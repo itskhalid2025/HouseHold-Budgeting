@@ -30,9 +30,9 @@ uuid>=9.0.0
 opik>=0.1.0
 
 # ===================
-# Real-time Communication
+# Polling (No WebSocket needed)
 # ===================
-socket.io>=4.6.0
+# Using setInterval for auto-refresh instead of Socket.io
 
 # ===================
 # Validation

@@ -411,6 +411,6 @@ Phase 2 is complete when:
 - Create households
 - Implement invitation via email/phone
 - Set up role-based permissions
-- Add real-time sync with Socket.io
+- Set up polling for data sync
 
 Before moving to Phase 3, ensure all Phase 2 tests pass!

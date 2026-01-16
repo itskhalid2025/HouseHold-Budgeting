@@ -37,7 +37,7 @@ HomeHarmony Budget is a collaborative household financial tracking application t
 - Node.js + Express
 - PostgreSQL + Prisma ORM
 - JWT Authentication
-- Socket.io (real-time sync)
+- Polling (auto-refresh sync)
 
 ### AI & Observability
 - Google Gemini API (Free Tier)
@@ -265,6 +265,7 @@ npm run eval
 | Phase 7 | Reporting & Visualization | ⏳ Pending |
 | Phase 8 | Opik Integration & Evaluation | ⏳ Pending |
 | Phase 9 | Testing & Polish | ⏳ Pending |
+| Phase 10 | Deployment & Hosting | ⏳ Pending |
 
 See individual `phaseX_guide.md` files for detailed implementation instructions.
 

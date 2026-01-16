@@ -109,7 +109,7 @@ Each should:
 
 1. **Pull data from** Phase 4 transactions
 2. **Use AI reports from** Phase 6
-3. **Real-time updates** via Socket.io
+3. **Polling updates** for fresh data
 
 ---
 

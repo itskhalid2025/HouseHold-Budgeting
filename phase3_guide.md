@@ -12,7 +12,7 @@ This phase builds the multi-user household system. By the end, you will have:
 - Household creation and management
 - Invitation system via email or phone (unique identifiers)
 - Role-based permissions (Admin, Editor, Viewer)
-- Real-time sync foundation with Socket.io
+- Polling-based sync for data updates
 
 ---
 
@@ -219,43 +219,44 @@ Requirements:
 
 ---
 
-### 4. Real-time Sync (Socket.io)
+### 4. Polling-Based Sync
 
-#### 4.1 Set Up Socket.io
-- [ ] Install and configure Socket.io
-- [ ] Create household rooms
-- [ ] Broadcast transaction updates
-- [ ] Handle connection/disconnection
+#### 4.1 Set Up Polling Service (Frontend)
+- [ ] Create usePolling hook
+- [ ] Implement auto-refresh for household data
+- [ ] Handle stale data detection
+- [ ] Add manual refresh button
 
-**LLM Prompt for Socket Setup:**
+**LLM Prompt for Polling Hook:**
 ```
-Create a Socket.io service (backend/src/services/socketService.js) for real-time updates.
+Create a React hook (frontend/src/hooks/usePolling.js) for auto-refresh data sync.
 
 Requirements:
-- Export function: initializeSocket(server)
-  - Create Socket.io instance with CORS config
-  - On 'connection':
-    - Authenticate using token from handshake
-    - Join user to household room: `household:${householdId}`
-    - Log connection
-  - On 'disconnect':
-    - Log disconnection
+- Export function: usePolling(fetchFunction, interval = 30000)
+  - Call fetchFunction on mount
+  - Set up interval to refetch
+  - Clear interval on unmount
+  - Return: { data, loading, error, refetch, lastUpdated }
 
-- Export function: emitToHousehold(householdId, event, data)
-  - Emit event to all members of household room
-  - Use for: new transaction, budget update, new member
+- Export function: useHouseholdSync()
+  - Use usePolling to fetch household data every 30 seconds
+  - Track lastSyncedAt timestamp
+  - Compare with server timestamp to detect stale data
+  - Show "New updates available" toast if stale
+  - Return household data
 
-- Export function: emitToUser(userId, event, data)
-  - Emit to specific user's socket(s)
-  - Use for: invitation received, role changed
+Example usage:
+const { data: household, refetch, lastUpdated } = useHouseholdSync();
+```
 
-Events to support:
-- 'transaction:created'
-- 'transaction:updated'
-- 'transaction:deleted'
-- 'member:joined'
-- 'member:left'
-- 'budget:updated'
+**Polling Service (Backend):**
+```javascript
+// Add to household response
+{
+  "household": { ... },
+  "serverTimestamp": Date.now(),
+  "hasNewData": true  // Compare with client's last fetch
+}
 ```
 
 ---
@@ -297,6 +298,7 @@ curl http://localhost:3001/api/households/$HOUSEHOLD_ID/members \
 | Change role (non-admin) | 403 Forbidden | - [ ] Pass |
 | Remove member (admin) | Member removed | - [ ] Pass |
 | Leave household | Successfully left | - [ ] Pass |
+| Polling refresh | Data updates every 30s | - [ ] Pass |
 
 ---
 
@@ -310,10 +312,12 @@ backend/src/
 ├── routes/
 │   ├── households.js
 │   └── invitations.js
-├── services/
-│   └── socketService.js
 └── utils/
     └── generateCode.js
+
+frontend/src/
+├── hooks/
+│   └── usePolling.js
 ```
 
 ---
@@ -324,14 +328,9 @@ backend/src/
 ```javascript
 import householdRoutes from './routes/households.js';
 import invitationRoutes from './routes/invitations.js';
-import { initializeSocket } from './services/socketService.js';
 
 app.use('/api/households', authenticate, householdRoutes);
 app.use('/api/invitations', invitationRoutes);
-
-// After server creation
-const server = app.listen(PORT, () => {...});
-initializeSocket(server);
 ```
 
 2. **Use auth middleware** from Phase 2 for protected routes
@@ -347,7 +346,7 @@ Phase 3 is complete when:
 - [ ] Invitations can be accepted
 - [ ] Role permissions enforced (Admin/Editor/Viewer)
 - [ ] Members can be managed (role change, removal)
-- [ ] Socket.io ready for real-time updates
+- [ ] Polling hook refreshes data every 30s
 - [ ] All tests pass
 
 ---

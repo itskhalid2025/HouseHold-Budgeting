@@ -14,6 +14,7 @@ By the end of this phase, you will have:
 - Voice input via Web Speech API
 - Text input parsing
 - Opik tracing for all inputs
+- Polling-based updates for new transactions
 
 ---
 
@@ -27,6 +28,7 @@ By the end of this phase, you will have:
 - [ ] Implement list transactions (with filters)
 - [ ] Implement update transaction
 - [ ] Implement delete transaction
+- [ ] Add lastModified timestamp for polling
 
 **LLM Prompt for Transaction Controller:**
 ```
@@ -37,24 +39,25 @@ Requirements:
   - Extract: description, amount, date, merchant (optional), category (optional)
   - If no category: trigger AI categorization (placeholder for Phase 5)
   - Save to database with householdId and userId from req.user
-  - Emit Socket event 'transaction:created'
+  - Update household's lastModifiedAt timestamp (for polling)
   - Return transaction with Opik trace ID
 
 - listTransactions(req, res):
   - Filter by: dateRange, category, type, userId (who logged it)
   - Pagination: page, limit (default 20)
   - Sort by date descending
+  - Include householdLastModified for polling
   - Return transactions with total count
 
 - updateTransaction(req, res):
   - Only owner or ADMIN can update
   - Track if user overrode AI categorization
-  - Emit 'transaction:updated'
+  - Update household's lastModifiedAt
 
 - deleteTransaction(req, res):
   - Only owner or ADMIN can delete
   - Soft delete (set deletedAt) or hard delete
-  - Emit 'transaction:deleted'
+  - Update household's lastModifiedAt
 ```
 
 **Testing (Manual):**
@@ -87,7 +90,8 @@ curl -X POST http://localhost:3001/api/transactions \
     "date": "2024-01-16",
     "aiCategorized": true,
     "confidence": 0.95
-  }
+  },
+  "householdLastModified": "2024-01-16T10:30:00Z"
 }
 ```
 
@@ -133,9 +137,27 @@ Requirements:
 
 ---
 
-### 4. Opik Integration
+### 4. Polling Integration
 
-#### 4.1 Trace All Input Processing
+#### 4.1 Update Polling for Transactions
+- [ ] Extend usePolling to check for new transactions
+- [ ] Show notification when new data available
+- [ ] Manual refresh button
+
+**LLM Prompt:**
+```
+Extend the usePolling hook to support transaction updates:
+- Track lastFetchedAt timestamp
+- Compare with server's householdLastModified
+- If server is newer: show "New transactions available" toast
+- Allow manual refresh via refetch()
+```
+
+---
+
+### 5. Opik Integration
+
+#### 5.1 Trace All Input Processing
 - [ ] Wrap transaction creation with Opik trace
 - [ ] Log input text and parsed output
 - [ ] Track latency
@@ -149,7 +171,7 @@ Requirements:
 
 ## Integration with Previous Phases
 
-1. **Use Socket.io** from Phase 3 for real-time updates
+1. **Use Polling** from Phase 3 for sync updates
 2. **Use auth middleware** from Phase 2
 3. **Use Prisma** from Phase 1
 
@@ -161,7 +183,7 @@ Requirements:
 - [ ] Income sources tracked with frequency
 - [ ] Voice input works in browser
 - [ ] Opik traces visible for all operations
-- [ ] Real-time updates via Socket.io
+- [ ] Polling detects new transactions
 
 ---
 

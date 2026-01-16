@@ -136,7 +136,7 @@
 | **Prisma ORM** | Database access and migrations |
 | **JWT** | Authentication tokens |
 | **bcrypt** | Password hashing |
-| **Socket.io** | Real-time household sync |
+| **Polling** | Auto-refresh for household sync (30s intervals) |
 
 #### AI & Observability
 | Technology | Purpose |
@@ -161,7 +161,7 @@
 │  │  Dashboard  │  │ Transactions│  │   Reports   │  │  AI Assistant   │ │
 │  │    Page     │  │    Page     │  │    Page     │  │    Chat Page    │ │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────────┘ │
-│                            ↓ HTTP/WebSocket ↓                            │
+│                              ↓ HTTP REST API ↓                            │
 └─────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
@@ -799,7 +799,7 @@ class AIContextService {
 - Profile settings
 
 #### 3.2 Household Syncing
-- Real-time updates via Socket.io
+- Auto-refresh polling (30s intervals) for sync
 - Transaction ownership tracking
 
 #### 3.3 Role Management
@@ -995,7 +995,7 @@ POST /api/auth/register
 1. Implement household creation
 2. Build invitation system (email + phone)
 3. Create role-based permissions
-4. Set up real-time sync with Socket.io
+4. Set up polling for household data sync
 
 #### Testing Method
 | Test Type | Method | Tool |
@@ -1503,6 +1503,67 @@ const prismaWithRetry = async (operation) => {
 - [ ] Opik dashboard walkthrough scripted
 - [ ] Before/after metrics prepared
 - [ ] GitHub repo with clear README
+
+---
+
+### Phase 10: Deployment & Hosting (Days 24-25)
+
+#### Tasks
+1. Prepare production environment configuration
+2. Deploy frontend to Vercel (free tier)
+3. Deploy backend to Railway or Render (free tier)
+4. Set up PostgreSQL database hosting
+5. Configure production environment variables
+6. Test full production flow
+
+#### Hosting Options (All Free Tier)
+
+| Service | What to Deploy | Free Tier |
+|---------|----------------|-----------|
+| **Vercel** | Frontend (React) | Unlimited deploys, 100GB bandwidth |
+| **Railway** | Backend (Node.js) | $5 free credit, 500 hours/month |
+| **Render** | Backend (Alternative) | 750 hours, spins down after 15min |
+| **Supabase/Neon** | PostgreSQL | 500MB database |
+
+#### Testing Method
+| Test Type | Method | Tool |
+|-----------|--------|------|
+| Frontend deployment | Manual | Vercel dashboard |
+| Backend deployment | Manual | Railway/Render dashboard |
+| Production flow | Manual | Browser + API testing |
+| Opik traces | **Opik** | Production dashboard |
+
+#### Input/Output Examples
+
+**Test: Production Health Check**
+```bash
+# Input
+curl https://your-api.up.railway.app/api/health
+
+# Expected Output
+{
+  "status": "ok",
+  "environment": "production",
+  "timestamp": 1705420800000
+}
+```
+
+**Test: Full Production Flow**
+1. Visit `https://your-app.vercel.app`
+2. Register new user
+3. Create household
+4. Add transaction (verify AI categorization)
+5. View dashboard
+6. Check Opik traces in production project
+
+#### Completion Criteria
+- [ ] Frontend deployed to Vercel
+- [ ] Backend deployed to Railway/Render
+- [ ] Database connected with SSL
+- [ ] All API endpoints working
+- [ ] Gemini AI functioning in production
+- [ ] Opik traces visible in production project
+- [ ] No CORS errors
 
 ---
 

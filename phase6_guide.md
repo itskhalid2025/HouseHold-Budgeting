@@ -124,7 +124,7 @@ Output:
 #### 4.1 Implement Cron Job
 - [ ] Weekly report generation (Sundays)
 - [ ] Store reports in database
-- [ ] Notify users via Socket
+- [ ] Notify users via polling refresh
 
 ---
 
@@ -132,7 +132,7 @@ Output:
 
 1. **Use categorized transactions** from Phase 5
 2. **Use smart data fetching** for token efficiency
-3. **Emit real-time updates** via Socket.io
+3. **Schedule periodic updates** via polling
 
 ---
 
