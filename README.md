@@ -304,16 +304,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 🙏 Acknowledgments
-
-- [Google Gemini](https://ai.google.dev/) for the AI capabilities
-- [Opik by Comet](https://www.comet.com/opik) for LLM observability
-- Built for the Comet Opik Hackathon 2024
-
----
-
 ## 📞 Contact
 
-Your Name - [@yourtwitter](https://twitter.com/yourtwitter)
+Mohammed Khalid - [itskhalid.25@gmail.com](mailto:itskhalid.25@gmail.com)
 
-Project Link: [https://github.com/yourusername/household-budgeting](https://github.com/yourusername/household-budgeting)
+Project Link: [https://github.com/itskhalid2025/HouseHold-Budgeting](https://github.com/itskhalid2025/HouseHold-Budgeting)

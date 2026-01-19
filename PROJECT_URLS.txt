@@ -1,0 +1,16 @@
+
+# Project URLs
+
+## Core Services
+User/Customer Frontend: http://localhost:5173
+Admin Frontend:         http://localhost:5174/login
+Backend API:           http://localhost:3001
+
+## Database Tools
+Prisma Studio (DB GUI): http://localhost:5555
+
+## Local Development Paths
+Root Directory: c:\Users\KHALID\Downloads\HouseHold Budgeting
+Backend:        c:\Users\KHALID\Downloads\HouseHold Budgeting\backend
+Frontend:       c:\Users\KHALID\Downloads\HouseHold Budgeting\frontend
+Admin Frontend: c:\Users\KHALID\Downloads\HouseHold Budgeting\frontend-admin

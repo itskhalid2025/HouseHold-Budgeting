@@ -1,0 +1,434 @@
+// Prisma schema for HomeHarmony Budget
+// PostgreSQL database with Prisma 5
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Enums
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum TransactionType {
+  NEED
+  WANT
+}
+
+enum IncomeType {
+  PRIMARY
+  VARIABLE
+  PASSIVE
+}
+
+enum IncomeFrequency {
+  ONE_TIME
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  CANCELLED
+}
+
+enum GoalType {
+  EMERGENCY_FUND
+  SINKING_FUND
+  DEBT_PAYOFF
+  LONG_TERM
+}
+
+// New Enums for Advanced Features
+enum LoanType {
+  LENT      // Money you gave to someone
+  BORROWED  // Money you owe to someone
+}
+
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum CategoryType {
+  NEEDS
+  WANTS
+  SAVINGS
+}
+
+
+// Models
+
+model User {
+  id                       String    @id @default(uuid())
+  email                    String    @unique
+  phone                    String    @unique
+  passwordHash             String    @map("password_hash")
+  firstName                String    @map("first_name")
+  lastName                 String    @map("last_name")
+  currency                 String    @default("USD")
+  avatarUrl                String?   @map("avatar_url")
+  timezone                 String    @default("UTC")
+  notificationPreferences  Json      @default("{}")  @map("notification_preferences")
+  
+  householdId              String?   @map("household_id")
+  household                Household? @relation(fields: [householdId], references: [id])
+  
+  role                     Role      @default(VIEWER)
+  emailVerified            Boolean   @default(false) @map("email_verified")
+  phoneVerified            Boolean   @default(false) @map("phone_verified")
+  
+  resetToken               String?   @map("reset_token")
+  resetTokenExpiry         DateTime? @map("reset_token_expiry")
+  
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+  
+  // Relations
+  transactions             Transaction[]
+  incomes                  Income[]
+  sentInvitations          Invitation[]
+  adminHouseholds          Household[] @relation("HouseholdAdmin")
+  loans                    Loan[]
+  
+  @@map("users")
+}
+
+model Household {
+  id                String   @id @default(uuid())
+  name              String
+  inviteCode        String   @unique @map("invite_code")
+  
+  adminId           String   @map("admin_id")
+  admin             User     @relation("HouseholdAdmin", fields: [adminId], references: [id])
+  
+  lastModifiedAt    DateTime @default(now()) @map("last_modified_at")
+  createdAt         DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  members           User[]
+  transactions      Transaction[]
+  incomes           Income[]
+  invitations       Invitation[]
+  goals             Goal[]
+  customCategories  CustomCategory[]
+  recurringExpenses RecurringExpense[]
+  loans             Loan[]
+  splitExpenses     SplitExpense[]
+  
+  @@map("households")
+}
+
+model Transaction {
+  id                String          @id @default(uuid())
+  
+  householdId       String          @map("household_id")
+  household         Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  
+  userId            String          @map("user_id")
+  user              User            @relation(fields: [userId], references: [id])
+  
+  amount            Decimal         @db.Decimal(10, 2)
+  currency          String          @default("USD")
+  merchant          String?
+  description       String
+  
+  category          String
+  subcategory       String?
+  type              TransactionType
+  
+  date              DateTime        @db.Date
+  
+  aiCategorized     Boolean         @default(false) @map("ai_categorized")
+  confidence        Float?
+  userOverride      Boolean         @default(false) @map("user_override")
+  
+  deletedAt         DateTime?       @map("deleted_at")
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  
+  // Relations for splits
+  splits            SplitExpense[]
+  
+  @@index([householdId, date])
+  @@index([category, type])
+  @@map("transactions")
+}
+
+model Income {
+  id                String           @id @default(uuid())
+  
+  householdId       String           @map("household_id")
+  household         Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  
+  userId            String           @map("user_id")
+  user              User             @relation(fields: [userId], references: [id])
+  
+  amount            Decimal          @db.Decimal(10, 2)
+  currency          String          @default("USD")
+  source            String
+  type              IncomeType
+  frequency         IncomeFrequency
+  
+  startDate         DateTime         @map("start_date") @db.Date
+  endDate           DateTime?        @map("end_date") @db.Date
+  isActive          Boolean          @default(true) @map("is_active")
+  
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  
+  @@index([householdId, isActive])
+  @@map("incomes")
+}
+
+model Invitation {
+  id                String            @id @default(uuid())
+  
+  householdId       String            @map("household_id")
+  household         Household         @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  
+  invitedById       String            @map("invited_by_id")
+  invitedBy         User              @relation(fields: [invitedById], references: [id])
+  
+  recipientEmail    String?           @map("recipient_email")
+  recipientPhone    String?           @map("recipient_phone")
+  
+  role              Role
+  token             String            @unique
+  status            InvitationStatus  @default(PENDING)
+  
+  expiresAt         DateTime          @map("expires_at")
+  acceptedAt        DateTime?         @map("accepted_at")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  
+  @@unique([householdId, recipientEmail], map: "unique_household_email")
+  @@unique([householdId, recipientPhone], map: "unique_household_phone")
+  @@map("invitations")
+}
+
+model Goal {
+  id                String    @id @default(uuid())
+  
+  householdId       String    @map("household_id")
+  household         Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  
+  name              String
+  type              GoalType
+  targetAmount      Decimal   @map("target_amount") @db.Decimal(10, 2)
+  currentAmount     Decimal   @default(0) @map("current_amount") @db.Decimal(10, 2)
+  
+  deadline          DateTime? @db.Date
+  isActive          Boolean   @default(true) @map("is_active")
+  
+  createdAt         DateTime  @default(now()) @map("created_at")
+  updatedAt         DateTime  @updatedAt @map("updated_at")
+  
+  @@index([householdId, isActive])
+  @@map("goals")
+}
+
+// ========================================
+// NEW MODELS FOR ADVANCED FEATURES
+// ========================================
+
+model CustomCategory {
+  id                String       @id @default(uuid())
+  
+  householdId       String       @map("household_id")
+  household         Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  
+  name              String       // e.g., "Maid Salary", "Gym Membership"
+  type              CategoryType // NEEDS, WANTS, SAVINGS
+  parentCategory    String?      @map("parent_category") // For grouping
+  isActive          Boolean      @default(true) @map("is_active")
+  
+  createdAt         DateTime     @default(now()) @map("created_at")
+  
+  @@unique([householdId, name])
+  @@map("custom_categories")
+}
+
+model RecurringExpense {
+  id                String             @id @default(uuid())
+  
+  householdId       String             @map("household_id")
+  household         Household          @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  
+  name              String             // e.g., "Maid", "Netflix", "Gym"
+  amount            Decimal            @db.Decimal(10, 2)
+  category          String
+  subcategory       String?
+  frequency         RecurringFrequency
+  skipDates         Json               @default("[]") @map("skip_dates") // Array of skipped dates
+  
+  isActive          Boolean            @default(true) @map("is_active")
+  startDate         DateTime           @map("start_date") @db.Date
+  endDate           DateTime?          @map("end_date") @db.Date
+  
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  
+  @@index([householdId, isActive])
+  @@map("recurring_expenses")
+}
+
+model Loan {
+  id                String       @id @default(uuid())
+  
+  householdId       String       @map("household_id")
+  household         Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  
+  userId            String       @map("user_id")
+  user              User         @relation(fields: [userId], references: [id])
+  
+  type              LoanType     // LENT or BORROWED
+  personName        String       @map("person_name") // Who you lent to / borrowed from
+  principalAmount   Decimal      @map("principal_amount") @db.Decimal(10, 2)
+  remainingAmount   Decimal      @map("remaining_amount") @db.Decimal(10, 2)
+  
+  dueDate           DateTime?    @map("due_date") @db.Date
+  notes             String?
+  isSettled         Boolean      @default(false) @map("is_settled")
+  
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+  
+  // Relations
+  repayments        LoanRepayment[]
+  
+  @@index([householdId, isSettled])
+  @@map("loans")
+}
+
+model LoanRepayment {
+  id                String    @id @default(uuid())
+  
+  loanId            String    @map("loan_id")
+  loan              Loan      @relation(fields: [loanId], references: [id], onDelete: Cascade)
+  
+  amount            Decimal   @db.Decimal(10, 2)
+  date              DateTime  @db.Date
+  method            String?   // cash, UPI, bank transfer, etc.
+  note              String?
+  
+  createdAt         DateTime  @default(now()) @map("created_at")
+  
+  @@map("loan_repayments")
+}
+
+model SplitExpense {
+  id                String          @id @default(uuid())
+  
+  householdId       String          @map("household_id")
+  household         Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  
+  transactionId     String          @map("transaction_id")
+  transaction       Transaction     @relation(fields: [transactionId], references: [id])
+  
+  totalAmount       Decimal         @map("total_amount") @db.Decimal(10, 2)
+  yourShare         Decimal         @map("your_share") @db.Decimal(10, 2)
+  splits            Json            // [{person, amount, isPaid}]
+  
+  isFullySettled    Boolean         @default(false) @map("is_fully_settled")
+  
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+  
+  // Relations
+  repayments        SplitRepayment[]
+  
+  @@map("split_expenses")
+}
+
+model SplitRepayment {
+  id                String       @id @default(uuid())
+  
+  splitExpenseId    String       @map("split_expense_id")
+  splitExpense      SplitExpense @relation(fields: [splitExpenseId], references: [id], onDelete: Cascade)
+  
+  personName        String       @map("person_name")
+  amount            Decimal      @db.Decimal(10, 2)
+  date              DateTime     @db.Date
+  method            String?
+  
+  createdAt         DateTime     @default(now()) @map("created_at")
+  
+  @@map("split_repayments")
+}
+
+
+// ========================================
+// PHASE 1.5: PLATFORM ADMIN SYSTEM
+// ========================================
+
+model PlatformAdmin {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  username          String    @unique
+  passwordHash      String    @map("password_hash")
+  
+  // Profile
+  firstName         String    @map("first_name")
+  lastName          String    @map("last_name")
+  avatarUrl         String?   @map("avatar_url")
+  
+  // Admin Level (for future multi-tier admin system)
+  adminLevel        AdminLevel @default(STANDARD)
+  
+  // Security
+  lastLoginAt       DateTime?  @map("last_login_at")
+  lastLoginIp       String?    @map("last_login_ip")
+  twoFactorEnabled  Boolean    @default(false) @map("two_factor_enabled")
+  twoFactorSecret   String?    @map("two_factor_secret")
+  
+  // Access Control
+  isActive          Boolean    @default(true) @map("is_active")
+  isSuperAdmin      Boolean    @default(false) @map("is_super_admin")
+  
+  // Audit Trail
+  createdAt         DateTime   @default(now()) @map("created_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+  
+  // Relations
+  activityLogs      AdminActivityLog[]
+  
+  @@map("platform_admins")
+}
+
+enum AdminLevel {
+  STANDARD      // View-only access
+  MODERATOR     // Can manage users
+  ADMINISTRATOR // Full platform access
+}
+
+// Admin Activity Logging
+model AdminActivityLog {
+  id            String        @id @default(uuid())
+  adminId       String        @map("admin_id")
+  admin         PlatformAdmin @relation(fields: [adminId], references: [id])
+  
+  action        String        // e.g., "VIEW_HOUSEHOLD", "EDIT_USER", "GENERATE_REPORT"
+  targetType    String?       @map("target_type")  // "user", "household", "transaction"
+  targetId      String?       @map("target_id")
+  details       Json?         // Additional context
+  ipAddress     String        @map("ip_address")
+  
+  createdAt     DateTime      @default(now()) @map("created_at")
+  
+  @@index([adminId, createdAt])
+  @@map("admin_activity_logs")
+}
