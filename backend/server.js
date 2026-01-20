@@ -1,4 +1,4 @@
-// HomeHarmony Budget - Express Server
+// HouseHold Budgeting - Express Server
 // Main entry point for the backend API
 
 import express from 'express';
@@ -9,19 +9,33 @@ import config, { validateConfig } from './src/utils/config.js';
 import { PrismaClient } from '@prisma/client';
 import { testConnection as testGemini } from './src/services/geminiService.js';
 import { testConnection as testOpik } from './src/services/opikService.js';
+import swaggerUi from 'swagger-ui-express';
+import { specs } from './src/utils/swagger.js';
 import adminRoutes from './src/routes/adminRoutes.js';
+import authRoutes from './src/routes/auth.js';
+import householdRoutes from './src/routes/households.js';
+import invitationRoutes from './src/routes/invitations.js';
+import { authenticate } from './src/middleware/auth.js';
 
 const app = express();
 const prisma = new PrismaClient();
 
 // Middleware
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: false, // HELMET blocks Swagger UI by default, disable CSP for dev
+}));
 app.use(cors({ origin: config.cors.origin }));
 app.use(express.json());
 app.use(morgan('dev'));
 
+// Swagger Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
 // Routes
 app.use('/api/admin', adminRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/households', authenticate, householdRoutes);
+app.use('/api/invitations', invitationRoutes); // Auth handled internally or via middleware in router
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -99,7 +113,7 @@ async function startServer() {
 
         // Start listening
         app.listen(config.port, () => {
-            console.log(`\n🚀 HomeHarmony Budget API running on port ${config.port}`);
+            console.log(`\n🚀 HouseHold Budgeting API running on port ${config.port}`);
             console.log(`📖 Health check: http://localhost:${config.port}/api/health`);
             console.log(`🧪 Test Gemini: http://localhost:${config.port}/api/test/gemini`);
             console.log(`🧪 Test Opik: http://localhost:${config.port}/api/test/opik\n`);

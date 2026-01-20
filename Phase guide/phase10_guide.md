@@ -101,7 +101,7 @@ Create deployment configuration for Vercel frontend hosting:
 1. vercel.json configuration for Vite React app
 2. Environment variables needed:
    - VITE_API_URL: Backend API URL
-   - VITE_APP_NAME: HomeHarmony Budget
+   - VITE_APP_NAME: HouseHold Budgeting
 3. Build settings for Vite
 4. Redirect rules for React Router (SPA)
 
@@ -367,10 +367,10 @@ Phase 10 is complete when:
 
 ## 🎉 Deployment Complete!
 
-Your HomeHarmony Budget app is now live! Share these URLs:
+Your HouseHold Budgeting app is now live! Share these URLs:
 
-- **Frontend**: `https://homeharmony.vercel.app`
-- **Backend API**: `https://homeharmony-api.up.railway.app`
+- **Frontend**: `https://householdbudgeting.vercel.app`
+- **Backend API**: `https://householdbudgeting-api.up.railway.app`
 - **Opik Dashboard**: `https://www.comet.com/your-username/household-budget`
 
 **For the Hackathon Demo:**

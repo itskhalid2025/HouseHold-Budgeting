@@ -1,4 +1,4 @@
-# HomeHarmony Budget - Complete Implementation Plan
+# HouseHold Budgeting - Complete Implementation Plan
 
 > **AI-Powered Financial Clarity for the Whole Household**
 

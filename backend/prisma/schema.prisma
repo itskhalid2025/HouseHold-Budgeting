@@ -1,4 +1,4 @@
-// Prisma schema for HomeHarmony Budget
+// Prisma schema for HouseHold Budgeting
 // PostgreSQL database with Prisma 5
 
 generator client {

@@ -1,5 +1,5 @@
 # Backend Requirements
-# HomeHarmony Budget - Household Budgeting App
+# HouseHold Budgeting - Household Budgeting App
 
 # ===================
 # Core Framework

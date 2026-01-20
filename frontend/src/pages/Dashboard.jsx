@@ -2,7 +2,7 @@ export default function Dashboard() {
     return (
         <div className="container">
             <h1>Dashboard</h1>
-            <p>Welcome to HomeHarmony Budget! Your household financial overview will appear here.</p>
+            <p>Welcome to HouseHold Budgeting! Your household financial overview will appear here.</p>
             <div className="stats-grid">
                 <div className="stat-card">
                     <h3>Total Income</h3>

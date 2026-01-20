@@ -19,7 +19,7 @@ async function main() {
     console.log('📊 Exporting test data to Excel...\n');
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = 'HomeHarmony Budget';
+    workbook.creator = 'HouseHold Budgeting';
     workbook.created = new Date();
 
     // =====================================================

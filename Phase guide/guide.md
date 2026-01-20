@@ -1,6 +1,6 @@
 # HouseHold Budgeting App - Complete Implementation Plan
 
-## Project Overview: "HomeHarmony Budget"
+## Project Overview: "HouseHold Budgeting"
 AI-Powered Financial Clarity for the Whole Household with Advanced Tax Management
 
 ---

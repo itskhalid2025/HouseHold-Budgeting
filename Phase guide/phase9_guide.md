@@ -181,7 +181,7 @@ npm run test:report
 
 ## 🎉 Project Complete!
 
-Congratulations! Your HomeHarmony Budget app is ready for the hackathon demo.
+Congratulations! Your HouseHold Budgeting app is ready for the hackathon demo.
 
 **Final Deliverables:**
 - Working web application

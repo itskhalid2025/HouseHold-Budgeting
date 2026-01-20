@@ -1,4 +1,4 @@
-// Configuration service for HomeHarmony Budget
+// Configuration service for HouseHold Budgeting
 // Centralized configuration management
 
 import dotenv from 'dotenv';

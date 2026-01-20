@@ -113,7 +113,7 @@ npx tailwindcss init -p
 
 **LLM Prompt for Component Generation:**
 ```
-Create a basic React App.jsx component for a household budgeting application called "HomeHarmony Budget". 
+Create a basic React App.jsx component for a household budgeting application called "HouseHold Budgeting". 
 
 Requirements:
 - Use React Router v6 for routing
@@ -130,7 +130,7 @@ The component should be clean and minimal - we'll add features in later phases.
 | Test | How to Verify | Expected Result |
 |------|---------------|-----------------|
 | Frontend starts | Run `npm run dev` | Vite dev server starts on http://localhost:5173 |
-| React app loads | Open browser to localhost:5173 | See "HomeHarmony Budget" header |
+| React app loads | Open browser to localhost:5173 | See "HouseHold Budgeting" header |
 | Routes work | Click navigation links | URL changes, no errors in console |
 
 **Example Input:**

@@ -12,7 +12,7 @@ function App() {
         {/* Header */}
         <header className="app-header">
           <div className="header-content">
-            <h1 className="app-title">🏠 HomeHarmony Budget</h1>
+            <h1 className="app-title">🏠 HouseHold Budgeting</h1>
             <nav className="main-nav">
               <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
                 Dashboard
@@ -42,7 +42,7 @@ function App() {
 
         {/* Footer */}
         <footer className="app-footer">
-          <p>&copy; 2026 HomeHarmony Budget. Built with React + Vite.</p>
+          <p>&copy; 2026 HouseHold Budgeting. Built with React + Vite.</p>
         </footer>
       </div>
     </Router>

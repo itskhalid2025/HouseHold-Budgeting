@@ -1,7 +1,7 @@
 
 # Walkthrough - Admin System Implementation
 
-I have successfully implemented the Admin System for HomeHarmony Budget, creating a dedicated `frontend-admin` application and extending the backend with admin capabilities.
+I have successfully implemented the Admin System for HouseHold Budgeting, creating a dedicated `frontend-admin` application and extending the backend with admin capabilities.
 
 ## 1. Backend Implementation
 - **Schema Updates**: Added `PlatformAdmin`, `AdminLevel`, and `AdminActivityLog` to Prisma schema.

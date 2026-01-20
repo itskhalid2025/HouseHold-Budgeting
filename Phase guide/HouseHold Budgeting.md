@@ -1,4 +1,4 @@
-# HomeHarmony Budget
+# HouseHold Budgeting
 
 > **AI-Powered Financial Clarity for the Whole Household**
 
@@ -6,11 +6,11 @@
 
 ## About the Product
 
-HomeHarmony Budget is a collaborative household financial tracking application that combines multi-user access with advanced AI technology. Unlike traditional budgeting apps that are static spreadsheets, HomeHarmony uses Large Language Models (LLMs) to actively analyze your spending habits, generate dynamic visual reports, and offer personalized, conversational guidance on saving money.
+HouseHold Budgeting is a collaborative household financial tracking application that combines multi-user access with advanced AI technology. Unlike traditional budgeting apps that are static spreadsheets, HouseHold Budgeting uses Large Language Models (LLMs) to actively analyze your spending habits, generate dynamic visual reports, and offer personalized, conversational guidance on saving money.
 
 ### Key Differentiators
 
-| Traditional Apps | HomeHarmony Budget |
+| Traditional Apps | HouseHold Budgeting |
 |-----------------|-------------------|
 | Manual category selection | AI auto-categorizes transactions |
 | Static reports | Dynamic insights with trends |
@@ -292,7 +292,7 @@ Opik (by Comet) is an **LLM observability platform** that provides:
 - Experiment tracking for prompt optimization
 - Performance dashboards
 
-### How HomeHarmony Uses Opik
+### How HouseHold Budgeting Uses Opik
 
 #### 1. Comprehensive Tracing
 

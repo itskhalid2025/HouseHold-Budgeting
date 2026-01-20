@@ -1,4 +1,4 @@
-// Opik Service for HomeHarmony Budget
+// Opik Service for HouseHold Budgeting
 // Handles LLM observability and evaluation with Opik
 
 import { Opik } from 'opik';

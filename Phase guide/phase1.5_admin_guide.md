@@ -296,7 +296,7 @@ GET    /api/admin/activity-logs             # View audit logs
 
 ```
 ╔════════════════════════════════════════════════════════════════╗
-║  🏠 HomeHarmony Budget - Admin Dashboard              [Logout] ║
+║  🏠 HouseHold Budgeting - Admin Dashboard              [Logout] ║
 ╠════════════════════════════════════════════════════════════════╣
 ║                                                                ║
 ║  Platform Overview                                             ║
@@ -331,7 +331,7 @@ GET    /api/admin/activity-logs             # View audit logs
 INSERT INTO platform_admins (id, email, username, password_hash, first_name, last_name, is_super_admin, admin_level)
 VALUES (
   gen_random_uuid(),
-  'admin@homeharmony.com',
+  'admin@householdbudgeting.com',
   'superadmin',
   '$2a$10$...',  -- bcrypt hash of password
   'Super',

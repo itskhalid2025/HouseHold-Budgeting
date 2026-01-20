@@ -1,4 +1,4 @@
-# HomeHarmony Budget
+# HouseHold Budgeting
 
 > **AI-Powered Financial Clarity for the Whole Household**
 
@@ -11,7 +11,7 @@
 
 ## 📋 Overview
 
-HomeHarmony Budget is a collaborative household financial tracking application that combines multi-user access with advanced Large Language Model (LLM) technology. It actively analyzes spending habits to generate dynamic visual reports and offers personalized, conversational guidance on saving money.
+HouseHold Budgeting is a collaborative household financial tracking application that combines multi-user access with advanced Large Language Model (LLM) technology. It actively analyzes spending habits to generate dynamic visual reports and offers personalized, conversational guidance on saving money.
 
 ### Key Features
 

@@ -1,8 +1,8 @@
-# HomeHarmony Budget - Database Schema Documentation
+# HouseHold Budgeting - Database Schema Documentation
 
 ## Overview
 
-This document provides a comprehensive explanation of the database schema for the HomeHarmony Budget application. The database uses **PostgreSQL** with **Prisma ORM** and consists of **12 tables** that manage users, households, financial transactions, incomes, invitations, savings goals, recurring expenses, loans, and bill splits.
+This document provides a comprehensive explanation of the database schema for the HouseHold Budgeting application. The database uses **PostgreSQL** with **Prisma ORM** and consists of **12 tables** that manage users, households, financial transactions, incomes, invitations, savings goals, recurring expenses, loans, and bill splits.
 
 
 ---

@@ -27,7 +27,7 @@ const Login = () => {
             <div className="w-full max-w-md p-8 space-y-8 bg-white rounded-lg shadow-md dark:bg-gray-800">
                 <div className="text-center">
                     <h2 className="text-3xl font-extrabold text-gray-900 dark:text-white">Admin Login</h2>
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to manage HomeHarmony</p>
+                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Sign in to manage HouseHold Budgeting</p>
                 </div>
                 <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
                     <div className="rounded-md shadow-sm -space-y-px">

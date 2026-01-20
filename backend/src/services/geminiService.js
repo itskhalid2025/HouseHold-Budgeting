@@ -1,4 +1,4 @@
-// Gemini API Service for HomeHarmony Budget
+// Gemini API Service for HouseHold Budgeting
 // Handles all interactions with Google's Gemini AI
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
