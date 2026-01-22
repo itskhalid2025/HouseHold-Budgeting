@@ -20,6 +20,7 @@ enum Role {
 enum TransactionType {
   NEED
   WANT
+  SAVINGS
 }
 
 enum IncomeType {

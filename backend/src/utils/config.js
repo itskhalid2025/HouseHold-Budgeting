@@ -31,7 +31,11 @@ const config = {
 
     // Gemini AI
     gemini: {
-        apiKey: process.env.GEMINI_API_KEY,
+        apiKeys: [
+            process.env.GEMINI_API_KEY,
+            process.env.GEMINI_API_KEY2,
+            process.env.GEMINI_API_KEY3
+        ].filter(Boolean),
         model: 'gemini-2.5-flash'
     },
 
@@ -57,11 +61,15 @@ export function validateConfig() {
     const required = [
         'DATABASE_URL',
         'JWT_SECRET',
-        'GEMINI_API_KEY',
         'OPIK_API_KEY'
     ];
 
     const missing = required.filter(key => !process.env[key]);
+
+    // Check for at least one Gemini key
+    if (!process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY2 && !process.env.GEMINI_API_KEY3) {
+        missing.push('GEMINI_API_KEY (or GEMINI_API_KEY2/3)');
+    }
 
     if (missing.length > 0) {
         throw new Error(`Missing required environment variables: ${missing.join(', ')}`);

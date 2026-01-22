@@ -16,6 +16,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { traceOperation } from '../services/opikService.js';
 const prisma = new PrismaClient();
 
 /**
@@ -39,6 +40,8 @@ const prisma = new PrismaClient();
  *           enum: [ONE_TIME, WEEKLY, BIWEEKLY, MONTHLY, QUARTERLY, YEARLY]
  *         isActive:
  *           type: boolean
+ *         householdId:
+ *           type: string
  */
 
 /**
@@ -46,66 +49,71 @@ const prisma = new PrismaClient();
  * POST /api/incomes
  */
 async function addIncome(req, res) {
-    try {
-        const { amount, source, type, frequency, startDate, endDate } = req.body;
-        const userId = req.user.id;
-        const householdId = req.user.householdId;
-        const userRole = req.user.role;
+    return traceOperation('addIncome', async () => {
+        try {
+            const { amount, source, type, frequency, startDate, endDate } = req.body;
+            const userId = req.user.id;
+            const householdId = req.user.householdId;
+            const userRole = req.user.role;
 
-        // VIEWER cannot add income
-        if (userRole === 'VIEWER') {
-            return res.status(403).json({
-                success: false,
-                error: 'Viewers cannot add income sources. Contact the household owner to upgrade your role.'
-            });
-        }
-
-        if (!householdId) {
-            return res.status(400).json({
-                success: false,
-                error: 'You must be part of a household to add income'
-            });
-        }
-
-        // Validate required fields
-        if (!amount || !source || !type || !frequency) {
-            return res.status(400).json({
-                success: false,
-                error: 'Amount, source, type, and frequency are required'
-            });
-        }
-
-        // Create income
-        const income = await prisma.income.create({
-            data: {
-                householdId,
-                userId,
-                amount: parseFloat(amount),
-                source,
-                type,
-                frequency,
-                startDate: startDate ? new Date(startDate) : new Date(),
-                endDate: endDate ? new Date(endDate) : null,
-                isActive: true
+            // VIEWER cannot add income
+            if (userRole === 'VIEWER') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Viewers cannot add income sources. Contact the household owner to upgrade your role.'
+                });
             }
-        });
 
-        // Update household lastModifiedAt
-        await prisma.household.update({
-            where: { id: householdId },
-            data: { lastModifiedAt: new Date() }
-        });
+            if (!householdId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'You must be part of a household to add income'
+                });
+            }
 
-        res.status(201).json({
-            success: true,
-            income,
-            householdLastModified: new Date().toISOString()
-        });
+            // Validate required fields
+            if (!amount || !source || !type || !frequency) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'Amount, source, type, and frequency are required'
+                });
+            }
 
-    } catch (error) {
-        console.error('Add income error:', error);
-        res.status(500).json({ success: false, error: 'Failed to add income' });
-    }
+            // Create income
+            const income = await prisma.income.create({
+                data: {
+                    householdId,
+                    userId,
+                    amount: parseFloat(amount),
+                    source,
+                    type,
+                    frequency,
+                    startDate: startDate ? new Date(startDate) : new Date(),
+                    endDate: endDate ? new Date(endDate) : null,
+                    isActive: true
+                }
+            });
+
+            // Update household lastModifiedAt
+            await prisma.household.update({
+                where: { id: householdId },
+                data: { lastModifiedAt: new Date() }
+            });
+
+            res.status(201).json({
+                success: true,
+                income,
+                householdLastModified: new Date().toISOString()
+            });
+
+            return { success: true, incomeId: income.id };
+
+        } catch (error) {
+            console.error('Add income error:', error);
+            res.status(500).json({ success: false, error: 'Failed to add income' });
+            throw error;
+        }
+    }, { userId: req.user?.id, source: req.body?.source });
 }
 
 /**
@@ -113,54 +121,59 @@ async function addIncome(req, res) {
  * GET /api/incomes
  */
 async function listIncomes(req, res) {
-    try {
-        const householdId = req.user.householdId;
+    return traceOperation('listIncomes', async () => {
+        try {
+            const householdId = req.user.householdId;
 
-        if (!householdId) {
-            return res.status(400).json({
-                success: false,
-                error: 'You must be part of a household to view incomes'
-            });
-        }
+            if (!householdId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'You must be part of a household to view incomes'
+                });
+            }
 
-        // Parse query parameters
-        const activeOnly = req.query.active !== 'false';
+            // Parse query parameters
+            const activeOnly = req.query.active !== 'false';
 
-        const where = {
-            householdId
-        };
+            const where = {
+                householdId
+            };
 
-        if (activeOnly) {
-            where.isActive = true;
-        }
+            if (activeOnly) {
+                where.isActive = true;
+            }
 
-        // Get incomes with user info
-        const incomes = await prisma.income.findMany({
-            where,
-            orderBy: [
-                { type: 'asc' },
-                { frequency: 'asc' }
-            ],
-            include: {
-                user: {
-                    select: {
-                        id: true,
-                        firstName: true,
-                        lastName: true
+            // Get incomes with user info
+            const incomes = await prisma.income.findMany({
+                where,
+                orderBy: [
+                    { type: 'asc' },
+                    { frequency: 'asc' }
+                ],
+                include: {
+                    user: {
+                        select: {
+                            id: true,
+                            firstName: true,
+                            lastName: true
+                        }
                     }
                 }
-            }
-        });
+            });
 
-        res.json({
-            success: true,
-            incomes
-        });
+            res.json({
+                success: true,
+                incomes
+            });
 
-    } catch (error) {
-        console.error('List incomes error:', error);
-        res.status(500).json({ success: false, error: 'Failed to list incomes' });
-    }
+            return { success: true, count: incomes.length };
+
+        } catch (error) {
+            console.error('List incomes error:', error);
+            res.status(500).json({ success: false, error: 'Failed to list incomes' });
+            throw error;
+        }
+    }, { userId: req.user?.id });
 }
 
 /**

@@ -26,7 +26,7 @@ import {
     parseVoiceInput
 } from '../api/api';
 import { useAuth } from '../context/AuthContext';
-import useVoiceInput from '../hooks/useVoiceInput';
+
 import usePolling from '../hooks/usePolling';
 import './Transactions.css';
 
@@ -69,7 +69,7 @@ export default function Transactions() {
 
     // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
-    const [showVoiceModal, setShowVoiceModal] = useState(false);
+
     const [editingTxn, setEditingTxn] = useState(null);
 
     // Form states
@@ -82,27 +82,24 @@ export default function Transactions() {
         merchant: ''
     });
 
-    // Voice Hook
-    const {
-        isListening,
-        transcript,
-        startListening,
-        stopListening,
-        resetTranscript,
-        isSupported
-    } = useVoiceInput();
+
+
+    const [hasNewData, setHasNewData] = useState(false);
+    const [lastModified, setLastModified] = useState(null);
 
     // Polling for updates
     const { refetch } = usePolling(fetchTransactions, 10000, true, [page, filters]);
 
     useEffect(() => {
-        fetchTransactions();
+        fetchTransactions({ isInitial: true });
     }, [page, filters]);
 
-    async function fetchTransactions() {
+    async function fetchTransactions(options = {}) {
         try {
+            const isPoll = options.isPoll;
+
             // Don't set global loading on refreshing/polling unless it's initial load
-            if (transactions.length === 0) setLoading(true);
+            if (!isPoll && transactions.length === 0) setLoading(true);
 
             const [data, summary] = await Promise.all([
                 getTransactions({
@@ -113,13 +110,27 @@ export default function Transactions() {
                 getTransactionSummary() // Fetches current month total
             ]);
 
+            // Smart Polling Logic
+            if (isPoll) {
+                const serverLastMod = data.householdLastModified;
+                if (lastModified && serverLastMod && serverLastMod !== lastModified) {
+                    console.log('🔔 New data available!');
+                    // For this phase, we just auto-update but show a small toast/indicator could be added
+                    // setHasNewData(true); 
+                    // But to keep it simple and "live", we just update the list
+                }
+            }
+
             setTransactions(data.transactions);
             setTotalPages(data.pagination.pages);
             setTotalExpenses(summary.summary?.totalSpent || 0);
+            if (data.householdLastModified) setLastModified(data.householdLastModified);
+
             setLoading(false);
         } catch (err) {
             if (!err.message.includes('abort')) {
-                setError(err.message);
+                // setError(err.message); // Don't show error on polling failure to avoid annoying users
+                if (!options.isPoll) setError(err.message);
             }
             setLoading(false);
         }
@@ -207,40 +218,11 @@ export default function Transactions() {
         });
     };
 
-    const handleVoiceSubmit = async () => {
-        stopListening();
-        // Parse transcript (mocked for now, will use backend NLP later)
-        // Quick heuristic parsing or API call
-        try {
-            const parsed = await parseVoiceInput(transcript);
-            setFormData(prev => ({
-                ...prev,
-                description: parsed.description,
-                amount: parsed.amount || prev.amount,
-                date: parsed.date || prev.date
-            }));
-            setShowVoiceModal(false);
-            setShowAddModal(true); // Open add modal with pre-filled data
-            resetTranscript();
-        } catch (err) {
-            setError('Failed to parse voice input');
-        }
-    };
-
     return (
         <div className="transactions-page">
             <div className="page-header">
                 <h1>Transactions</h1>
                 <div className="header-actions">
-                    {canEdit && isSupported && (
-                        <button
-                            className="btn-voice"
-                            onClick={() => { setShowVoiceModal(true); resetTranscript(); }}
-                            title="Add via Voice"
-                        >
-                            🎤 Voice Add
-                        </button>
-                    )}
                     {canEdit && (
                         <button
                             className="btn-primary"
@@ -473,32 +455,7 @@ export default function Transactions() {
                 </div>
             )}
 
-            {/* Voice Input Modal */}
-            {showVoiceModal && (
-                <div className="modal-overlay" onClick={() => { stopListening(); setShowVoiceModal(false); }}>
-                    <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
-                        <h3>Voice Input</h3>
-                        <div className={`mic-container ${isListening ? 'listening' : ''}`}>
-                            <div className="mic-icon">🎤</div>
-                            {isListening && <div className="ripple"></div>}
-                        </div>
-                        <div className="transcript-box">
-                            {transcript || "Tap start and speak..."}
-                        </div>
-                        <div className="voice-controls">
-                            {!isListening ? (
-                                <button className="btn-primary" onClick={startListening}>Start Listening</button>
-                            ) : (
-                                <button className="btn-danger" onClick={stopListening}>Stop</button>
-                            )}
-                            {transcript && (
-                                <button className="btn-success" onClick={handleVoiceSubmit}>Use Transcript</button>
-                            )}
-                        </div>
-                        <p className="voice-hint">Try saying: "Spent 50 dollars on groceries at Walmart"</p>
-                    </div>
-                </div>
-            )}
+
         </div>
     );
 }

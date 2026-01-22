@@ -31,7 +31,7 @@ export function usePolling(fetchFn, interval = 30000, enabled = true, deps = [])
 
     // Manual refetch function
     const refetch = useCallback(() => {
-        savedFetchFn.current();
+        savedFetchFn.current({ isManual: true });
     }, []);
 
     // Set up polling
@@ -45,11 +45,11 @@ export function usePolling(fetchFn, interval = 30000, enabled = true, deps = [])
         }
 
         // Initial fetch
-        savedFetchFn.current();
+        savedFetchFn.current({ isInitial: true });
 
         // Set up interval
         intervalRef.current = setInterval(() => {
-            savedFetchFn.current();
+            savedFetchFn.current({ isPoll: true });
         }, interval);
 
         // Cleanup

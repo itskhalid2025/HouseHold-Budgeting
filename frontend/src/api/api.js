@@ -387,20 +387,33 @@ export async function deleteGoal(id) {
 // ================== VOICE INPUT API ==================
 
 export async function parseVoiceInput(transcript) {
-    // This endpoint will be implemented in Phase 4 backend
-    // For now, we can structure it but it might return 501 Not Implemented
-    // const response = await fetch(`${API_BASE_URL}/voice/parse`, { ... });
-
-    // Placeholder mock response until backend is ready
-    return new Promise((resolve) => {
-        setTimeout(() => {
-            resolve({
-                description: transcript,
-                amount: null,
-                date: new Date().toISOString().split('T')[0]
-            });
-        }, 500);
+    console.log('🎤 Voice Input:', transcript);
+    const response = await fetch(`${API_BASE_URL}/smart/entry`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ text: transcript })
     });
+
+    // The Smart Controller returns { success, action, table, data, classification }
+    // We handle the response to check for errors
+    const result = await handleResponse(response);
+
+    // Map the backend response to what the frontend form might expect for auto-fill 
+    // (though in this new flow, the backend ALREADY created the record).
+    // So we might want to just return the data to show a success message or trigger a refresh.
+
+    // Retaining basic structure for compatibility if frontend tries to pre-fill form
+    // But since the backend creates it, the UI should probably just refresh the list.
+    return {
+        isCreated: true, // Flag to tell UI that record is already created
+        action: result.action,
+        table: result.table,
+        description: result.classification.description,
+        amount: result.classification.amount,
+        date: result.classification.date,
+        type: result.classification.type,
+        category: result.classification.category
+    };
 }
 
 export default {

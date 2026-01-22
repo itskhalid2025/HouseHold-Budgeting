@@ -40,18 +40,23 @@ export async function traceOperation(name, fn, metadata = {}) {
     try {
         const result = await fn();
 
-        trace.log({
+        trace.update({
             output: typeof result === 'string' ? result.substring(0, 500) : JSON.stringify(result).substring(0, 500),
-            latency: Date.now() - startTime,
-            success: true
+            metadata: {
+                latency: Date.now() - startTime,
+                success: true
+            }
         });
 
         return result;
     } catch (error) {
-        trace.log({
-            error: error.message,
-            latency: Date.now() - startTime,
-            success: false
+        trace.update({
+            output: `Error: ${error.message}`,
+            metadata: {
+                error: error.message,
+                latency: Date.now() - startTime,
+                success: false
+            }
         });
 
         throw error;
@@ -71,7 +76,7 @@ export async function logCategorization({ input, output, confidence }) {
         output,
         metadata: {
             confidence,
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             feature: 'categorization'
         }
     });
@@ -88,7 +93,7 @@ export async function logReport({ type, input, output }) {
         output,
         metadata: {
             reportType: type,
-            model: 'gemini-1.5-flash',
+            model: 'gemini-2.5-flash',
             feature: 'reporting'
         }
     });

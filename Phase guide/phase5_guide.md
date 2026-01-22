@@ -53,13 +53,44 @@ By the end of this phase, you will have:
 
 ## Task Checklist
 
-### 1. Categorization Agent
+### 1. Unified Smart Router & Categorization Agent
 
-#### 1.1 Create Categorization Service
-- [ ] Build categorization prompt
-- [ ] Implement category inference
-- [ ] Handle batch categorization
-- [ ] Add confidence scoring
+#### 1.1 Create Smart Entry Endpoint
+- [ ] `POST /api/smart/process`
+- [ ] Accepts: `{ text: "transcript or text input" }`
+- [ ] Returns: `{ action: "CREATED", type: "INCOME|EXPENSE|SAVINGS", data: { ... } }`
+
+#### 1.2 Implement Categorization Logic (Gemini)
+- [ ] Classify intent: INCOME vs EXPENSE (NEED/WANT) vs SAVINGS
+- [ ] Map to specific categories from User Image:
+    - **INCOME**: Primary, Variable, Passive
+    - **NEEDS**: Housing, Utilities, Food, Transportation, Healthcare, Childcare, Debt
+    - **WANTS**: Dining & Entertainment, Shopping, Travel, Gifts
+    - **SAVINGS**: Emergency Fund, Long-Term, Sinking Funds
+- [ ] Extract entities: Amount, Source/Merchant, Description, Date (default to now if missing)
+
+#### 1.3 Routing Logic
+- [ ] If **INCOME** -> Create `Income` record
+- [ ] If **EXPENSE** (Need/Want) -> Create `Transaction` record
+- [ ] If **SAVINGS** -> Create `Goal` contribution (or generic transfer transaction if goal doesn't exist? For Phase 5, maybe just a Transaction with type SAVINGS or separate logic. *Correction*: Database has `CategoryType.SAVINGS` but `Transaction` model only has `NEED/WANT`. We might need to map Savings to a Transfer or update TransactionType enum. **Decision**: For now, map simple "Saved" to `Goal` deposit if possible, or simple Transaction if not linked to a specific goal. *Actually, user said "store them in backend... make appropriate table".* The schema has `Goal` and `Transaction`. I will try to map Savings to `Transaction` with a new Type if possible, OR strictly use `Goal`. Given the image shows "Savings" as a parallel type to "Needs/Wants", I should probably add `SAVINGS` to `TransactionType` enum to allow simple tracking without complex Goal logic, OR create a new `SavingsTransaction` model. 
+*Simpler approach*: Add `SAVINGS` to `TransactionType` enum in Prisma to support the 4-quadrant model directly in Transactions for simple tracking, whilst keeping Goals for targets. 
+
+**Wait**, the User said "make a appropriate table". Schema already has `Transaction`, `Income`, `Goal`. 
+Let's stick to:
+- Income -> `Income` table
+- Expense (Need/Want) -> `Transaction` table
+- Savings -> `Goal` table (add to currentAmount) OR `Transaction` (if just tracking outflow to savings).
+*Refined Decision*: To strictly follow the image "Type" column, I will modify `TransactionType` to include `SAVINGS` (if it's just an expense that goes to savings) AND/OR ensure the router puts it in `Goal`. 
+*Actually*, the image implies a unified view. I will implement the router to put:
+- Income -> `Income` table
+- Need/Want -> `Transaction` table
+- Savings -> `Transaction` table (Type=SAVINGS) *or* `Goal` update. 
+*Let's check Schema again*. `TransactionType` is `NEED, WANT`. I should add `SAVINGS` to `TransactionType` to align with the image's "Type" column. This allows unified querying of all "Outflows" (Needs, Wants, Savings contributions). income is "Inflow".
+
+**Updated Plan**:
+1. Update `TransactionType` enum to include `SAVINGS`.
+2. Categorization Agent maps to one of the 4 quadrants.
+
 
 **LLM Prompt for Categorization Agent:**
 ```

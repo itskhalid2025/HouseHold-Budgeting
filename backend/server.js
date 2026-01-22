@@ -50,6 +50,7 @@ import transactionRoutes from './src/routes/transactions.js';
 import incomeRoutes from './src/routes/incomes.js';
 import goalRoutes from './src/routes/goals.js';
 import joinRequestRoutes from './src/routes/joinRequests.js';
+import smartRoutes from './src/routes/smartRoutes.js';
 
 // Middleware imports
 import { authenticate } from './src/middleware/auth.js';
@@ -85,6 +86,7 @@ app.use('/api/transactions', transactionRoutes);
 app.use('/api/incomes', incomeRoutes);
 app.use('/api/goals', authenticate, goalRoutes); // Goals/Savings routes
 app.use('/api/join-requests', joinRequestRoutes);
+app.use('/api/smart', authenticate, smartRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

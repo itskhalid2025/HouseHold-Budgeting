@@ -26,13 +26,9 @@
 
 /*
  * Dashboard View Styles
- *
- * Specific styles for the financial overview dashboard, including
- * the main statistics grid and specialized layout tweaks.
  */
 
 .stats-grid {
-
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 24px;
@@ -90,4 +86,165 @@
     border-radius: 8px;
     color: #ef4444;
     margin-bottom: 24px;
+}
+
+/* Smart Actions Header */
+.dashboard-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+/* Smart Actions Container */
+.smart-actions {
+    display: flex;
+    gap: 16px;
+}
+
+/* Premium Highlighted Buttons */
+.btn-smart-voice,
+.btn-smart-text {
+    border: none;
+    padding: 12px 24px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Voice: Purple Highlight */
+.btn-smart-voice {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+    box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+}
+
+/* Text: Blue Highlight */
+.btn-smart-text {
+    background: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+    box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
+}
+
+.btn-smart-voice:hover,
+.btn-smart-text:hover {
+    transform: translateY(-3px) scale(1.05);
+    filter: brightness(115%);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.btn-smart-voice:active,
+.btn-smart-text:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+/* Voice Modal Styles */
+.voice-modal {
+    text-align: center;
+    max-width: 450px;
+    width: 90%;
+    padding: 40px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.modal-subtitle {
+    color: var(--text-secondary);
+    margin-bottom: 30px;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.mic-container {
+    width: 90px;
+    height: 90px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 30px;
+    position: relative;
+}
+
+.mic-container.listening {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.mic-icon {
+    font-size: 36px;
+    z-index: 2;
+}
+
+.ripple {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: rgba(239, 68, 68, 0.3);
+    animation: ripple 1.5s infinite;
+}
+
+@keyframes ripple {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+
+    100% {
+        transform: scale(3);
+        opacity: 0;
+    }
+}
+
+.transcript-box {
+    background: rgba(255, 255, 255, 0.05);
+    padding: 20px;
+    border-radius: 12px;
+    min-height: 100px;
+    border: 1px solid var(--border-light);
+    margin-bottom: 30px;
+    font-style: italic;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+}
+
+/* Smart Text Input Area */
+.smart-text-input {
+    width: 100%;
+    padding: 20px;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--text-primary);
+    font-size: 16px;
+    font-family: inherit;
+    resize: none;
+    margin-bottom: 24px;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+}
+
+.smart-text-input:focus {
+    outline: none;
+    border-color: #6366f1;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.voice-controls {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
 }

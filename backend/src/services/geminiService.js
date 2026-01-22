@@ -12,10 +12,37 @@
  */
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import config from '../utils/config.js';
 
-// Initialize Gemini API
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+let currentKeyIndex = 0;
+const apiKeys = config.gemini.apiKeys;
+
+/**
+ * Get instance of Gemini model with current API key
+ */
+function getGenerativeModel() {
+    if (apiKeys.length === 0) {
+        throw new Error('No Gemini API keys configured');
+    }
+    const genAI = new GoogleGenerativeAI(apiKeys[currentKeyIndex]);
+    return genAI.getGenerativeModel({ model: config.gemini.model });
+}
+
+// Initialize first model instance
+let model = getGenerativeModel();
+
+/**
+ * Rotate to the next available API key
+ * @returns {boolean} - True if a different key was selected
+ */
+function rotateKey() {
+    if (apiKeys.length <= 1) return false;
+
+    currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
+    console.log(`🔄 Rotating Gemini API key to key #${currentKeyIndex + 1}`);
+    model = getGenerativeModel();
+    return true;
+}
 
 /**
  * Sleep utility for retry logic
@@ -37,6 +64,9 @@ export async function generateContent(prompt, options = {}) {
 
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
+            console.log(`🤖 [Gemini] Request using Key #${currentKeyIndex + 1}`);
+            console.log(`📝 [Input]: ${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}`);
+
             const result = await model.generateContent({
                 contents: [{ role: 'user', parts: [{ text: prompt }] }],
                 generationConfig: {
@@ -46,14 +76,26 @@ export async function generateContent(prompt, options = {}) {
             });
 
             const response = result.response;
-            return response.text();
+            const text = response.text();
+
+            console.log(`✅ [Output]: ${text.substring(0, 50).replace(/\n/g, ' ')}${text.length > 50 ? '...' : ''}`);
+            return text;
 
         } catch (error) {
-            console.error(`Gemini API error (attempt ${attempt}/${retries}):`, error.message);
+            console.error(`Gemini API error (attempt ${attempt}):`, error.message);
 
-            if (error.message?.includes('RATE_LIMIT') && attempt < retries) {
-                const waitTime = Math.pow(2, attempt) * 1000; // Exponential backoff
-                console.log(`Rate limited. Waiting ${waitTime}ms before retry...`);
+            // Handle rate limits by rotating key if possible
+            if (error.message?.includes('RATE_LIMIT')) {
+                console.log(`⚠️ Rate limit hit on key #${currentKeyIndex + 1}`);
+
+                if (rotateKey()) {
+                    console.log('Retrying with new API key...');
+                    continue;
+                }
+
+                // If no more keys to rotate to, use exponential backoff
+                const waitTime = Math.pow(2, attempt) * 1000;
+                console.log(`All keys likely limited. Waiting ${waitTime}ms before retry...`);
                 await sleep(waitTime);
                 continue;
             }

@@ -16,6 +16,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { traceOperation } from '../services/opikService.js';
 const prisma = new PrismaClient();
 
 /**
@@ -54,82 +55,87 @@ const prisma = new PrismaClient();
  * POST /api/transactions
  */
 async function addTransaction(req, res) {
-    try {
-        const { description, amount, date, merchant, category, subcategory, type } = req.body;
-        const userId = req.user.id;
-        const householdId = req.user.householdId;
-        const userRole = req.user.role;
+    return traceOperation('addTransaction', async () => {
+        try {
+            const { description, amount, date, merchant, category, subcategory, type } = req.body;
+            const userId = req.user.id;
+            const householdId = req.user.householdId;
+            const userRole = req.user.role;
 
-        // VIEWER cannot add transactions
-        if (userRole === 'VIEWER') {
-            return res.status(403).json({
-                success: false,
-                error: 'Viewers cannot add transactions. Contact the household owner to upgrade your role.'
-            });
-        }
-
-        if (!householdId) {
-            return res.status(400).json({
-                success: false,
-                error: 'You must be part of a household to add transactions'
-            });
-        }
-
-        // Determine category - if not provided, will use AI in Phase 5
-        let finalCategory = category || 'Uncategorized';
-        let finalSubcategory = subcategory || null;
-        let finalType = type || 'NEED';
-        let aiCategorized = false;
-        let confidence = null;
-
-        // Placeholder for AI categorization (Phase 5)
-        if (!category) {
-            // TODO: In Phase 5, call AI categorization service here
-            // const aiResult = await categorizationAgent.categorize(description, merchant, amount);
-            // finalCategory = aiResult.category;
-            // finalSubcategory = aiResult.subcategory;
-            // finalType = aiResult.type;
-            // aiCategorized = true;
-            // confidence = aiResult.confidence;
-
-            // For now, default to Uncategorized
-            finalCategory = 'Uncategorized';
-            finalType = 'NEED';
-        }
-
-        // Create transaction
-        const transaction = await prisma.transaction.create({
-            data: {
-                householdId,
-                userId,
-                amount: parseFloat(amount),
-                description,
-                merchant: merchant || null,
-                category: finalCategory,
-                subcategory: finalSubcategory,
-                type: finalType,
-                date: new Date(date),
-                aiCategorized,
-                confidence
+            // VIEWER cannot add transactions
+            if (userRole === 'VIEWER') {
+                return res.status(403).json({
+                    success: false,
+                    error: 'Viewers cannot add transactions. Contact the household owner to upgrade your role.'
+                });
             }
-        });
 
-        // Update household lastModifiedAt for polling
-        await prisma.household.update({
-            where: { id: householdId },
-            data: { lastModifiedAt: new Date() }
-        });
+            if (!householdId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'You must be part of a household to add transactions'
+                });
+            }
 
-        res.status(201).json({
-            success: true,
-            transaction,
-            householdLastModified: new Date().toISOString()
-        });
+            // Determine category - if not provided, will use AI in Phase 5
+            let finalCategory = category || 'Uncategorized';
+            let finalSubcategory = subcategory || null;
+            let finalType = type || 'NEED';
+            let aiCategorized = false;
+            let confidence = null;
 
-    } catch (error) {
-        console.error('Add transaction error:', error);
-        res.status(500).json({ success: false, error: 'Failed to add transaction' });
-    }
+            // Placeholder for AI categorization (Phase 5)
+            if (!category) {
+                // TODO: In Phase 5, call AI categorization service here
+                // const aiResult = await categorizationAgent.categorize(description, merchant, amount);
+                // finalCategory = aiResult.category;
+                // finalSubcategory = aiResult.subcategory;
+                // finalType = aiResult.type;
+                // aiCategorized = true;
+                // confidence = aiResult.confidence;
+
+                // For now, default to Uncategorized
+                finalCategory = 'Uncategorized';
+                finalType = 'NEED';
+            }
+
+            // Create transaction
+            const transaction = await prisma.transaction.create({
+                data: {
+                    householdId,
+                    userId,
+                    amount: parseFloat(amount),
+                    description,
+                    merchant: merchant || null,
+                    category: finalCategory,
+                    subcategory: finalSubcategory,
+                    type: finalType,
+                    date: new Date(date),
+                    aiCategorized,
+                    confidence
+                }
+            });
+
+            // Update household lastModifiedAt for polling
+            await prisma.household.update({
+                where: { id: householdId },
+                data: { lastModifiedAt: new Date() }
+            });
+
+            res.status(201).json({
+                success: true,
+                transaction,
+                householdLastModified: new Date().toISOString()
+            });
+
+            return { success: true, transactionId: transaction.id };
+
+        } catch (error) {
+            console.error('Add transaction error:', error);
+            res.status(500).json({ success: false, error: 'Failed to add transaction' });
+            throw error; // Re-throw for Opik to capture error
+        }
+    }, { userId: req.user?.id, description: req.body?.description });
 }
 
 /**
@@ -137,103 +143,108 @@ async function addTransaction(req, res) {
  * GET /api/transactions
  */
 async function listTransactions(req, res) {
-    try {
-        const householdId = req.user.householdId;
+    return traceOperation('listTransactions', async () => {
+        try {
+            const householdId = req.user.householdId;
 
-        if (!householdId) {
-            return res.status(400).json({
-                success: false,
-                error: 'You must be part of a household to view transactions'
-            });
-        }
-
-        // Parse query parameters
-        const page = parseInt(req.query.page) || 1;
-        const limit = parseInt(req.query.limit) || 20;
-        const skip = (page - 1) * limit;
-
-        // Build filter conditions
-        const where = {
-            householdId,
-            deletedAt: null // Only get non-deleted transactions
-        };
-
-        // Date range filter
-        if (req.query.startDate || req.query.endDate) {
-            where.date = {};
-            if (req.query.startDate) {
-                where.date.gte = new Date(req.query.startDate);
+            if (!householdId) {
+                return res.status(400).json({
+                    success: false,
+                    error: 'You must be part of a household to view transactions'
+                });
             }
-            if (req.query.endDate) {
-                where.date.lte = new Date(req.query.endDate);
+
+            // Parse query parameters
+            const page = parseInt(req.query.page) || 1;
+            const limit = parseInt(req.query.limit) || 20;
+            const skip = (page - 1) * limit;
+
+            // Build filter conditions
+            const where = {
+                householdId,
+                deletedAt: null // Only get non-deleted transactions
+            };
+
+            // Date range filter
+            if (req.query.startDate || req.query.endDate) {
+                where.date = {};
+                if (req.query.startDate) {
+                    where.date.gte = new Date(req.query.startDate);
+                }
+                if (req.query.endDate) {
+                    where.date.lte = new Date(req.query.endDate);
+                }
             }
-        }
 
-        // Category filter
-        if (req.query.category) {
-            where.category = req.query.category;
-        }
+            // Category filter
+            if (req.query.category) {
+                where.category = req.query.category;
+            }
 
-        // Type filter (NEED/WANT)
-        if (req.query.type) {
-            where.type = req.query.type;
-        }
+            // Type filter (NEED/WANT)
+            if (req.query.type) {
+                where.type = req.query.type;
+            }
 
-        // User filter (who logged it)
-        if (req.query.userId) {
-            where.userId = req.query.userId;
-        }
+            // User filter (who logged it)
+            if (req.query.userId) {
+                where.userId = req.query.userId;
+            }
 
-        // Search by description or merchant
-        if (req.query.search) {
-            where.OR = [
-                { description: { contains: req.query.search, mode: 'insensitive' } },
-                { merchant: { contains: req.query.search, mode: 'insensitive' } }
-            ];
-        }
+            // Search by description or merchant
+            if (req.query.search) {
+                where.OR = [
+                    { description: { contains: req.query.search, mode: 'insensitive' } },
+                    { merchant: { contains: req.query.search, mode: 'insensitive' } }
+                ];
+            }
 
-        // Get transactions with pagination
-        const [transactions, total] = await Promise.all([
-            prisma.transaction.findMany({
-                where,
-                skip,
-                take: limit,
-                orderBy: { date: 'desc' },
-                include: {
-                    user: {
-                        select: {
-                            id: true,
-                            firstName: true,
-                            lastName: true
+            // Get transactions with pagination
+            const [transactions, total] = await Promise.all([
+                prisma.transaction.findMany({
+                    where,
+                    skip,
+                    take: limit,
+                    orderBy: { date: 'desc' },
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true
+                            }
                         }
                     }
-                }
-            }),
-            prisma.transaction.count({ where })
-        ]);
+                }),
+                prisma.transaction.count({ where })
+            ]);
 
-        // Get household lastModifiedAt for polling
-        const household = await prisma.household.findUnique({
-            where: { id: householdId },
-            select: { lastModifiedAt: true }
-        });
+            // Get household lastModifiedAt for polling
+            const household = await prisma.household.findUnique({
+                where: { id: householdId },
+                select: { lastModifiedAt: true }
+            });
 
-        res.json({
-            success: true,
-            transactions,
-            pagination: {
-                page,
-                limit,
-                total,
-                pages: Math.ceil(total / limit)
-            },
-            householdLastModified: household?.lastModifiedAt
-        });
+            res.json({
+                success: true,
+                transactions,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    pages: Math.ceil(total / limit)
+                },
+                householdLastModified: household?.lastModifiedAt
+            });
 
-    } catch (error) {
-        console.error('List transactions error:', error);
-        res.status(500).json({ success: false, error: 'Failed to list transactions' });
-    }
+            return { success: true, results: transactions.length };
+
+        } catch (error) {
+            console.error('List transactions error:', error);
+            res.status(500).json({ success: false, error: 'Failed to list transactions' });
+            throw error;
+        }
+    }, { userId: req.user?.id, filters: req.query });
 }
 
 /**
