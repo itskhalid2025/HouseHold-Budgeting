@@ -47,6 +47,15 @@ async function addTransaction(req, res) {
         const { description, amount, date, merchant, category, subcategory, type } = req.body;
         const userId = req.user.id;
         const householdId = req.user.householdId;
+        const userRole = req.user.role;
+
+        // VIEWER cannot add transactions
+        if (userRole === 'VIEWER') {
+            return res.status(403).json({
+                success: false,
+                error: 'Viewers cannot add transactions. Contact the household owner to upgrade your role.'
+            });
+        }
 
         if (!householdId) {
             return res.status(400).json({
@@ -267,6 +276,14 @@ async function updateTransaction(req, res) {
         const userRole = req.user.role;
         const householdId = req.user.householdId;
 
+        // VIEWER cannot update transactions
+        if (userRole === 'VIEWER') {
+            return res.status(403).json({
+                success: false,
+                error: 'Viewers cannot update transactions'
+            });
+        }
+
         // Find the transaction
         const existingTransaction = await prisma.transaction.findFirst({
             where: {
@@ -280,14 +297,14 @@ async function updateTransaction(req, res) {
             return res.status(404).json({ success: false, error: 'Transaction not found' });
         }
 
-        // Check permissions: Only owner or ADMIN/OWNER can update
-        const isOwner = existingTransaction.userId === userId;
-        const isAdmin = userRole === 'OWNER' || userRole === 'EDITOR';
+        // Check permissions: Owner can update all, Editor can only update own
+        const isCreator = existingTransaction.userId === userId;
+        const isHouseholdOwner = userRole === 'OWNER';
 
-        if (!isOwner && !isAdmin) {
+        if (!isCreator && !isHouseholdOwner) {
             return res.status(403).json({
                 success: false,
-                error: 'You do not have permission to update this transaction'
+                error: 'You can only update transactions you created'
             });
         }
 
@@ -340,6 +357,14 @@ async function deleteTransaction(req, res) {
         const userRole = req.user.role;
         const householdId = req.user.householdId;
 
+        // VIEWER cannot delete transactions
+        if (userRole === 'VIEWER') {
+            return res.status(403).json({
+                success: false,
+                error: 'Viewers cannot delete transactions'
+            });
+        }
+
         // Find the transaction
         const existingTransaction = await prisma.transaction.findFirst({
             where: {
@@ -353,14 +378,14 @@ async function deleteTransaction(req, res) {
             return res.status(404).json({ success: false, error: 'Transaction not found' });
         }
 
-        // Check permissions: Only owner or ADMIN/OWNER can delete
-        const isOwner = existingTransaction.userId === userId;
-        const isAdmin = userRole === 'OWNER' || userRole === 'EDITOR';
+        // Check permissions: Owner can delete all, Editor can only delete own
+        const isCreator = existingTransaction.userId === userId;
+        const isHouseholdOwner = userRole === 'OWNER';
 
-        if (!isOwner && !isAdmin) {
+        if (!isCreator && !isHouseholdOwner) {
             return res.status(403).json({
                 success: false,
-                error: 'You do not have permission to delete this transaction'
+                error: 'You can only delete transactions you created'
             });
         }
 

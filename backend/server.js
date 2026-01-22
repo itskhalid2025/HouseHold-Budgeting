@@ -17,6 +17,7 @@ import householdRoutes from './src/routes/households.js';
 import invitationRoutes from './src/routes/invitations.js';
 import transactionRoutes from './src/routes/transactions.js';
 import incomeRoutes from './src/routes/incomes.js';
+import joinRequestRoutes from './src/routes/joinRequests.js';
 import { authenticate } from './src/middleware/auth.js';
 
 const app = express();
@@ -41,6 +42,7 @@ app.use('/api/households', authenticate, householdRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/incomes', incomeRoutes);
+app.use('/api/join-requests', joinRequestRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

@@ -1,28 +1,54 @@
 import { useState, useEffect } from 'react';
 import {
     getTransactions,
+    getHousehold,
+    getTransactionSummary,
     addTransaction,
     updateTransaction,
     deleteTransaction,
     parseVoiceInput
 } from '../api/api';
+import { useAuth } from '../context/AuthContext';
 import useVoiceInput from '../hooks/useVoiceInput';
 import usePolling from '../hooks/usePolling';
 import './Transactions.css';
 
 export default function Transactions() {
+    const { user } = useAuth();
+    const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
+
+    // Check granular permission for editing/deleting specific transactions
+    const canModifyTransaction = (txn) => {
+        if (!user) return false;
+        if (user.role === 'OWNER') return true;
+        return user.role === 'EDITOR' && txn.userId === user.id;
+    };
+
     const [transactions, setTransactions] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
+    const [totalExpenses, setTotalExpenses] = useState(0);
     const [filters, setFilters] = useState({
         type: '',
         category: '',
         startDate: '',
         endDate: '',
-        search: ''
+        search: '',
+        userId: ''
     });
+
+    const [members, setMembers] = useState([]);
+
+    useEffect(() => {
+        // Load household members for filter
+        getHousehold().then(data => {
+            if (data.household?.members) {
+                setMembers(data.household.members);
+            }
+        }).catch(err => console.error('Failed to load members:', err));
+    }, []);
 
     // Modal states
     const [showAddModal, setShowAddModal] = useState(false);
@@ -50,7 +76,7 @@ export default function Transactions() {
     } = useVoiceInput();
 
     // Polling for updates
-    const { refetch } = usePolling(fetchTransactions, 30000, true, [page, filters]);
+    const { refetch } = usePolling(fetchTransactions, 10000, true, [page, filters]);
 
     useEffect(() => {
         fetchTransactions();
@@ -61,14 +87,18 @@ export default function Transactions() {
             // Don't set global loading on refreshing/polling unless it's initial load
             if (transactions.length === 0) setLoading(true);
 
-            const data = await getTransactions({
-                page,
-                limit: 20,
-                ...filters
-            });
+            const [data, summary] = await Promise.all([
+                getTransactions({
+                    page,
+                    limit: 20,
+                    ...filters
+                }),
+                getTransactionSummary() // Fetches current month total
+            ]);
 
             setTransactions(data.transactions);
             setTotalPages(data.pagination.pages);
+            setTotalExpenses(summary.summary?.totalSpent || 0);
             setLoading(false);
         } catch (err) {
             if (!err.message.includes('abort')) {
@@ -91,11 +121,30 @@ export default function Transactions() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(''); // Clear previous errors
         try {
+            // Build clean payload - remove empty optional fields
+            const payload = {
+                description: formData.description,
+                amount: parseFloat(formData.amount),
+                date: formData.date,
+                type: formData.type
+            };
+
+            // Only include optional fields if they have values
+            if (formData.category) {
+                payload.category = formData.category;
+            }
+            if (formData.merchant) {
+                payload.merchant = formData.merchant;
+            }
+
+            console.log('📤 Transaction payload:', payload);
+
             if (editingTxn) {
-                await updateTransaction(editingTxn.id, formData);
+                await updateTransaction(editingTxn.id, payload);
             } else {
-                await addTransaction(formData);
+                await addTransaction(payload);
             }
 
             setShowAddModal(false);
@@ -103,7 +152,7 @@ export default function Transactions() {
             resetForm();
             fetchTransactions();
         } catch (err) {
-            setError(err.message);
+            setError(err.message || 'Failed to save transaction');
         }
     };
 
@@ -166,7 +215,7 @@ export default function Transactions() {
             <div className="page-header">
                 <h1>Transactions</h1>
                 <div className="header-actions">
-                    {isSupported && (
+                    {canEdit && isSupported && (
                         <button
                             className="btn-voice"
                             onClick={() => { setShowVoiceModal(true); resetTranscript(); }}
@@ -175,12 +224,28 @@ export default function Transactions() {
                             🎤 Voice Add
                         </button>
                     )}
-                    <button
-                        className="btn-primary"
-                        onClick={() => { setEditingTxn(null); resetForm(); setShowAddModal(true); }}
-                    >
-                        + Add Transaction
-                    </button>
+                    {canEdit && (
+                        <button
+                            className="btn-primary"
+                            onClick={() => { setEditingTxn(null); resetForm(); setShowAddModal(true); }}
+                        >
+                            + Add Transaction
+                        </button>
+                    )}
+                    {!canEdit && (
+                        <span className="viewer-notice">👁️ View Only</span>
+                    )}
+                </div>
+            </div>
+
+            {/* Summary Card */}
+            <div className="transaction-summary-card">
+                <div className="summary-left">
+                    <h3>Total Monthly Expenses</h3>
+                    <p className="summary-subtitle">Includes all household spending</p>
+                </div>
+                <div className="summary-right">
+                    <span className="total-amount-expense">${loading ? '...' : totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                 </div>
             </div>
 
@@ -206,6 +271,14 @@ export default function Transactions() {
                     <option value="Housing">Housing</option>
                     <option value="Entertainment">Entertainment</option>
                     {/* Add more categories dynamically if needed */}
+                </select>
+                <select name="userId" value={filters.userId || ''} onChange={handleFilterChange} className="filter-select">
+                    <option value="">All Users</option>
+                    {members.map(member => (
+                        <option key={member.id} value={member.id}>
+                            {member.firstName} {member.lastName}
+                        </option>
+                    ))}
                 </select>
                 <input
                     type="date"
@@ -248,6 +321,11 @@ export default function Transactions() {
                                                 <span className="txn-category">{txn.category || 'Uncategorized'}</span>
                                                 <span className="txn-dot">•</span>
                                                 <span className="txn-merchant">{txn.merchant || 'Unknown'}</span>
+                                                {txn.user && (
+                                                    <span className="user-badge">
+                                                        👤 {txn.user.firstName}
+                                                    </span>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
@@ -256,8 +334,12 @@ export default function Transactions() {
                                             -${parseFloat(txn.amount).toFixed(2)}
                                         </div>
                                         <div className="txn-actions">
-                                            <button onClick={() => handleEdit(txn)} className="btn-icon">✏️</button>
-                                            <button onClick={() => handleDelete(txn.id)} className="btn-icon delete">🗑️</button>
+                                            {canEdit && (
+                                                <>
+                                                    <button onClick={() => handleEdit(txn)} className="btn-icon">✏️</button>
+                                                    <button onClick={() => handleDelete(txn.id)} className="btn-icon delete">✖</button>
+                                                </>
+                                            )}
                                         </div>
                                     </div>
                                     {txn.aiCategorized && (

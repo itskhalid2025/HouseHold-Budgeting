@@ -101,6 +101,14 @@ export const getInvitations = async (req, res) => {
     try {
         const { householdId } = req.user;
 
+        // Check if user has a household
+        if (!householdId) {
+            return res.status(200).json({
+                success: true,
+                invitations: [] // Return empty array if no household
+            });
+        }
+
         const invitations = await prisma.invitation.findMany({
             where: { householdId },
             include: {
@@ -120,7 +128,8 @@ export const getInvitations = async (req, res) => {
         console.error('Get invitations error:', error);
         return res.status(500).json({
             success: false,
-            error: 'Failed to fetch invitations'
+            error: 'Failed to fetch invitations',
+            details: error.message
         });
     }
 };

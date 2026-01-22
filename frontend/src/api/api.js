@@ -5,7 +5,16 @@ const API_BASE_URL = 'http://localhost:3001/api';
 async function handleResponse(response) {
     const data = await response.json();
     if (!response.ok) {
-        throw new Error(data.error || 'Request failed');
+        // Log detailed error info for debugging
+        console.error('❌ API Error:', {
+            status: response.status,
+            statusText: response.statusText,
+            url: response.url,
+            error: data.error,
+            details: data.details || data.message || data,
+            validationErrors: data.errors // Zod validation errors
+        });
+        throw new Error(data.error || data.message || `Request failed with status ${response.status}`);
     }
     return data;
 }
@@ -117,7 +126,7 @@ export async function createHousehold(name) {
 }
 
 export async function getHousehold() {
-    const response = await fetch(`${API_BASE_URL}/households`, {
+    const response = await fetch(`${API_BASE_URL}/households?_t=${Date.now()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -136,6 +145,23 @@ export async function leaveHousehold() {
     const response = await fetch(`${API_BASE_URL}/households/leave`, {
         method: 'POST',
         headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function removeMember(memberId) {
+    const response = await fetch(`${API_BASE_URL}/households/members/${memberId}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function updateMemberRole(memberId, role) {
+    const response = await fetch(`${API_BASE_URL}/households/members/${memberId}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify({ role })
     });
     return handleResponse(response);
 }
@@ -166,6 +192,48 @@ export async function acceptInvitation(token) {
     return handleResponse(response);
 }
 
+// ================== JOIN REQUEST API ==================
+
+export async function submitJoinRequest(inviteCode) {
+    const response = await fetch(`${API_BASE_URL}/join-requests`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ inviteCode })
+    });
+    return handleResponse(response);
+}
+
+export async function getJoinRequests() {
+    const response = await fetch(`${API_BASE_URL}/join-requests`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function getMyJoinRequestStatus() {
+    const response = await fetch(`${API_BASE_URL}/join-requests/my-status`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function approveJoinRequest(requestId, role) {
+    const response = await fetch(`${API_BASE_URL}/join-requests/${requestId}/approve`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ role })
+    });
+    return handleResponse(response);
+}
+
+export async function rejectJoinRequest(requestId) {
+    const response = await fetch(`${API_BASE_URL}/join-requests/${requestId}/reject`, {
+        method: 'POST',
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
 // ================== TRANSACTION API ==================
 
 export async function addTransaction(transactionData) {
@@ -178,21 +246,18 @@ export async function addTransaction(transactionData) {
 }
 
 export async function getTransactions(params = {}) {
-    // Build query string
-    const query = new URLSearchParams(params).toString();
-    const url = `${API_BASE_URL}/transactions${query ? `?${query}` : ''}`;
-
-    const response = await fetch(url, {
+    const queryParams = new URLSearchParams(params);
+    queryParams.append('_t', Date.now()); // Cache busting
+    const response = await fetch(`${API_BASE_URL}/transactions?${queryParams.toString()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function getTransactionSummary(params = {}) {
-    const query = new URLSearchParams(params).toString();
-    const url = `${API_BASE_URL}/transactions/summary${query ? `?${query}` : ''}`;
-
-    const response = await fetch(url, {
+    const queryParams = new URLSearchParams(params);
+    queryParams.append('_t', Date.now());
+    const response = await fetch(`${API_BASE_URL}/transactions/summary?${queryParams.toString()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -218,6 +283,7 @@ export async function deleteTransaction(id) {
 // ================== INCOME API ==================
 
 export async function addIncome(incomeData) {
+    console.log('📤 Sending addIncome request:', JSON.stringify(incomeData, null, 2));
     const response = await fetch(`${API_BASE_URL}/incomes`, {
         method: 'POST',
         headers: authHeaders(),
@@ -234,7 +300,7 @@ export async function getIncomes(active = true) {
 }
 
 export async function getMonthlyIncomeTotal() {
-    const response = await fetch(`${API_BASE_URL}/incomes/monthly-total`, {
+    const response = await fetch(`${API_BASE_URL}/incomes/monthly-total?_t=${Date.now()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -287,9 +353,16 @@ export default {
     getHousehold,
     joinHousehold,
     leaveHousehold,
+    removeMember,
+    updateMemberRole,
     sendInvitation,
     getInvitations,
     acceptInvitation,
+    submitJoinRequest,
+    getJoinRequests,
+    getMyJoinRequestStatus,
+    approveJoinRequest,
+    rejectJoinRequest,
     addTransaction,
     getTransactions,
     getTransactionSummary,

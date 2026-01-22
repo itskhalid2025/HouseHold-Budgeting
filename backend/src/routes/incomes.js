@@ -19,7 +19,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/incomes:
+ * /incomes:
  *   post:
  *     summary: Add a new income source
  *     tags: [Incomes]
@@ -69,7 +69,7 @@ router.post('/', authenticate, validate(addIncomeSchema), addIncome);
 
 /**
  * @swagger
- * /api/incomes:
+ * /incomes:
  *   get:
  *     summary: List all income sources
  *     tags: [Incomes]
@@ -92,7 +92,7 @@ router.get('/', authenticate, listIncomes);
 
 /**
  * @swagger
- * /api/incomes/monthly-total:
+ * /incomes/monthly-total:
  *   get:
  *     summary: Get monthly income total
  *     tags: [Incomes]
@@ -121,7 +121,7 @@ router.get('/monthly-total', authenticate, getMonthlyTotal);
 
 /**
  * @swagger
- * /api/incomes/{id}:
+ * /incomes/{id}:
  *   get:
  *     summary: Get a single income source
  *     tags: [Incomes]
@@ -143,7 +143,7 @@ router.get('/:id', authenticate, getIncome);
 
 /**
  * @swagger
- * /api/incomes/{id}:
+ * /incomes/{id}:
  *   put:
  *     summary: Update an income source
  *     tags: [Incomes]
@@ -186,7 +186,7 @@ router.put('/:id', authenticate, validate(updateIncomeSchema), updateIncome);
 
 /**
  * @swagger
- * /api/incomes/{id}:
+ * /incomes/{id}:
  *   delete:
  *     summary: Delete an income source
  *     tags: [Incomes]

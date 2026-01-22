@@ -104,6 +104,57 @@ router.post('/join', validate(joinHouseholdSchema), joinHousehold);
  */
 router.post('/leave', leaveHousehold);
 
+/**
+ * @swagger
+ * /households/members/{memberId}:
+ *   delete:
+ *     summary: Remove a member from household (Owner only)
+ *     tags: [Households]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Member removed successfully
+ */
+router.delete('/members/:memberId', removeMember);
+
+/**
+ * @swagger
+ * /households/members/{memberId}:
+ *   put:
+ *     summary: Update a member's role (Owner only)
+ *     tags: [Households]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: memberId
+ *         required: true
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [role]
+ *             properties:
+ *               role:
+ *                 type: string
+ *                 enum: [EDITOR, VIEWER]
+ *     responses:
+ *       200:
+ *         description: Role updated successfully
+ */
+router.put('/members/:memberId', validate(updateRoleSchema), updateMemberRole);
+
 // ... other routes
 
 export default router;

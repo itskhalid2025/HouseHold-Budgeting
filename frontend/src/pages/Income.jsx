@@ -1,14 +1,27 @@
 import { useState, useEffect } from 'react';
 import {
     getIncomes,
+    getHousehold,
     addIncome,
     updateIncome,
     deleteIncome,
     getMonthlyIncomeTotal
 } from '../api/api';
+import { useAuth } from '../context/AuthContext';
+import usePolling from '../hooks/usePolling';
 import './Income.css';
 
 export default function Income() {
+    const { user } = useAuth();
+    const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR'; // For Add Button
+
+    // Check granular permission for edit/delete
+    const canModifyIncome = (inc) => {
+        if (!user) return false;
+        if (user.role === 'OWNER') return true;
+        return user.role === 'EDITOR' && inc.userId === user.id;
+    };
+
     const [incomes, setIncomes] = useState([]);
     const [monthlyStats, setMonthlyStats] = useState({ total: 0, breakdown: [] });
     const [loading, setLoading] = useState(true);
@@ -25,13 +38,26 @@ export default function Income() {
         endDate: ''
     });
 
+    const [members, setMembers] = useState([]);
+
     useEffect(() => {
         fetchData();
+        // Load members for filter
+        getHousehold().then(data => {
+            if (data.household?.members) {
+                setMembers(data.household.members);
+            }
+        }).catch(err => console.error('Failed to load members:', err));
     }, []);
+
+    // Poll for updates every 10 seconds
+    usePolling(fetchData, 10000);
 
     async function fetchData() {
         try {
-            setLoading(true);
+            // Only show loader on initial load
+            if (incomes.length === 0) setLoading(true);
+
             const [incomeList, stats] = await Promise.all([
                 getIncomes(),
                 getMonthlyIncomeTotal()
@@ -55,18 +81,37 @@ export default function Income() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError(''); // Clear previous errors
         try {
+            // Build clean payload - remove empty optional fields
+            const payload = {
+                source: formData.source,
+                amount: parseFloat(formData.amount),
+                type: formData.type,
+                frequency: formData.frequency
+            };
+
+            // Only include optional dates if they have values
+            if (formData.startDate) {
+                payload.startDate = formData.startDate;
+            }
+            if (formData.endDate) {
+                payload.endDate = formData.endDate;
+            }
+
+            console.log('📤 Income payload:', payload);
+
             if (editingIncome) {
-                await updateIncome(editingIncome.id, formData);
+                await updateIncome(editingIncome.id, payload);
             } else {
-                await addIncome(formData);
+                await addIncome(payload);
             }
             setShowAddModal(false);
             setEditingIncome(null);
             resetForm();
             fetchData();
         } catch (err) {
-            setError(err.message);
+            setError(err.message || 'Failed to save income');
         }
     };
 
@@ -104,16 +149,39 @@ export default function Income() {
         });
     };
 
+    // Filter Logic
+    const [filters, setFilters] = useState({
+        search: '',
+        type: '',
+        userId: ''
+    });
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    const filteredIncomes = incomes.filter(inc => {
+        const matchesSearch = inc.source.toLowerCase().includes(filters.search.toLowerCase());
+        const matchesType = filters.type ? inc.type === filters.type : true;
+        const matchesUser = filters.userId ? inc.user?.id === filters.userId : true;
+        return matchesSearch && matchesType && matchesUser;
+    });
+
     return (
         <div className="income-page">
             <div className="page-header">
                 <h1>Income & Earnings</h1>
-                <button
-                    className="btn-primary"
-                    onClick={() => { setEditingIncome(null); resetForm(); setShowAddModal(true); }}
-                >
-                    + Add Income Source
-                </button>
+                {canEdit ? (
+                    <button
+                        className="btn-primary"
+                        onClick={() => { setEditingIncome(null); resetForm(); setShowAddModal(true); }}
+                    >
+                        + Add Income Source
+                    </button>
+                ) : (
+                    <span className="viewer-notice">👁️ View Only</span>
+                )}
             </div>
 
             {error && <div className="error-banner">{error}</div>}
@@ -131,6 +199,35 @@ export default function Income() {
 
             {/* Income List */}
             <h2 className="section-title">Income Sources</h2>
+
+            {/* Filters */}
+            <div className="filters-bar">
+                <input
+                    type="text"
+                    name="search"
+                    placeholder="Search source..."
+                    value={filters.search}
+                    onChange={handleFilterChange}
+                    className="filter-input"
+                />
+                <select name="type" value={filters.type} onChange={handleFilterChange} className="filter-select">
+                    <option value="">All Types</option>
+                    <option value="PRIMARY">Primary Job</option>
+                    <option value="FREELANCE">Freelance</option>
+                    <option value="INVESTMENT">Investment</option>
+                    <option value="GIFT">Gift</option>
+                    <option value="OTHER">Other</option>
+                </select>
+                <select name="userId" value={filters.userId} onChange={handleFilterChange} className="filter-select">
+                    <option value="">All Users</option>
+                    {members.map(member => (
+                        <option key={member.id} value={member.id}>
+                            {member.firstName} {member.lastName}
+                        </option>
+                    ))}
+                </select>
+            </div>
+
             {loading ? (
                 <div className="loading-state">
                     <div className="spinner"></div>
@@ -138,20 +235,28 @@ export default function Income() {
                 </div>
             ) : (
                 <div className="income-grid">
-                    {incomes.length > 0 ? (
-                        incomes.map(inc => (
+                    {filteredIncomes.length > 0 ? (
+                        filteredIncomes.map(inc => (
                             <div key={inc.id} className={`income-card ${inc.isActive ? '' : 'inactive'}`}>
                                 <div className="income-header">
                                     <span className={`income-type ${inc.type.toLowerCase()}`}>{inc.type}</span>
-                                    <div className="card-actions">
-                                        <button onClick={() => handleEdit(inc)} className="btn-icon">✏️</button>
-                                        <button onClick={() => handleDelete(inc.id)} className="btn-icon delete">🗑️</button>
-                                    </div>
+
+                                    {canModifyIncome(inc) && (
+                                        <div className="card-actions">
+                                            <button onClick={() => handleEdit(inc)} className="btn-icon">✏️</button>
+                                            <button onClick={() => handleDelete(inc.id)} className="btn-icon delete">✖</button>
+                                        </div>
+                                    )}
                                 </div>
                                 <h3>{inc.source}</h3>
                                 <div className="income-details">
                                     <span className="income-amount">${parseFloat(inc.amount).toLocaleString()}</span>
                                     <span className="income-freq">per {inc.frequency.toLowerCase().replace('_', ' ')}</span>
+                                    {inc.user && (
+                                        <span className="user-badge" style={{ marginTop: '8px', display: 'inline-block' }}>
+                                            👤 {inc.user.firstName}
+                                        </span>
+                                    )}
                                 </div>
                                 <div className="income-footer">
                                     <span className="monthly-equiv">

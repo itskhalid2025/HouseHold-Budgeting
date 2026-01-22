@@ -19,7 +19,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/transactions:
+ * /transactions:
  *   post:
  *     summary: Add a new transaction
  *     tags: [Transactions]
@@ -71,7 +71,7 @@ router.post('/', authenticate, validate(addTransactionSchema), addTransaction);
 
 /**
  * @swagger
- * /api/transactions:
+ * /transactions:
  *   get:
  *     summary: List transactions with filters and pagination
  *     tags: [Transactions]
@@ -121,7 +121,7 @@ router.get('/', authenticate, listTransactions);
 
 /**
  * @swagger
- * /api/transactions/summary:
+ * /transactions/summary:
  *   get:
  *     summary: Get transaction summary/stats
  *     tags: [Transactions]
@@ -148,7 +148,7 @@ router.get('/summary', authenticate, getTransactionSummary);
 
 /**
  * @swagger
- * /api/transactions/{id}:
+ * /transactions/{id}:
  *   get:
  *     summary: Get a single transaction
  *     tags: [Transactions]
@@ -170,7 +170,7 @@ router.get('/:id', authenticate, getTransaction);
 
 /**
  * @swagger
- * /api/transactions/{id}:
+ * /transactions/{id}:
  *   put:
  *     summary: Update a transaction
  *     tags: [Transactions]
@@ -213,7 +213,7 @@ router.put('/:id', authenticate, validate(updateTransactionSchema), updateTransa
 
 /**
  * @swagger
- * /api/transactions/{id}:
+ * /transactions/{id}:
  *   delete:
  *     summary: Delete a transaction (soft delete)
  *     tags: [Transactions]

@@ -291,17 +291,33 @@ export const removeMember = async (req, res) => {
             });
         }
 
-        await prisma.user.update({
-            where: { id: memberId },
-            data: {
-                householdId: null,
-                role: 'VIEWER' // Reset role to default
-            }
-        });
+        // Delete member's data and remove from household
+        await prisma.$transaction([
+            // Delete member's transactions
+            prisma.transaction.deleteMany({
+                where: { userId: memberId, householdId }
+            }),
+            // Delete member's incomes
+            prisma.income.deleteMany({
+                where: { userId: memberId, householdId }
+            }),
+            // Delete old invitations for this member (allows rejoining)
+            prisma.invitation.deleteMany({
+                where: { householdId, recipientEmail: member.email }
+            }),
+            // Remove member from household
+            prisma.user.update({
+                where: { id: memberId },
+                data: {
+                    householdId: null,
+                    role: 'VIEWER'
+                }
+            })
+        ]);
 
         return res.status(200).json({
             success: true,
-            message: 'Member removed successfully'
+            message: 'Member removed successfully. Their transactions and income have been deleted.'
         });
 
     } catch (error) {
@@ -318,7 +334,7 @@ export const removeMember = async (req, res) => {
  */
 export const leaveHousehold = async (req, res) => {
     try {
-        const { id: userId, householdId, role } = req.user;
+        const { id: userId, householdId, role, email } = req.user;
 
         if (!householdId) {
             return res.status(400).json({
@@ -327,23 +343,32 @@ export const leaveHousehold = async (req, res) => {
             });
         }
 
-        // If user is the only member, maybe delete household? Or require transfer?
-        // Determine policy. For now, simple leave.
-        // If OWNER, ensure there is another OWNER? Or prevent leaving?
-
         // Check if user is the last member
         const memberCount = await prisma.user.count({
             where: { householdId }
         });
 
         if (memberCount === 1) {
-            // Last member leaving - optionally delete household or just leave it empty (which is bad data)
-            // Let's delete the household if last member leaves
+            // Last member leaving - delete household and all its data
             await prisma.$transaction([
+                // Delete user's transactions
+                prisma.transaction.deleteMany({
+                    where: { householdId }
+                }),
+                // Delete user's incomes
+                prisma.income.deleteMany({
+                    where: { householdId }
+                }),
+                // Delete all invitations for this household
+                prisma.invitation.deleteMany({
+                    where: { householdId }
+                }),
+                // Update user
                 prisma.user.update({
                     where: { id: userId },
                     data: { householdId: null, role: 'VIEWER' }
                 }),
+                // Delete household
                 prisma.household.delete({
                     where: { id: householdId }
                 })
@@ -356,7 +381,6 @@ export const leaveHousehold = async (req, res) => {
 
         // If OWNER is leaving and there are others...
         if (role === 'OWNER') {
-            // ideally force transfer, but for MVP let's checks if there are other owners
             const otherOwners = await prisma.user.count({
                 where: { householdId, role: 'OWNER', NOT: { id: userId } }
             });
@@ -369,17 +393,42 @@ export const leaveHousehold = async (req, res) => {
             }
         }
 
-        await prisma.user.update({
-            where: { id: userId },
-            data: {
-                householdId: null,
-                role: 'VIEWER'
-            }
-        });
+        // Delete user's transactions and income from this household before leaving
+        await prisma.$transaction([
+            // Delete user's transactions
+            prisma.transaction.deleteMany({
+                where: {
+                    userId,
+                    householdId
+                }
+            }),
+            // Delete user's incomes
+            prisma.income.deleteMany({
+                where: {
+                    userId,
+                    householdId
+                }
+            }),
+            // Delete any old invitations/join requests for this user & household (allows rejoining)
+            prisma.invitation.deleteMany({
+                where: {
+                    householdId,
+                    recipientEmail: email
+                }
+            }),
+            // Update user to leave household
+            prisma.user.update({
+                where: { id: userId },
+                data: {
+                    householdId: null,
+                    role: 'VIEWER'
+                }
+            })
+        ]);
 
         return res.status(200).json({
             success: true,
-            message: 'You have left the household'
+            message: 'You have left the household. Your transactions and income have been removed.'
         });
 
     } catch (error) {

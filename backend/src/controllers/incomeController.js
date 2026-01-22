@@ -39,6 +39,15 @@ async function addIncome(req, res) {
         const { amount, source, type, frequency, startDate, endDate } = req.body;
         const userId = req.user.id;
         const householdId = req.user.householdId;
+        const userRole = req.user.role;
+
+        // VIEWER cannot add income
+        if (userRole === 'VIEWER') {
+            return res.status(403).json({
+                success: false,
+                error: 'Viewers cannot add income sources. Contact the household owner to upgrade your role.'
+            });
+        }
 
         if (!householdId) {
             return res.status(400).json({
@@ -192,6 +201,14 @@ async function updateIncome(req, res) {
         const userRole = req.user.role;
         const householdId = req.user.householdId;
 
+        // VIEWER cannot update income
+        if (userRole === 'VIEWER') {
+            return res.status(403).json({
+                success: false,
+                error: 'Viewers cannot update income sources'
+            });
+        }
+
         // Find the income
         const existingIncome = await prisma.income.findFirst({
             where: {
@@ -204,14 +221,14 @@ async function updateIncome(req, res) {
             return res.status(404).json({ success: false, error: 'Income not found' });
         }
 
-        // Check permissions: Only the creator or ADMIN/OWNER can update
-        const isOwner = existingIncome.userId === userId;
-        const isAdmin = userRole === 'OWNER' || userRole === 'EDITOR';
+        // Check permissions: Owner can update all, Editor can only update own
+        const isCreator = existingIncome.userId === userId;
+        const isHouseholdOwner = userRole === 'OWNER';
 
-        if (!isOwner && !isAdmin) {
+        if (!isCreator && !isHouseholdOwner) {
             return res.status(403).json({
                 success: false,
-                error: 'You do not have permission to update this income'
+                error: 'You can only update income sources you created'
             });
         }
 
@@ -258,6 +275,14 @@ async function deleteIncome(req, res) {
         const userRole = req.user.role;
         const householdId = req.user.householdId;
 
+        // VIEWER cannot delete income
+        if (userRole === 'VIEWER') {
+            return res.status(403).json({
+                success: false,
+                error: 'Viewers cannot delete income sources'
+            });
+        }
+
         // Find the income
         const existingIncome = await prisma.income.findFirst({
             where: {
@@ -270,14 +295,14 @@ async function deleteIncome(req, res) {
             return res.status(404).json({ success: false, error: 'Income not found' });
         }
 
-        // Check permissions
-        const isOwner = existingIncome.userId === userId;
-        const isAdmin = userRole === 'OWNER' || userRole === 'EDITOR';
+        // Check permissions: Owner can delete all, Editor can only delete own
+        const isCreator = existingIncome.userId === userId;
+        const isHouseholdOwner = userRole === 'OWNER';
 
-        if (!isOwner && !isAdmin) {
+        if (!isCreator && !isHouseholdOwner) {
             return res.status(403).json({
                 success: false,
-                error: 'You do not have permission to delete this income'
+                error: 'You can only delete income sources you created'
             });
         }
 
