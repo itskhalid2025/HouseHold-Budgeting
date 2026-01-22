@@ -98,6 +98,8 @@ model User {
   createdAt                DateTime  @default(now()) @map("created_at")
   updatedAt                DateTime  @updatedAt @map("updated_at")
   
+  goals                    Goal[]
+  
   // Relations
   transactions             Transaction[]
   incomes                  Income[]
@@ -236,6 +238,9 @@ model Goal {
   
   createdAt         DateTime  @default(now()) @map("created_at")
   updatedAt         DateTime  @updatedAt @map("updated_at")
+
+  createdById       String?   @map("created_by_id")
+  createdBy         User?     @relation(fields: [createdById], references: [id])
   
   @@index([householdId, isActive])
   @@map("goals")

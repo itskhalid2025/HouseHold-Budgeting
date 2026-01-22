@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getTransactionSummary, getMonthlyIncomeTotal } from '../api/api';
+import { getTransactionSummary, getMonthlyIncomeTotal, getGoalSummary } from '../api/api';
 import usePolling from '../hooks/usePolling';
 import './Dashboard.css';
 
@@ -7,7 +7,8 @@ export default function Dashboard() {
     const [stats, setStats] = useState({
         income: 0,
         expenses: 0,
-        savings: 0
+        savings: 0,
+        totalSaved: 0
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -18,19 +19,22 @@ export default function Dashboard() {
             if (stats.income === 0 && stats.expenses === 0) setLoading(true);
 
             // Fetch data in parallel
-            const [transactionSummary, incomeData] = await Promise.all([
+            const [transactionSummary, incomeData, goalData] = await Promise.all([
                 getTransactionSummary(),
-                getMonthlyIncomeTotal()
+                getMonthlyIncomeTotal(),
+                getGoalSummary()
             ]);
 
             const totalExpenses = transactionSummary.summary?.totalSpent || 0;
             const totalIncome = incomeData.monthlyTotal || 0;
             const savings = totalIncome - totalExpenses;
+            const totalSaved = goalData.totalSaved || 0;
 
             setStats({
                 income: totalIncome,
                 expenses: totalExpenses,
-                savings: savings
+                savings: savings,
+                totalSaved: totalSaved
             });
         } catch (err) {
             console.error('Error fetching dashboard data:', err);
@@ -72,10 +76,11 @@ export default function Dashboard() {
                     <h3>Total Expenses</h3>
                     <p className="amount expense">${stats.expenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
                 </div>
+
                 <div className="stat-card">
-                    <h3>Savings</h3>
-                    <p className={`amount ${stats.savings >= 0 ? 'savings-positive' : 'savings-negative'}`}>
-                        ${stats.savings.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    <h3>Goals Saved</h3>
+                    <p className="amount savings-positive">
+                        ${stats.totalSaved.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                     </p>
                 </div>
             </div>

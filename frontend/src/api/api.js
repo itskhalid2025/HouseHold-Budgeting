@@ -323,6 +323,48 @@ export async function deleteIncome(id) {
     return handleResponse(response);
 }
 
+// ================== GOALS (SAVINGS) API ==================
+
+export async function addGoal(goalData) {
+    const response = await fetch(`${API_BASE_URL}/goals`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify(goalData)
+    });
+    return handleResponse(response);
+}
+
+export async function getGoals(active = true) {
+    const response = await fetch(`${API_BASE_URL}/goals?active=${active}`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function getGoalSummary() {
+    const response = await fetch(`${API_BASE_URL}/goals/summary?_t=${Date.now()}`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function updateGoal(id, data) {
+    const response = await fetch(`${API_BASE_URL}/goals/${id}`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+}
+
+export async function deleteGoal(id) {
+    const response = await fetch(`${API_BASE_URL}/goals/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
 // ================== VOICE INPUT API ==================
 
 export async function parseVoiceInput(transcript) {
@@ -373,6 +415,11 @@ export default {
     getMonthlyIncomeTotal,
     updateIncome,
     deleteIncome,
+    addGoal,
+    getGoals,
+    getGoalSummary,
+    updateGoal,
+    deleteGoal,
     parseVoiceInput,
     getToken,
     getUser,
