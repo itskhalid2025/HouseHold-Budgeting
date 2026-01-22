@@ -1,4 +1,12 @@
+/*
+ * Savings & Goals Styles
+ *
+ * UI definitions for savings progress bars, goal cards,
+ * and summary statistics for household financial targets.
+ */
+
 .savings-page {
+
     padding: 2rem;
     max-width: 1200px;
     margin: 0 auto;

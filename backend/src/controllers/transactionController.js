@@ -1,4 +1,15 @@
 /**
+ * @fileoverview Transaction Controller
+ *
+ * Handles CRUD operations for household transactions, including creation,
+ * listing, retrieval, updating, deletion (soft), and summary statistics.
+ * Utilises Prisma for data access and enforces role‑based permissions.
+ *
+ * @module controllers/transactionController
+ * @requires @prisma/client
+ */
+
+/**
  * Transaction Controller
  * Handles CRUD operations for household transactions
  * Phase 4: Transaction & Income Tracking

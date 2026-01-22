@@ -1,3 +1,18 @@
+/**
+ * @fileoverview Dashboard Page
+ *
+ * Displays an overview of household financial statistics, including income, expenses, and savings.
+ * Utilises API calls to fetch transaction summary, monthly income, and goal data, and updates via polling.
+ *
+ * @module pages/Dashboard
+ * @requires react
+ * @requires ../api/api
+ * @requires ../hooks/usePolling
+ * @requires ../context/AuthContext
+ * @requires ../utils/currencyUtils
+ * @requires ./Dashboard.css
+ */
+
 import { useState, useEffect } from 'react';
 import { getTransactionSummary, getMonthlyIncomeTotal, getGoalSummary } from '../api/api';
 import usePolling from '../hooks/usePolling';

@@ -1,7 +1,10 @@
-/* ========================================
-   HouseHold Budgeting - App Styles
-   Dark Mode Glassmorphism Design
-======================================== */
+/*
+ * Main Application Layout & Shared UI Styles
+ *
+ * Defines core design tokens (colors, variables), glassmorphism effects,
+ * and shared layout components like headers, footers, modals, and buttons.
+ */
+
 
 :root {
   /* Dark Theme Colors */

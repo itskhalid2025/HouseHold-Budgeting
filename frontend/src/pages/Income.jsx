@@ -1,3 +1,17 @@
+/**
+ * @fileoverview Income Page
+ *
+ * Manages CRUD operations for household income sources, including listing, adding, editing, and deleting.
+ * Utilises API calls, polling for updates, and role‑based permissions.
+ *
+ * @module pages/Income
+ * @requires react
+ * @requires ../api/api
+ * @requires ../hooks/usePolling
+ * @requires ../context/AuthContext
+ * @requires ./Income.css
+ */
+
 import { useState, useEffect } from 'react';
 import {
     getIncomes,

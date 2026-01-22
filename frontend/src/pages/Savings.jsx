@@ -1,4 +1,20 @@
+/**
+ * @fileoverview Savings & Goals Page
+ *
+ * Manages household savings goals, tracking progress towards targets,
+ * and allowing for CRUD operations on goals based on user permissions.
+ *
+ * @module pages/Savings
+ * @requires react
+ * @requires ../api/api
+ * @requires ../context/AuthContext
+ * @requires ../hooks/usePolling
+ * @requires ../utils/currencyUtils
+ * @requires ./Savings.css
+ */
+
 import { useState, useEffect } from 'react';
+
 import {
     getGoals,
     getGoalSummary,

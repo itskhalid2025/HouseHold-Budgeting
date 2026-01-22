@@ -1,7 +1,16 @@
-// Configuration service for HouseHold Budgeting
-// Centralized configuration management
+/**
+ * @fileoverview Configuration Service
+ *
+ * Centralised management of environment variables, database URLs,
+ * JWT secrets, and third‑party service API keys (Gemini, Opik).
+ * Includes configuration validation logic.
+ *
+ * @module utils/config
+ * @requires dotenv
+ */
 
 import dotenv from 'dotenv';
+
 
 // Load environment variables
 dotenv.config();

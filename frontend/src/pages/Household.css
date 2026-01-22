@@ -1,5 +1,13 @@
 /* Household Page Styles */
+/*
+ * Household Management Styles
+ *
+ * Covers styles for member cards, role badges, join request cards,
+ * and specific administrative UI components in the household view.
+ */
+
 .household-container {
+
     max-width: 1000px;
     margin: 0 auto;
     padding: 24px;

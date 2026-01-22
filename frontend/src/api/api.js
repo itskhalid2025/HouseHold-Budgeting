@@ -1,5 +1,15 @@
+/**
+ * @fileoverview Frontend API client
+ *
+ * Provides a centralised interface for all backend API interactions using Fetch.
+ * Handles authentication headers, token persistence, and error response formatting.
+ *
+ * @module api/api
+ */
+
 // API Configuration
 const API_BASE_URL = 'http://localhost:3001/api';
+
 
 // Helper for handling responses
 async function handleResponse(response) {

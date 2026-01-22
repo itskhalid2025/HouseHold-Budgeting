@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Login Page
+ *
+ * Provides user authentication via email/password. Handles form submission and displays errors.
+ * Utilises AuthContext for login state and redirects on success.
+ *
+ * @module pages/Login
+ * @requires react
+ * @requires ../context/AuthContext
+ * @requires ../api/api
+ * @requires ./Login.css
+ */
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login as loginApi } from '../api/api';

@@ -1,4 +1,15 @@
 /**
+ * @fileoverview Income Controller
+ *
+ * Provides CRUD operations for household income sources, including creation,
+ * listing, retrieval, updating, deletion, and monthly total calculations.
+ * Utilises Prisma for database interactions and enforces role‑based access.
+ *
+ * @module controllers/incomeController
+ * @requires @prisma/client
+ */
+
+/**
  * Income Controller
  * Handles CRUD operations for household income sources
  * Phase 4: Transaction & Income Tracking

@@ -1,4 +1,16 @@
+/**
+ * @fileoverview Authentication Context Provider
+ *
+ * Manages global authentication state, user profile data, and household information.
+ * Provides login, logout, and session persistence logic for the entire frontend application.
+ *
+ * @module context/AuthContext
+ * @requires react
+ * @requires ../api/api
+ */
+
 import { createContext, useContext, useState, useEffect } from 'react';
+
 import { getToken, getUser, setToken, setUser, clearToken, getMe, getHousehold } from '../api/api';
 
 const AuthContext = createContext(null);

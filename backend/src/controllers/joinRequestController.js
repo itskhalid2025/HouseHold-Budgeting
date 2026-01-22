@@ -3,7 +3,19 @@
  * Phase 3 Simplified: Code-based join requests with owner approval
  */
 
+/**
+ * @fileoverview Join Request Controller
+ *
+ * Handles submission, retrieval, approval, rejection, and status checks for
+ * join requests to households. Uses Prisma for database operations and enforces
+ * role‑based permissions.
+ *
+ * @module controllers/joinRequestController
+ * @requires @prisma/client
+ */
+
 import { PrismaClient } from '@prisma/client';
+
 
 const prisma = new PrismaClient();
 

@@ -1,4 +1,15 @@
+/**
+ * @fileoverview useVoiceInput Hook
+ *
+ * Interfaces with the Web Speech API to provide voice recognition capabilities.
+ * Handles microphone permissions, transcript generation, and error reporting.
+ *
+ * @module hooks/useVoiceInput
+ * @requires react
+ */
+
 import { useState, useEffect, useCallback, useRef } from 'react';
+
 
 /**
  * useVoiceInput Hook

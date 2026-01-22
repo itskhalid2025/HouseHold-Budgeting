@@ -1,4 +1,20 @@
+/**
+ * @fileoverview Settings Page
+ *
+ * Provides user profile management, household configuration (currency, name),
+ * and notification preferences. Handles password reset requests and global logout.
+ *
+ * @module pages/Settings
+ * @requires react
+ * @requires ../context/AuthContext
+ * @requires ../api/api
+ * @requires react-router-dom
+ * @requires ../utils/currencyUtils
+ * @requires ./Settings.css
+ */
+
 import { useState, useEffect } from 'react';
+
 import { useAuth } from '../context/AuthContext';
 import { updateHousehold, forgotPassword } from '../api/api';
 import { useLocation, useNavigate } from 'react-router-dom';

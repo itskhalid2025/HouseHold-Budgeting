@@ -1,4 +1,10 @@
-/* Income Page Styles */
+/*
+ * Income & Earnings Styles
+ *
+ * Styles for the income summary cards, source listing, and
+ * forms related to earnings management.
+ */
+
 
 .income-summary-card {
     background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.1));

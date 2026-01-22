@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Authentication Middleware
+ *
+ * Provides middleware functions to protect routes by verifying JWT tokens.
+ * Includes `authenticate` for required authentication and `optionalAuth`
+ * for routes where authentication is optional.
+ *
+ * @module middleware/auth
+ * @requires jsonwebtoken
+ * @requires @prisma/client
+ * @requires ../utils/config
+ */
+
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';
 import config from '../utils/config.js';

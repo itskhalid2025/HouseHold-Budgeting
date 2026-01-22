@@ -1,6 +1,16 @@
 // Opik Service for HouseHold Budgeting
 // Handles LLM observability and evaluation with Opik
 
+/**
+ * @fileoverview Opik Service
+ *
+ * Provides LLM observability and evaluation integration using Opik.
+ * Utilises the Opik client for tracing, logging, and connection testing.
+ *
+ * @module services/opikService
+ * @requires opik
+ */
+
 import { Opik } from 'opik';
 
 // Initialize Opik client

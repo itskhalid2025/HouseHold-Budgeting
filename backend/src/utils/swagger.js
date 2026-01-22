@@ -1,4 +1,15 @@
+/**
+ * @fileoverview Swagger API Documentation Configuration
+ *
+ * Configures the Swagger/OpenAPI specification for the HouseHold Budgeting API.
+ * Defines metadata, security schemes, and route scanning paths.
+ *
+ * @module utils/swagger
+ * @requires swagger-jsdoc
+ */
+
 import swaggerJsdoc from 'swagger-jsdoc';
+
 
 const options = {
   definition: {

@@ -1,4 +1,17 @@
 
+/**
+ * @fileoverview Admin Authentication Service
+ *
+ * Provides login and profile retrieval for platform administrators.
+ * Utilises Prisma for DB access, bcrypt for password hashing, and JWT for token generation.
+ *
+ * @module services/adminAuthService
+ * @requires bcrypt
+ * @requires jsonwebtoken
+ * @requires @prisma/client
+ * @requires ../utils/config
+ */
+
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { PrismaClient } from '@prisma/client';

@@ -1,4 +1,12 @@
+/*
+ * Settings & Profile Styles
+ *
+ * Layout for the tabbed settings interface, including profile
+ * cards, form groupings, and notification toggle styling.
+ */
+
 .settings-page {
+
     padding: 2rem;
     max-width: 900px;
     margin: 0 auto;

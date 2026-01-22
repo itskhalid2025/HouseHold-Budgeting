@@ -1,4 +1,21 @@
+/**
+ * @fileoverview Transactions Management Page
+ *
+ * Displays a filtered and paginated list of household transactions.
+ * Supports adding, editing, and deleting transactions, including voice‑input integration
+ * and monthly expense summaries.
+ *
+ * @module pages/Transactions
+ * @requires react
+ * @requires ../api/api
+ * @requires ../context/AuthContext
+ * @requires ../hooks/useVoiceInput
+ * @requires ../hooks/usePolling
+ * @requires ./Transactions.css
+ */
+
 import { useState, useEffect } from 'react';
+
 import {
     getTransactions,
     getHousehold,

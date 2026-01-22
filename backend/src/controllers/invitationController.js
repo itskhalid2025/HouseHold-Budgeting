@@ -1,5 +1,17 @@
+/**
+ * @fileoverview Invitation Controller
+ *
+ * Manages sending, retrieving, accepting, and cancelling household invitations.
+ * Includes role‑based permission checks and token handling.
+ *
+ * @module controllers/invitationController
+ * @requires @prisma/client
+ * @requires ../utils/generateCode
+ */
+
 import { PrismaClient } from '@prisma/client';
 import { generateToken } from '../utils/generateCode.js';
+
 
 const prisma = new PrismaClient();
 

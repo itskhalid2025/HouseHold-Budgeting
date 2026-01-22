@@ -1,3 +1,13 @@
+/**
+ * @fileoverview usePolling Hook
+ *
+ * Provides a reusable polling mechanism for fetching data at regular intervals.
+ * Supports manual refetch and can be paused via the `enabled` flag.
+ *
+ * @module hooks/usePolling
+ * @requires react
+ */
+
 import { useEffect, useRef, useCallback } from 'react';
 
 /**

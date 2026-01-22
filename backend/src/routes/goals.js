@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Goals Routes
+ *
+ * Provides CRUD endpoints for managing savings goals.
+ * Utilises the goal controller and authentication middleware.
+ *
+ * @module routes/goals
+ * @requires express
+ * @requires ../controllers/goalController
+ */
+
 import express from 'express';
 import {
     createGoal,

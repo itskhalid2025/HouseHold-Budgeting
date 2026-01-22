@@ -1,5 +1,34 @@
-// HouseHold Budgeting - Express Server
-// Main entry point for the backend API
+/**
+ * @fileoverview HouseHold Budgeting - Express Server
+ * 
+ * Main entry point for the backend API server. This file configures and initializes
+ * the Express application with required middleware, routes, and error handlers.
+ * 
+ * @module server
+ * @author HouseHold Budgeting Team
+ * @version 1.0.0
+ * @license MIT
+ * 
+ * @description
+ * This server provides RESTful API endpoints for:
+ * - User authentication and authorization
+ * - Household management
+ * - Transaction tracking
+ * - Income management
+ * - Savings goals
+ * - Invitations and join requests
+ * 
+ * @requires express - Web framework for Node.js
+ * @requires cors - Cross-Origin Resource Sharing middleware
+ * @requires helmet - Security middleware for HTTP headers
+ * @requires morgan - HTTP request logger
+ * @requires @prisma/client - Database ORM client
+ * @requires swagger-ui-express - API documentation UI
+ */
+
+// =============================================================================
+// IMPORTS
+// =============================================================================
 
 import express from 'express';
 import cors from 'cors';
@@ -11,6 +40,8 @@ import { testConnection as testGemini } from './src/services/geminiService.js';
 import { testConnection as testOpik } from './src/services/opikService.js';
 import swaggerUi from 'swagger-ui-express';
 import { specs } from './src/utils/swagger.js';
+
+// Route imports
 import adminRoutes from './src/routes/adminRoutes.js';
 import authRoutes from './src/routes/auth.js';
 import householdRoutes from './src/routes/households.js';
@@ -19,9 +50,18 @@ import transactionRoutes from './src/routes/transactions.js';
 import incomeRoutes from './src/routes/incomes.js';
 import goalRoutes from './src/routes/goals.js';
 import joinRequestRoutes from './src/routes/joinRequests.js';
+
+// Middleware imports
 import { authenticate } from './src/middleware/auth.js';
 
+// =============================================================================
+// APPLICATION INITIALIZATION
+// =============================================================================
+
+/** @type {express.Application} Express application instance */
 const app = express();
+
+/** @type {PrismaClient} Prisma ORM client for database operations */
 const prisma = new PrismaClient();
 
 // Middleware

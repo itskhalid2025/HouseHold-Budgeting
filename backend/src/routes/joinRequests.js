@@ -3,6 +3,18 @@
  * Phase 3 Simplified: Code-based join requests with owner approval
  */
 
+/**
+ * @fileoverview Join Requests Routes
+ *
+ * Defines endpoints for submitting, viewing, approving, and rejecting join requests.
+ * Utilises the join request controller and authentication middleware.
+ *
+ * @module routes/joinRequests
+ * @requires express
+ * @requires ../controllers/joinRequestController
+ * @requires ../middleware/auth
+ */
+
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import {

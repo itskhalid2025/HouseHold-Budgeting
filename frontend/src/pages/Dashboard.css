@@ -24,7 +24,15 @@
     color: var(--text-secondary);
 }
 
+/*
+ * Dashboard View Styles
+ *
+ * Specific styles for the financial overview dashboard, including
+ * the main statistics grid and specialized layout tweaks.
+ */
+
 .stats-grid {
+
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 24px;

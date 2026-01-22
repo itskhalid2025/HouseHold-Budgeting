@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Forgot Password Page
+ *
+ * Allows users to request a password reset via email. Handles form submission and displays status.
+ * Utilises AuthContext and API call for reset request.
+ *
+ * @module pages/ForgotPassword
+ * @requires react
+ * @requires ../context/AuthContext
+ * @requires ../api/api
+ * @requires ./ForgotPassword.css
+ */
+
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { forgotPassword } from '../api/api';

@@ -1,5 +1,13 @@
 /* Auth Pages Styling */
+/*
+ * Authentication Page Styles
+ *
+ * Styles specific to Login, Register, and Forgot Password layouts.
+ * Includes auth card formatting, error messages, and wide-page variants.
+ */
+
 .auth-container {
+
   min-height: 100vh;
   display: flex;
   align-items: center;

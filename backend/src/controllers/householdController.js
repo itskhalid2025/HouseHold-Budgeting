@@ -1,5 +1,18 @@
+/**
+ * @fileoverview Household Controller
+ *
+ * Handles creation, joining, retrieval, and management of households, as well as
+ * member role updates and leaving/removing members. Utilises Prisma for data
+ * persistence and includes permission checks based on user roles.
+ *
+ * @module controllers/householdController
+ * @requires @prisma/client
+ * @requires ../utils/generateCode
+ */
+
 import { PrismaClient } from '@prisma/client';
 import { generateCode } from '../utils/generateCode.js';
+
 
 const prisma = new PrismaClient();
 

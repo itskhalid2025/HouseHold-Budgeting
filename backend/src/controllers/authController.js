@@ -1,3 +1,19 @@
+/**
+ * @fileoverview Authentication Controller
+ *
+ * This module defines controller functions for user authentication, including
+ * registration, login, profile retrieval, logout, and password‑reset flows.
+ * It uses Prisma for database access, bcrypt for password hashing, and JWT
+ * for token generation.
+ *
+ * @module controllers/authController
+ * @requires bcryptjs
+ * @requires jsonwebtoken
+ * @requires crypto
+ * @requires @prisma/client
+ * @requires ../utils/config
+ */
+
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';

@@ -1,3 +1,14 @@
+/**
+ * @fileoverview ProtectedRoute Component
+ *
+ * Handles route protection for authenticated users and public route redirection.
+ * Utilises AuthContext for authentication state and React Router for navigation.
+ *
+ * @module components/ProtectedRoute
+ * @requires react-router-dom
+ * @requires ../context/AuthContext
+ */
+
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 

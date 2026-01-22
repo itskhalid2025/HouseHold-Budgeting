@@ -1,7 +1,13 @@
 /**
- * Role-based authorization middleware
- * Provides middleware for checking user roles and household access
+ * @fileoverview Authorization Middleware
+ *
+ * Provides various middleware functions for enforcing role‑based access control (RBAC),
+ * household membership verification, and cross‑household access permissions.
+ *
+ * @module middleware/authorize
+ * @requires @prisma/client
  */
+
 
 /**
  * Authorization middleware factory

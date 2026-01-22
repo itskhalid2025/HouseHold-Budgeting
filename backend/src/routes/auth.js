@@ -1,3 +1,17 @@
+/**
+ * @fileoverview Auth Routes
+ *
+ * Defines authentication endpoints for user registration, login, password reset,
+ * and profile retrieval. Utilises controllers from `../controllers/authController`
+ * and validation middleware.
+ *
+ * @module routes/auth
+ * @requires express
+ * @requires ../controllers/authController
+ * @requires ../middleware/validate
+ * @requires ../middleware/auth
+ */
+
 import { Router } from 'express';
 import {
     register,

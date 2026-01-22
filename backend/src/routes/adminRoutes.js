@@ -1,4 +1,18 @@
 
+/**
+ * @fileoverview Admin Routes
+ *
+ * Defines platform admin API endpoints for authentication and dashboard
+ * statistics. Uses JWT for admin authentication and Prisma for data access.
+ *
+ * @module routes/adminRoutes
+ * @requires express
+ * @requires ../services/adminAuthService
+ * @requires jsonwebtoken
+ * @requires ../utils/config
+ * @requires @prisma/client
+ */
+
 import express from 'express';
 import { adminAuthService } from '../services/adminAuthService.js';
 import jwt from 'jsonwebtoken';

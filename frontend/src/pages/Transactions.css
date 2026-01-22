@@ -25,7 +25,8 @@
 .total-amount-expense {
     font-size: 32px;
     font-weight: 700;
-    color: #f87171; /* lighter red */
+    color: #f87171;
+    /* lighter red */
 }
 
 /* Mobile Responsive */
@@ -37,7 +38,15 @@
     }
 }
 
+/*
+ * Transaction Management Styles
+ *
+ * Styles for the transaction list view, date badges, expense highlighting,
+ * voice input modal, and pagination controls.
+ */
+
 .transactions-page {
+
     padding-bottom: 80px;
     /* Space for FAB or footer */
 }

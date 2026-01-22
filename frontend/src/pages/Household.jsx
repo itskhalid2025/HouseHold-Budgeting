@@ -1,4 +1,20 @@
+/**
+ * @fileoverview Household Management Page
+ *
+ * Provides a comprehensive interface for managing household settings, membership,
+ * join requests, and roles. Supports creating new households, joining via code,
+ * and owner administrative actions.
+ *
+ * @module pages/Household
+ * @requires react
+ * @requires ../api/api
+ * @requires ../context/AuthContext
+ * @requires ../hooks/usePolling
+ * @requires ./Household.css
+ */
+
 import { useState, useEffect, useCallback } from 'react';
+
 import {
     getHousehold,
     createHousehold,

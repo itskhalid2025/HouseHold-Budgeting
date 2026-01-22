@@ -1,4 +1,15 @@
 /**
+ * @fileoverview Code Generation Utilities
+ *
+ * Provides functions for generating random alphanumeric invite codes
+ * and secure random tokens for invitations.
+ *
+ * @module utils/generateCode
+ * @requires crypto
+ */
+
+/**
+
  * Generate a random alphanumeric code
  * @param {number} length - Length of the code
  * @returns {string} - Random code (uppercase)

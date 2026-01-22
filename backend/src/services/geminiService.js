@@ -1,6 +1,16 @@
 // Gemini API Service for HouseHold Budgeting
 // Handles all interactions with Google's Gemini AI
 
+/**
+ * @fileoverview Gemini Service
+ *
+ * Provides integration with the Gemini AI platform for advanced features.
+ * Utilises GoogleGenerativeAI for API calls and configuration from utils.
+ *
+ * @module services/geminiService
+ * @requires @google/generative-ai
+ */
+
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 // Initialize Gemini API

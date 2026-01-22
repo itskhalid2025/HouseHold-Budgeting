@@ -1,4 +1,14 @@
+/**
+ * @fileoverview Currency Formatting Utilities
+ *
+ * Provides helper functions for converting between currency codes and symbols,
+ * and formatting numeric amounts for localized display.
+ *
+ * @module utils/currencyUtils
+ */
+
 export const CURRENCIES = {
+
     'USD': '$',
     'EUR': '€',
     'GBP': '£',

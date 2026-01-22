@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Households Routes
+ *
+ * Provides endpoints for creating, joining, retrieving, and managing household data.
+ * Utilises the household controller and validation/authorization middleware.
+ *
+ * @module routes/households
+ * @requires express
+ * @requires ../controllers/householdController
+ * @requires ../middleware/validate
+ * @requires ../middleware/authorize
+ */
+
 import { Router } from 'express';
 import {
     createHousehold,

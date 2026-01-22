@@ -1,3 +1,17 @@
+/**
+ * @fileoverview Invitation Routes
+ *
+ * Provides endpoints for sending, listing, accepting, and cancelling household invitations.
+ * Utilises the invitation controller and authentication/authorization middleware.
+ *
+ * @module routes/invitations
+ * @requires express
+ * @requires ../controllers/invitationController
+ * @requires ../middleware/auth
+ * @requires ../middleware/authorize
+ * @requires ../middleware/validate
+ */
+
 import { Router } from 'express';
 import {
     sendInvitation,

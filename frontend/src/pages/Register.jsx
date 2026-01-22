@@ -1,3 +1,16 @@
+/**
+ * @fileoverview Register Page
+ *
+ * Handles new user registration, including validation and account creation.
+ * Utilises AuthContext for login after successful registration.
+ *
+ * @module pages/Register
+ * @requires react
+ * @requires ../api/api
+ * @requires ../context/AuthContext
+ * @requires ./Auth.css
+ */
+
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register as registerApi } from '../api/api';

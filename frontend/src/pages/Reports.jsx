@@ -1,4 +1,14 @@
+/**
+ * @fileoverview Reports & Analytics Page
+ *
+ * Provides visualisations and insights into household spending patterns
+ * and financial health (v1 placeholder).
+ *
+ * @module pages/Reports
+ */
+
 export default function Reports() {
+
     return (
         <div className="container">
             <h1>Reports</h1>

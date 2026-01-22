@@ -1,3 +1,14 @@
+/**
+ * @fileoverview Goal Controller
+ *
+ * Handles CRUD operations for savings goals, including creation, retrieval,
+ * updating, deletion, and summary calculations. Utilises Prisma for database
+ * interactions and enforces household ownership and role‑based permissions.
+ *
+ * @module controllers/goalController
+ * @requires @prisma/client
+ */
+
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();

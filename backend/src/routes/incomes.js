@@ -3,6 +3,19 @@
  * Phase 4: Transaction & Income Tracking
  */
 
+/**
+ * @fileoverview Income Routes
+ *
+ * Defines CRUD endpoints for managing household income sources.
+ * Utilises the income controller and authentication middleware.
+ *
+ * @module routes/incomes
+ * @requires express
+ * @requires ../controllers/incomeController
+ * @requires ../middleware/auth
+ * @requires ../middleware/validate
+ */
+
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import { validate, addIncomeSchema, updateIncomeSchema } from '../middleware/validate.js';
