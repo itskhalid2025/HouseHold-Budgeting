@@ -1,0 +1,408 @@
+/* Household Page Styles */
+.household-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 24px;
+}
+
+/* Loading State */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(124, 58, 237, 0.3);
+    border-top-color: #7c3aed;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* No Household State */
+.no-household {
+    text-align: center;
+    padding: 60px 20px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.no-household-icon {
+    font-size: 64px;
+    margin-bottom: 20px;
+}
+
+.no-household h2 {
+    color: #fff;
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+
+.no-household p {
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 32px;
+}
+
+.no-household-actions {
+    display: flex;
+    gap: 16px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn-primary {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.4);
+}
+
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    border-radius: 10px;
+    padding: 12px 24px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background: rgba(239, 68, 68, 0.3);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Household Header */
+.household-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 24px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.household-info h1 {
+    color: #fff;
+    font-size: 28px;
+    margin-bottom: 12px;
+}
+
+.invite-code {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.invite-code code {
+    background: rgba(124, 58, 237, 0.2);
+    color: #a855f7;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 16px;
+}
+
+.copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 18px;
+    padding: 4px;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.copy-btn:hover {
+    opacity: 1;
+}
+
+.household-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+/* Members Section */
+.members-section {
+    margin-bottom: 24px;
+}
+
+.members-section h2 {
+    color: #fff;
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+.members-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.member-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.member-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+}
+
+.member-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.member-name {
+    display: block;
+    color: #fff;
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.member-email {
+    display: block;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 14px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.member-role {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.role-owner {
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+}
+
+.role-admin {
+    background: rgba(124, 58, 237, 0.2);
+    color: #a855f7;
+}
+
+.role-member {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+}
+
+/* Invitations Section */
+.invitations-section {
+    margin-bottom: 24px;
+}
+
+.invitations-section h2 {
+    color: #fff;
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+.invitations-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.invitation-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.invitation-email {
+    flex: 1;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.invitation-role {
+    padding: 4px 10px;
+    background: rgba(124, 58, 237, 0.2);
+    color: #a855f7;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.invitation-status {
+    padding: 4px 10px;
+    background: rgba(234, 179, 8, 0.2);
+    color: #eab308;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal {
+    background: #1a1a2e;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 24px;
+    max-width: 400px;
+    width: 100%;
+}
+
+.modal h3 {
+    color: #fff;
+    margin-bottom: 20px;
+    font-size: 20px;
+}
+
+.modal p {
+    color: rgba(255, 255, 255, 0.7);
+    margin-bottom: 24px;
+    line-height: 1.6;
+}
+
+.modal .form-group {
+    margin-bottom: 16px;
+}
+
+.modal .form-group label {
+    display: block;
+    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.modal .form-group input,
+.modal .form-group select {
+    width: 100%;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+}
+
+.modal .form-group input:focus,
+.modal .form-group select:focus {
+    outline: none;
+    border-color: #7c3aed;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 24px;
+}
+
+/* Error Message */
+.error-message {
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* Mobile Responsive */
+@media (max-width: 640px) {
+    .household-header {
+        flex-direction: column;
+    }
+
+    .household-actions {
+        width: 100%;
+    }
+
+    .household-actions button {
+        flex: 1;
+    }
+
+    .members-grid {
+        grid-template-columns: 1fr;
+    }
+}

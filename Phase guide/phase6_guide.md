@@ -2,7 +2,45 @@
 
 > **Duration**: Days 14-16  
 > **Prerequisites**: Phase 5 completed (categorization working)  
-> **Goal**: Implement weekly reports, savings advice (ON REQUEST only), and natural language charts
+> **Goal**: Implement weekly reports, savings advice (ON REQUEST only), and natural language charts  
+> **Status**: ❌ **NOT STARTED** (0%)
+
+---
+
+## 📋 websitelook.md Alignment
+
+This phase implements **Screens 6 and 8** from `websitelook.md`.
+
+| Page # | Page Name | Status | Description |
+|--------|-----------|--------|-------------|
+| 6 | Reports | ❌ | Weekly/Monthly reports with AI insights |
+| 8 | AI Advisor | ❌ | Chat-like interface for financial advice |
+
+### Screen 6 Elements (Reports):
+| Element | Description | Status |
+|---------|-------------|--------|
+| 6.1 | Report Tab Nav | ❌ | Weekly, Monthly, Custom |
+| 6.2 | Weekly Pulse Card | ❌ | AI-generated summary |
+| 6.3 | Category Breakdown | ❌ | Pie chart with Recharts |
+| 6.4 | PDF Export Button | ❌ | Download report as PDF |
+| 6.5 | Natural Language Query | ❌ | "Show me grocery spending" |
+
+### Screen 8 Elements (AI Advisor):
+| Element | Description | Status |
+|---------|-------------|--------|
+| 8.1 | Chat Interface | ❌ | Message history display |
+| 8.2 | Input Box | ❌ | Type or voice input |
+| 8.3 | Get Advice Button | ❌ | Triggers AI analysis |
+| 8.4 | Recommendation Cards | ❌ | Actionable AI suggestions |
+
+### Image States (8 total):
+**Screen 6**: Weekly View, Monthly View, Custom Date, PDF Preview  
+**Screen 8**: Empty Chat, Chat History, Typing State, Recommendations View
+
+### Backend Agents:
+- [ ] `agents/reportAgent.js` - Weekly/monthly reports
+- [ ] `agents/advisorAgent.js` - Savings recommendations
+- [ ] `agents/chartAgent.js` - NL to chart specs
 
 ---
 

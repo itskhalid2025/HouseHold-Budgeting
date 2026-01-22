@@ -2,7 +2,40 @@
 
 > **Duration**: Days 6-7  
 > **Prerequisites**: Phase 2 completed (auth working)  
-> **Goal**: Enable household creation, member invitations via email/phone, role management, and recurring expense setup
+> **Goal**: Enable household creation, member invitations via email/phone, role management, and recurring expense setup  
+> **Status**: 🟡 **IN PROGRESS** (60% - Backend ✅, Frontend ❌)
+
+---
+
+## 📋 websitelook.md Alignment
+
+This phase implements **Screen 5** from `websitelook.md`.
+
+| Page # | Page Name | Status | Description |
+|--------|-----------|--------|-------------|
+| 5 | Household Management | ❌ | Household creation, members, invitations |
+
+### Screen 5 Elements (from websitelook.md):
+| Element | Description | Status |
+|---------|-------------|--------|
+| 5.1 | Household Header | ❌ | Name, invite code display, copy button |
+| 5.2 | Members List | ❌ | Avatars, names, roles, remove button |
+| 5.3 | Invite Button | ❌ | Opens invite modal (email/phone input) |
+| 5.4 | Pending Invitations | ❌ | Shows outstanding invites |
+| 5.5 | Leave Button | ❌ | Leave household with confirmation |
+
+### Image States for Screen 5 (5 total):
+- [ ] No Household (create/join prompt)
+- [ ] Single Member household
+- [ ] Multiple Members view
+- [ ] Invite Modal open
+- [ ] Pending Invitations view
+
+### Backend Status (Complete):
+- ✅ `householdController.js` - CRUD + join via code
+- ✅ `invitationController.js` - Send, accept, cancel
+- ✅ `routes/households.js` - All routes with Swagger
+- ✅ `routes/invitations.js` - Invitation routes
 
 ---
 

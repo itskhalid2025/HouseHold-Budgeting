@@ -2,7 +2,38 @@
 
 > **Duration**: Days 19-20  
 > **Prerequisites**: Phases 5-6 completed (AI agents working)  
-> **Goal**: Complete Opik observability with comprehensive evaluation
+> **Goal**: Complete Opik observability with comprehensive evaluation  
+> **Status**: ❌ **NOT STARTED** (0%)
+
+---
+
+## 📋 websitelook.md Alignment
+
+This phase is **infrastructure-focused** and doesn't add new user-facing pages.
+
+### Purpose:
+Ensure all AI features from Phases 5-6 have proper observability.
+
+| AI Feature | Element Reference | Observability |
+|------------|-------------------|---------------|
+| Categorization | Element 3.3 | ❌ |
+| Weekly Reports | Element 6.2 | ❌ |
+| AI Advisor | Screen 8 | ❌ |
+| Chart Generation | Element 6.5 | ❌ |
+
+### Opik Dashboard Metrics:
+- [ ] Trace coverage percentage
+- [ ] Categorization accuracy (precision/recall)
+- [ ] Response latency (P50/P95)
+- [ ] Token usage per feature
+- [ ] Error rate tracking
+
+### Evaluation Datasets:
+| Dataset | Size | Purpose |
+|---------|------|---------|
+| Categorization Golden | 200 | Transaction classification |
+| Advice Quality | 50 | LLM-as-judge scoring |
+| Chart Commands | 30 | NL to chart accuracy |
 
 ---
 

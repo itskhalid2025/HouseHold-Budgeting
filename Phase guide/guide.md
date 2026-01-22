@@ -3,7 +3,34 @@
 ## Project Overview: "HouseHold Budgeting"
 AI-Powered Financial Clarity for the Whole Household with Advanced Tax Management
 
+> **Design Reference**: See [websitelook.md](./websitelook.md) for complete UI specification  
+> **Progress Tracker**: See [PROGRESS_TRACKER.md](./PROGRESS_TRACKER.md) for current status
+
 ---
+
+## 📊 Project Scope Summary (from websitelook.md)
+
+| Metric | Count |
+|--------|-------|
+| **User App Pages** | 18 |
+| **Admin Panel Pages** | 8 |
+| **Total Pages** | 26 |
+| **Database Tables** | 16 |
+| **AI Agents** | 5 |
+| **Image States** | 45 |
+
+### Phase-to-Page Mapping:
+| Phase | Pages Implemented |
+|-------|-------------------|
+| Phase 1 | Infrastructure (16 tables) |
+| Phase 1.5 | Admin A.1-A.8 |
+| Phase 2 | Auth 1.1-1.3 |
+| Phase 3 | Household 5 |
+| Phase 4 | Transactions 3, Income 4 |
+| Phase 5 | AI Element 3.3 |
+| Phase 6 | Reports 6, AI Advisor 8 |
+| Phase 7 | Dashboard 2, Goals 7, Settings 9 |
+| Phase 8-10 | Testing & Deployment |
 
 ## Hackathon Judging Criteria - How We Address Each
 

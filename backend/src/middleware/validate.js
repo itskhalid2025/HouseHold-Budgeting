@@ -123,6 +123,51 @@ export const sendInvitationSchema = z.object({
   path: ["email"]
 });
 
+// =========== PHASE 4: TRANSACTIONS & INCOME ===========
+
+// Schema for adding a transaction
+export const addTransactionSchema = z.object({
+  description: z.string().min(1, "Description is required"),
+  amount: z.number().positive("Amount must be positive"),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be YYYY-MM-DD"),
+  merchant: z.string().optional(),
+  category: z.string().optional(),
+  subcategory: z.string().optional(),
+  type: z.enum(['NEED', 'WANT']).optional().default('NEED')
+});
+
+// Schema for updating a transaction
+export const updateTransactionSchema = z.object({
+  description: z.string().min(1).optional(),
+  amount: z.number().positive().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  merchant: z.string().optional(),
+  category: z.string().optional(),
+  subcategory: z.string().optional(),
+  type: z.enum(['NEED', 'WANT']).optional()
+});
+
+// Schema for adding income
+export const addIncomeSchema = z.object({
+  amount: z.number().positive("Amount must be positive"),
+  source: z.string().min(1, "Source is required"),
+  type: z.enum(['PRIMARY', 'VARIABLE', 'PASSIVE']),
+  frequency: z.enum(['ONE_TIME', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()
+});
+
+// Schema for updating income
+export const updateIncomeSchema = z.object({
+  amount: z.number().positive().optional(),
+  source: z.string().min(1).optional(),
+  type: z.enum(['PRIMARY', 'VARIABLE', 'PASSIVE']).optional(),
+  frequency: z.enum(['ONE_TIME', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).optional(),
+  startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
+  isActive: z.boolean().optional()
+});
+
 // Validation middleware factory
 /**
  * Validation middleware factory

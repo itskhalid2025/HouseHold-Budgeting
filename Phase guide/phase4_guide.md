@@ -2,7 +2,46 @@
 
 > **Duration**: Days 8-10  
 > **Prerequisites**: Phase 3 completed (households working)  
-> **Goal**: Implement transaction and income CRUD with voice/text input, loans, and bill splitting
+> **Goal**: Implement transaction and income CRUD with voice/text input, loans, and bill splitting  
+> **Status**: ❌ **NOT STARTED** (0%)
+
+---
+
+## 📋 websitelook.md Alignment
+
+This phase implements **Screens 3 and 4** from `websitelook.md`.
+
+| Page # | Page Name | Status | Description |
+|--------|-----------|--------|-------------|
+| 3 | Transactions | ❌ | Expense tracking with filters |
+| 4 | Income | ❌ | Income sources and tracking |
+
+### Screen 3 Elements (Transactions):
+| Element | Description | Status |
+|---------|-------------|--------|
+| 3.1 | Filter Bar | ❌ | Date range, category, type filters |
+| 3.2 | Transaction List | ❌ | Cards with amount, category, date |
+| 3.3 | AI Categorization Badge | ❌ | Accept/Edit buttons for AI suggestions |
+| 3.4 | Add Transaction Modal | ❌ | Form with all fields |
+| 3.5 | Floating Add Button | ❌ | FAB for quick add |
+| 3.6 | Voice Input Modal | ❌ | Microphone button, listening state |
+
+### Screen 4 Elements (Income):
+| Element | Description | Status |
+|---------|-------------|--------|
+| 4.1 | Income Summary Card | ❌ | Total monthly income |
+| 4.2 | Income Sources List | ❌ | Salary, freelance, etc. |
+| 4.3 | Add Income Modal | ❌ | Frequency options |
+
+### Image States (9 total):
+**Screen 3**: Empty, List View, Filter Applied, Add Modal, Voice Listening, Voice Ready  
+**Screen 4**: Empty, Income List, Add Income Modal
+
+### Database Tables Used:
+- Transaction (Table #5)
+- Income (Table #6)
+- Loan (Table #10)
+- BillSplit (Table #11)
 
 ---
 

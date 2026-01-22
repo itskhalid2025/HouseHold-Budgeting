@@ -2,7 +2,37 @@
 
 > **Duration**: Days 11-13  
 > **Prerequisites**: Phase 4 completed (transactions working)  
-> **Goal**: Implement smart AI categorization with Opik evaluation and advanced transaction detection
+> **Goal**: Implement smart AI categorization with Opik evaluation and advanced transaction detection  
+> **Status**: ❌ **NOT STARTED** (0%)
+
+---
+
+## 📋 websitelook.md Alignment
+
+This phase implements AI features visible in **Element 3.3** from `websitelook.md`.
+
+| websitelook.md Element | Description | Status |
+|------------------------|-------------|--------|
+| 3.3 AI Categorization Badge | Shows AI suggestion with Accept/Edit | ❌ |
+
+### AI Features This Phase Implements:
+| Feature | User-Facing Element | Status |
+|---------|---------------------|--------|
+| Auto-categorization | Badge shows category guess | ❌ |
+| Confidence scoring | Icon shows AI confidence level | ❌ |
+| Accept suggestion | "Accept" button on transaction | ❌ |
+| Override suggestion | "Edit" button opens category picker | ❌ |
+| User correction learning | Stored in UserCategoryOverride table | ❌ |
+
+### Backend Components:
+- [ ] `agents/categorizationAgent.js` - Gemini-powered classifier
+- [ ] `services/geminiService.js` - API wrapper
+- [ ] Golden dataset (200 samples)
+- [ ] Opik evaluation pipeline
+
+### Database Tables Used:
+- Category (Table #7)
+- UserCategoryOverride (Table #13)
 
 ---
 

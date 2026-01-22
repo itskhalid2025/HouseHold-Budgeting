@@ -2,7 +2,50 @@
 
 > **Duration**: Days 17-18  
 > **Prerequisites**: Phase 6 completed (AI agents working)  
-> **Goal**: Build the dashboard UI, chart rendering, Savings Dashboard, and PDF export
+> **Goal**: Build the dashboard UI, chart rendering, Savings Dashboard, and PDF export  
+> **Status**: ❌ **NOT STARTED** (0%)
+
+---
+
+## 📋 websitelook.md Alignment
+
+This phase implements **Screens 2, 7, and 9** from `websitelook.md`.
+
+| Page # | Page Name | Status | Description |
+|--------|-----------|--------|-------------|
+| 2 | Dashboard | ❌ | Main overview with charts |
+| 7 | Goals & Savings | ❌ | Sinking funds, emergency fund |
+| 9 | Settings | ❌ | User preferences |
+
+### Screen 2 Elements (Dashboard):
+| Element | Description | Status |
+|---------|-------------|--------|
+| 2.1 | Budget Pulse Card | ❌ | Needs/Wants/Savings overview |
+| 2.2 | Quick Stats | ❌ | This week/month spending |
+| 2.3 | Recent Transactions | ❌ | Last 5 transactions |
+| 2.4 | Trend Chart | ❌ | Line chart with Recharts |
+| 2.5 | Quick Actions | ❌ | Add Transaction, View Reports |
+
+### Screen 7 Elements (Goals & Savings):
+| Element | Description | Status |
+|---------|-------------|--------|
+| 7.1 | Sinking Funds List | ❌ | Goals with progress bars |
+| 7.2 | Emergency Fund | ❌ | Progress toward 3-6 months |
+| 7.3 | Recurring Expenses | ❌ | Subscriptions, memberships |
+| 7.4 | Add Fund Button | ❌ | Create new sinking fund |
+
+### Screen 9 Elements (Settings):
+| Element | Description | Status |
+|---------|-------------|--------|
+| 9.1 | Profile Section | ❌ | Name, email, avatar |
+| 9.2 | Notifications | ❌ | Toggle preferences |
+| 9.3 | Currency | ❌ | Preferred currency selector |
+| 9.4 | Account Actions | ❌ | Logout, delete account |
+
+### Image States (11 total):
+**Screen 2**: Empty, With Data, Loading, Mobile View  
+**Screen 7**: No Goals, With Goals, Add Goal Modal, Fund Details  
+**Screen 9**: Default, Editing Profile, Confirm Delete
 
 ---
 

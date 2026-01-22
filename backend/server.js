@@ -15,6 +15,8 @@ import adminRoutes from './src/routes/adminRoutes.js';
 import authRoutes from './src/routes/auth.js';
 import householdRoutes from './src/routes/households.js';
 import invitationRoutes from './src/routes/invitations.js';
+import transactionRoutes from './src/routes/transactions.js';
+import incomeRoutes from './src/routes/incomes.js';
 import { authenticate } from './src/middleware/auth.js';
 
 const app = express();
@@ -26,6 +28,7 @@ app.use(helmet({
 }));
 app.use(cors({ origin: config.cors.origin }));
 app.use(express.json());
+
 app.use(morgan('dev'));
 
 // Swagger Documentation
@@ -35,7 +38,9 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/households', authenticate, householdRoutes);
-app.use('/api/invitations', invitationRoutes); // Auth handled internally or via middleware in router
+app.use('/api/invitations', invitationRoutes);
+app.use('/api/transactions', transactionRoutes);
+app.use('/api/incomes', incomeRoutes);
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
