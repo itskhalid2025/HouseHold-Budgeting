@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
 import { getTransactionSummary, getMonthlyIncomeTotal, getGoalSummary } from '../api/api';
 import usePolling from '../hooks/usePolling';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../utils/currencyUtils';
 import './Dashboard.css';
 
 export default function Dashboard() {
+    const { currency } = useAuth();
     const [stats, setStats] = useState({
         income: 0,
         expenses: 0,
@@ -70,17 +73,17 @@ export default function Dashboard() {
             <div className="stats-grid">
                 <div className="stat-card">
                     <h3>Total Income</h3>
-                    <p className="amount income">${stats.income.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="amount income">{formatCurrency(stats.income, currency)}</p>
                 </div>
                 <div className="stat-card">
                     <h3>Total Expenses</h3>
-                    <p className="amount expense">${stats.expenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                    <p className="amount expense">{formatCurrency(stats.expenses, currency)}</p>
                 </div>
 
                 <div className="stat-card">
                     <h3>Goals Saved</h3>
                     <p className="amount savings-positive">
-                        ${stats.totalSaved.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(stats.totalSaved, currency)}
                     </p>
                 </div>
             </div>

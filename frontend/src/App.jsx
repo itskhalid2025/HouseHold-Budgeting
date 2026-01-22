@@ -1,4 +1,5 @@
-import { BrowserRouter as Router, Routes, Route, NavLink } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 
@@ -19,6 +20,24 @@ import './App.css';
 // Header component with auth state
 function Header() {
   const { isAuthenticated, user, logout } = useAuth();
+  const [showMenu, setShowMenu] = useState(false);
+  const navigate = useNavigate();
+
+  const handleNavigate = (tab) => {
+    setShowMenu(false);
+    navigate('/settings', { state: { tab } });
+  };
+
+  // Click outside listener
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (!event.target.closest('.user-menu-container')) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className="app-header">
@@ -49,9 +68,41 @@ function Header() {
                 Settings
               </NavLink>
             </nav>
-            <div className="user-menu">
-              <span className="user-name">{user?.firstName || 'User'}</span>
-              <button onClick={logout} className="logout-btn">Logout</button>
+            <div className="user-menu-container">
+              <div
+                className="user-menu-trigger"
+                onClick={() => setShowMenu(!showMenu)}
+              >
+                <div className="user-avatar-circle">
+                  {(user?.firstName?.[0] || 'U').toUpperCase()}
+                </div>
+              </div>
+
+              {showMenu && (
+                <div className="dropdown-menu">
+                  <div className="dropdown-header">
+                    <div className="dropdown-user-name">{user?.firstName} {user?.lastName}</div>
+                    <div className="dropdown-user-email">{user?.email}</div>
+                  </div>
+                  <div className="dropdown-divider"></div>
+                  <button onClick={() => handleNavigate('profile')} className="dropdown-item">
+                    Profile settings
+                  </button>
+                  <button onClick={() => handleNavigate('household')} className="dropdown-item">
+                    Household management
+                  </button>
+                  <button onClick={() => handleNavigate('notifications')} className="dropdown-item">
+                    Notification preferences
+                  </button>
+                  <button onClick={() => handleNavigate('household')} className="dropdown-item">
+                    Currency settings
+                  </button>
+                  <div className="dropdown-divider"></div>
+                  <button onClick={logout} className="dropdown-item danger">
+                    Logout
+                  </button>
+                </div>
+              )}
             </div>
           </>
         ) : (
@@ -65,7 +116,7 @@ function Header() {
           </nav>
         )}
       </div>
-    </header>
+    </header >
   );
 }
 

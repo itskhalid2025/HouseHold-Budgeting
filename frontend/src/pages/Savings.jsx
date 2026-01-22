@@ -10,8 +10,10 @@ import { useAuth } from '../context/AuthContext';
 import usePolling from '../hooks/usePolling';
 import './Savings.css';
 
+import { formatCurrency } from '../utils/currencyUtils';
+
 export default function Savings() {
-    const { user } = useAuth();
+    const { user, currency } = useAuth();
     const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR'; // For Add Button
 
     const [goals, setGoals] = useState([]);
@@ -167,8 +169,8 @@ export default function Savings() {
                     <p className="summary-subtitle">Across all active goals</p>
                 </div>
                 <div className="summary-right">
-                    <span className="total-amount">${parseFloat(summary.totalSaved).toLocaleString()}</span>
-                    <span className="total-target">Goal: ${parseFloat(summary.totalTarget).toLocaleString()}</span>
+                    <span className="total-amount">{formatCurrency(summary.totalSaved, currency)}</span>
+                    <span className="total-target">Goal: {formatCurrency(summary.totalTarget, currency)}</span>
                 </div>
             </div>
 
@@ -237,8 +239,8 @@ export default function Savings() {
 
                                     <div className="savings-progress">
                                         <div className="progress-header">
-                                            <span>${parseFloat(goal.currentAmount).toLocaleString()}</span>
-                                            <span>{Math.round(percent)}% of ${parseFloat(goal.targetAmount).toLocaleString()}</span>
+                                            <span>{formatCurrency(goal.currentAmount, currency)}</span>
+                                            <span>{Math.round(percent)}% of {formatCurrency(goal.targetAmount, currency)}</span>
                                         </div>
                                         <div className="progress-bar-bg">
                                             <div

@@ -132,6 +132,15 @@ export async function getHousehold() {
     return handleResponse(response);
 }
 
+export async function updateHousehold(data) {
+    const response = await fetch(`${API_BASE_URL}/households`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+}
+
 export async function joinHousehold(inviteCode) {
     const response = await fetch(`${API_BASE_URL}/households/join`, {
         method: 'POST',

@@ -117,6 +117,7 @@ model Household {
   
   adminId           String   @map("admin_id")
   admin             User     @relation("HouseholdAdmin", fields: [adminId], references: [id])
+  currency          String   @default("USD")
   
   lastModifiedAt    DateTime @default(now()) @map("last_modified_at")
   createdAt         DateTime @default(now()) @map("created_at")

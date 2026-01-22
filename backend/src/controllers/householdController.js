@@ -178,15 +178,20 @@ export const getHousehold = async (req, res) => {
 export const updateHousehold = async (req, res) => {
     try {
         const { householdId } = req.user;
-        const { name } = req.body;
+        const { name, currency } = req.body;
 
         // Check permissions (Middleware should handle this usually, but double checking logic or relying on route middleware)
         // Assuming authorize('OWNER') middleware usage, but let's check ownership
         // Schema says OWNER, EDITOR, VIEWER. Assuming OWNER is the "Admin".
 
+        // Construct update data
+        const data = {};
+        if (name) data.name = name;
+        if (currency) data.currency = currency;
+
         const updatedHousehold = await prisma.household.update({
             where: { id: householdId },
-            data: { name }
+            data
         });
 
         return res.status(200).json({

@@ -62,6 +62,7 @@ const router = Router();
  */
 router.post('/', validate(createHouseholdSchema), createHousehold);
 router.get('/', getHousehold);
+router.put('/', validate(updateHouseholdSchema), updateHousehold);
 
 /**
  * @swagger

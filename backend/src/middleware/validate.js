@@ -100,7 +100,8 @@ export const createHouseholdSchema = z.object({
 
 // Schema for updating a household
 export const updateHouseholdSchema = z.object({
-  name: z.string().min(2, { message: 'Household name must be at least 2 characters' }).max(50)
+  name: z.string().min(2, { message: 'Household name must be at least 2 characters' }).max(50).optional(),
+  currency: z.string().length(3).optional()
 });
 
 // Schema for joining via code

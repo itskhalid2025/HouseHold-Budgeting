@@ -1,11 +1,23 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { getToken, getUser, setToken, setUser, clearToken, getMe } from '../api/api';
+import { getToken, getUser, setToken, setUser, clearToken, getMe, getHousehold } from '../api/api';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
     const [user, setUserState] = useState(null);
     const [loading, setLoading] = useState(true);
+
+    const [household, setHouseholdState] = useState(null);
+
+    const refreshHousehold = async () => {
+        try {
+            const data = await getHousehold();
+            setHouseholdState(data.household);
+            return data.household;
+        } catch (err) {
+            console.error('Failed to refresh household', err);
+        }
+    };
 
     useEffect(() => {
         // Check for existing session on mount
@@ -15,10 +27,14 @@ export function AuthProvider({ children }) {
                 .then((data) => {
                     setUserState(data.user);
                     setUser(data.user);
+                    if (data.user.householdId) {
+                        return getHousehold().then(hData => setHouseholdState(hData.household));
+                    }
                 })
                 .catch(() => {
                     clearToken();
                     setUserState(null);
+                    setHouseholdState(null);
                 })
                 .finally(() => setLoading(false));
         } else {
@@ -30,11 +46,15 @@ export function AuthProvider({ children }) {
         setToken(token);
         setUser(userData);
         setUserState(userData);
+        if (userData.householdId) {
+            refreshHousehold();
+        }
     };
 
     const logout = () => {
         clearToken();
         setUserState(null);
+        setHouseholdState(null);
     };
 
     const updateUser = (userData) => {
@@ -43,7 +63,17 @@ export function AuthProvider({ children }) {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, logout, updateUser, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{
+            user,
+            household,
+            currency: household?.currency || 'USD',
+            loading,
+            login,
+            logout,
+            updateUser,
+            refreshHousehold,
+            isAuthenticated: !!user
+        }}>
             {children}
         </AuthContext.Provider>
     );
