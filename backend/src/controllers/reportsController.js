@@ -130,12 +130,16 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd) {
         }
     });
 
-    // Determine Top Category for each user
+    // Determine Top Category for each user and attach full breakdown
     Object.keys(userCategoryCounts).forEach(userId => {
         const categories = userCategoryCounts[userId];
-        const topCat = Object.entries(categories).sort((a, b) => b[1] - a[1])[0];
-        if (topCat && userMap[userId]) {
-            userMap[userId].topCategory = topCat[0];
+        const sortedCats = Object.entries(categories)
+            .map(([category, amount]) => ({ category, amount }))
+            .sort((a, b) => b.amount - a.amount);
+
+        if (userMap[userId]) {
+            userMap[userId].topCategory = sortedCats[0]?.category || 'N/A';
+            userMap[userId].categories = sortedCats; // Attach full list for charts
         }
     });
 

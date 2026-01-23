@@ -142,7 +142,15 @@ Generate a financial report in VALID JSON format with these exact fields:
                 wants: u.wants,
                 savings: u.savings,
                 percentage: totalSpent > 0 ? ((u.spent / totalSpent) * 100).toFixed(1) : '0',
-                topCategory: u.topCategory || 'N/A'
+                topCategory: u.topCategory || 'N/A',
+                categories: u.categories?.slice(0, 6).map((cat, i) => {
+                    const colors = ['#3b82f6', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b', '#06b6d4'];
+                    return {
+                        name: cat.category,
+                        value: cat.amount,
+                        color: colors[i % colors.length]
+                    };
+                }) || []
             }));
 
             logSuccess('reportAgent', 'generateReport', { title: reportContent.title });

@@ -18,7 +18,7 @@ import {
 } from 'recharts';
 import {
     FileText, Download, TrendingUp, TrendingDown,
-    DollarSign, Users, RefreshCw, AlertCircle
+    DollarSign, Users, RefreshCw, AlertCircle, ChevronDown
 } from 'lucide-react';
 import { getLatestReport, generateReport } from '../api/api';
 import './Reports.css';
@@ -29,6 +29,8 @@ export default function Reports() {
     const [generating, setGenerating] = useState(false);
     const [activeTab, setActiveTab] = useState('weekly');
     const [error, setError] = useState('');
+    const [pieView, setPieView] = useState('all'); // 'all' or userId
+    const [pieViewOpen, setPieViewOpen] = useState(false);
 
     const COLORS = {
         needs: '#ef4444',
@@ -287,41 +289,90 @@ export default function Reports() {
                     )}
                 </div>
 
-                {/* Pie Chart: Top Categories */}
+                {/* Pie Chart: Top Categories with Toggle */}
                 <div className="chart-card">
-                    <h3 className="chart-title">Top Spending Categories</h3>
-                    {report.charts?.[1]?.data?.length > 0 ? (
-                        <div className="chart-container">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={report.charts[1].data}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={100}
-                                        paddingAngle={5}
-                                        dataKey="value"
-                                        stroke="none"
+                    <div className="stat-header" style={{ alignItems: 'flex-start', position: 'relative' }}>
+                        <div>
+                            <h3 className="chart-title" style={{ margin: 0 }}>Top Spending Categories</h3>
+                        </div>
+
+                        {/* View Toggle */}
+                        <div className="view-toggle-container">
+                            <button
+                                className="view-toggle-btn"
+                                onClick={() => setPieViewOpen(!pieViewOpen)}
+                            >
+                                {pieView === 'all' ? 'Total Household' : (report.byUser?.find(u => u.id === pieView)?.name || 'User')}
+                                <ChevronDown size={14} />
+                            </button>
+
+                            {pieViewOpen && (
+                                <div className="view-dropdown">
+                                    <div className="view-dropdown-title">Select View</div>
+                                    <div
+                                        className={`view-option ${pieView === 'all' ? 'active' : ''}`}
+                                        onClick={() => { setPieView('all'); setPieViewOpen(false); }}
                                     >
-                                        {report.charts[1].data.map((entry, index) => (
+                                        <div className="radio-circle"></div>
+                                        Total Household
+                                    </div>
+                                    {report.byUser?.map(u => (
+                                        <div
+                                            key={u.id}
+                                            className={`view-option ${pieView === u.id ? 'active' : ''}`}
+                                            onClick={() => { setPieView(u.id); setPieViewOpen(false); }}
+                                        >
+                                            <div className="radio-circle"></div>
+                                            {u.name}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="chart-container">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={pieView === 'all'
+                                        ? report.charts.find(c => c.title === 'Top Categories')?.data
+                                        : (report.byUser?.find(u => u.id === pieView)?.categories || [])}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={5}
+                                >
+                                    {(pieView === 'all'
+                                        ? report.charts.find(c => c.title === 'Top Categories')?.data
+                                        : (report.byUser?.find(u => u.id === pieView)?.categories || [])
+                                    )?.map(
+                                        (entry, index) => (
                                             <Cell key={`cell-${index}`} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                    <Tooltip
-                                        formatter={(value) => `$${value.toLocaleString()}`}
-                                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
-                                        itemStyle={{ color: '#fff' }}
-                                    />
-                                    <Legend iconType="circle" />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    ) : (
-                        <div className="no-data">
-                            No data available
-                        </div>
-                    )}
+                                        )
+                                    )}
+                                </Pie>
+                                <Tooltip
+                                    formatter={(value) => `$${value.toLocaleString()}`}
+                                    contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
+                                    itemStyle={{ color: '#fff' }}
+                                />
+                                <Legend
+                                    verticalAlign="bottom"
+                                    height={36}
+                                    formatter={(value) => <span style={{ color: '#cbd5e1' }}>{value}</span>}
+                                />
+                            </PieChart>
+                        </ResponsiveContainer>
+                        {(pieView !== 'all' && (!report.byUser?.find(u => u.id === pieView)?.categories?.length)) && (
+                            <div className="no-data" style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'rgba(30, 41, 59, 0.8)' }}>
+                                No expenses tracked
+                            </div>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -372,40 +423,59 @@ export default function Reports() {
                         <Users className="text-gray-400" size={20} />
                     </div>
                     <div className="breakdown-grid" style={{ gridTemplateColumns: '1fr', marginTop: '1.5rem' }}>
-                        {report.byUser?.map((user, i) => (
-                            <div key={i} className="member-card">
-                                <div className="member-header">
-                                    <div className="member-info">
-                                        <div className="member-avatar">
-                                            {user.name[0]}
-                                        </div>
-                                        <div>
-                                            <p className="member-name">{user.name} <span className="member-role">{user.role}</span></p>
-                                            <p className="member-income">Income: ${user.income?.toLocaleString() || 0}</p>
-                                        </div>
-                                    </div>
-                                    <div className="member-stats">
-                                        <p className="member-amount">${user.spent.toLocaleString()}</p>
-                                        <p className="member-percent">{user.percentage}% of total spent</p>
-                                    </div>
-                                </div>
+                        {report.byUser?.map((user, i) => {
+                            // Calculate percentages for the bar
+                            const total = user.spent || 1;
+                            const needsPct = ((user.needs || 0) / total) * 100;
+                            const wantsPct = ((user.wants || 0) / total) * 100;
+                            const savingsPct = ((user.savings || 0) / total) * 100;
 
-                                <div className="member-breakdown-row">
-                                    <div className="breakdown-item text-needs">
-                                        Needs
-                                        <strong>${user.needs?.toLocaleString() || 0}</strong>
+                            return (
+                                <div key={i} className="member-card">
+                                    <div className="member-header">
+                                        <div className="member-info">
+                                            <div className="member-avatar">
+                                                {user.name[0]}
+                                            </div>
+                                            <div>
+                                                <p className="member-name">{user.name} <span className="member-role">{user.role}</span></p>
+                                                <span className="member-income-label">
+                                                    Income: <span className="member-income-value">${user.income?.toLocaleString() || 0}</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div className="member-stats">
+                                            <p className="member-amount">${user.spent.toLocaleString()}</p>
+                                            <p className="member-percent">{user.percentage}% of total spent</p>
+                                        </div>
                                     </div>
-                                    <div className="breakdown-item text-wants">
-                                        Wants
-                                        <strong>${user.wants?.toLocaleString() || 0}</strong>
-                                    </div>
-                                    <div className="breakdown-item text-savings">
-                                        Savings
-                                        <strong>${user.savings?.toLocaleString() || 0}</strong>
+
+                                    {/* Stacked Progress Bar */}
+                                    <div className="stacked-progress-container">
+                                        <div className="stacked-bar">
+                                            <div className="bar-segment bg-needs" style={{ width: `${needsPct}%` }} title={`Needs: $${user.needs}`}></div>
+                                            <div className="bar-segment bg-wants" style={{ width: `${wantsPct}%` }} title={`Wants: $${user.wants}`}></div>
+                                            <div className="bar-segment bg-savings" style={{ width: `${savingsPct}%` }} title={`Savings: $${user.savings}`}></div>
+                                        </div>
+
+                                        <div className="legend-row">
+                                            <div className="legend-item">
+                                                <span className="dot bg-needs"></span>
+                                                Needs <span className="legend-value">${user.needs?.toLocaleString() || 0}</span>
+                                            </div>
+                                            <div className="legend-item">
+                                                <span className="dot bg-wants"></span>
+                                                Wants <span className="legend-value">${user.wants?.toLocaleString() || 0}</span>
+                                            </div>
+                                            <div className="legend-item">
+                                                <span className="dot bg-savings"></span>
+                                                Savings <span className="legend-value">${user.savings?.toLocaleString() || 0}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         {(!report.byUser || report.byUser.length === 0) && (
                             <div className="no-data">
                                 No member data available
