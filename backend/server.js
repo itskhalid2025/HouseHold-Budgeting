@@ -51,6 +51,8 @@ import incomeRoutes from './src/routes/incomes.js';
 import goalRoutes from './src/routes/goals.js';
 import joinRequestRoutes from './src/routes/joinRequests.js';
 import smartRoutes from './src/routes/smartRoutes.js';
+import reportsRoutes from './src/routes/reports.js';
+import advisorRoutes from './src/routes/advisor.js';
 
 // Middleware imports
 import { authenticate } from './src/middleware/auth.js';
@@ -87,6 +89,8 @@ app.use('/api/incomes', incomeRoutes);
 app.use('/api/goals', authenticate, goalRoutes); // Goals/Savings routes
 app.use('/api/join-requests', joinRequestRoutes);
 app.use('/api/smart', authenticate, smartRoutes);
+app.use('/api/reports', reportsRoutes); // Phase 6: AI Reports
+app.use('/api/advisor', advisorRoutes); // Phase 6: AI Advisor
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

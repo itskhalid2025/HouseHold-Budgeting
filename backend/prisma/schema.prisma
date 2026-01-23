@@ -133,6 +133,7 @@ model Household {
   recurringExpenses RecurringExpense[]
   loans             Loan[]
   splitExpenses     SplitExpense[]
+  reports           Report[]
   
   @@map("households")
 }
@@ -251,6 +252,25 @@ model Goal {
 // ========================================
 // NEW MODELS FOR ADVANCED FEATURES
 // ========================================
+
+// PHASE 6: AI REPORTS MODEL
+
+model Report {
+  id            String    @id @default(uuid())
+  
+  householdId   String    @map("household_id")
+  household     Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  
+  type          String    // "weekly", "monthly", "custom"
+  dateStart     DateTime  @map("date_start") @db.Date
+  dateEnd       DateTime  @map("date_end") @db.Date
+  
+  content       Json      // Full report JSON from AI
+  createdAt     DateTime  @default(now()) @map("created_at")
+  
+  @@index([householdId, createdAt])
+  @@map("reports")
+}
 
 model CustomCategory {
   id                String       @id @default(uuid())

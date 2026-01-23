@@ -93,13 +93,14 @@ export default function Dashboard() {
                 fetchDashboardData(); // Refresh dashboard stats
 
                 // Enhanced feedback for single vs multiple entries
+                const today = new Date().toLocaleDateString();
                 if (parsed.count && parsed.count > 1) {
                     const entryList = parsed.entries.map((e, i) =>
                         `${i + 1}. ${e.classification.description}: $${e.record.amount}`
                     ).join('\n');
-                    alert(`✅ Successfully added ${parsed.count} transactions!\n\n${entryList}\n\nTotal: $${parsed.amount}`);
+                    alert(`✅ Successfully added ${parsed.count} transactions on ${today}!\n\n${entryList}\n\nTotal: $${parsed.amount}`);
                 } else {
-                    alert(`✅ Successfully added!\n\nCreated ${parsed.type || 'Record'}: ${parsed.description} ($${parsed.amount})`);
+                    alert(`✅ Successfully added on ${today}!\n\nCreated ${parsed.type || 'Record'}: ${parsed.description} ($${parsed.amount})`);
                 }
             } else {
                 alert("Could not automatically create record. Please try again.");

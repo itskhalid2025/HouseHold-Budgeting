@@ -14,6 +14,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import Household from './pages/Household';
 import Income from './pages/Income';
 import Savings from './pages/Savings';
+import Advisor from './pages/Advisor';
 
 import './App.css';
 
@@ -63,6 +64,9 @@ function Header() {
               </NavLink>
               <NavLink to="/reports" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
                 Reports
+              </NavLink>
+              <NavLink to="/advisor" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                AI Advisor
               </NavLink>
               <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
                 Settings
@@ -156,6 +160,11 @@ function AppContent() {
           <Route path="/reports" element={
             <ProtectedRoute>
               <Reports />
+            </ProtectedRoute>
+          } />
+          <Route path="/advisor" element={
+            <ProtectedRoute>
+              <Advisor />
             </ProtectedRoute>
           } />
           <Route path="/settings" element={

@@ -431,6 +431,90 @@ export async function parseVoiceInput(transcript) {
     return result;
 }
 
+// ================== PHASE 6: REPORTS API ==================
+
+export async function getReports() {
+    console.log('📊 Fetching reports');
+    const response = await fetch(`${API_BASE_URL}/reports`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function getLatestReport(type = 'weekly') {
+    console.log('📊 Fetching latest report:', type);
+    const response = await fetch(`${API_BASE_URL}/reports/latest?type=${type}`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function generateReport(reportType = 'weekly', dateStart = null, dateEnd = null) {
+    console.log('📊 Generating report:', reportType);
+    const response = await fetch(`${API_BASE_URL}/reports/generate`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ reportType, dateStart, dateEnd })
+    });
+    return handleResponse(response);
+}
+
+export async function getReportById(id) {
+    console.log('📊 Fetching report:', id);
+    const response = await fetch(`${API_BASE_URL}/reports/${id}`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+// ================== PHASE 6: ADVISOR API ==================
+
+export async function chatWithAdvisor(message, conversationId = null) {
+    console.log('🤖 Sending to advisor:', message.substring(0, 50));
+    const response = await fetch(`${API_BASE_URL}/advisor/chat`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ message, conversationId })
+    });
+    return handleResponse(response);
+}
+
+export async function getRecommendations() {
+    console.log('💡 Getting recommendations');
+    const response = await fetch(`${API_BASE_URL}/advisor/recommendations`, {
+        method: 'POST',
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function generateChartConfig(query) {
+    console.log('📈 Generating chart config:', query);
+    const response = await fetch(`${API_BASE_URL}/advisor/chart`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ query })
+    });
+    return handleResponse(response);
+}
+
+export async function getConversationHistory(conversationId) {
+    console.log('📜 Getting conversation history');
+    const response = await fetch(`${API_BASE_URL}/advisor/history/${conversationId}`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function clearConversation(conversationId) {
+    console.log('🗑️ Clearing conversation');
+    const response = await fetch(`${API_BASE_URL}/advisor/conversation/${conversationId}`, {
+        method: 'DELETE',
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
 export default {
     register,
     login,
@@ -470,5 +554,15 @@ export default {
     parseVoiceInput,
     getToken,
     getUser,
-    clearToken
+    clearToken,
+    // Phase 6
+    getReports,
+    getLatestReport,
+    generateReport,
+    getReportById,
+    chatWithAdvisor,
+    getRecommendations,
+    generateChartConfig,
+    getConversationHistory,
+    clearConversation
 };

@@ -116,7 +116,7 @@ export async function categorizeEntry(text) {
 
             console.log('🤖 [AI Prompt Preview]:', prompt.substring(0, 300) + '...');
 
-            const data = await generateJSON(prompt);
+            const data = await generateJSON(prompt, null, { maxTokens: 4096 });
             console.log('🤖 AI Categorization Result:', JSON.stringify(data, null, 2));
 
             // Ensure we always return the entries array

@@ -84,12 +84,17 @@ export async function generateContent(prompt, options = {}) {
         } catch (error) {
             console.error(`Gemini API error (attempt ${attempt}):`, error.message);
 
-            // Handle rate limits by rotating key if possible
-            if (error.message?.includes('RATE_LIMIT')) {
-                console.log(`⚠️ Rate limit hit on key #${currentKeyIndex + 1}`);
+            // Handle rate limits and quota exhaustion by rotating key if possible
+            const isRateLimitOrQuota = error.message?.includes('RATE_LIMIT') ||
+                error.message?.includes('429') ||
+                error.message?.includes('quota') ||
+                error.message?.includes('Too Many Requests');
+
+            if (isRateLimitOrQuota) {
+                console.log(`⚠️ Rate limit/quota hit on key #${currentKeyIndex + 1}`);
 
                 if (rotateKey()) {
-                    console.log('Retrying with new API key...');
+                    console.log('🔄 Retrying with new API key...');
                     continue;
                 }
 
@@ -117,10 +122,10 @@ export async function generateContent(prompt, options = {}) {
  * @param {object} schema - Optional JSON schema for validation
  * @returns {Promise<object>} - Parsed JSON object
  */
-export async function generateJSON(prompt, schema = null) {
+export async function generateJSON(prompt, schema = null, options = {}) {
     const fullPrompt = `${prompt}\n\nReturn ONLY valid JSON, no markdown formatting or explanations.`;
 
-    const response = await generateContent(fullPrompt);
+    const response = await generateContent(fullPrompt, options);
 
     try {
         // Remove markdown code blocks if present
