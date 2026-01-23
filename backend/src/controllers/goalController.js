@@ -10,20 +10,24 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
 const prisma = new PrismaClient();
 
 // Add a new savings goal
 export const createGoal = async (req, res) => {
+    logEntry('goalController', 'createGoal', req.body);
     try {
         const { name, targetAmount, currentAmount, type, deadline } = req.body;
         const userId = req.user.id;
         const householdId = req.user.householdId;
 
         if (!householdId) {
+            logError('goalController', 'createGoal', new Error('User must belong to a household'));
             return res.status(400).json({ error: 'User must belong to a household to create goals' });
         }
 
+        logDB('create', 'Goal', { name });
         const goal = await prisma.goal.create({
             data: {
                 householdId,
@@ -37,20 +41,23 @@ export const createGoal = async (req, res) => {
             }
         });
 
+        logSuccess('goalController', 'createGoal', { id: goal.id });
         res.status(201).json({ success: true, goal });
     } catch (error) {
-        console.error('Error creating goal:', error);
+        logError('goalController', 'createGoal', error);
         res.status(500).json({ error: 'Failed to create goal' });
     }
 };
 
 // Get all goals for the household
 export const getGoals = async (req, res) => {
+    logEntry('goalController', 'getGoals', req.query);
     try {
         const householdId = req.user.householdId;
         const { active } = req.query;
 
         if (!householdId) {
+            logError('goalController', 'getGoals', new Error('User must belong to a household'));
             return res.status(400).json({ error: 'User must belong to a household' });
         }
 
@@ -59,6 +66,7 @@ export const getGoals = async (req, res) => {
             where.isActive = active === 'true';
         }
 
+        logDB('findMany', 'Goal', { householdId });
         const goals = await prisma.goal.findMany({
             where,
             orderBy: { createdAt: 'desc' },
@@ -73,15 +81,17 @@ export const getGoals = async (req, res) => {
             }
         });
 
+        logSuccess('goalController', 'getGoals', { count: goals.length });
         res.json({ success: true, goals });
     } catch (error) {
-        console.error('Error fetching goals:', error);
+        logError('goalController', 'getGoals', error);
         res.status(500).json({ error: 'Failed to fetch goals' });
     }
 };
 
 // Update a goal
 export const updateGoal = async (req, res) => {
+    logEntry('goalController', 'updateGoal', { id: req.params.id, ...req.body });
     try {
         const { id } = req.params;
         const householdId = req.user.householdId;
@@ -93,21 +103,20 @@ export const updateGoal = async (req, res) => {
         });
 
         if (!existingGoal || existingGoal.householdId !== householdId) {
+            logError('goalController', 'updateGoal', new Error('Goal not found'));
             return res.status(404).json({ error: 'Goal not found' });
         }
 
         // Permission check: Owner or Creator
         const isOwner = req.user.role === 'OWNER';
         const isCreator = existingGoal.createdById === req.user.id;
-        // If createdById is null (legacy), allow Owner or... maybe allow anyone? 
-        // Let's restrict to Owner if unknown creator, or allow Editor?
-        // User rule: "only the owner can do the edit... but the menber can only do its own"
-        // If creator is unknown, only Owner can edit.
 
         if (!isOwner && !isCreator) {
+            logError('goalController', 'updateGoal', new Error('Forbidden'));
             return res.status(403).json({ error: 'You can only edit your own savings goals' });
         }
 
+        logDB('update', 'Goal', { id });
         const updatedGoal = await prisma.goal.update({
             where: { id },
             data: {
@@ -120,15 +129,17 @@ export const updateGoal = async (req, res) => {
             }
         });
 
+        logSuccess('goalController', 'updateGoal', { id: updatedGoal.id });
         res.json({ success: true, goal: updatedGoal });
     } catch (error) {
-        console.error('Error updating goal:', error);
+        logError('goalController', 'updateGoal', error);
         res.status(500).json({ error: 'Failed to update goal' });
     }
 };
 
 // Delete a goal
 export const deleteGoal = async (req, res) => {
+    logEntry('goalController', 'deleteGoal', req.params);
     try {
         const { id } = req.params;
         const householdId = req.user.householdId;
@@ -139,6 +150,7 @@ export const deleteGoal = async (req, res) => {
         });
 
         if (!existingGoal || existingGoal.householdId !== householdId) {
+            logError('goalController', 'deleteGoal', new Error('Goal not found'));
             return res.status(404).json({ error: 'Goal not found' });
         }
 
@@ -147,29 +159,35 @@ export const deleteGoal = async (req, res) => {
         const isCreator = existingGoal.createdById === req.user.id;
 
         if (!isOwner && !isCreator) {
+            logError('goalController', 'deleteGoal', new Error('Forbidden'));
             return res.status(403).json({ error: 'You can only delete your own savings goals' });
         }
 
+        logDB('delete', 'Goal', { id });
         await prisma.goal.delete({
             where: { id }
         });
 
+        logSuccess('goalController', 'deleteGoal', { id });
         res.json({ success: true, message: 'Goal deleted successfully' });
     } catch (error) {
-        console.error('Error deleting goal:', error);
+        logError('goalController', 'deleteGoal', error);
         res.status(500).json({ error: 'Failed to delete goal' });
     }
 };
 
 // Get total savings summary
 export const getGoalSummary = async (req, res) => {
+    logEntry('goalController', 'getGoalSummary');
     try {
         const householdId = req.user.householdId;
 
         if (!householdId) {
+            logSuccess('goalController', 'getGoalSummary', 'No household');
             return res.json({ totalSaved: 0, totalTarget: 0 });
         }
 
+        logDB('findMany', 'Goal', { householdId, isActive: true });
         const goals = await prisma.goal.findMany({
             where: { householdId, isActive: true }
         });
@@ -177,13 +195,14 @@ export const getGoalSummary = async (req, res) => {
         const totalSaved = goals.reduce((sum, goal) => sum + Number(goal.currentAmount), 0);
         const totalTarget = goals.reduce((sum, goal) => sum + Number(goal.targetAmount), 0);
 
+        logSuccess('goalController', 'getGoalSummary', { totalSaved, totalTarget });
         res.json({
             totalSaved,
             totalTarget,
             count: goals.length
         });
     } catch (error) {
-        console.error('Error fetching goal summary:', error);
+        logError('goalController', 'getGoalSummary', error);
         res.status(500).json({ error: 'Failed to fetch summary' });
     }
 };

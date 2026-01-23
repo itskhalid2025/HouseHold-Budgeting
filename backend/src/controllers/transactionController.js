@@ -17,6 +17,8 @@
 
 import { PrismaClient } from '@prisma/client';
 import { traceOperation } from '../services/opikService.js';
+import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
+
 const prisma = new PrismaClient();
 
 /**
@@ -56,6 +58,7 @@ const prisma = new PrismaClient();
  */
 async function addTransaction(req, res) {
     return traceOperation('addTransaction', async () => {
+        logEntry('transactionController', 'addTransaction', req.body);
         try {
             const { description, amount, date, merchant, category, subcategory, type } = req.body;
             const userId = req.user.id;
@@ -64,6 +67,7 @@ async function addTransaction(req, res) {
 
             // VIEWER cannot add transactions
             if (userRole === 'VIEWER') {
+                logError('transactionController', 'addTransaction', new Error('Forbidden: Viewer attempted to add transaction'));
                 return res.status(403).json({
                     success: false,
                     error: 'Viewers cannot add transactions. Contact the household owner to upgrade your role.'
@@ -71,35 +75,27 @@ async function addTransaction(req, res) {
             }
 
             if (!householdId) {
+                logError('transactionController', 'addTransaction', new Error('No household ID'));
                 return res.status(400).json({
                     success: false,
                     error: 'You must be part of a household to add transactions'
                 });
             }
 
-            // Determine category - if not provided, will use AI in Phase 5
+            // Determine category
             let finalCategory = category || 'Uncategorized';
             let finalSubcategory = subcategory || null;
             let finalType = type || 'NEED';
             let aiCategorized = false;
             let confidence = null;
 
-            // Placeholder for AI categorization (Phase 5)
             if (!category) {
-                // TODO: In Phase 5, call AI categorization service here
-                // const aiResult = await categorizationAgent.categorize(description, merchant, amount);
-                // finalCategory = aiResult.category;
-                // finalSubcategory = aiResult.subcategory;
-                // finalType = aiResult.type;
-                // aiCategorized = true;
-                // confidence = aiResult.confidence;
-
-                // For now, default to Uncategorized
                 finalCategory = 'Uncategorized';
                 finalType = 'NEED';
             }
 
             // Create transaction
+            logDB('create', 'Transaction', { description });
             const transaction = await prisma.transaction.create({
                 data: {
                     householdId,
@@ -117,11 +113,13 @@ async function addTransaction(req, res) {
             });
 
             // Update household lastModifiedAt for polling
+            logDB('update', 'Household', { id: householdId });
             await prisma.household.update({
                 where: { id: householdId },
                 data: { lastModifiedAt: new Date() }
             });
 
+            logSuccess('transactionController', 'addTransaction', { id: transaction.id });
             res.status(201).json({
                 success: true,
                 transaction,
@@ -131,9 +129,9 @@ async function addTransaction(req, res) {
             return { success: true, transactionId: transaction.id };
 
         } catch (error) {
-            console.error('Add transaction error:', error);
+            logError('transactionController', 'addTransaction', error);
             res.status(500).json({ success: false, error: 'Failed to add transaction' });
-            throw error; // Re-throw for Opik to capture error
+            throw error;
         }
     }, { userId: req.user?.id, description: req.body?.description });
 }
@@ -144,10 +142,12 @@ async function addTransaction(req, res) {
  */
 async function listTransactions(req, res) {
     return traceOperation('listTransactions', async () => {
+        logEntry('transactionController', 'listTransactions', req.query);
         try {
             const householdId = req.user.householdId;
 
             if (!householdId) {
+                logError('transactionController', 'listTransactions', new Error('No household ID'));
                 return res.status(400).json({
                     success: false,
                     error: 'You must be part of a household to view transactions'
@@ -162,7 +162,7 @@ async function listTransactions(req, res) {
             // Build filter conditions
             const where = {
                 householdId,
-                deletedAt: null // Only get non-deleted transactions
+                deletedAt: null
             };
 
             // Date range filter
@@ -200,6 +200,7 @@ async function listTransactions(req, res) {
             }
 
             // Get transactions with pagination
+            logDB('findMany', 'Transaction', { householdId, page });
             const [transactions, total] = await Promise.all([
                 prisma.transaction.findMany({
                     where,
@@ -225,6 +226,7 @@ async function listTransactions(req, res) {
                 select: { lastModifiedAt: true }
             });
 
+            logSuccess('transactionController', 'listTransactions', { count: transactions.length, total });
             res.json({
                 success: true,
                 transactions,
@@ -240,7 +242,7 @@ async function listTransactions(req, res) {
             return { success: true, results: transactions.length };
 
         } catch (error) {
-            console.error('List transactions error:', error);
+            logError('transactionController', 'listTransactions', error);
             res.status(500).json({ success: false, error: 'Failed to list transactions' });
             throw error;
         }
@@ -252,10 +254,12 @@ async function listTransactions(req, res) {
  * GET /api/transactions/:id
  */
 async function getTransaction(req, res) {
+    logEntry('transactionController', 'getTransaction', req.params);
     try {
         const { id } = req.params;
         const householdId = req.user.householdId;
 
+        logDB('findFirst', 'Transaction', { id });
         const transaction = await prisma.transaction.findFirst({
             where: {
                 id,
@@ -275,13 +279,15 @@ async function getTransaction(req, res) {
         });
 
         if (!transaction) {
+            logError('transactionController', 'getTransaction', new Error('Not found'));
             return res.status(404).json({ success: false, error: 'Transaction not found' });
         }
 
+        logSuccess('transactionController', 'getTransaction', { id: transaction.id });
         res.json({ success: true, transaction });
 
     } catch (error) {
-        console.error('Get transaction error:', error);
+        logError('transactionController', 'getTransaction', error);
         res.status(500).json({ success: false, error: 'Failed to get transaction' });
     }
 }
@@ -291,6 +297,7 @@ async function getTransaction(req, res) {
  * PUT /api/transactions/:id
  */
 async function updateTransaction(req, res) {
+    logEntry('transactionController', 'updateTransaction', { id: req.params.id, ...req.body });
     try {
         const { id } = req.params;
         const { description, amount, date, merchant, category, subcategory, type } = req.body;
@@ -300,6 +307,7 @@ async function updateTransaction(req, res) {
 
         // VIEWER cannot update transactions
         if (userRole === 'VIEWER') {
+            logError('transactionController', 'updateTransaction', new Error('Forbidden: Viewer attempted to update'));
             return res.status(403).json({
                 success: false,
                 error: 'Viewers cannot update transactions'
@@ -316,6 +324,7 @@ async function updateTransaction(req, res) {
         });
 
         if (!existingTransaction) {
+            logError('transactionController', 'updateTransaction', new Error('Not found'));
             return res.status(404).json({ success: false, error: 'Transaction not found' });
         }
 
@@ -324,6 +333,7 @@ async function updateTransaction(req, res) {
         const isHouseholdOwner = userRole === 'OWNER';
 
         if (!isCreator && !isHouseholdOwner) {
+            logError('transactionController', 'updateTransaction', new Error('Forbidden: Permission denied'));
             return res.status(403).json({
                 success: false,
                 error: 'You can only update transactions you created'
@@ -336,6 +346,7 @@ async function updateTransaction(req, res) {
             category !== existingTransaction.category;
 
         // Update transaction
+        logDB('update', 'Transaction', { id });
         const transaction = await prisma.transaction.update({
             where: { id },
             data: {
@@ -351,11 +362,13 @@ async function updateTransaction(req, res) {
         });
 
         // Update household lastModifiedAt
+        logDB('update', 'Household', { id: householdId });
         await prisma.household.update({
             where: { id: householdId },
             data: { lastModifiedAt: new Date() }
         });
 
+        logSuccess('transactionController', 'updateTransaction', { id: transaction.id });
         res.json({
             success: true,
             transaction,
@@ -363,7 +376,7 @@ async function updateTransaction(req, res) {
         });
 
     } catch (error) {
-        console.error('Update transaction error:', error);
+        logError('transactionController', 'updateTransaction', error);
         res.status(500).json({ success: false, error: 'Failed to update transaction' });
     }
 }
@@ -373,6 +386,7 @@ async function updateTransaction(req, res) {
  * DELETE /api/transactions/:id
  */
 async function deleteTransaction(req, res) {
+    logEntry('transactionController', 'deleteTransaction', req.params);
     try {
         const { id } = req.params;
         const userId = req.user.id;
@@ -381,6 +395,7 @@ async function deleteTransaction(req, res) {
 
         // VIEWER cannot delete transactions
         if (userRole === 'VIEWER') {
+            logError('transactionController', 'deleteTransaction', new Error('Forbidden: Viewer attempted to delete'));
             return res.status(403).json({
                 success: false,
                 error: 'Viewers cannot delete transactions'
@@ -397,6 +412,7 @@ async function deleteTransaction(req, res) {
         });
 
         if (!existingTransaction) {
+            logError('transactionController', 'deleteTransaction', new Error('Not found'));
             return res.status(404).json({ success: false, error: 'Transaction not found' });
         }
 
@@ -405,6 +421,7 @@ async function deleteTransaction(req, res) {
         const isHouseholdOwner = userRole === 'OWNER';
 
         if (!isCreator && !isHouseholdOwner) {
+            logError('transactionController', 'deleteTransaction', new Error('Forbidden: Permission denied'));
             return res.status(403).json({
                 success: false,
                 error: 'You can only delete transactions you created'
@@ -412,24 +429,27 @@ async function deleteTransaction(req, res) {
         }
 
         // Soft delete
+        logDB('update', 'Transaction', { id, action: 'soft-delete' });
         await prisma.transaction.update({
             where: { id },
             data: { deletedAt: new Date() }
         });
 
         // Update household lastModifiedAt
+        logDB('update', 'Household', { id: householdId });
         await prisma.household.update({
             where: { id: householdId },
             data: { lastModifiedAt: new Date() }
         });
 
+        logSuccess('transactionController', 'deleteTransaction', { id });
         res.json({
             success: true,
             message: 'Transaction deleted successfully'
         });
 
     } catch (error) {
-        console.error('Delete transaction error:', error);
+        logError('transactionController', 'deleteTransaction', error);
         res.status(500).json({ success: false, error: 'Failed to delete transaction' });
     }
 }
@@ -439,10 +459,12 @@ async function deleteTransaction(req, res) {
  * GET /api/transactions/summary
  */
 async function getTransactionSummary(req, res) {
+    logEntry('transactionController', 'getTransactionSummary');
     try {
         const householdId = req.user.householdId;
 
         if (!householdId) {
+            logError('transactionController', 'getTransactionSummary', new Error('No household ID'));
             return res.status(400).json({
                 success: false,
                 error: 'You must be part of a household to view transaction summary'
@@ -458,6 +480,7 @@ async function getTransactionSummary(req, res) {
         const endDate = req.query.endDate ? new Date(req.query.endDate) : endOfMonth;
 
         // Aggregate transactions
+        logDB('aggregate', 'Transaction', { householdId, range: { startDate, endDate } });
         const [totalSpent, byCategory, byType] = await Promise.all([
             // Total spent
             prisma.transaction.aggregate({
@@ -495,6 +518,7 @@ async function getTransactionSummary(req, res) {
             })
         ]);
 
+        logSuccess('transactionController', 'getTransactionSummary', { totalSpent: totalSpent._sum.amount });
         res.json({
             success: true,
             summary: {
@@ -515,7 +539,7 @@ async function getTransactionSummary(req, res) {
         });
 
     } catch (error) {
-        console.error('Get summary error:', error);
+        logError('transactionController', 'getTransactionSummary', error);
         res.status(500).json({ success: false, error: 'Failed to get transaction summary' });
     }
 }

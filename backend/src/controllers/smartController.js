@@ -1,102 +1,147 @@
 import { traceOperation } from '../services/opikService.js';
 import { categorizeEntry } from '../agents/categorizationAgent.js';
 import { PrismaClient } from '@prisma/client';
+import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
 const prisma = new PrismaClient();
 
 /**
- * Process a smart entry (voice/text)
+ * Process a smart entry (voice/text) - can handle multiple transactions in one input
  * POST /api/smart/entry
  */
 export async function processSmartEntry(req, res) {
     return traceOperation('processSmartEntry', async () => {
+        logEntry('smartController', 'processSmartEntry', { length: req.body?.text?.length });
         try {
             const { text } = req.body;
             const userId = req.user.id;
             const householdId = req.user.householdId;
 
             if (!text) {
+                logError('smartController', 'processSmartEntry', new Error('Missing text'));
                 return res.status(400).json({ success: false, error: 'Text input is required' });
             }
 
             if (!householdId) {
+                logError('smartController', 'processSmartEntry', new Error('No household ID'));
                 return res.status(400).json({ success: false, error: 'Household required' });
             }
 
             // 1. Categorize using AI
-            const classification = await categorizeEntry(text);
-            console.log('🧠 AI Classification:', classification);
+            logSuccess('smartController', 'processSmartEntry', 'Calling AI classification agent');
+            const aiResponse = await categorizeEntry(text);
 
-            const { intent, type, amount, description, category, subcategory, date } = classification;
+            const { entries } = aiResponse;
 
-            // Validations
-            if (!amount || isNaN(amount)) {
+            if (!entries || entries.length === 0) {
+                logError('smartController', 'processSmartEntry', new Error('AI returned no valid entries'));
                 return res.status(422).json({
                     success: false,
-                    error: 'Could not extract a valid amount',
-                    classification
+                    error: 'No valid entries could be extracted from the input',
+                    aiResponse
                 });
             }
 
-            const entryDate = date ? new Date(date) : new Date();
+            const createdRecords = [];
+            const errors = [];
 
-            let createdRecord;
-            let tableName;
+            // 2. Process each entry
+            for (let i = 0; i < entries.length; i++) {
+                const classification = entries[i];
+                const { intent, type, amount, description, category, subcategory, date } = classification;
 
-            // 2. Route based on Intent
-            if (intent === 'INCOME') {
-                // Route to Income Table
-                createdRecord = await prisma.income.create({
-                    data: {
-                        householdId,
-                        userId,
-                        amount: parseFloat(amount),
-                        source: description || 'Income',
-                        type: mapIncomeType(category), // Need a mapper for "Primary" -> "PRIMARY"
-                        frequency: 'ONE_TIME', // Default for basic entry
-                        startDate: entryDate,
-                        isActive: true
+                // Validate amount
+                if (!amount || isNaN(amount)) {
+                    logError('smartController', 'processSmartEntry', new Error(`Invalid amount in entry ${i + 1}`));
+                    errors.push({
+                        index: i,
+                        error: 'Invalid amount',
+                        entry: classification
+                    });
+                    continue;
+                }
+
+                const entryDate = date ? new Date(date) : new Date();
+
+                try {
+                    let createdRecord;
+                    let tableName;
+
+                    // 3. Route based on Intent
+                    if (intent === 'INCOME') {
+                        logDB('create', 'Income', { description });
+                        createdRecord = await prisma.income.create({
+                            data: {
+                                householdId,
+                                userId,
+                                amount: parseFloat(amount),
+                                source: description || 'Income',
+                                type: mapIncomeType(category),
+                                frequency: 'ONE_TIME',
+                                startDate: entryDate,
+                                isActive: true
+                            }
+                        });
+                        tableName = 'Income';
+                    } else {
+                        logDB('create', 'Transaction', { description });
+                        createdRecord = await prisma.transaction.create({
+                            data: {
+                                householdId,
+                                userId,
+                                amount: parseFloat(amount),
+                                description: description || 'Expense',
+                                category,
+                                subcategory,
+                                type: type,
+                                date: entryDate,
+                                aiCategorized: true,
+                                confidence: classification.confidence,
+                                merchant: null
+                            }
+                        });
+                        tableName = 'Transaction';
                     }
-                });
-                tableName = 'Income';
-            } else {
-                // Route to Transaction Table (EXPENSE or SAVINGS)
-                // TransactionType matches schema: NEED, WANT, SAVINGS
-                // AI returns "NEED", "WANT", or "SAVINGS" in `type` field
-                createdRecord = await prisma.transaction.create({
-                    data: {
-                        householdId,
-                        userId,
-                        amount: parseFloat(amount),
-                        description: description || 'Expense',
-                        category,
-                        subcategory,
-                        type: type, // Matches Enum: NEED, WANT, SAVINGS
-                        date: entryDate,
-                        aiCategorized: true,
-                        confidence: classification.confidence,
-                        merchant: null // AI might extract this later if we update agent
-                    }
-                });
-                tableName = 'Transaction';
+
+                    createdRecords.push({
+                        table: tableName,
+                        record: createdRecord,
+                        classification
+                    });
+
+                } catch (error) {
+                    logError('smartController', `entry-${i + 1}`, error);
+                    errors.push({
+                        index: i,
+                        error: error.message,
+                        entry: classification
+                    });
+                }
             }
 
-            // 3. Update Household LastModified
-            await prisma.household.update({
-                where: { id: householdId },
-                data: { lastModifiedAt: new Date() }
-            });
+            // 4. Update Household LastModified
+            if (createdRecords.length > 0) {
+                logDB('update', 'Household', { id: householdId });
+                await prisma.household.update({
+                    where: { id: householdId },
+                    data: { lastModifiedAt: new Date() }
+                });
+            }
 
-            res.status(201).json({
+            logSuccess('smartController', 'processSmartEntry', { created: createdRecords.length, errors: errors.length });
+
+            const response = {
                 success: true,
                 action: 'CREATED',
-                table: tableName,
-                data: createdRecord,
-                classification
-            });
+                count: createdRecords.length,
+                entries: createdRecords,
+                errors: errors.length > 0 ? errors : undefined
+            };
+
+            res.status(201).json(response);
 
         } catch (error) {
-            console.error('Smart Entry Error:', error);
+            logError('smartController', 'processSmartEntry', error);
             res.status(500).json({ success: false, error: 'Failed to process smart entry' });
         }
     }, { userId: req.user?.id, text: req.body?.text });

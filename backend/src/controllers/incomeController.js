@@ -17,6 +17,8 @@
 
 import { PrismaClient } from '@prisma/client';
 import { traceOperation } from '../services/opikService.js';
+import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
+
 const prisma = new PrismaClient();
 
 /**
@@ -50,6 +52,7 @@ const prisma = new PrismaClient();
  */
 async function addIncome(req, res) {
     return traceOperation('addIncome', async () => {
+        logEntry('incomeController', 'addIncome', req.body);
         try {
             const { amount, source, type, frequency, startDate, endDate } = req.body;
             const userId = req.user.id;
@@ -58,6 +61,7 @@ async function addIncome(req, res) {
 
             // VIEWER cannot add income
             if (userRole === 'VIEWER') {
+                logError('incomeController', 'addIncome', new Error('Forbidden: Viewer attempted to add income'));
                 return res.status(403).json({
                     success: false,
                     error: 'Viewers cannot add income sources. Contact the household owner to upgrade your role.'
@@ -65,6 +69,7 @@ async function addIncome(req, res) {
             }
 
             if (!householdId) {
+                logError('incomeController', 'addIncome', new Error('No household ID'));
                 return res.status(400).json({
                     success: false,
                     error: 'You must be part of a household to add income'
@@ -73,6 +78,7 @@ async function addIncome(req, res) {
 
             // Validate required fields
             if (!amount || !source || !type || !frequency) {
+                logError('incomeController', 'addIncome', new Error('Missing required fields'));
                 return res.status(400).json({
                     success: false,
                     error: 'Amount, source, type, and frequency are required'
@@ -80,6 +86,7 @@ async function addIncome(req, res) {
             }
 
             // Create income
+            logDB('create', 'Income', { source });
             const income = await prisma.income.create({
                 data: {
                     householdId,
@@ -95,11 +102,13 @@ async function addIncome(req, res) {
             });
 
             // Update household lastModifiedAt
+            logDB('update', 'Household', { id: householdId });
             await prisma.household.update({
                 where: { id: householdId },
                 data: { lastModifiedAt: new Date() }
             });
 
+            logSuccess('incomeController', 'addIncome', { id: income.id });
             res.status(201).json({
                 success: true,
                 income,
@@ -109,7 +118,7 @@ async function addIncome(req, res) {
             return { success: true, incomeId: income.id };
 
         } catch (error) {
-            console.error('Add income error:', error);
+            logError('incomeController', 'addIncome', error);
             res.status(500).json({ success: false, error: 'Failed to add income' });
             throw error;
         }
@@ -122,10 +131,12 @@ async function addIncome(req, res) {
  */
 async function listIncomes(req, res) {
     return traceOperation('listIncomes', async () => {
+        logEntry('incomeController', 'listIncomes', req.query);
         try {
             const householdId = req.user.householdId;
 
             if (!householdId) {
+                logError('incomeController', 'listIncomes', new Error('No household ID'));
                 return res.status(400).json({
                     success: false,
                     error: 'You must be part of a household to view incomes'
@@ -144,6 +155,7 @@ async function listIncomes(req, res) {
             }
 
             // Get incomes with user info
+            logDB('findMany', 'Income', { householdId });
             const incomes = await prisma.income.findMany({
                 where,
                 orderBy: [
@@ -161,6 +173,7 @@ async function listIncomes(req, res) {
                 }
             });
 
+            logSuccess('incomeController', 'listIncomes', { count: incomes.length });
             res.json({
                 success: true,
                 incomes
@@ -169,7 +182,7 @@ async function listIncomes(req, res) {
             return { success: true, count: incomes.length };
 
         } catch (error) {
-            console.error('List incomes error:', error);
+            logError('incomeController', 'listIncomes', error);
             res.status(500).json({ success: false, error: 'Failed to list incomes' });
             throw error;
         }
@@ -181,10 +194,12 @@ async function listIncomes(req, res) {
  * GET /api/incomes/:id
  */
 async function getIncome(req, res) {
+    logEntry('incomeController', 'getIncome', req.params);
     try {
         const { id } = req.params;
         const householdId = req.user.householdId;
 
+        logDB('findFirst', 'Income', { id });
         const income = await prisma.income.findFirst({
             where: {
                 id,
@@ -202,13 +217,15 @@ async function getIncome(req, res) {
         });
 
         if (!income) {
+            logError('incomeController', 'getIncome', new Error('Income not found'));
             return res.status(404).json({ success: false, error: 'Income not found' });
         }
 
+        logSuccess('incomeController', 'getIncome', { id: income.id });
         res.json({ success: true, income });
 
     } catch (error) {
-        console.error('Get income error:', error);
+        logError('incomeController', 'getIncome', error);
         res.status(500).json({ success: false, error: 'Failed to get income' });
     }
 }
@@ -218,6 +235,7 @@ async function getIncome(req, res) {
  * PUT /api/incomes/:id
  */
 async function updateIncome(req, res) {
+    logEntry('incomeController', 'updateIncome', { id: req.params.id, ...req.body });
     try {
         const { id } = req.params;
         const { amount, source, type, frequency, startDate, endDate, isActive } = req.body;
@@ -227,6 +245,7 @@ async function updateIncome(req, res) {
 
         // VIEWER cannot update income
         if (userRole === 'VIEWER') {
+            logError('incomeController', 'updateIncome', new Error('Forbidden: Viewer attempted to update income'));
             return res.status(403).json({
                 success: false,
                 error: 'Viewers cannot update income sources'
@@ -242,6 +261,7 @@ async function updateIncome(req, res) {
         });
 
         if (!existingIncome) {
+            logError('incomeController', 'updateIncome', new Error('Income not found'));
             return res.status(404).json({ success: false, error: 'Income not found' });
         }
 
@@ -250,6 +270,7 @@ async function updateIncome(req, res) {
         const isHouseholdOwner = userRole === 'OWNER';
 
         if (!isCreator && !isHouseholdOwner) {
+            logError('incomeController', 'updateIncome', new Error('Forbidden: Permission denied'));
             return res.status(403).json({
                 success: false,
                 error: 'You can only update income sources you created'
@@ -257,6 +278,7 @@ async function updateIncome(req, res) {
         }
 
         // Update income
+        logDB('update', 'Income', { id });
         const income = await prisma.income.update({
             where: { id },
             data: {
@@ -271,11 +293,13 @@ async function updateIncome(req, res) {
         });
 
         // Update household lastModifiedAt
+        logDB('update', 'Household', { id: householdId });
         await prisma.household.update({
             where: { id: householdId },
             data: { lastModifiedAt: new Date() }
         });
 
+        logSuccess('incomeController', 'updateIncome', { id: income.id });
         res.json({
             success: true,
             income,
@@ -283,7 +307,7 @@ async function updateIncome(req, res) {
         });
 
     } catch (error) {
-        console.error('Update income error:', error);
+        logError('incomeController', 'updateIncome', error);
         res.status(500).json({ success: false, error: 'Failed to update income' });
     }
 }
@@ -293,6 +317,7 @@ async function updateIncome(req, res) {
  * DELETE /api/incomes/:id
  */
 async function deleteIncome(req, res) {
+    logEntry('incomeController', 'deleteIncome', req.params);
     try {
         const { id } = req.params;
         const userId = req.user.id;
@@ -301,6 +326,7 @@ async function deleteIncome(req, res) {
 
         // VIEWER cannot delete income
         if (userRole === 'VIEWER') {
+            logError('incomeController', 'deleteIncome', new Error('Forbidden: Viewer attempted to delete income'));
             return res.status(403).json({
                 success: false,
                 error: 'Viewers cannot delete income sources'
@@ -316,6 +342,7 @@ async function deleteIncome(req, res) {
         });
 
         if (!existingIncome) {
+            logError('incomeController', 'deleteIncome', new Error('Income not found'));
             return res.status(404).json({ success: false, error: 'Income not found' });
         }
 
@@ -324,6 +351,7 @@ async function deleteIncome(req, res) {
         const isHouseholdOwner = userRole === 'OWNER';
 
         if (!isCreator && !isHouseholdOwner) {
+            logError('incomeController', 'deleteIncome', new Error('Forbidden: Permission denied'));
             return res.status(403).json({
                 success: false,
                 error: 'You can only delete income sources you created'
@@ -331,23 +359,26 @@ async function deleteIncome(req, res) {
         }
 
         // Delete income
+        logDB('delete', 'Income', { id });
         await prisma.income.delete({
             where: { id }
         });
 
         // Update household lastModifiedAt
+        logDB('update', 'Household', { id: householdId });
         await prisma.household.update({
             where: { id: householdId },
             data: { lastModifiedAt: new Date() }
         });
 
+        logSuccess('incomeController', 'deleteIncome', { id });
         res.json({
             success: true,
             message: 'Income deleted successfully'
         });
 
     } catch (error) {
-        console.error('Delete income error:', error);
+        logError('incomeController', 'deleteIncome', error);
         res.status(500).json({ success: false, error: 'Failed to delete income' });
     }
 }
@@ -357,10 +388,12 @@ async function deleteIncome(req, res) {
  * GET /api/incomes/monthly-total
  */
 async function getMonthlyTotal(req, res) {
+    logEntry('incomeController', 'getMonthlyTotal');
     try {
         const householdId = req.user.householdId;
 
         if (!householdId) {
+            logError('incomeController', 'getMonthlyTotal', new Error('No household ID'));
             return res.status(400).json({
                 success: false,
                 error: 'You must be part of a household to view income total'
@@ -368,6 +401,7 @@ async function getMonthlyTotal(req, res) {
         }
 
         // Get all active incomes
+        logDB('findMany', 'Income', { householdId, isActive: true });
         const incomes = await prisma.income.findMany({
             where: {
                 householdId,
@@ -418,6 +452,7 @@ async function getMonthlyTotal(req, res) {
             });
         }
 
+        logSuccess('incomeController', 'getMonthlyTotal', { monthlyTotal, incomeCount: incomes.length });
         res.json({
             success: true,
             monthlyTotal: Math.round(monthlyTotal * 100) / 100,
@@ -426,7 +461,7 @@ async function getMonthlyTotal(req, res) {
         });
 
     } catch (error) {
-        console.error('Get monthly total error:', error);
+        logError('incomeController', 'getMonthlyTotal', error);
         res.status(500).json({ success: false, error: 'Failed to calculate monthly total' });
     }
 }

@@ -11,6 +11,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { generateToken } from '../utils/generateCode.js';
+import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
 
 const prisma = new PrismaClient();
@@ -20,37 +21,32 @@ const prisma = new PrismaClient();
  * Only accessible by household members (Role check done in middleware/logic)
  */
 export const sendInvitation = async (req, res) => {
+    logEntry('invitationController', 'sendInvitation', req.body);
     try {
         const { email, phone, role } = req.body;
         const { householdId, id: userId, role: userRole } = req.user;
 
-        // Check permissions - Only OWNER or EDITOR can invite? Let's say OWNER only as per plan
-        if (userRole !== 'OWNER' && userRole !== 'EDITOR') { // Allowing Editor to invite for flexibility? Plan said Admin. Let's stick to OWNER strictly if plan said ADMIN. Plan: "Only household ADMIN can send invitations". Schema has OWNER.
-            // Actually, let's allow OWNER and EDITOR to invite, but stricter roles maybe?
-            // Let's stick to OWNER for now to be safe, or check plan.
-            // Plan says: "Only household ADMIN can send invitations".
-            // Schema roles: OWNER, EDITOR, VIEWER.
-            // Let's restrict to OWNER.
-            if (userRole !== 'OWNER') {
-                return res.status(403).json({
-                    success: false,
-                    error: 'Only the household owner can send invitations'
-                });
-            }
+        // Check permissions
+        if (userRole !== 'OWNER') {
+            logError('invitationController', 'sendInvitation', new Error('Forbidden: Only owner can invite'));
+            return res.status(403).json({
+                success: false,
+                error: 'Only the household owner can send invitations'
+            });
         }
 
         if (!householdId) {
+            logError('invitationController', 'sendInvitation', new Error('No household ID'));
             return res.status(400).json({ success: false, error: 'You are not in a household' });
         }
 
-        // 1. Check if recipient is already in this household
-        // (Ideally we check if user exists, but we can invite non-existing users to register too)
-        // If we have email/phone, check if there is a pending invite
         if (!email && !phone) {
+            logError('invitationController', 'sendInvitation', new Error('Recipient contact missing'));
             return res.status(400).json({ success: false, error: 'Email or phone required' });
         }
 
         // Check duplicate pending invite
+        logDB('findFirst', 'Invitation', { recipient: email || phone });
         const existingInvite = await prisma.invitation.findFirst({
             where: {
                 householdId,
@@ -64,6 +60,7 @@ export const sendInvitation = async (req, res) => {
         });
 
         if (existingInvite) {
+            logError('invitationController', 'sendInvitation', new Error('Duplicate invite'));
             return res.status(400).json({ success: false, error: 'Invitation already pending for this recipient' });
         }
 
@@ -72,6 +69,7 @@ export const sendInvitation = async (req, res) => {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 7); // 7 days
 
+        logDB('create', 'Invitation', { recipient: email || phone });
         const invitation = await prisma.invitation.create({
             data: {
                 householdId,
@@ -85,20 +83,17 @@ export const sendInvitation = async (req, res) => {
             }
         });
 
-        // 3. Log/Send (Mocking email sending)
-        const inviteLink = `http://localhost:5173/invite/${token}`; // Frontend URL
-        console.log(`INVITATION SENT TO ${email || phone}: ${inviteLink}`);
-
+        logSuccess('invitationController', 'sendInvitation', { id: invitation.id });
         return res.status(201).json({
             success: true,
             invitation: {
                 ...invitation,
-                inviteLink // Returning link for testing convenience
+                inviteLink: `http://localhost:5173/invite/${token}`
             }
         });
 
     } catch (error) {
-        console.error('Send invitation error:', error);
+        logError('invitationController', 'sendInvitation', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to send invitation'
@@ -110,17 +105,19 @@ export const sendInvitation = async (req, res) => {
  * Get all invitations for the household
  */
 export const getInvitations = async (req, res) => {
+    logEntry('invitationController', 'getInvitations');
     try {
         const { householdId } = req.user;
 
-        // Check if user has a household
         if (!householdId) {
+            logSuccess('invitationController', 'getInvitations', 'No household');
             return res.status(200).json({
                 success: true,
-                invitations: [] // Return empty array if no household
+                invitations: []
             });
         }
 
+        logDB('findMany', 'Invitation', { householdId });
         const invitations = await prisma.invitation.findMany({
             where: { householdId },
             include: {
@@ -131,17 +128,17 @@ export const getInvitations = async (req, res) => {
             orderBy: { createdAt: 'desc' }
         });
 
+        logSuccess('invitationController', 'getInvitations', { count: invitations.length });
         return res.status(200).json({
             success: true,
             invitations
         });
 
     } catch (error) {
-        console.error('Get invitations error:', error);
+        logError('invitationController', 'getInvitations', error);
         return res.status(500).json({
             success: false,
-            error: 'Failed to fetch invitations',
-            details: error.message
+            error: 'Failed to fetch invitations'
         });
     }
 };
@@ -151,45 +148,40 @@ export const getInvitations = async (req, res) => {
  * - Token passed in URL parameter or body
  */
 export const acceptInvitation = async (req, res) => {
+    logEntry('invitationController', 'acceptInvitation');
     try {
-        const { token } = req.body; // Using body as per API design usually, or params. Plan said params. Let's support body for simplicity in Postman/Swagger
-        // Plan: "Extract token from req.params". Okay, I will support params in route.
-        // If route is /:token/accept, it's params.
-
+        const { token } = req.body;
         const validToken = token || req.params.token;
 
         if (!validToken) {
+            logError('invitationController', 'acceptInvitation', new Error('Missing token'));
             return res.status(400).json({ success: false, error: 'Token is required' });
         }
 
-        // Find invitation
+        logDB('findUnique', 'Invitation', { token: '[PROVIDED]' });
         const invitation = await prisma.invitation.findUnique({
             where: { token: validToken },
             include: { household: true }
         });
 
         if (!invitation) {
+            logError('invitationController', 'acceptInvitation', new Error('Invalid token'));
             return res.status(404).json({ success: false, error: 'Invalid invitation' });
         }
 
         if (invitation.status !== 'PENDING') {
+            logError('invitationController', 'acceptInvitation', new Error(`Invite ${invitation.status}`));
             return res.status(400).json({ success: false, error: `Invitation is ${invitation.status.toLowerCase()}` });
         }
 
         if (new Date() > invitation.expiresAt) {
-            // Mark as expired?
+            logDB('update', 'Invitation', { id: invitation.id, status: 'EXPIRED' });
             await prisma.invitation.update({ where: { id: invitation.id }, data: { status: 'EXPIRED' } });
             return res.status(400).json({ success: false, error: 'Invitation expired' });
         }
 
-        // Requires authentication to accept (assume middleware ran, but what if registering?)
-        // If endpoint is public (for registration flow), we return data to frontend.
-        // But implementation plan says:
-        // "If req.user exists (logged in): Add user... If not: Return registration URL"
-
-        // Check if user is logged in
         if (!req.user) {
-            // Unauthenticated - Return info for registration
+            logSuccess('invitationController', 'acceptInvitation', 'Registration required');
             return res.status(200).json({
                 success: true,
                 requiresRegistration: true,
@@ -199,34 +191,27 @@ export const acceptInvitation = async (req, res) => {
             });
         }
 
-        // User is logged in
         const userId = req.user.id;
 
-        // Check if user is already in a household
-        const userString = await prisma.user.findUnique({ where: { id: userId } }); // Refresh user data to be safe? req.user might be stale?
-        // req.user comes from auth middleware which fetches fresh user. Safe.
-
-        // Check if user is already in THIS household
         if (req.user.householdId === invitation.householdId) {
+            logError('invitationController', 'acceptInvitation', new Error('Already in this household'));
             return res.status(400).json({ success: false, error: 'You are already in this household' });
         }
 
-        // Check if user is in ANOTHER household
         if (req.user.householdId) {
+            logError('invitationController', 'acceptInvitation', new Error('Already in another household'));
             return res.status(400).json({ success: false, error: 'You are already in a household. Leave it first.' });
         }
 
-        // Execute Acceptance Transaction
+        logDB('transaction', 'Multiple', { action: 'accept invitation and join' });
         await prisma.$transaction([
-            // 1. Update User
             prisma.user.update({
                 where: { id: userId },
                 data: {
                     householdId: invitation.householdId,
-                    role: invitation.role // Assign role from invite
+                    role: invitation.role
                 }
             }),
-            // 2. Mark Invitation Accepted
             prisma.invitation.update({
                 where: { id: invitation.id },
                 data: {
@@ -236,6 +221,7 @@ export const acceptInvitation = async (req, res) => {
             })
         ]);
 
+        logSuccess('invitationController', 'acceptInvitation', { id: invitation.id });
         return res.status(200).json({
             success: true,
             message: 'You have joined the household',
@@ -243,7 +229,7 @@ export const acceptInvitation = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Accept invitation error:', error);
+        logError('invitationController', 'acceptInvitation', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to accept invitation'
@@ -255,29 +241,35 @@ export const acceptInvitation = async (req, res) => {
  * Cancel an invitation (Admin only)
  */
 export const cancelInvitation = async (req, res) => {
+    logEntry('invitationController', 'cancelInvitation', req.params);
     try {
         const { id } = req.params;
         const { householdId, role } = req.user;
 
         if (role !== 'OWNER') {
+            logError('invitationController', 'cancelInvitation', new Error('Forbidden: Only owner can cancel'));
             return res.status(403).json({ success: false, error: 'Only owner can cancel invitations' });
         }
 
+        logDB('findUnique', 'Invitation', { id });
         const invitation = await prisma.invitation.findUnique({ where: { id } });
 
         if (!invitation || invitation.householdId !== householdId) {
+            logError('invitationController', 'cancelInvitation', new Error('Not found'));
             return res.status(404).json({ success: false, error: 'Invitation not found' });
         }
 
+        logDB('update', 'Invitation', { id, status: 'CANCELLED' });
         await prisma.invitation.update({
             where: { id },
             data: { status: 'CANCELLED' }
         });
 
+        logSuccess('invitationController', 'cancelInvitation', { id });
         return res.status(200).json({ success: true, message: 'Invitation cancelled' });
 
     } catch (error) {
-        console.error('Cancel invitation error:', error);
-        return res.status(500).json({ success: false, error: 'Failed' });
+        logError('invitationController', 'cancelInvitation', error);
+        return res.status(500).json({ success: false, error: 'Failed to cancel invitation' });
     }
 };

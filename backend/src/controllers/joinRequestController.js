@@ -15,7 +15,7 @@
  */
 
 import { PrismaClient } from '@prisma/client';
-
+import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
 const prisma = new PrismaClient();
 
@@ -24,12 +24,14 @@ const prisma = new PrismaClient();
  * User must be authenticated but NOT in a household
  */
 export const submitJoinRequest = async (req, res) => {
+    logEntry('joinRequestController', 'submitJoinRequest', { inviteCode: req.body.inviteCode });
     try {
         const { inviteCode } = req.body;
         const userId = req.user.id;
 
         // Check if user is already in a household
         if (req.user.householdId) {
+            logError('joinRequestController', 'submitJoinRequest', new Error('User already in household'));
             return res.status(400).json({
                 success: false,
                 error: 'You are already in a household. Leave first to join another.'
@@ -37,6 +39,7 @@ export const submitJoinRequest = async (req, res) => {
         }
 
         if (!inviteCode) {
+            logError('joinRequestController', 'submitJoinRequest', new Error('Missing invite code'));
             return res.status(400).json({
                 success: false,
                 error: 'Invite code is required'
@@ -44,11 +47,13 @@ export const submitJoinRequest = async (req, res) => {
         }
 
         // Find household by invite code
+        logDB('findUnique', 'Household', { inviteCode });
         const household = await prisma.household.findUnique({
             where: { inviteCode: inviteCode.toUpperCase() }
         });
 
         if (!household) {
+            logError('joinRequestController', 'submitJoinRequest', new Error('Invalid code'));
             return res.status(404).json({
                 success: false,
                 error: 'Invalid invite code'
@@ -65,6 +70,7 @@ export const submitJoinRequest = async (req, res) => {
         });
 
         if (existingRequest) {
+            logError('joinRequestController', 'submitJoinRequest', new Error('Duplicate request'));
             return res.status(400).json({
                 success: false,
                 error: 'You already have a pending request for this household'
@@ -72,6 +78,7 @@ export const submitJoinRequest = async (req, res) => {
         }
 
         // Create join request (using Invitation model)
+        logDB('create', 'Invitation', { type: 'JOIN_REQUEST', householdId: household.id });
         const joinRequest = await prisma.invitation.create({
             data: {
                 householdId: household.id,
@@ -84,6 +91,7 @@ export const submitJoinRequest = async (req, res) => {
             }
         });
 
+        logSuccess('joinRequestController', 'submitJoinRequest', { id: joinRequest.id });
         return res.status(201).json({
             success: true,
             message: 'Join request submitted. Waiting for owner approval.',
@@ -96,7 +104,7 @@ export const submitJoinRequest = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Submit join request error:', error);
+        logError('joinRequestController', 'submitJoinRequest', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to submit join request'
@@ -108,10 +116,12 @@ export const submitJoinRequest = async (req, res) => {
  * Get pending join requests for household (Owner only)
  */
 export const getPendingRequests = async (req, res) => {
+    logEntry('joinRequestController', 'getPendingRequests');
     try {
         const { householdId, role } = req.user;
 
         if (!householdId) {
+            logError('joinRequestController', 'getPendingRequests', new Error('No household'));
             return res.status(400).json({
                 success: false,
                 error: 'You are not in a household'
@@ -119,12 +129,14 @@ export const getPendingRequests = async (req, res) => {
         }
 
         if (role !== 'OWNER') {
+            logError('joinRequestController', 'getPendingRequests', new Error('Forbidden: Not owner'));
             return res.status(403).json({
                 success: false,
                 error: 'Only the household owner can view join requests'
             });
         }
 
+        logDB('findMany', 'Invitation', { householdId, status: 'PENDING' });
         const requests = await prisma.invitation.findMany({
             where: {
                 householdId,
@@ -156,13 +168,14 @@ export const getPendingRequests = async (req, res) => {
             })
         );
 
+        logSuccess('joinRequestController', 'getPendingRequests', { count: enrichedRequests.length });
         return res.status(200).json({
             success: true,
             requests: enrichedRequests
         });
 
     } catch (error) {
-        console.error('Get pending requests error:', error);
+        logError('joinRequestController', 'getPendingRequests', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to fetch pending requests'
@@ -174,12 +187,14 @@ export const getPendingRequests = async (req, res) => {
  * Approve a join request (Owner only)
  */
 export const approveRequest = async (req, res) => {
+    logEntry('joinRequestController', 'approveRequest', { id: req.params.id, role: req.body.role });
     try {
         const { id } = req.params;
         const { role: assignedRole } = req.body; // EDITOR or VIEWER
         const { householdId, role: userRole } = req.user;
 
         if (userRole !== 'OWNER') {
+            logError('joinRequestController', 'approveRequest', new Error('Forbidden: Not owner'));
             return res.status(403).json({
                 success: false,
                 error: 'Only the household owner can approve requests'
@@ -187,6 +202,7 @@ export const approveRequest = async (req, res) => {
         }
 
         if (!assignedRole || !['EDITOR', 'VIEWER'].includes(assignedRole)) {
+            logError('joinRequestController', 'approveRequest', new Error('Invalid role assigned'));
             return res.status(400).json({
                 success: false,
                 error: 'Role must be EDITOR or VIEWER'
@@ -194,11 +210,13 @@ export const approveRequest = async (req, res) => {
         }
 
         // Find the request
+        logDB('findUnique', 'Invitation', { id });
         const request = await prisma.invitation.findUnique({
             where: { id }
         });
 
         if (!request || request.householdId !== householdId) {
+            logError('joinRequestController', 'approveRequest', new Error('Request not found'));
             return res.status(404).json({
                 success: false,
                 error: 'Request not found'
@@ -206,6 +224,7 @@ export const approveRequest = async (req, res) => {
         }
 
         if (request.status !== 'PENDING') {
+            logError('joinRequestController', 'approveRequest', new Error(`Status ${request.status}`));
             return res.status(400).json({
                 success: false,
                 error: `Request is already ${request.status.toLowerCase()}`
@@ -218,6 +237,7 @@ export const approveRequest = async (req, res) => {
         });
 
         if (!requester) {
+            logError('joinRequestController', 'approveRequest', new Error('Requester not found'));
             return res.status(404).json({
                 success: false,
                 error: 'Requester user not found'
@@ -226,6 +246,7 @@ export const approveRequest = async (req, res) => {
 
         // Check if user is already in another household
         if (requester.householdId) {
+            logError('joinRequestController', 'approveRequest', new Error('Requester already in household'));
             return res.status(400).json({
                 success: false,
                 error: 'User is already in another household'
@@ -233,6 +254,7 @@ export const approveRequest = async (req, res) => {
         }
 
         // Execute transaction: update user and invitation
+        logDB('transaction', 'Multiple', { action: 'approve join request' });
         await prisma.$transaction([
             // Add user to household
             prisma.user.update({
@@ -253,13 +275,14 @@ export const approveRequest = async (req, res) => {
             })
         ]);
 
+        logSuccess('joinRequestController', 'approveRequest', { id, userId: requester.id });
         return res.status(200).json({
             success: true,
             message: `${requester.firstName} has been added as ${assignedRole}`
         });
 
     } catch (error) {
-        console.error('Approve request error:', error);
+        logError('joinRequestController', 'approveRequest', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to approve request'
@@ -271,22 +294,26 @@ export const approveRequest = async (req, res) => {
  * Reject a join request (Owner only)
  */
 export const rejectRequest = async (req, res) => {
+    logEntry('joinRequestController', 'rejectRequest', req.params);
     try {
         const { id } = req.params;
         const { householdId, role: userRole } = req.user;
 
         if (userRole !== 'OWNER') {
+            logError('joinRequestController', 'rejectRequest', new Error('Forbidden: Not owner'));
             return res.status(403).json({
                 success: false,
                 error: 'Only the household owner can reject requests'
             });
         }
 
+        logDB('findUnique', 'Invitation', { id });
         const request = await prisma.invitation.findUnique({
             where: { id }
         });
 
         if (!request || request.householdId !== householdId) {
+            logError('joinRequestController', 'rejectRequest', new Error('Request not found'));
             return res.status(404).json({
                 success: false,
                 error: 'Request not found'
@@ -294,24 +321,27 @@ export const rejectRequest = async (req, res) => {
         }
 
         if (request.status !== 'PENDING') {
+            logError('joinRequestController', 'rejectRequest', new Error(`Status ${request.status}`));
             return res.status(400).json({
                 success: false,
                 error: `Request is already ${request.status.toLowerCase()}`
             });
         }
 
+        logDB('update', 'Invitation', { id, status: 'CANCELLED' });
         await prisma.invitation.update({
             where: { id },
             data: { status: 'CANCELLED' }
         });
 
+        logSuccess('joinRequestController', 'rejectRequest', { id });
         return res.status(200).json({
             success: true,
             message: 'Request rejected'
         });
 
     } catch (error) {
-        console.error('Reject request error:', error);
+        logError('joinRequestController', 'rejectRequest', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to reject request'
@@ -323,9 +353,11 @@ export const rejectRequest = async (req, res) => {
  * Get user's pending request status
  */
 export const getMyRequestStatus = async (req, res) => {
+    logEntry('joinRequestController', 'getMyRequestStatus');
     try {
         const userId = req.user.id;
 
+        logDB('findFirst', 'Invitation', { email: req.user.email, status: 'PENDING' });
         const pendingRequest = await prisma.invitation.findFirst({
             where: {
                 recipientEmail: req.user.email,
@@ -340,12 +372,14 @@ export const getMyRequestStatus = async (req, res) => {
         });
 
         if (!pendingRequest) {
+            logSuccess('joinRequestController', 'getMyRequestStatus', 'No pending request Found');
             return res.status(200).json({
                 success: true,
                 hasPendingRequest: false
             });
         }
 
+        logSuccess('joinRequestController', 'getMyRequestStatus', { id: pendingRequest.id });
         return res.status(200).json({
             success: true,
             hasPendingRequest: true,
@@ -358,7 +392,7 @@ export const getMyRequestStatus = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Get my request status error:', error);
+        logError('joinRequestController', 'getMyRequestStatus', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to fetch request status'

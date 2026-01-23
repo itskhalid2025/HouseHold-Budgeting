@@ -394,26 +394,41 @@ export async function parseVoiceInput(transcript) {
         body: JSON.stringify({ text: transcript })
     });
 
-    // The Smart Controller returns { success, action, table, data, classification }
-    // We handle the response to check for errors
+    // The Smart Controller now returns { success, count, entries: [...] }
     const result = await handleResponse(response);
 
-    // Map the backend response to what the frontend form might expect for auto-fill 
-    // (though in this new flow, the backend ALREADY created the record).
-    // So we might want to just return the data to show a success message or trigger a refresh.
+    // Handle multiple entries
+    if (result.success && result.entries && result.entries.length > 0) {
+        // If multiple entries, summarize
+        if (result.count > 1) {
+            const totalAmount = result.entries.reduce((sum, e) => sum + parseFloat(e.record.amount), 0);
+            const descriptions = result.entries.map(e => e.classification.description).join(', ');
 
-    // Retaining basic structure for compatibility if frontend tries to pre-fill form
-    // But since the backend creates it, the UI should probably just refresh the list.
-    return {
-        isCreated: true, // Flag to tell UI that record is already created
-        action: result.action,
-        table: result.table,
-        description: result.classification.description,
-        amount: result.classification.amount,
-        date: result.classification.date,
-        type: result.classification.type,
-        category: result.classification.category
-    };
+            return {
+                isCreated: true,
+                type: 'Multiple',
+                description: descriptions,
+                amount: totalAmount.toFixed(2),
+                count: result.count,
+                entries: result.entries
+            };
+        } else {
+            // Single entry - return as before
+            const entry = result.entries[0];
+            return {
+                isCreated: true,
+                action: result.action,
+                table: entry.table,
+                description: entry.classification.description,
+                amount: entry.record.amount,
+                date: entry.record.date || entry.record.startDate,
+                type: entry.classification.type,
+                category: entry.classification.category
+            };
+        }
+    }
+
+    return result;
 }
 
 export default {

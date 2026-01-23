@@ -19,6 +19,7 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { PrismaClient } from '@prisma/client';
 import config from '../utils/config.js';
+import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
 const prisma = new PrismaClient();
 
@@ -47,6 +48,7 @@ const generateToken = (user) => {
  * @param {Object} res - Express response
  */
 export const register = async (req, res) => {
+    logEntry('authController', 'register', { email: req.body.email, phone: req.body.phone });
     try {
         const { email, phone, password, firstName, lastName, currency } = req.body;
 
@@ -78,6 +80,7 @@ export const register = async (req, res) => {
         const passwordHash = await bcrypt.hash(password, 12);
 
         // Create user
+        logDB('create', 'User', { email });
         const user = await prisma.user.create({
             data: {
                 email,
@@ -104,6 +107,7 @@ export const register = async (req, res) => {
         // Generate JWT
         const token = generateToken(user);
 
+        logSuccess('authController', 'register', { userId: user.id });
         return res.status(201).json({
             success: true,
             user,
@@ -111,7 +115,7 @@ export const register = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Registration error:', error);
+        logError('authController', 'register', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to register user'
@@ -125,6 +129,7 @@ export const register = async (req, res) => {
  * @param {Object} res - Express response
  */
 export const login = async (req, res) => {
+    logEntry('authController', 'login', { email: req.body.email });
     try {
         const { email, password } = req.body;
 
@@ -151,6 +156,7 @@ export const login = async (req, res) => {
 
         // Use consistent error message to prevent user enumeration
         if (!user) {
+            logError('authController', 'login', new Error('User not found'));
             return res.status(401).json({
                 success: false,
                 error: 'Invalid credentials'
@@ -161,6 +167,7 @@ export const login = async (req, res) => {
         const isValidPassword = await bcrypt.compare(password, user.passwordHash);
 
         if (!isValidPassword) {
+            logError('authController', 'login', new Error('Invalid password'));
             return res.status(401).json({
                 success: false,
                 error: 'Invalid credentials'
@@ -173,6 +180,7 @@ export const login = async (req, res) => {
         // Generate JWT
         const token = generateToken(user);
 
+        logSuccess('authController', 'login', { userId: user.id });
         return res.status(200).json({
             success: true,
             user: userWithoutPassword,
@@ -180,7 +188,7 @@ export const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Login error:', error);
+        logError('authController', 'login', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to login'
@@ -194,14 +202,16 @@ export const login = async (req, res) => {
  * @param {Object} res - Express response
  */
 export const me = async (req, res) => {
+    logEntry('authController', 'me', { userId: req.user?.id });
     try {
         // User is already attached by authenticate middleware
+        logSuccess('authController', 'me', { userId: req.user?.id });
         return res.status(200).json({
             success: true,
             user: req.user
         });
     } catch (error) {
-        console.error('Get profile error:', error);
+        logError('authController', 'me', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to get user profile'
@@ -215,15 +225,17 @@ export const me = async (req, res) => {
  * @param {Object} res - Express response
  */
 export const logout = async (req, res) => {
+    logEntry('authController', 'logout', { userId: req.user?.id });
     try {
         // In a stateless JWT system, logout is handled client-side by discarding the token
         // Optional: implement token blacklisting if needed
+        logSuccess('authController', 'logout');
         return res.status(200).json({
             success: true,
             message: 'Logged out successfully'
         });
     } catch (error) {
-        console.error('Logout error:', error);
+        logError('authController', 'logout', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to logout'
@@ -237,6 +249,7 @@ export const logout = async (req, res) => {
  * @param {Object} res - Express response
  */
 export const forgotPassword = async (req, res) => {
+    logEntry('authController', 'forgotPassword', { email: req.body.email });
     try {
         const { email } = req.body;
 
@@ -247,6 +260,7 @@ export const forgotPassword = async (req, res) => {
 
         // Always return success to prevent email enumeration
         if (!user) {
+            logSuccess('authController', 'forgotPassword', 'Email not found (silent success)');
             return res.status(200).json({
                 success: true,
                 message: 'If the email exists, a reset link has been sent'
@@ -258,6 +272,7 @@ export const forgotPassword = async (req, res) => {
         const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
         // Save token to database
+        logDB('update', 'User', { id: user.id, resetToken: '[SET]' });
         await prisma.user.update({
             where: { id: user.id },
             data: {
@@ -267,8 +282,7 @@ export const forgotPassword = async (req, res) => {
         });
 
         // TODO: Send email with reset link
-        console.log(`Password reset token for ${email}: ${resetToken}`);
-        console.log(`Reset link: http://localhost:5173/reset-password?token=${resetToken}`);
+        logSuccess('authController', 'forgotPassword', { email });
 
         return res.status(200).json({
             success: true,
@@ -278,7 +292,7 @@ export const forgotPassword = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Forgot password error:', error);
+        logError('authController', 'forgotPassword', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to process password reset request'
@@ -292,6 +306,7 @@ export const forgotPassword = async (req, res) => {
  * @param {Object} res - Express response
  */
 export const resetPassword = async (req, res) => {
+    logEntry('authController', 'resetPassword');
     try {
         const { token, newPassword } = req.body;
 
@@ -306,6 +321,7 @@ export const resetPassword = async (req, res) => {
         });
 
         if (!user) {
+            logError('authController', 'resetPassword', new Error('Invalid or expired reset token'));
             return res.status(400).json({
                 success: false,
                 error: 'Invalid or expired reset token'
@@ -316,6 +332,7 @@ export const resetPassword = async (req, res) => {
         const passwordHash = await bcrypt.hash(newPassword, 12);
 
         // Update password and clear reset token
+        logDB('update', 'User', { id: user.id, password: '[UPDATED]' });
         await prisma.user.update({
             where: { id: user.id },
             data: {
@@ -325,13 +342,14 @@ export const resetPassword = async (req, res) => {
             }
         });
 
+        logSuccess('authController', 'resetPassword', { userId: user.id });
         return res.status(200).json({
             success: true,
             message: 'Password reset successful'
         });
 
     } catch (error) {
-        console.error('Reset password error:', error);
+        logError('authController', 'resetPassword', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to reset password'

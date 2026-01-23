@@ -91,7 +91,16 @@ export default function Dashboard() {
                 resetTranscript();
                 setTextInput('');
                 fetchDashboardData(); // Refresh dashboard stats
-                alert(`✅ Successfully added!\n\nCreated ${parsed.type || 'Record'}: ${parsed.description} ($${parsed.amount})`);
+
+                // Enhanced feedback for single vs multiple entries
+                if (parsed.count && parsed.count > 1) {
+                    const entryList = parsed.entries.map((e, i) =>
+                        `${i + 1}. ${e.classification.description}: $${e.record.amount}`
+                    ).join('\n');
+                    alert(`✅ Successfully added ${parsed.count} transactions!\n\n${entryList}\n\nTotal: $${parsed.amount}`);
+                } else {
+                    alert(`✅ Successfully added!\n\nCreated ${parsed.type || 'Record'}: ${parsed.description} ($${parsed.amount})`);
+                }
             } else {
                 alert("Could not automatically create record. Please try again.");
             }

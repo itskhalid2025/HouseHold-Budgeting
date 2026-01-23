@@ -12,6 +12,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import { generateCode } from '../utils/generateCode.js';
+import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
 
 const prisma = new PrismaClient();
@@ -21,6 +22,7 @@ const prisma = new PrismaClient();
  * The creator becomes the ADMIN
  */
 export const createHousehold = async (req, res) => {
+    logEntry('householdController', 'createHousehold', { name: req.body.name });
     try {
         const { name } = req.body;
         const userId = req.user.id;
@@ -31,6 +33,7 @@ export const createHousehold = async (req, res) => {
         });
 
         if (existingUser.householdId) {
+            logError('householdController', 'createHousehold', new Error('User already in household'));
             return res.status(400).json({
                 success: false,
                 error: 'You are already a member of a household. Please leave your current household before creating a new one.'
@@ -49,6 +52,7 @@ export const createHousehold = async (req, res) => {
         }
 
         // Create household and update user in a transaction
+        logDB('transaction', 'Household/User', { action: 'create household and join' });
         const household = await prisma.$transaction(async (tx) => {
             // 1. Create household
             const newHousehold = await tx.household.create({
@@ -64,20 +68,21 @@ export const createHousehold = async (req, res) => {
                 where: { id: userId },
                 data: {
                     householdId: newHousehold.id,
-                    role: 'OWNER' // Using OWNER based on schema enum, although prompt said ADMIN. Schema has OWNER, EDITOR, VIEWER.
+                    role: 'OWNER'
                 }
             });
 
             return newHousehold;
         });
 
+        logSuccess('householdController', 'createHousehold', { id: household.id });
         return res.status(201).json({
             success: true,
             household
         });
 
     } catch (error) {
-        console.error('Create household error:', error);
+        logError('householdController', 'createHousehold', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to create household'
@@ -89,6 +94,7 @@ export const createHousehold = async (req, res) => {
  * Join a household using invite code
  */
 export const joinHousehold = async (req, res) => {
+    logEntry('householdController', 'joinHousehold', { inviteCode: req.body.inviteCode });
     try {
         const { inviteCode } = req.body;
         const userId = req.user.id;
@@ -99,6 +105,7 @@ export const joinHousehold = async (req, res) => {
         });
 
         if (existingUser.householdId) {
+            logError('householdController', 'joinHousehold', new Error('User already in household'));
             return res.status(400).json({
                 success: false,
                 error: 'You are already in a household. Please leave needed.'
@@ -111,6 +118,7 @@ export const joinHousehold = async (req, res) => {
         });
 
         if (!household) {
+            logError('householdController', 'joinHousehold', new Error('Invalid invite code'));
             return res.status(404).json({
                 success: false,
                 error: 'Invalid invite code'
@@ -118,6 +126,7 @@ export const joinHousehold = async (req, res) => {
         }
 
         // Add user to household
+        logDB('update', 'User', { id: userId, householdId: household.id });
         await prisma.user.update({
             where: { id: userId },
             data: {
@@ -126,6 +135,7 @@ export const joinHousehold = async (req, res) => {
             }
         });
 
+        logSuccess('householdController', 'joinHousehold', { id: household.id });
         return res.status(200).json({
             success: true,
             message: `Joined ${household.name} successfully`,
@@ -133,7 +143,7 @@ export const joinHousehold = async (req, res) => {
         });
 
     } catch (error) {
-        console.error('Join household error:', error);
+        logError('householdController', 'joinHousehold', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to join household'
@@ -145,16 +155,19 @@ export const joinHousehold = async (req, res) => {
  * Get current user's household with members
  */
 export const getHousehold = async (req, res) => {
+    logEntry('householdController', 'getHousehold');
     try {
         const { householdId } = req.user;
 
         if (!householdId) {
+            logError('householdController', 'getHousehold', new Error('No household ID'));
             return res.status(404).json({
                 success: false,
                 error: 'You are not a member of any household'
             });
         }
 
+        logDB('findUnique', 'Household', { id: householdId });
         const household = await prisma.household.findUnique({
             where: { id: householdId },
             include: {
@@ -171,13 +184,14 @@ export const getHousehold = async (req, res) => {
             }
         });
 
+        logSuccess('householdController', 'getHousehold', { id: household.id });
         return res.status(200).json({
             success: true,
             household
         });
 
     } catch (error) {
-        console.error('Get household error:', error);
+        logError('householdController', 'getHousehold', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to fetch household'
@@ -189,31 +203,29 @@ export const getHousehold = async (req, res) => {
  * Update household settings (Admin only)
  */
 export const updateHousehold = async (req, res) => {
+    logEntry('householdController', 'updateHousehold', req.body);
     try {
         const { householdId } = req.user;
         const { name, currency } = req.body;
 
-        // Check permissions (Middleware should handle this usually, but double checking logic or relying on route middleware)
-        // Assuming authorize('OWNER') middleware usage, but let's check ownership
-        // Schema says OWNER, EDITOR, VIEWER. Assuming OWNER is the "Admin".
-
-        // Construct update data
         const data = {};
         if (name) data.name = name;
         if (currency) data.currency = currency;
 
+        logDB('update', 'Household', { id: householdId });
         const updatedHousehold = await prisma.household.update({
             where: { id: householdId },
             data
         });
 
+        logSuccess('householdController', 'updateHousehold', { id: updatedHousehold.id });
         return res.status(200).json({
             success: true,
             household: updatedHousehold
         });
 
     } catch (error) {
-        console.error('Update household error:', error);
+        logError('householdController', 'updateHousehold', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to update household'
@@ -225,12 +237,14 @@ export const updateHousehold = async (req, res) => {
  * Update a member's role (Admin only)
  */
 export const updateMemberRole = async (req, res) => {
+    logEntry('householdController', 'updateMemberRole', { memberId: req.params.memberId, role: req.body.role });
     try {
         const { memberId } = req.params;
         const { role } = req.body;
         const { householdId, id: currentUserId } = req.user;
 
         if (memberId === currentUserId) {
+            logError('householdController', 'updateMemberRole', new Error('Self-role update attempted'));
             return res.status(400).json({
                 success: false,
                 error: 'You cannot change your own role'
@@ -243,6 +257,7 @@ export const updateMemberRole = async (req, res) => {
         });
 
         if (!member || member.householdId !== householdId) {
+            logError('householdController', 'updateMemberRole', new Error('Member not found'));
             return res.status(404).json({
                 success: false,
                 error: 'Member not found in your household'
@@ -251,12 +266,14 @@ export const updateMemberRole = async (req, res) => {
 
         // Role validation
         if (!['OWNER', 'EDITOR', 'VIEWER'].includes(role)) {
+            logError('householdController', 'updateMemberRole', new Error('Invalid role'));
             return res.status(400).json({
                 success: false,
                 error: 'Invalid role'
             });
         }
 
+        logDB('update', 'User', { id: memberId, role });
         const updatedMember = await prisma.user.update({
             where: { id: memberId },
             data: { role },
@@ -269,13 +286,14 @@ export const updateMemberRole = async (req, res) => {
             }
         });
 
+        logSuccess('householdController', 'updateMemberRole', { id: updatedMember.id, role });
         return res.status(200).json({
             success: true,
             member: updatedMember
         });
 
     } catch (error) {
-        console.error('Update member role error:', error);
+        logError('householdController', 'updateMemberRole', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to update member role'
@@ -287,11 +305,13 @@ export const updateMemberRole = async (req, res) => {
  * Remove a member from the household (Admin only)
  */
 export const removeMember = async (req, res) => {
+    logEntry('householdController', 'removeMember', req.params);
     try {
         const { memberId } = req.params;
         const { householdId, id: currentUserId } = req.user;
 
         if (memberId === currentUserId) {
+            logError('householdController', 'removeMember', new Error('Self-removal attempted'));
             return res.status(400).json({
                 success: false,
                 error: 'You cannot remove yourself. Use "Leave Household" instead.'
@@ -303,6 +323,7 @@ export const removeMember = async (req, res) => {
         });
 
         if (!member || member.householdId !== householdId) {
+            logError('householdController', 'removeMember', new Error('Member not found'));
             return res.status(404).json({
                 success: false,
                 error: 'Member not found in your household'
@@ -310,6 +331,7 @@ export const removeMember = async (req, res) => {
         }
 
         // Delete member's data and remove from household
+        logDB('transaction', 'Multiple', { action: 'remove member and clean data' });
         await prisma.$transaction([
             // Delete member's transactions
             prisma.transaction.deleteMany({
@@ -333,13 +355,14 @@ export const removeMember = async (req, res) => {
             })
         ]);
 
+        logSuccess('householdController', 'removeMember', { memberId });
         return res.status(200).json({
             success: true,
             message: 'Member removed successfully. Their transactions and income have been deleted.'
         });
 
     } catch (error) {
-        console.error('Remove member error:', error);
+        logError('householdController', 'removeMember', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to remove member'
@@ -351,10 +374,12 @@ export const removeMember = async (req, res) => {
  * Leave the current household
  */
 export const leaveHousehold = async (req, res) => {
+    logEntry('householdController', 'leaveHousehold');
     try {
         const { id: userId, householdId, role, email } = req.user;
 
         if (!householdId) {
+            logError('householdController', 'leaveHousehold', new Error('No household ID'));
             return res.status(400).json({
                 success: false,
                 error: 'You are not in a household'
@@ -367,6 +392,7 @@ export const leaveHousehold = async (req, res) => {
         });
 
         if (memberCount === 1) {
+            logDB('transaction', 'Multiple', { action: 'delete household as last member leaves' });
             // Last member leaving - delete household and all its data
             await prisma.$transaction([
                 // Delete user's transactions
@@ -391,6 +417,8 @@ export const leaveHousehold = async (req, res) => {
                     where: { id: householdId }
                 })
             ]);
+
+            logSuccess('householdController', 'leaveHousehold', 'Household deleted');
             return res.status(200).json({
                 success: true,
                 message: 'You left the household. Household deleted as you were the last member.'
@@ -404,6 +432,7 @@ export const leaveHousehold = async (req, res) => {
             });
 
             if (otherOwners === 0) {
+                logError('householdController', 'leaveHousehold', new Error('Only admin cannot leave'));
                 return res.status(400).json({
                     success: false,
                     error: 'You are the only Admin. Please promote another member to Admin before leaving.'
@@ -412,6 +441,7 @@ export const leaveHousehold = async (req, res) => {
         }
 
         // Delete user's transactions and income from this household before leaving
+        logDB('transaction', 'Multiple', { action: 'leave household and clean data' });
         await prisma.$transaction([
             // Delete user's transactions
             prisma.transaction.deleteMany({
@@ -444,13 +474,14 @@ export const leaveHousehold = async (req, res) => {
             })
         ]);
 
+        logSuccess('householdController', 'leaveHousehold', { userId });
         return res.status(200).json({
             success: true,
             message: 'You have left the household. Your transactions and income have been removed.'
         });
 
     } catch (error) {
-        console.error('Leave household error:', error);
+        logError('householdController', 'leaveHousehold', error);
         return res.status(500).json({
             success: false,
             error: 'Failed to leave household'
