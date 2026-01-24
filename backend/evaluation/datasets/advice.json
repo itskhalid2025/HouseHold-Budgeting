@@ -1,0 +1,28 @@
+[
+    {
+        "scenario": "High spending on dining",
+        "householdData": {
+            "monthlyIncome": 5000,
+            "monthlySpending": 4800,
+            "savingsRate": 4,
+            "topCategories": [
+                {
+                    "category": "Dining & Entertainment",
+                    "amount": 800,
+                    "type": "WANT"
+                },
+                {
+                    "category": "Housing",
+                    "amount": 1500,
+                    "type": "NEED"
+                }
+            ]
+        },
+        "userMessage": "How can I save more money?",
+        "expectedCriteria": {
+            "mentions_dining": true,
+            "tone": "encouraging",
+            "specific_suggestion": true
+        }
+    }
+]

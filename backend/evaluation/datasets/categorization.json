@@ -1,0 +1,50 @@
+[
+    {
+        "input": "Spent 200 on groceries at Walmart",
+        "expected": {
+            "intent": "EXPENSE",
+            "type": "NEED",
+            "amount": 200,
+            "category": "Food",
+            "subcategory": "Groceries"
+        }
+    },
+    {
+        "input": "Received salary of 5000",
+        "expected": {
+            "intent": "INCOME",
+            "type": "PRIMARY",
+            "amount": 5000,
+            "category": "Primary"
+        }
+    },
+    {
+        "input": "Paid 1200 for rent",
+        "expected": {
+            "intent": "EXPENSE",
+            "type": "NEED",
+            "amount": 1200,
+            "category": "Housing",
+            "subcategory": "Rent"
+        }
+    },
+    {
+        "input": "Got 50 from selling old bike",
+        "expected": {
+            "intent": "INCOME",
+            "type": "VARIABLE",
+            "amount": 50,
+            "category": "Variable"
+        }
+    },
+    {
+        "input": "80 dollars for dinner date",
+        "expected": {
+            "intent": "EXPENSE",
+            "type": "WANT",
+            "amount": 80,
+            "category": "Dining & Entertainment",
+            "subcategory": "Restaurants"
+        }
+    }
+]
