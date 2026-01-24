@@ -28,6 +28,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 import usePolling from '../hooks/usePolling';
+import { formatDate, getUserColor } from '../utils/formatting';
 import './Transactions.css';
 
 export default function Transactions() {
@@ -223,14 +224,7 @@ export default function Transactions() {
             <div className="page-header">
                 <h1>Transactions</h1>
                 <div className="header-actions">
-                    {canEdit && (
-                        <button
-                            className="btn-primary"
-                            onClick={() => { setEditingTxn(null); resetForm(); setShowAddModal(true); }}
-                        >
-                            + Add Transaction
-                        </button>
-                    )}
+                    {/* Add Button Removed based on request */}
                     {!canEdit && (
                         <span className="viewer-notice">👁️ View Only</span>
                     )}
@@ -307,45 +301,83 @@ export default function Transactions() {
                 <>
                     <div className="transactions-list">
                         {transactions.length > 0 ? (
-                            transactions.map(txn => (
-                                <div key={txn.id} className="transaction-card">
-                                    <div className="txn-left">
-                                        <div className="txn-date">
-                                            <span className="day">{new Date(txn.date).getDate()}</span>
-                                            <span className="month">{new Date(txn.date).toLocaleString('default', { month: 'short' })}</span>
-                                        </div>
-                                        <div className="txn-details">
-                                            <div className="txn-desc">{txn.description}</div>
-                                            <div className="txn-meta">
-                                                <span className="txn-category">{txn.category || 'Uncategorized'}</span>
-                                                <span className="txn-dot">•</span>
-                                                <span className="txn-merchant">{txn.merchant || 'Unknown'}</span>
-                                                {txn.user && (
-                                                    <span className="user-badge">
-                                                        👤 {txn.user.firstName}
+                            transactions.map(txn => {
+                                const userColor = txn.user ? getUserColor(txn.user.firstName) : '#334155';
+                                // Convert hex to rgba for background (approximate or use simple opacity if hex)
+                                // Standard approach: use a helper or just set border-left colored
+                                return (
+                                    <div
+                                        key={txn.id}
+                                        className="transaction-card"
+                                        style={{
+                                            background: `linear-gradient(90deg, ${userColor}44 0%, rgba(30, 41, 59, 0.8) 100%)`, // Stronger color (44 hex = ~25%)
+                                            borderColor: `${userColor}88`
+                                        }}
+                                    >
+                                        <div className="txn-left-group">
+                                            <div className="txn-date-simple">
+                                                {formatDate(txn.date)}
+                                            </div>
+                                            <div className="txn-details">
+                                                <div className="txn-desc">{txn.description}</div>
+                                                <div className="txn-meta">
+                                                    <span className="txn-category">{txn.category || 'Uncategorized'}</span>
+                                                    {txn.user && (
+                                                        <span
+                                                            className="txn-user-pill"
+                                                            style={{
+                                                                backgroundColor: userColor,
+                                                                color: '#fff',
+                                                                boxShadow: `0 2px 8px ${userColor}66`
+                                                            }}
+                                                        >
+                                                            {txn.user.firstName}
+                                                        </span>
+                                                    )}
+
+                                                    <span
+                                                        className={`txn-type-badge ${txn.type}`}
+                                                        style={{
+                                                            marginLeft: '12px',
+                                                            fontSize: '11px',
+                                                            fontWeight: '600',
+                                                            color: txn.type === 'NEED' ? '#fbbf24' : (txn.type === 'WANT' ? '#f87171' : '#10b981'),
+                                                            border: `1px solid ${txn.type === 'NEED' ? '#fbbf24' : (txn.type === 'WANT' ? '#f87171' : '#10b981')}`,
+                                                            padding: '1px 6px',
+                                                            borderRadius: '4px',
+                                                            textTransform: 'uppercase'
+                                                        }}
+                                                    >
+                                                        {txn.type || 'EXPENSE'}
                                                     </span>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* AI in the Middle */}
+                                        <div className="txn-center">
+                                            {txn.aiCategorized && (
+                                                <div className="ai-badge-center" title="Categorized by AI">✨ AI</div>
+                                            )}
+                                        </div>
+
+                                        {/* Price and Buttons moved to Right as requested */}
+                                        <div className="txn-right-group">
+                                            <div className={`txn-amount ${txn.type.toLowerCase()}`}>
+                                                -${parseFloat(txn.amount).toFixed(2)}
+                                            </div>
+                                            <div className="txn-actions-inline">
+                                                {canEdit && (
+                                                    <>
+                                                        <button onClick={() => handleEdit(txn)} className="btn-icon">✏️</button>
+                                                        <button onClick={() => handleDelete(txn.id)} className="btn-icon delete">✖</button>
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="txn-right">
-                                        <div className={`txn-amount ${txn.type.toLowerCase()}`}>
-                                            -${parseFloat(txn.amount).toFixed(2)}
-                                        </div>
-                                        <div className="txn-actions">
-                                            {canEdit && (
-                                                <>
-                                                    <button onClick={() => handleEdit(txn)} className="btn-icon">✏️</button>
-                                                    <button onClick={() => handleDelete(txn.id)} className="btn-icon delete">✖</button>
-                                                </>
-                                            )}
-                                        </div>
-                                    </div>
-                                    {txn.aiCategorized && (
-                                        <div className="ai-badge" title="Categorized by AI">✨ AI</div>
-                                    )}
-                                </div>
-                            ))
+                                );
+                            })
                         ) : (
                             <div className="empty-state">
                                 <p>No transactions found</p>

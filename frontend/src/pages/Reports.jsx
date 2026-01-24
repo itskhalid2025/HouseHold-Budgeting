@@ -11,7 +11,7 @@
  * @module pages/Reports
  */
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import {
     PieChart, Pie, BarChart, Bar, Cell,
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
@@ -20,6 +20,9 @@ import {
     FileText, Download, TrendingUp, TrendingDown,
     DollarSign, Users, RefreshCw, AlertCircle, ChevronDown
 } from 'lucide-react';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 import { getLatestReport, generateReport } from '../api/api';
 import './Reports.css';
 
@@ -27,6 +30,7 @@ export default function Reports() {
     const [report, setReport] = useState(null);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
+    const [exporting, setExporting] = useState(false);
     const [activeTab, setActiveTab] = useState('weekly');
     const [error, setError] = useState('');
     const [pieView, setPieView] = useState('all'); // 'all' or userId
@@ -40,6 +44,47 @@ export default function Reports() {
         purple: '#8b5cf6',
         pink: '#ec4899',
         teal: '#14b8a6'
+    };
+
+    const handleExportPDF = async () => {
+        setExporting(true);
+        const input = document.querySelector('.reports-container');
+        if (!input) {
+            setExporting(false);
+            return;
+        }
+
+        try {
+            const canvas = await html2canvas(input, {
+                scale: 2,
+                backgroundColor: '#0f0f23', // Match dark theme bg
+                ignoreElements: (element) => element.classList.contains('header-actions') // Hide buttons in PDF
+            });
+            const imgData = canvas.toDataURL('image/png');
+            const pdf = new jsPDF('p', 'mm', 'a4');
+            const pdfWidth = pdf.internal.pageSize.getWidth();
+            const pdfHeight = pdf.internal.pageSize.getHeight();
+            const imgWidth = canvas.width;
+            const imgHeight = canvas.height;
+            const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+
+            // Calculate dimensions to fit on page or span multiple
+            const imgX = (pdfWidth - imgWidth * ratio) / 2;
+            const imgY = 10;
+
+            // Simple fit to one page (or improved for scroll later)
+            // For now, simpler fit-to-width strategy
+            const finalWidth = pdfWidth - 20;
+            const finalHeight = (imgHeight * finalWidth) / imgWidth;
+
+            pdf.addImage(imgData, 'PNG', 10, 10, finalWidth, finalHeight);
+            pdf.save(`Household_Report_${activeTab}_${new Date().toISOString().split('T')[0]}.pdf`);
+        } catch (err) {
+            console.error('PDF Export failed', err);
+            alert('Failed to export PDF');
+        } finally {
+            setExporting(false);
+        }
     };
 
     const fetchReport = async (type = 'weekly') => {
@@ -169,6 +214,14 @@ export default function Reports() {
                 </div>
 
                 <div className="header-actions">
+                    <button
+                        onClick={handleExportPDF}
+                        disabled={exporting}
+                        className="btn-secondary"
+                        title="Export as PDF"
+                    >
+                        {exporting ? 'Exporting...' : <><Download size={18} /> Export PDF</>}
+                    </button>
                     <button
                         onClick={() => handleGenerateReport(activeTab)}
                         disabled={generating}

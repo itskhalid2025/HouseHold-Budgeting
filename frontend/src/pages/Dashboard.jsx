@@ -14,11 +14,13 @@
  */
 
 import { useState, useEffect } from 'react';
-import { getTransactionSummary, getMonthlyIncomeTotal, getGoalSummary, parseVoiceInput } from '../api/api';
+import { getTransactionSummary, getMonthlyIncomeTotal, getGoalSummary, parseVoiceInput, getTransactions } from '../api/api';
+import TrendLineChart from '../components/charts/TrendLineChart';
 import usePolling from '../hooks/usePolling';
 import useVoiceInput from '../hooks/useVoiceInput';
 import { useAuth } from '../context/AuthContext';
 import { formatCurrency } from '../utils/currencyUtils';
+import { formatDate, getUserColor } from '../utils/formatting';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -32,16 +34,21 @@ export default function Dashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [recentTransactions, setRecentTransactions] = useState([]);
+    const [trendData, setTrendData] = useState([]);
+
     async function fetchDashboardData() {
         try {
             // Only set loading on initial fetch
             if (stats.income === 0 && stats.expenses === 0) setLoading(true);
 
             // Fetch data in parallel
-            const [transactionSummary, incomeData, goalData] = await Promise.all([
+            const [transactionSummary, incomeData, goalData, recentTxns, allTxns] = await Promise.all([
                 getTransactionSummary(),
                 getMonthlyIncomeTotal(),
-                getGoalSummary()
+                getGoalSummary(),
+                getTransactions({ limit: 5 }), // Recent 5
+                getTransactions({ limit: 100 }) // For trend (approx last 100 txns to calc trend)
             ]);
 
             const totalExpenses = transactionSummary.summary?.totalSpent || 0;
@@ -55,6 +62,35 @@ export default function Dashboard() {
                 savings: savings,
                 totalSaved: totalSaved
             });
+
+            setRecentTransactions(recentTxns.transactions || []);
+
+            // Calculate daily spending for trend (last 7 days active)
+            const dailyMap = {};
+            const today = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                dailyMap[dateStr] = 0;
+            }
+
+            if (allTxns.transactions) {
+                allTxns.transactions.forEach(t => {
+                    const d = t.date.split('T')[0];
+                    if (dailyMap[d] !== undefined) {
+                        dailyMap[d] += parseFloat(t.amount);
+                    }
+                });
+            }
+
+            const chartData = Object.keys(dailyMap).map(date => ({
+                date: new Date(date).toLocaleDateString(undefined, { weekday: 'short' }),
+                amount: dailyMap[date]
+            }));
+
+            setTrendData(chartData);
+
         } catch (err) {
             console.error('Error fetching dashboard data:', err);
             setError('Failed to load dashboard data');
@@ -142,6 +178,7 @@ export default function Dashboard() {
                     <p>Welcome to HouseHold Budgeting! Your financial overview.</p>
                 </div>
                 <div className="smart-actions">
+                    {/* + Add Button Removed */}
                     {isSupported && (
                         <button
                             className="btn-smart-voice"
@@ -161,6 +198,7 @@ export default function Dashboard() {
 
             {error && <div className="error-message">{error}</div>}
 
+            {/* Summary Cards */}
             <div className="stats-grid">
                 <div className="stat-card">
                     <h3>Total Income</h3>
@@ -176,6 +214,60 @@ export default function Dashboard() {
                     <p className="amount savings-positive">
                         {formatCurrency(stats.totalSaved, currency)}
                     </p>
+                </div>
+            </div>
+
+            {/* Main Content Grid */}
+            <div className="dashboard-grid">
+                {/* Trend Chart */}
+                <div className="dashboard-card chart-section">
+                    <h3>Weekly Spending Trend</h3>
+                    <div className="chart-wrapper">
+                        <TrendLineChart data={trendData} />
+                    </div>
+                </div>
+
+                {/* Recent Transactions */}
+                <div className="dashboard-card recent-transactions">
+                    <h3>Recent Transactions</h3>
+                    <div className="transaction-list-compact">
+                        {recentTransactions.length > 0 ? (
+                            recentTransactions.map(txn => (
+                                <div key={txn.id} className="txn-item-compact">
+                                    <div className="txn-icon">{txn.category?.icon || '💸'}</div>
+                                    <div className="txn-details">
+                                        <span className="txn-desc">{txn.description}</span>
+                                        <div className="txn-meta">
+                                            <span className="txn-date">{formatDate(txn.date)}</span>
+                                            {txn.user && (
+                                                <span
+                                                    className="txn-user-pill"
+                                                    style={{
+                                                        backgroundColor: getUserColor(txn.user.firstName),
+                                                        color: '#fff',
+                                                        padding: '2px 8px',
+                                                        borderRadius: '10px',
+                                                        fontSize: '11px',
+                                                        fontWeight: '700',
+                                                        textTransform: 'uppercase',
+                                                        marginLeft: '8px'
+                                                    }}
+                                                >
+                                                    {txn.user.firstName}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <span className="txn-amount">-${parseFloat(txn.amount).toFixed(2)}</span>
+                                </div>
+                            ))
+                        ) : (
+                            <p className="empty-text">No recent transactions</p>
+                        )}
+                    </div>
+                    <button className="view-all-btn" onClick={() => (window.location.href = '/transactions')}>
+                        View All
+                    </button>
                 </div>
             </div>
 

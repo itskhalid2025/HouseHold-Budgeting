@@ -20,7 +20,10 @@ import {
     getGoalSummary,
     addGoal,
     updateGoal,
-    deleteGoal
+    deleteGoal,
+    getTransactionSummary, // NEW
+    getMonthlyIncomeTotal, // NEW
+    chatWithAdvisor // NEW
 } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import usePolling from '../hooks/usePolling';
@@ -30,10 +33,20 @@ import { formatCurrency } from '../utils/currencyUtils';
 
 export default function Savings() {
     const { user, currency } = useAuth();
-    const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR'; // For Add Button
+    const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
 
+    const [activeTab, setActiveTab] = useState('goals'); // 'goals' or 'overview'
     const [goals, setGoals] = useState([]);
     const [summary, setSummary] = useState({ totalSaved: 0, totalTarget: 0 });
+    // New stats for Overview
+    const [overviewStats, setOverviewStats] = useState({
+        income: 0,
+        expenses: 0,
+        potentialSavings: 0
+    });
+    const [aiAdvice, setAiAdvice] = useState('');
+    const [loadingAdvice, setLoadingAdvice] = useState(false);
+
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [showAddModal, setShowAddModal] = useState(false);
@@ -51,25 +64,50 @@ export default function Savings() {
         fetchData();
     }, []);
 
-    // Poll for updates every 10 seconds
     usePolling(fetchData, 10000);
 
     async function fetchData() {
         try {
             if (goals.length === 0) setLoading(true);
 
-            const [goalsList, stats] = await Promise.all([
+            // Fetch Goals + Overview Data
+            const [goalsList, stats, txnSum, incomeSum] = await Promise.all([
                 getGoals(),
-                getGoalSummary()
+                getGoalSummary(),
+                getTransactionSummary(),
+                getMonthlyIncomeTotal()
             ]);
+
             setGoals(goalsList.goals);
             setSummary(stats);
+
+            setOverviewStats({
+                income: incomeSum.monthlyTotal || 0,
+                expenses: txnSum.summary?.totalSpent || 0,
+                potentialSavings: (incomeSum.monthlyTotal || 0) - (txnSum.summary?.totalSpent || 0)
+            });
+
             setLoading(false);
         } catch (err) {
             setError(err.message);
             setLoading(false);
         }
     }
+
+    const handleGetAiAdvice = async () => {
+        setLoadingAdvice(true);
+        try {
+            const prompt = `Analyze my savings. Income: ${overviewStats.income}, Expenses: ${overviewStats.expenses}, Current Saved in Goals: ${summary.totalSaved}. Give me 3 short bullet points on how to improve.`;
+            const res = await chatWithAdvisor(prompt);
+            // Assuming res.response contains the text
+            setAiAdvice(res.response || "Could not generate advice at this time.");
+        } catch (e) {
+            console.error(e);
+            setAiAdvice("Failed to get AI advice.");
+        } finally {
+            setLoadingAdvice(false);
+        }
+    };
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -138,7 +176,6 @@ export default function Savings() {
     const [filterType, setFilterType] = useState('');
     const [filterCreator, setCreatorFilter] = useState('');
 
-    // Extract unique creators
     const creators = [...new Set(goals.map(g => g.createdBy ? JSON.stringify({ id: g.createdBy.id, name: g.createdBy.firstName }) : null).filter(Boolean))].map(s => JSON.parse(s));
 
     const filteredGoals = goals.filter(goal => {
@@ -147,145 +184,195 @@ export default function Savings() {
         return typeMatch && creatorMatch;
     });
 
-    // Helper for permissions
-    const isOwner = user?.role === 'OWNER';
-    // Members (Editors) can add, Viewers cannot (kept existing logic for ADD)
     const canAdd = user?.role === 'OWNER' || user?.role === 'EDITOR';
+    const isOwner = user?.role === 'OWNER';
 
-    // Determine progress color
     const getProgressColor = (percent) => {
-        if (percent >= 100) return '#10b981'; // Green
-        if (percent >= 50) return '#3b82f6'; // Blue
-        if (percent >= 25) return '#f59e0b'; // Orange
-        return '#ef4444'; // Red
+        if (percent >= 100) return '#10b981';
+        if (percent >= 50) return '#3b82f6';
+        if (percent >= 25) return '#f59e0b';
+        return '#ef4444';
     };
 
     return (
         <div className="savings-page">
             <div className="page-header">
                 <h1>Savings & Goals</h1>
-                {canAdd ? (
+                {canAdd && activeTab === 'goals' && (
                     <button
                         className="btn-primary"
                         onClick={() => { setEditingGoal(null); resetForm(); setShowAddModal(true); }}
                     >
                         + Add Goal
                     </button>
-                ) : (
-                    <span className="viewer-notice">👁️ View Only</span>
                 )}
+            </div>
+
+            {/* Tabs */}
+            <div className="tabs-container" style={{ marginBottom: '20px', display: 'flex', gap: '10px' }}>
+                <button
+                    className={`tab-btn ${activeTab === 'goals' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('goals')}
+                >
+                    My Goals
+                </button>
+                <button
+                    className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('overview')}
+                >
+                    Overview & Insights
+                </button>
             </div>
 
             {error && <div className="error-banner">{error}</div>}
 
-            {/* Summary Stats */}
-            <div className="savings-summary-card">
-                <div className="summary-left">
-                    <h3>Total Savings</h3>
-                    <p className="summary-subtitle">Across all active goals</p>
-                </div>
-                <div className="summary-right">
-                    <span className="total-amount">{formatCurrency(summary.totalSaved, currency)}</span>
-                    <span className="total-target">Goal: {formatCurrency(summary.totalTarget, currency)}</span>
-                </div>
-            </div>
+            {activeTab === 'goals' ? (
+                <>
+                    {/* Summary Stats */}
+                    <div className="savings-summary-card">
+                        <div className="summary-left">
+                            <h3>Total Savings</h3>
+                            <p className="summary-subtitle">Across all active goals</p>
+                        </div>
+                        <div className="summary-right">
+                            <span className="total-amount">{formatCurrency(summary.totalSaved, currency)}</span>
+                            <span className="total-target">Goal: {formatCurrency(summary.totalTarget, currency)}</span>
+                        </div>
+                    </div>
 
-            {/* Filters */}
-            <div className="filters-bar">
-                <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="filter-select"
-                >
-                    <option value="">All Types</option>
-                    <option value="EMERGENCY_FUND">Emergency Fund</option>
-                    <option value="SINKING_FUND">Sinking Fund</option>
-                    <option value="DEBT_PAYOFF">Debt Payoff</option>
-                    <option value="LONG_TERM">Long Term</option>
-                </select>
+                    <div className="filters-bar">
+                        <select
+                            value={filterType}
+                            onChange={(e) => setFilterType(e.target.value)}
+                            className="filter-select"
+                        >
+                            <option value="">All Types</option>
+                            <option value="EMERGENCY_FUND">Emergency Fund</option>
+                            <option value="SINKING_FUND">Sinking Fund</option>
+                            <option value="DEBT_PAYOFF">Debt Payoff</option>
+                            <option value="LONG_TERM">Long Term</option>
+                        </select>
 
-                <select
-                    value={filterCreator}
-                    onChange={(e) => setCreatorFilter(e.target.value)}
-                    className="filter-select"
-                >
-                    <option value="">All Creators</option>
-                    {creators.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                </select>
-            </div>
+                        <select
+                            value={filterCreator}
+                            onChange={(e) => setCreatorFilter(e.target.value)}
+                            className="filter-select"
+                        >
+                            <option value="">All Creators</option>
+                            {creators.map(c => (
+                                <option key={c.id} value={c.id}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
 
-            {loading ? (
-                <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>Loading goals...</p>
-                </div>
-            ) : (
-                <div className="savings-grid">
-                    {filteredGoals.length > 0 ? (
-                        filteredGoals.map(goal => {
-                            const percent = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
-                            const isCreator = goal.createdById === user?.id; // backend provides createdById or we check goal.createdBy.id
-                            // Note: createdById is on Goal model, but might not be in JSON if not selected? 
-                            // goalController returns 'goals' which is prisma result. createdById is field.
-                            const canAction = isOwner || isCreator;
-
-                            return (
-                                <div key={goal.id} className="savings-card">
-                                    <div className="savings-header">
-                                        <div className="header-left">
-                                            <span className={`goal-type ${goal.type.toLowerCase()}`}>
-                                                {goal.type.replace('_', ' ')}
-                                            </span>
-                                            {goal.createdBy && (
-                                                <span className="creator-badge">
-                                                    by {goal.createdBy.firstName}
-                                                </span>
-                                            )}
-                                        </div>
-                                        {canAction && (
-                                            <div className="card-actions">
-                                                <button onClick={() => handleEdit(goal)} className="btn-icon">✏️</button>
-                                                <button onClick={() => handleDelete(goal.id)} className="btn-icon delete">✖</button>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <h3>{goal.name}</h3>
-
-                                    <div className="savings-progress">
-                                        <div className="progress-header">
-                                            <span>{formatCurrency(goal.currentAmount, currency)}</span>
-                                            <span>{Math.round(percent)}% of {formatCurrency(goal.targetAmount, currency)}</span>
-                                        </div>
-                                        <div className="progress-bar-bg">
-                                            <div
-                                                className="progress-bar-fill"
-                                                style={{
-                                                    width: `${percent}%`,
-                                                    backgroundColor: getProgressColor(percent)
-                                                }}
-                                            ></div>
-                                        </div>
-                                    </div>
-
-                                    <div className="savings-footer">
-                                        {goal.deadline ? (
-                                            <span className="deadline-badge">
-                                                📅 Target: {new Date(goal.deadline).toLocaleDateString()}
-                                            </span>
-                                        ) : (
-                                            <span>No deadline set</span>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })
+                    {loading ? (
+                        <div className="loading-state">
+                            <div className="spinner"></div>
+                            <p>Loading goals...</p>
+                        </div>
                     ) : (
-                        <div className="empty-state">
-                            <p>No savings goals found</p>
+                        <div className="savings-grid">
+                            {filteredGoals.length > 0 ? (
+                                filteredGoals.map(goal => {
+                                    const percent = Math.min(100, (goal.currentAmount / goal.targetAmount) * 100);
+                                    const isCreator = goal.createdById === user?.id;
+                                    const canAction = isOwner || isCreator;
+
+                                    return (
+                                        <div key={goal.id} className="savings-card">
+                                            <div className="savings-header">
+                                                <div className="header-left">
+                                                    <span className={`goal-type ${goal.type.toLowerCase()}`}>
+                                                        {goal.type.replace('_', ' ')}
+                                                    </span>
+                                                    {goal.createdBy && (
+                                                        <span className="creator-badge">
+                                                            by {goal.createdBy.firstName}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {canAction && (
+                                                    <div className="card-actions">
+                                                        <button onClick={() => handleEdit(goal)} className="btn-icon">✏️</button>
+                                                        <button onClick={() => handleDelete(goal.id)} className="btn-icon delete">✖</button>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <h3>{goal.name}</h3>
+
+                                            <div className="savings-progress">
+                                                <div className="progress-header">
+                                                    <span>{formatCurrency(goal.currentAmount, currency)}</span>
+                                                    <span>{Math.round(percent)}% of {formatCurrency(goal.targetAmount, currency)}</span>
+                                                </div>
+                                                <div className="progress-bar-bg">
+                                                    <div
+                                                        className="progress-bar-fill"
+                                                        style={{
+                                                            width: `${percent}%`,
+                                                            backgroundColor: getProgressColor(percent)
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+
+                                            <div className="savings-footer">
+                                                {goal.deadline ? (
+                                                    <span className="deadline-badge">
+                                                        📅 Target: {new Date(goal.deadline).toLocaleDateString()}
+                                                    </span>
+                                                ) : (
+                                                    <span>No deadline set</span>
+                                                )}
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="empty-state">
+                                    <p>No savings goals found</p>
+                                </div>
+                            )}
                         </div>
                     )}
+                </>
+            ) : (
+                // Overview Tab
+                <div className="overview-container">
+                    <div className="stats-grid">
+                        <div className="stat-card">
+                            <h3>Monthly Income</h3>
+                            <p className="amount income">{formatCurrency(overviewStats.income, currency)}</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Monthly Expenses</h3>
+                            <p className="amount expense">{formatCurrency(overviewStats.expenses, currency)}</p>
+                        </div>
+                        <div className="stat-card">
+                            <h3>Potential Savings</h3>
+                            <p className="amount savings-positive">{formatCurrency(overviewStats.potentialSavings, currency)}</p>
+                            <span className="subtitle" style={{ fontSize: '12px', color: '#94a3b8' }}>Income - Expenses</span>
+                        </div>
+                    </div>
+
+                    <div className="ai-advice-section" style={{ marginTop: '30px', padding: '20px', background: 'rgba(124, 58, 237, 0.1)', borderRadius: '12px', border: '1px solid rgba(124, 58, 237, 0.3)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                            <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                🤖 AI Savings Advisor
+                            </h3>
+                            <button className="btn-primary" onClick={handleGetAiAdvice} disabled={loadingAdvice}>
+                                {loadingAdvice ? 'Analyzing...' : 'Get Suggestions'}
+                            </button>
+                        </div>
+
+                        {aiAdvice ? (
+                            <div className="ai-response" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>
+                                {aiAdvice}
+                            </div>
+                        ) : (
+                            <p style={{ color: '#94a3b8' }}>Click the button to get personalized savings advice based on your current finances.</p>
+                        )}
+                    </div>
                 </div>
             )}
 

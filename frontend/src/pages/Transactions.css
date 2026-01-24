@@ -38,21 +38,9 @@
     }
 }
 
-/*
- * Transaction Management Styles
- *
- * Styles for the transaction list view, date badges, expense highlighting,
- * voice input modal, and pagination controls.
- */
-
 .transactions-page {
-
     padding-bottom: 80px;
-    /* Space for FAB or footer */
 }
-
-/* Page Header & Filters are handled by global Admin/App CSS usually, 
-   but specific tweaks here */
 
 .filters-bar {
     display: flex;
@@ -78,126 +66,128 @@
 
 .filter-input {
     flex: 2;
-    /* Search takes more space */
     min-width: 200px;
 }
 
+.filter-input,
 .transactions-list {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .transaction-card {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    background: rgba(255, 255, 255, 0.05);
+    justify-content: space-between;
+    padding: 16px 24px;
+    border-radius: 16px;
     border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 16px;
-    transition: transform 0.2s, background 0.2s;
+    transition: transform 0.2s, box-shadow 0.2s;
+    /* Background handled inline for colors */
 }
 
 .transaction-card:hover {
-    transform: translateY(-2px);
-    background: rgba(255, 255, 255, 0.08);
+    transform: scale(1.01);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.txn-left {
+/* Left Group: Date + Details */
+.txn-left-group {
     display: flex;
-    gap: 16px;
     align-items: center;
+    gap: 24px;
+    flex: 2;
+    /* Give more space to details on left */
 }
 
-.txn-date-box {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    width: 50px;
-    height: 50px;
-    flex-shrink: 0;
-}
-
-.txn-day {
-    font-size: 18px;
+.txn-date-simple {
+    font-size: 15px;
     font-weight: 700;
     color: #fff;
+    white-space: nowrap;
+    width: 80px;
 }
 
-.txn-month {
-    font-size: 10px;
-    text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.6);
-}
-
-.txn-details h3 {
-    font-size: 16px;
-    color: #fff;
-    margin-bottom: 4px;
-}
-
-.txn-sub {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
+/* Center Group: AI */
+.txn-center {
+    flex: 0 0 80px;
     display: flex;
+    justify-content: center;
+}
+
+.ai-badge-center {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #000;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 20px;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Right Group: Price + Actions */
+.txn-right-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
     gap: 8px;
+    min-width: 120px;
+}
+
+.txn-details {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.txn-desc {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.txn-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .txn-category {
-    color: #60a5fa;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 13px;
 }
 
-.txn-user {
-    color: rgba(255, 255, 255, 0.4);
-}
-
-.txn-right {
-    text-align: right;
-    display: flex;
-    align-items: center;
-    gap: 16px;
-}
-
-.txn-amount {
-    font-size: 18px;
+.txn-user-pill {
+    font-size: 12px;
     font-weight: 700;
-    color: #fff;
-}
-
-.txn-amount.expense {
-    color: #fff;
-}
-
-.txn-amount.income {
-    color: #4ade80;
-}
-
-.transaction-actions {
-    display: flex;
-    gap: 8px;
-    opacity: 0;
-    transition: opacity 0.2s;
-}
-
-.transaction-card:hover .transaction-actions {
-    opacity: 1;
+    padding: 2px 10px;
+    border-radius: 12px;
+    text-transform: uppercase;
 }
 
 .btn-icon {
-    background: none;
+    background: rgba(255, 255, 255, 0.1);
     border: none;
     cursor: pointer;
-    font-size: 16px;
-    padding: 4px;
-    transition: transform 0.2s;
+    font-size: 12px;
+    padding: 4px 8px;
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.7);
+    transition: all 0.2s;
 }
 
 .btn-icon:hover {
-    transform: scale(1.1);
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+
+.btn-icon.delete:hover {
+    background: rgba(239, 68, 68, 0.3);
+    color: #fca5a5;
 }
 
 .btn-voice {
