@@ -17,11 +17,10 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import config from '../utils/config.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
-const prisma = new PrismaClient();
 
 /**
  * Generate JWT token

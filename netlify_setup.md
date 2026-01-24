@@ -47,7 +47,7 @@ This guide uses the **Free Tier Trio** for 2026:
 4.  **Configuration**:
     - **Name**: `household-api`
     - **Runtime**: **Node**
-    - **Build Command**: `npm install` (or `npm install && npm run build` if using TS)
+    - **Build Command**: `npm install && npx prisma generate && npx prisma migrate deploy`
     - **Start Command**: `npm start`
     - **Instance Type**: **Free**
 5.  **Environment Variables** (Scroll down):
@@ -58,7 +58,8 @@ This guide uses the **Free Tier Trio** for 2026:
     | `JWT_SECRET` | `some-super-secret-long-string` |
     | `GEMINI_API_KEY` | Your Google Gemini API Key |
     | `OPIK_API_KEY` | Your Opik API Key |
-    | `PORT` | `3001` (Optional, Render sets `PORT` automatically) |
+    | `NODE_ENV` | `production` |
+    | `FRONTEND_URL` | Your Netlify URL (e.g., `https://household-budget.netlify.app`) |
 6.  **Deploy**:
     - Click **"Create Web Service"**.
     - Wait for it to build. Once live, copy your **Backend URL** (e.g., `https://household-api.onrender.com`).
@@ -79,8 +80,8 @@ This guide uses the **Free Tier Trio** for 2026:
 5.  **Environment Variables**:
     - Click **"Add environment variable"**.
     - Key: `VITE_API_URL`
-    - Value: `https://household-api.onrender.com` (Your Render URL from Step 2)
-    - *Make sure to remove any trailing slash `/` at the end.*
+    - Value: `https://household-api.onrender.com/api` (Notice the **/api** at the end)
+    - *Make sure to remove any trailing slash `/` after the word api.*
 6.  **Deploy**:
     - Click **"Deploy"**.
 

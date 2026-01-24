@@ -124,9 +124,43 @@ function Header() {
   );
 }
 
+// Server Status component to handle cold starts
+function ServerStatus() {
+  const [isSlow, setIsSlow] = useState(false);
+
+  useEffect(() => {
+    const handleSlow = () => setIsSlow(true);
+    const handleReady = () => setIsSlow(false);
+
+    window.addEventListener('api-slow', handleSlow);
+    window.addEventListener('api-ready', handleReady);
+
+    return () => {
+      window.removeEventListener('api-slow', handleSlow);
+      window.removeEventListener('api-ready', handleReady);
+    };
+  }, []);
+
+  if (!isSlow) return null;
+
+  return (
+    <div className="server-status-banner">
+      <div className="server-status-content">
+        <span className="server-status-icon">☕</span>
+        <div className="server-status-text">
+          <strong>Waking up the server...</strong>
+          <p>Render's free tier takes about 30s to start. Hang tight!</p>
+        </div>
+        <div className="server-status-loader"></div>
+      </div>
+    </div>
+  );
+}
+
 function AppContent() {
   return (
     <div className="app">
+      <ServerStatus />
       <Header />
 
       <main className="app-main">

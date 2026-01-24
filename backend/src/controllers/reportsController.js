@@ -9,11 +9,10 @@
  * @requires ../agents/reportAgent
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import { generateReport } from '../agents/reportAgent.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
-const prisma = new PrismaClient();
 
 /**
  * Helper function to aggregate transaction data for reports

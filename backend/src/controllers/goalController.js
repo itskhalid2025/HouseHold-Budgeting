@@ -9,10 +9,9 @@
  * @requires @prisma/client
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
-const prisma = new PrismaClient();
 
 // Add a new savings goal
 export const createGoal = async (req, res) => {

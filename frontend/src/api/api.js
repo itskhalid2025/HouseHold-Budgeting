@@ -8,7 +8,45 @@
  */
 
 // API Configuration
-const API_BASE_URL = 'http://localhost:3001/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+
+// Request tracking for "Waking up" notification
+let activeRequests = 0;
+let slowTimer = null;
+
+function startRequest() {
+    activeRequests++;
+    if (!slowTimer) {
+        slowTimer = setTimeout(() => {
+            if (activeRequests > 0) {
+                window.dispatchEvent(new CustomEvent('api-slow'));
+            }
+        }, 1500); // Trigger after 1.5 seconds
+    }
+}
+
+function stopRequest() {
+    activeRequests--;
+    if (activeRequests <= 0) {
+        activeRequests = 0;
+        if (slowTimer) {
+            clearTimeout(slowTimer);
+            slowTimer = null;
+        }
+        window.dispatchEvent(new CustomEvent('api-ready'));
+    }
+}
+
+// Wrapper for fetch to track loading state
+async function trackedFetch(...args) {
+    startRequest();
+    try {
+        const response = await window.fetch(...args);
+        return response;
+    } finally {
+        stopRequest();
+    }
+}
 
 
 // Helper for handling responses
@@ -68,7 +106,7 @@ function authHeaders() {
 // ================== AUTH API ==================
 
 export async function register(userData) {
-    const response = await fetch(`${API_BASE_URL}/auth/register`, {
+    const response = await trackedFetch(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(userData)
@@ -82,7 +120,7 @@ export async function register(userData) {
 }
 
 export async function login(email, password) {
-    const response = await fetch(`${API_BASE_URL}/auth/login`, {
+    const response = await trackedFetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -100,7 +138,7 @@ export async function logout() {
 }
 
 export async function forgotPassword(email) {
-    const response = await fetch(`${API_BASE_URL}/auth/forgot-password`, {
+    const response = await trackedFetch(`${API_BASE_URL}/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email })
@@ -109,7 +147,7 @@ export async function forgotPassword(email) {
 }
 
 export async function resetPassword(token, newPassword) {
-    const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
+    const response = await trackedFetch(`${API_BASE_URL}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword })
@@ -118,7 +156,7 @@ export async function resetPassword(token, newPassword) {
 }
 
 export async function getMe() {
-    const response = await fetch(`${API_BASE_URL}/auth/me`, {
+    const response = await trackedFetch(`${API_BASE_URL}/auth/me`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -127,7 +165,7 @@ export async function getMe() {
 // ================== HOUSEHOLD API ==================
 
 export async function createHousehold(name) {
-    const response = await fetch(`${API_BASE_URL}/households`, {
+    const response = await trackedFetch(`${API_BASE_URL}/households`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ name })
@@ -136,14 +174,14 @@ export async function createHousehold(name) {
 }
 
 export async function getHousehold() {
-    const response = await fetch(`${API_BASE_URL}/households?_t=${Date.now()}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/households?_t=${Date.now()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function updateHousehold(data) {
-    const response = await fetch(`${API_BASE_URL}/households`, {
+    const response = await trackedFetch(`${API_BASE_URL}/households`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(data)
@@ -152,7 +190,7 @@ export async function updateHousehold(data) {
 }
 
 export async function joinHousehold(inviteCode) {
-    const response = await fetch(`${API_BASE_URL}/households/join`, {
+    const response = await trackedFetch(`${API_BASE_URL}/households/join`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ inviteCode })
@@ -161,7 +199,7 @@ export async function joinHousehold(inviteCode) {
 }
 
 export async function leaveHousehold() {
-    const response = await fetch(`${API_BASE_URL}/households/leave`, {
+    const response = await trackedFetch(`${API_BASE_URL}/households/leave`, {
         method: 'POST',
         headers: authHeaders()
     });
@@ -169,7 +207,7 @@ export async function leaveHousehold() {
 }
 
 export async function removeMember(memberId) {
-    const response = await fetch(`${API_BASE_URL}/households/members/${memberId}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/households/members/${memberId}`, {
         method: 'DELETE',
         headers: authHeaders()
     });
@@ -177,7 +215,7 @@ export async function removeMember(memberId) {
 }
 
 export async function updateMemberRole(memberId, role) {
-    const response = await fetch(`${API_BASE_URL}/households/members/${memberId}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/households/members/${memberId}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify({ role })
@@ -188,7 +226,7 @@ export async function updateMemberRole(memberId, role) {
 // ================== INVITATION API ==================
 
 export async function sendInvitation(email, role) {
-    const response = await fetch(`${API_BASE_URL}/invitations`, {
+    const response = await trackedFetch(`${API_BASE_URL}/invitations`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ email, role })
@@ -197,14 +235,14 @@ export async function sendInvitation(email, role) {
 }
 
 export async function getInvitations() {
-    const response = await fetch(`${API_BASE_URL}/invitations`, {
+    const response = await trackedFetch(`${API_BASE_URL}/invitations`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function acceptInvitation(token) {
-    const response = await fetch(`${API_BASE_URL}/invitations/${token}/accept`, {
+    const response = await trackedFetch(`${API_BASE_URL}/invitations/${token}/accept`, {
         method: 'POST',
         headers: authHeaders()
     });
@@ -214,7 +252,7 @@ export async function acceptInvitation(token) {
 // ================== JOIN REQUEST API ==================
 
 export async function submitJoinRequest(inviteCode) {
-    const response = await fetch(`${API_BASE_URL}/join-requests`, {
+    const response = await trackedFetch(`${API_BASE_URL}/join-requests`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ inviteCode })
@@ -223,21 +261,21 @@ export async function submitJoinRequest(inviteCode) {
 }
 
 export async function getJoinRequests() {
-    const response = await fetch(`${API_BASE_URL}/join-requests`, {
+    const response = await trackedFetch(`${API_BASE_URL}/join-requests`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function getMyJoinRequestStatus() {
-    const response = await fetch(`${API_BASE_URL}/join-requests/my-status`, {
+    const response = await trackedFetch(`${API_BASE_URL}/join-requests/my-status`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function approveJoinRequest(requestId, role) {
-    const response = await fetch(`${API_BASE_URL}/join-requests/${requestId}/approve`, {
+    const response = await trackedFetch(`${API_BASE_URL}/join-requests/${requestId}/approve`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ role })
@@ -246,7 +284,7 @@ export async function approveJoinRequest(requestId, role) {
 }
 
 export async function rejectJoinRequest(requestId) {
-    const response = await fetch(`${API_BASE_URL}/join-requests/${requestId}/reject`, {
+    const response = await trackedFetch(`${API_BASE_URL}/join-requests/${requestId}/reject`, {
         method: 'POST',
         headers: authHeaders()
     });
@@ -256,7 +294,7 @@ export async function rejectJoinRequest(requestId) {
 // ================== TRANSACTION API ==================
 
 export async function addTransaction(transactionData) {
-    const response = await fetch(`${API_BASE_URL}/transactions`, {
+    const response = await trackedFetch(`${API_BASE_URL}/transactions`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(transactionData)
@@ -267,7 +305,7 @@ export async function addTransaction(transactionData) {
 export async function getTransactions(params = {}) {
     const queryParams = new URLSearchParams(params);
     queryParams.append('_t', Date.now()); // Cache busting
-    const response = await fetch(`${API_BASE_URL}/transactions?${queryParams.toString()}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/transactions?${queryParams.toString()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -276,14 +314,14 @@ export async function getTransactions(params = {}) {
 export async function getTransactionSummary(params = {}) {
     const queryParams = new URLSearchParams(params);
     queryParams.append('_t', Date.now());
-    const response = await fetch(`${API_BASE_URL}/transactions/summary?${queryParams.toString()}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/transactions/summary?${queryParams.toString()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function updateTransaction(id, data) {
-    const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/transactions/${id}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(data)
@@ -292,7 +330,7 @@ export async function updateTransaction(id, data) {
 }
 
 export async function deleteTransaction(id) {
-    const response = await fetch(`${API_BASE_URL}/transactions/${id}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/transactions/${id}`, {
         method: 'DELETE',
         headers: authHeaders()
     });
@@ -303,7 +341,7 @@ export async function deleteTransaction(id) {
 
 export async function addIncome(incomeData) {
     console.log('📤 Sending addIncome request:', JSON.stringify(incomeData, null, 2));
-    const response = await fetch(`${API_BASE_URL}/incomes`, {
+    const response = await trackedFetch(`${API_BASE_URL}/incomes`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(incomeData)
@@ -312,21 +350,21 @@ export async function addIncome(incomeData) {
 }
 
 export async function getIncomes(active = true) {
-    const response = await fetch(`${API_BASE_URL}/incomes?active=${active}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/incomes?active=${active}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function getMonthlyIncomeTotal() {
-    const response = await fetch(`${API_BASE_URL}/incomes/monthly-total?_t=${Date.now()}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/incomes/monthly-total?_t=${Date.now()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function updateIncome(id, data) {
-    const response = await fetch(`${API_BASE_URL}/incomes/${id}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/incomes/${id}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(data)
@@ -335,7 +373,7 @@ export async function updateIncome(id, data) {
 }
 
 export async function deleteIncome(id) {
-    const response = await fetch(`${API_BASE_URL}/incomes/${id}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/incomes/${id}`, {
         method: 'DELETE',
         headers: authHeaders()
     });
@@ -345,7 +383,7 @@ export async function deleteIncome(id) {
 // ================== GOALS (SAVINGS) API ==================
 
 export async function addGoal(goalData) {
-    const response = await fetch(`${API_BASE_URL}/goals`, {
+    const response = await trackedFetch(`${API_BASE_URL}/goals`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify(goalData)
@@ -354,21 +392,21 @@ export async function addGoal(goalData) {
 }
 
 export async function getGoals(active = true) {
-    const response = await fetch(`${API_BASE_URL}/goals?active=${active}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/goals?active=${active}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function getGoalSummary() {
-    const response = await fetch(`${API_BASE_URL}/goals/summary?_t=${Date.now()}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/goals/summary?_t=${Date.now()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
 }
 
 export async function updateGoal(id, data) {
-    const response = await fetch(`${API_BASE_URL}/goals/${id}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/goals/${id}`, {
         method: 'PUT',
         headers: authHeaders(),
         body: JSON.stringify(data)
@@ -377,7 +415,7 @@ export async function updateGoal(id, data) {
 }
 
 export async function deleteGoal(id) {
-    const response = await fetch(`${API_BASE_URL}/goals/${id}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/goals/${id}`, {
         method: 'DELETE',
         headers: authHeaders()
     });
@@ -388,7 +426,7 @@ export async function deleteGoal(id) {
 
 export async function parseVoiceInput(transcript) {
     console.log('🎤 Voice Input:', transcript);
-    const response = await fetch(`${API_BASE_URL}/smart/entry`, {
+    const response = await trackedFetch(`${API_BASE_URL}/smart/entry`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ text: transcript })
@@ -435,7 +473,7 @@ export async function parseVoiceInput(transcript) {
 
 export async function getReports() {
     console.log('📊 Fetching reports');
-    const response = await fetch(`${API_BASE_URL}/reports`, {
+    const response = await trackedFetch(`${API_BASE_URL}/reports`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -443,7 +481,7 @@ export async function getReports() {
 
 export async function getLatestReport(type = 'weekly') {
     console.log('📊 Fetching latest report:', type);
-    const response = await fetch(`${API_BASE_URL}/reports/latest?type=${type}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/reports/latest?type=${type}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -451,7 +489,7 @@ export async function getLatestReport(type = 'weekly') {
 
 export async function generateReport(reportType = 'weekly', dateStart = null, dateEnd = null) {
     console.log('📊 Generating report:', reportType);
-    const response = await fetch(`${API_BASE_URL}/reports/generate`, {
+    const response = await trackedFetch(`${API_BASE_URL}/reports/generate`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ reportType, dateStart, dateEnd })
@@ -461,7 +499,7 @@ export async function generateReport(reportType = 'weekly', dateStart = null, da
 
 export async function getReportById(id) {
     console.log('📊 Fetching report:', id);
-    const response = await fetch(`${API_BASE_URL}/reports/${id}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/reports/${id}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -471,7 +509,7 @@ export async function getReportById(id) {
 
 export async function chatWithAdvisor(message, conversationId = null) {
     console.log('🤖 Sending to advisor:', message.substring(0, 50));
-    const response = await fetch(`${API_BASE_URL}/advisor/chat`, {
+    const response = await trackedFetch(`${API_BASE_URL}/advisor/chat`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ message, conversationId })
@@ -481,7 +519,7 @@ export async function chatWithAdvisor(message, conversationId = null) {
 
 export async function getRecommendations() {
     console.log('💡 Getting recommendations');
-    const response = await fetch(`${API_BASE_URL}/advisor/recommendations`, {
+    const response = await trackedFetch(`${API_BASE_URL}/advisor/recommendations`, {
         method: 'POST',
         headers: authHeaders()
     });
@@ -490,7 +528,7 @@ export async function getRecommendations() {
 
 export async function generateChartConfig(query) {
     console.log('📈 Generating chart config:', query);
-    const response = await fetch(`${API_BASE_URL}/advisor/chart`, {
+    const response = await trackedFetch(`${API_BASE_URL}/advisor/chart`, {
         method: 'POST',
         headers: authHeaders(),
         body: JSON.stringify({ query })
@@ -500,7 +538,7 @@ export async function generateChartConfig(query) {
 
 export async function getConversationHistory(conversationId) {
     console.log('📜 Getting conversation history');
-    const response = await fetch(`${API_BASE_URL}/advisor/history/${conversationId}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/advisor/history/${conversationId}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -508,7 +546,7 @@ export async function getConversationHistory(conversationId) {
 
 export async function clearConversation(conversationId) {
     console.log('🗑️ Clearing conversation');
-    const response = await fetch(`${API_BASE_URL}/advisor/conversation/${conversationId}`, {
+    const response = await trackedFetch(`${API_BASE_URL}/advisor/conversation/${conversationId}`, {
         method: 'DELETE',
         headers: authHeaders()
     });

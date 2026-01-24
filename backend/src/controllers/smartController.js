@@ -1,9 +1,8 @@
+import prisma from '../services/db.js';
 import { traceOperation } from '../services/opikService.js';
 import { categorizeEntry } from '../agents/categorizationAgent.js';
-import { PrismaClient } from '@prisma/client';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
-const prisma = new PrismaClient();
 
 /**
  * Process a smart entry (voice/text) - can handle multiple transactions in one input

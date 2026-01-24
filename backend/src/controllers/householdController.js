@@ -10,12 +10,10 @@
  * @requires ../utils/generateCode
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import { generateCode } from '../utils/generateCode.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
-
-const prisma = new PrismaClient();
 
 /**
  * Create a new household

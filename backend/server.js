@@ -92,6 +92,16 @@ app.use('/api/smart', authenticate, smartRoutes);
 app.use('/api/reports', reportsRoutes); // Phase 6: AI Reports
 app.use('/api/advisor', advisorRoutes); // Phase 6: AI Advisor
 
+// Root endpoint
+app.get('/', (req, res) => {
+    res.json({
+        message: 'HouseHold Budgeting API is running 🚀',
+        version: '1.0.0',
+        documentation: '/api-docs',
+        health: '/api/health'
+    });
+});
+
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
     try {

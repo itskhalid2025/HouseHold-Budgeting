@@ -15,11 +15,10 @@
  * Phase 4: Transaction & Income Tracking
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import { traceOperation } from '../services/opikService.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
-const prisma = new PrismaClient();
 
 /**
  * @swagger
