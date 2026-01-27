@@ -133,6 +133,11 @@
     font-size: 1rem;
 }
 
+.select-field option {
+    background-color: #1e293b;
+    color: white;
+}
+
 .input-field.disabled {
     opacity: 0.7;
     cursor: not-allowed;

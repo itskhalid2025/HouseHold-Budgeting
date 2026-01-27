@@ -23,10 +23,11 @@ import {
 } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import usePolling from '../hooks/usePolling';
+import { formatCurrency } from '../utils/currencyUtils';
 import './Income.css';
 
 export default function Income() {
-    const { user } = useAuth();
+    const { user, currency } = useAuth();
     const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR'; // For Add Button
 
     // Check granular permission for edit/delete
@@ -207,7 +208,7 @@ export default function Income() {
                     <p className="summary-subtitle">Estimated based on active sources</p>
                 </div>
                 <div className="summary-right">
-                    <span className="total-amount">${parseFloat(monthlyStats.total).toLocaleString()}</span>
+                    <span className="total-amount">{formatCurrency(monthlyStats.total, currency)}</span>
                 </div>
             </div>
 
@@ -264,7 +265,7 @@ export default function Income() {
                                 </div>
                                 <h3>{inc.source}</h3>
                                 <div className="income-details">
-                                    <span className="income-amount">${parseFloat(inc.amount).toLocaleString()}</span>
+                                    <span className="income-amount">{formatCurrency(inc.amount, currency)}</span>
                                     <span className="income-freq">per {inc.frequency.toLowerCase().replace('_', ' ')}</span>
                                     {inc.user && (
                                         <span className="user-badge" style={{ marginTop: '8px', display: 'inline-block' }}>
@@ -274,7 +275,7 @@ export default function Income() {
                                 </div>
                                 <div className="income-footer">
                                     <span className="monthly-equiv">
-                                        ≈ ${monthlyStats.breakdown.find(b => b.id === inc.id)?.monthlyEquivalent.toLocaleString()} / mo
+                                        ≈ {formatCurrency(monthlyStats.breakdown.find(b => b.id === inc.id)?.monthlyEquivalent || 0, currency)} / mo
                                     </span>
                                     {!inc.isActive && <span className="status-badge">Inactive</span>}
                                 </div>

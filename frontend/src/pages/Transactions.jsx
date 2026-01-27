@@ -29,10 +29,11 @@ import { useAuth } from '../context/AuthContext';
 
 import usePolling from '../hooks/usePolling';
 import { formatDate, getUserColor } from '../utils/formatting';
+import { formatCurrency } from '../utils/currencyUtils';
 import './Transactions.css';
 
 export default function Transactions() {
-    const { user } = useAuth();
+    const { user, currency } = useAuth();
     const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
 
     // Check granular permission for editing/deleting specific transactions
@@ -224,7 +225,15 @@ export default function Transactions() {
             <div className="page-header">
                 <h1>Transactions</h1>
                 <div className="header-actions">
-                    {/* Add Button Removed based on request */}
+                    {/* Add Button */}
+                    {canEdit && (
+                        <button
+                            className="btn-primary"
+                            onClick={() => { setEditingTxn(null); resetForm(); setShowAddModal(true); }}
+                        >
+                            + Add Transaction
+                        </button>
+                    )}
                     {!canEdit && (
                         <span className="viewer-notice">👁️ View Only</span>
                     )}
@@ -238,7 +247,7 @@ export default function Transactions() {
                     <p className="summary-subtitle">Includes all household spending</p>
                 </div>
                 <div className="summary-right">
-                    <span className="total-amount-expense">${loading ? '...' : totalExpenses.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    <span className="total-amount-expense">{loading ? '...' : formatCurrency(totalExpenses, currency)}</span>
                 </div>
             </div>
 
@@ -364,7 +373,7 @@ export default function Transactions() {
                                         {/* Price and Buttons moved to Right as requested */}
                                         <div className="txn-right-group">
                                             <div className={`txn-amount ${txn.type.toLowerCase()}`}>
-                                                -${parseFloat(txn.amount).toFixed(2)}
+                                                {formatCurrency(-parseFloat(txn.amount), currency)}
                                             </div>
                                             <div className="txn-actions-inline">
                                                 {canEdit && (

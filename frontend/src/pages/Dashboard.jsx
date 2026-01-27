@@ -258,7 +258,7 @@ export default function Dashboard() {
                                             )}
                                         </div>
                                     </div>
-                                    <span className="txn-amount">-${parseFloat(txn.amount).toFixed(2)}</span>
+                                    <span className="txn-amount">{formatCurrency(-parseFloat(txn.amount), currency)}</span>
                                 </div>
                             ))
                         ) : (
