@@ -20,7 +20,6 @@ import { chatWithAdvisor } from '../api/api';
 import './Advisor.css';
 
 export default function Advisor() {
-    const { currency } = useAuth();
     const [messages, setMessages] = useState([
         {
             role: 'assistant',
@@ -75,9 +74,7 @@ export default function Advisor() {
         setLoading(true);
 
         try {
-            // Append currency context imperatively for the AI
-            const contextMsg = `${userMsg} (Context: User's currency is ${currency || 'USD'})`;
-            const data = await chatWithAdvisor(contextMsg, conversationId);
+            const data = await chatWithAdvisor(userMsg, conversationId);
 
             if (data.success) {
                 // Update conversation ID if new

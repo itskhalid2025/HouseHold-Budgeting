@@ -43,6 +43,12 @@ async function getHouseholdSnapshot(householdId) {
         }
     });
 
+    // Get household settings for currency
+    const household = await prisma.household.findUnique({
+        where: { id: householdId },
+        select: { currency: true }
+    });
+
     // Get goals
     const goals = await prisma.goal.findMany({
         where: { householdId, isActive: true }
@@ -109,7 +115,8 @@ async function getHouseholdSnapshot(householdId) {
         savingsRate,
         topCategories,
         topWants,
-        goals: formattedGoals
+        goals: formattedGoals,
+        currency: household?.currency || 'USD'
     };
 }
 

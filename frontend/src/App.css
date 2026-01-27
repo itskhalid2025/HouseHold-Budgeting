@@ -850,3 +850,14 @@ body {
   background-color: #ffffff;
   color: #000000;
 }
+
+/* App Logo */
+.app-logo {
+  height: 48px;
+  width: auto;
+  margin-right: 12px;
+  vertical-align: middle;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 4px;
+}

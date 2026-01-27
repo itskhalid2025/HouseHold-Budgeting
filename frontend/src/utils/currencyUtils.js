@@ -23,8 +23,7 @@ export const getCurrencySymbol = (code) => {
     return CURRENCIES[code] || '$';
 };
 
-export const formatCurrency = (amount, code, compact = false) => {
+export const formatCurrency = (amount, code) => {
     const symbol = getCurrencySymbol(code);
-    const options = compact ? { notation: 'compact', maximumFractionDigits: 1 } : {};
-    return `${symbol}${parseFloat(amount).toLocaleString(undefined, options)}`;
+    return `${symbol}${parseFloat(amount).toLocaleString()}`;
 };

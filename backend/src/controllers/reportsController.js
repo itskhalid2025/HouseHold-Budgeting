@@ -50,6 +50,12 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd) {
         }
     });
 
+    // Get household settings for currency
+    const household = await prisma.household.findUnique({
+        where: { id: householdId },
+        select: { currency: true }
+    });
+
     // Calculate totals
     const totalSpent = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
     const totalIncome = incomes.reduce((sum, i) => sum + Number(i.amount), 0);
@@ -181,7 +187,8 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd) {
         dateRange: {
             start: dateStart.toISOString().split('T')[0],
             end: dateEnd.toISOString().split('T')[0]
-        }
+        },
+        currency: household?.currency || 'USD'
     };
 }
 

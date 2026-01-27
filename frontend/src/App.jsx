@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate } from 're
 import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
+import Logo from './assets/Logo.png';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -43,10 +44,10 @@ function Header() {
   return (
     <header className="app-header">
       <div className="header-content">
-        <div className="app-branding">
-          <img src="/logo.png" alt="Logo" className="app-logo" style={{ height: '32px', width: 'auto', marginRight: '10px' }} />
-          <h1 className="app-title">HouseHold Budgeting</h1>
-        </div>
+        <h1 className="app-title">
+          <img src={Logo} alt="Logo" className="app-logo" />
+          HouseHold Budgeting
+        </h1>
         {isAuthenticated ? (
           <>
             <nav className="main-nav">

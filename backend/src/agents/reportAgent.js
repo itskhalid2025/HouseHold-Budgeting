@@ -46,23 +46,24 @@ export async function generateReport(aggregatedData) {
 **Report Period**: ${dateRange.start} to ${dateRange.end} (${reportType})
 
 **Financial Summary**:
-- Total Income: $${totalIncome}
-- Total Spent: $${totalSpent}
-- Total Saved: $${totalSaved}
+- Currency: ${aggregatedData.currency || 'USD'}
+- Total Income: ${aggregatedData.currency || '$'}${totalIncome}
+- Total Spent: ${aggregatedData.currency || '$'}${totalSpent}
+- Total Saved: ${aggregatedData.currency || '$'}${totalSaved}
 - Savings Rate: ${savingsRate}%
 
 **Spending by Type**:
-- NEEDS: $${byType?.NEED || 0} (${totalSpent > 0 ? ((byType?.NEED || 0) / totalSpent * 100).toFixed(1) : 0}%)
-- WANTS: $${byType?.WANT || 0} (${totalSpent > 0 ? ((byType?.WANT || 0) / totalSpent * 100).toFixed(1) : 0}%)
-- SAVINGS: $${byType?.SAVINGS || 0} (${totalSpent > 0 ? ((byType?.SAVINGS || 0) / totalSpent * 100).toFixed(1) : 0}%)
+- NEEDS: ${aggregatedData.currency || '$'}${byType?.NEED || 0} (${totalSpent > 0 ? ((byType?.NEED || 0) / totalSpent * 100).toFixed(1) : 0}%)
+- WANTS: ${aggregatedData.currency || '$'}${byType?.WANT || 0} (${totalSpent > 0 ? ((byType?.WANT || 0) / totalSpent * 100).toFixed(1) : 0}%)
+- SAVINGS: ${aggregatedData.currency || '$'}${byType?.SAVINGS || 0} (${totalSpent > 0 ? ((byType?.SAVINGS || 0) / totalSpent * 100).toFixed(1) : 0}%)
 
 **Top 5 Spending Categories**:
 ${byCategory.slice(0, 5).map((cat, i) =>
-                `${i + 1}. ${cat.category}: $${cat.amount} (${cat.type})`
+                `${i + 1}. ${cat.category}: ${aggregatedData.currency || '$'}${cat.amount} (${cat.type})`
             ).join('\n')}
 
 **Household Members**:
-${byUser.map(u => `- ${u.name} (${u.role}): Income $${u.income}, Spent $${u.spent} (Needs: $${u.needs}, Wants: $${u.wants}, Savings: $${u.savings})`).join('\n')}
+${byUser.map(u => `- ${u.name} (${u.role}): Income ${aggregatedData.currency || '$'}${u.income}, Spent ${aggregatedData.currency || '$'}${u.spent} (Needs: ${aggregatedData.currency || '$'}${u.needs}, Wants: ${aggregatedData.currency || '$'}${u.wants}, Savings: ${aggregatedData.currency || '$'}${u.savings})`).join('\n')}
 
 **Compared to Last Period**:
 - Change: ${comparedToLastPeriod.change >= 0 ? '+' : ''}${comparedToLastPeriod.change}%

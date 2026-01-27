@@ -453,7 +453,7 @@ export default function Reports() {
                                         axisLine={false}
                                         tickLine={false}
                                         tick={{ fill: '#94a3b8', fontSize: 12 }}
-                                        tickFormatter={(value) => formatCurrency(value, currency, true)} // Compact mode if supported by utils, otherwise standard
+                                        tickFormatter={(value) => formatCurrency(value, currency, { maximumFractionDigits: 0 })}
                                     />
                                     <Tooltip
                                         formatter={(value) => [formatCurrency(value, currency), 'Spent']}
@@ -501,7 +501,7 @@ export default function Reports() {
                                             </div>
                                         </div>
                                         <div className="member-stats">
-                                            <p className="member-amount">{formatCurrency(user.spent, currency)}</p>
+                                            <p className="member-amount">{formatCurrency(user.spent || 0, currency)}</p>
                                             <p className="member-percent">{user.percentage}% of total spent</p>
                                         </div>
                                     </div>
@@ -509,9 +509,9 @@ export default function Reports() {
                                     {/* Stacked Progress Bar */}
                                     <div className="stacked-progress-container">
                                         <div className="stacked-bar">
-                                            <div className="bar-segment bg-needs" style={{ width: `${needsPct}%` }} title={`Needs: $${user.needs}`}></div>
-                                            <div className="bar-segment bg-wants" style={{ width: `${wantsPct}%` }} title={`Wants: $${user.wants}`}></div>
-                                            <div className="bar-segment bg-savings" style={{ width: `${savingsPct}%` }} title={`Savings: $${user.savings}`}></div>
+                                            <div className="bar-segment bg-needs" style={{ width: `${needsPct}%` }} title={`Needs: ${formatCurrency(user.needs, currency)}`}></div>
+                                            <div className="bar-segment bg-wants" style={{ width: `${wantsPct}%` }} title={`Wants: ${formatCurrency(user.wants, currency)}`}></div>
+                                            <div className="bar-segment bg-savings" style={{ width: `${savingsPct}%` }} title={`Savings: ${formatCurrency(user.savings, currency)}`}></div>
                                         </div>
 
                                         <div className="legend-row">
