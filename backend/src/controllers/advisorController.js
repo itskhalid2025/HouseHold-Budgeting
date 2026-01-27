@@ -13,6 +13,7 @@ import { PrismaClient } from '@prisma/client';
 import { getFinancialAdvice, generateSavingsRecommendations } from '../agents/advisorAgent.js';
 import { generateChartConfig } from '../agents/chartAgent.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
+import { getCurrencySymbol } from '../utils/currencySymbols.js';
 
 const prisma = new PrismaClient();
 
@@ -116,7 +117,8 @@ async function getHouseholdSnapshot(householdId) {
         topCategories,
         topWants,
         goals: formattedGoals,
-        currency: household?.currency || 'USD'
+        currency: household?.currency || 'USD',
+        currencySymbol: getCurrencySymbol(household?.currency || 'USD')
     };
 }
 

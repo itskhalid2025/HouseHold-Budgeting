@@ -12,6 +12,7 @@
 import prisma from '../services/db.js';
 import { generateReport } from '../agents/reportAgent.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
+import { getCurrencySymbol } from '../utils/currencySymbols.js';
 
 
 /**
@@ -188,7 +189,8 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd) {
             start: dateStart.toISOString().split('T')[0],
             end: dateEnd.toISOString().split('T')[0]
         },
-        currency: household?.currency || 'USD'
+        currency: household?.currency || 'USD',
+        currencySymbol: getCurrencySymbol(household?.currency || 'USD')
     };
 }
 

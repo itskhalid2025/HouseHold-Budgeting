@@ -35,41 +35,41 @@ export async function getFinancialAdvice(params) {
 
 **HOUSEHOLD FINANCIAL SNAPSHOT**:
 - Currency: ${householdData.currency || 'USD'}
-- Monthly Income: ${householdData.currency || '$'}${householdData.monthlyIncome}
-- Monthly Spending: ${householdData.currency || '$'}${householdData.monthlySpending}
+- Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
+- Monthly Spending: ${householdData.currencySymbol}${householdData.monthlySpending}
 - Current Savings Rate: ${householdData.savingsRate}%
 - Recommended Savings Rate: 20%
 
 **SPENDING BREAKDOWN**:
-- Needs: ${householdData.currency || '$'}${householdData.needs} (${householdData.needsPercent}%)
-- Wants: ${householdData.currency || '$'}${householdData.wants} (${householdData.wantsPercent}%)
-- Savings: ${householdData.currency || '$'}${householdData.savings} (${householdData.savingsPercent}%)
+- Needs: ${householdData.currencySymbol}${householdData.needs} (${householdData.needsPercent}%)
+- Wants: ${householdData.currencySymbol}${householdData.wants} (${householdData.wantsPercent}%)
+- Savings: ${householdData.currencySymbol}${householdData.savings} (${householdData.savingsPercent}%)
 
 **TOP SPENDING CATEGORIES** (Last 30 Days):
 ${householdData.topCategories?.map((c, i) =>
-                `${i + 1}. ${c.category}: ${householdData.currency || '$'}${c.amount} (${c.type})`
+                `${i + 1}. ${c.category}: ${householdData.currencySymbol}${c.amount} (${c.type})`
             ).join('\n') || 'No data available'}
 
 **ACTIVE FINANCIAL GOALS**:
 ${householdData.goals?.length > 0
                     ? householdData.goals.map(g =>
-                        `- ${g.name}: ${householdData.currency || '$'}${g.currentAmount}/${householdData.currency || '$'}${g.targetAmount} (${g.progress}% complete${g.deadline ? `, due ${g.deadline}` : ''})`
+                        `- ${g.name}: ${householdData.currencySymbol}${g.currentAmount}/${householdData.currencySymbol}${g.targetAmount} (${g.progress}% complete${g.deadline ? `, due ${g.deadline}` : ''})`
                     ).join('\n')
                     : '- No active goals set'
                 }
 
 **YOUR ROLE**:
 1. Provide personalized, actionable financial advice
-2. Calculate specific amounts for recommendations using the currency ${householdData.currency || 'USD'}
+2. Calculate specific amounts for recommendations using the currency symbol ${householdData.currencySymbol}
 3. Show impact on goals when relevant
 4. Be encouraging but honest
 5. Ask clarifying questions when needed
 6. Use simple, jargon-free language
-7. ALWAYS use the currency symbol/code "${householdData.currency || 'USD'}" for monetary values.
+7. ALWAYS use the currency symbol "${householdData.currencySymbol}" for monetary values.
 
 **CONVERSATION STYLE**:
 - Friendly and supportive (like a trusted friend who's good with money)
-- Specific numbers, not vague advice ("Save ${householdData.currency || '$'}200/month" not "save more")
+- Specific numbers, not vague advice ("Save ${householdData.currencySymbol}200/month" not "save more")
 - Celebrate wins, be constructive about challenges
 - Use emojis sparingly (max 2 per message)
 
@@ -138,10 +138,10 @@ export async function generateSavingsRecommendations(householdData) {
 **FINANCIAL DATA**:
 **FINANCIAL DATA**:
 - Currency: ${householdData.currency || 'USD'}
-- Monthly Income: ${householdData.currency || '$'}${householdData.monthlyIncome}
-- Monthly Spending: ${householdData.currency || '$'}${householdData.monthlySpending}
-- Wants Spending: ${householdData.currency || '$'}${householdData.wants}
-- Top Want Categories: ${householdData.topWants?.map(w => `${w.category} (${householdData.currency || '$'}${w.amount})`).join(', ') || 'None tracked'}
+- Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
+- Monthly Spending: ${householdData.currencySymbol}${householdData.monthlySpending}
+- Wants Spending: ${householdData.currencySymbol}${householdData.wants}
+- Top Want Categories: ${householdData.topWants?.map(w => `${w.category} (${householdData.currencySymbol}${w.amount})`).join(', ') || 'None tracked'}
 - Active Goals: ${householdData.goals?.map(g => g.name).join(', ') || 'None'}
 
 Generate EXACTLY 3 recommendations in valid JSON format:

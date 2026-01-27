@@ -47,23 +47,23 @@ export async function generateReport(aggregatedData) {
 
 **Financial Summary**:
 - Currency: ${aggregatedData.currency || 'USD'}
-- Total Income: ${aggregatedData.currency || '$'}${totalIncome}
-- Total Spent: ${aggregatedData.currency || '$'}${totalSpent}
-- Total Saved: ${aggregatedData.currency || '$'}${totalSaved}
+- Total Income: ${aggregatedData.currencySymbol}${totalIncome}
+- Total Spent: ${aggregatedData.currencySymbol}${totalSpent}
+- Total Saved: ${aggregatedData.currencySymbol}${totalSaved}
 - Savings Rate: ${savingsRate}%
 
 **Spending by Type**:
-- NEEDS: ${aggregatedData.currency || '$'}${byType?.NEED || 0} (${totalSpent > 0 ? ((byType?.NEED || 0) / totalSpent * 100).toFixed(1) : 0}%)
-- WANTS: ${aggregatedData.currency || '$'}${byType?.WANT || 0} (${totalSpent > 0 ? ((byType?.WANT || 0) / totalSpent * 100).toFixed(1) : 0}%)
-- SAVINGS: ${aggregatedData.currency || '$'}${byType?.SAVINGS || 0} (${totalSpent > 0 ? ((byType?.SAVINGS || 0) / totalSpent * 100).toFixed(1) : 0}%)
+- NEEDS: ${aggregatedData.currencySymbol}${byType?.NEED || 0} (${totalSpent > 0 ? ((byType?.NEED || 0) / totalSpent * 100).toFixed(1) : 0}%)
+- WANTS: ${aggregatedData.currencySymbol}${byType?.WANT || 0} (${totalSpent > 0 ? ((byType?.WANT || 0) / totalSpent * 100).toFixed(1) : 0}%)
+- SAVINGS: ${aggregatedData.currencySymbol}${byType?.SAVINGS || 0} (${totalSpent > 0 ? ((byType?.SAVINGS || 0) / totalSpent * 100).toFixed(1) : 0}%)
 
 **Top 5 Spending Categories**:
 ${byCategory.slice(0, 5).map((cat, i) =>
-                `${i + 1}. ${cat.category}: ${aggregatedData.currency || '$'}${cat.amount} (${cat.type})`
+                `${i + 1}. ${cat.category}: ${aggregatedData.currencySymbol}${cat.amount} (${cat.type})`
             ).join('\n')}
 
 **Household Members**:
-${byUser.map(u => `- ${u.name} (${u.role}): Income ${aggregatedData.currency || '$'}${u.income}, Spent ${aggregatedData.currency || '$'}${u.spent} (Needs: ${aggregatedData.currency || '$'}${u.needs}, Wants: ${aggregatedData.currency || '$'}${u.wants}, Savings: ${aggregatedData.currency || '$'}${u.savings})`).join('\n')}
+${byUser.map(u => `- ${u.name} (${u.role}): Income ${aggregatedData.currencySymbol}${u.income}, Spent ${aggregatedData.currencySymbol}${u.spent} (Needs: ${aggregatedData.currencySymbol}${u.needs}, Wants: ${aggregatedData.currencySymbol}${u.wants}, Savings: ${aggregatedData.currencySymbol}${u.savings})`).join('\n')}
 
 **Compared to Last Period**:
 - Change: ${comparedToLastPeriod.change >= 0 ? '+' : ''}${comparedToLastPeriod.change}%
@@ -88,7 +88,8 @@ Generate a financial report in VALID JSON format with these exact fields:
 2. Be conversational but professional
 3. Focus on actionable insights, not just restating numbers
 4. If spending decreased, celebrate it! If increased, be constructive
-5. Make recommendations specific (e.g., "Reduce dining by $100" not "spend less")`;
+5. Make recommendations specific (e.g., "Reduce dining by ${aggregatedData.currencySymbol}100" not "spend less")
+6. ALWAYS use the currency symbol "${aggregatedData.currencySymbol}" (e.g. ${aggregatedData.currencySymbol}100) and NEVER use the code (e.g. ${aggregatedData.currency}100).`;
 
             // Call Gemini API
             const reportContent = await generateJSON(prompt, null, { maxTokens: 4096 });
