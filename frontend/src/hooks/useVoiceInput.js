@@ -56,23 +56,18 @@ export function useVoiceInput() {
                 let interim = '';
                 let final = '';
 
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                // Re-build transcript from ALL results in the current session
+                // This prevents duplication issues on mobile/Android where 'isFinal' behavior varies
+                for (let i = 0; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
-                        final += event.results[i][0].transcript;
+                        final += event.results[i][0].transcript + ' ';
                     } else {
                         interim += event.results[i][0].transcript;
                     }
                 }
 
-                if (final) {
-                    setTranscript(prev => {
-                        const newTranscript = prev ? `${prev} ${final}` : final;
-                        return newTranscript.trim();
-                    });
-                    setInterimTranscript(''); // Clear interim when finalized
-                } else {
-                    setInterimTranscript(interim);
-                }
+                setTranscript(final.trim());
+                setInterimTranscript(interim);
             };
 
             recognitionRef.current.onerror = (event) => {
