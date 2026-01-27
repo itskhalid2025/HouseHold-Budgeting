@@ -24,9 +24,12 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 
 import { getLatestReport, generateReport } from '../api/api';
+import { useAuth } from '../context/AuthContext';
+import { formatCurrency } from '../utils/currencyUtils';
 import './Reports.css';
 
 export default function Reports() {
+    const { currency } = useAuth();
     const [report, setReport] = useState(null);
     const [loading, setLoading] = useState(true);
     const [generating, setGenerating] = useState(false);
@@ -251,14 +254,14 @@ export default function Reports() {
                 <StatCard
                     icon={DollarSign}
                     label="Total Spent"
-                    value={`$${report.metadata?.totalSpent?.toLocaleString() || 0}`}
+                    value={formatCurrency(report.metadata?.totalSpent || 0, currency)}
                     trend={report.metadata?.comparedToLastPeriod?.change || 0}
                     color="red"
                 />
                 <StatCard
                     icon={TrendingUp}
                     label="Total Income"
-                    value={`$${report.metadata?.totalIncome?.toLocaleString() || 0}`}
+                    value={formatCurrency(report.metadata?.totalIncome || 0, currency)}
                     color="green"
                 />
                 <StatCard
@@ -272,7 +275,7 @@ export default function Reports() {
                 <StatCard
                     icon={DollarSign}
                     label="Total Saved"
-                    value={`$${report.metadata?.totalSaved?.toLocaleString() || 0}`}
+                    value={formatCurrency(report.metadata?.totalSaved || 0, currency)}
                     color="teal"
                 />
             </div>
@@ -327,7 +330,7 @@ export default function Reports() {
                                         ))}
                                     </Pie>
                                     <Tooltip
-                                        formatter={(value) => `$${value.toLocaleString()}`}
+                                        formatter={(value) => formatCurrency(value, currency)}
                                         contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
                                         itemStyle={{ color: '#fff' }}
                                     />
@@ -409,7 +412,7 @@ export default function Reports() {
                                     )}
                                 </Pie>
                                 <Tooltip
-                                    formatter={(value) => `$${value.toLocaleString()}`}
+                                    formatter={(value) => formatCurrency(value, currency)}
                                     contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
                                     itemStyle={{ color: '#fff' }}
                                 />
@@ -450,10 +453,10 @@ export default function Reports() {
                                         axisLine={false}
                                         tickLine={false}
                                         tick={{ fill: '#94a3b8', fontSize: 12 }}
-                                        tickFormatter={(value) => `$${value}`}
+                                        tickFormatter={(value) => formatCurrency(value, currency, true)} // Compact mode if supported by utils, otherwise standard
                                     />
                                     <Tooltip
-                                        formatter={(value) => [`$${value.toLocaleString()}`, 'Spent']}
+                                        formatter={(value) => [formatCurrency(value, currency), 'Spent']}
                                         cursor={{ fill: 'rgba(255, 255, 255, 0.05)' }}
                                         contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
                                         itemStyle={{ color: '#fff' }}
@@ -493,12 +496,12 @@ export default function Reports() {
                                             <div>
                                                 <p className="member-name">{user.name} <span className="member-role">{user.role}</span></p>
                                                 <span className="member-income-label">
-                                                    Income: <span className="member-income-value">${user.income?.toLocaleString() || 0}</span>
+                                                    Income: <span className="member-income-value">{formatCurrency(user.income || 0, currency)}</span>
                                                 </span>
                                             </div>
                                         </div>
                                         <div className="member-stats">
-                                            <p className="member-amount">${user.spent.toLocaleString()}</p>
+                                            <p className="member-amount">{formatCurrency(user.spent, currency)}</p>
                                             <p className="member-percent">{user.percentage}% of total spent</p>
                                         </div>
                                     </div>
@@ -514,15 +517,15 @@ export default function Reports() {
                                         <div className="legend-row">
                                             <div className="legend-item">
                                                 <span className="dot bg-needs"></span>
-                                                Needs <span className="legend-value">${user.needs?.toLocaleString() || 0}</span>
+                                                Needs <span className="legend-value">{formatCurrency(user.needs || 0, currency)}</span>
                                             </div>
                                             <div className="legend-item">
                                                 <span className="dot bg-wants"></span>
-                                                Wants <span className="legend-value">${user.wants?.toLocaleString() || 0}</span>
+                                                Wants <span className="legend-value">{formatCurrency(user.wants || 0, currency)}</span>
                                             </div>
                                             <div className="legend-item">
                                                 <span className="dot bg-savings"></span>
-                                                Savings <span className="legend-value">${user.savings?.toLocaleString() || 0}</span>
+                                                Savings <span className="legend-value">{formatCurrency(user.savings || 0, currency)}</span>
                                             </div>
                                         </div>
                                     </div>

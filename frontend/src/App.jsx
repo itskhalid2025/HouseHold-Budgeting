@@ -43,7 +43,10 @@ function Header() {
   return (
     <header className="app-header">
       <div className="header-content">
-        <h1 className="app-title">🏠 HouseHold Budgeting</h1>
+        <div className="app-branding">
+          <img src="/logo.png" alt="Logo" className="app-logo" style={{ height: '32px', width: 'auto', marginRight: '10px' }} />
+          <h1 className="app-title">HouseHold Budgeting</h1>
+        </div>
         {isAuthenticated ? (
           <>
             <nav className="main-nav">
