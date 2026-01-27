@@ -31,6 +31,8 @@ export function useVoiceInput() {
     const [error, setError] = useState('');
     const [isSupported, setIsSupported] = useState(false);
 
+    const [interimTranscript, setInterimTranscript] = useState('');
+
     const recognitionRef = useRef(null);
 
     useEffect(() => {
@@ -51,19 +53,25 @@ export function useVoiceInput() {
             };
 
             recognitionRef.current.onresult = (event) => {
-                let finalTranscript = '';
+                let interim = '';
+                let final = '';
 
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
+                        final += event.results[i][0].transcript;
+                    } else {
+                        interim += event.results[i][0].transcript;
                     }
                 }
 
-                if (finalTranscript) {
+                if (final) {
                     setTranscript(prev => {
-                        const newTranscript = prev ? `${prev} ${finalTranscript}` : finalTranscript;
+                        const newTranscript = prev ? `${prev} ${final}` : final;
                         return newTranscript.trim();
                     });
+                    setInterimTranscript(''); // Clear interim when finalized
+                } else {
+                    setInterimTranscript(interim);
                 }
             };
 
@@ -81,6 +89,7 @@ export function useVoiceInput() {
 
             recognitionRef.current.onend = () => {
                 setIsListening(false);
+                setInterimTranscript('');
             };
 
         } else {
@@ -113,11 +122,13 @@ export function useVoiceInput() {
 
     const resetTranscript = useCallback(() => {
         setTranscript('');
+        setInterimTranscript('');
     }, []);
 
     return {
         isListening,
         transcript,
+        interimTranscript,
         startListening,
         stopListening,
         resetTranscript,

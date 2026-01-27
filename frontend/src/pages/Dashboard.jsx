@@ -106,6 +106,7 @@ export default function Dashboard() {
     const {
         isListening,
         transcript,
+        interimTranscript,
         startListening,
         stopListening,
         resetTranscript,
@@ -284,7 +285,12 @@ export default function Dashboard() {
                         </div>
 
                         <div className="transcript-box">
-                            {transcript || "Tap start and speak..."}
+                            {transcript || interimTranscript ? (
+                                <>
+                                    <span>{transcript}</span>
+                                    <span className="interim-text">{interimTranscript}</span>
+                                </>
+                            ) : "Tap start and speak..."}
                         </div>
 
                         <div className="voice-controls">

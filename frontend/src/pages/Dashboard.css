@@ -416,3 +416,9 @@
     color: var(--primary);
     background: rgba(124, 58, 237, 0.05);
 }
+
+/* Interim Voice Text */
+.interim-text {
+    color: #94a3b8;
+    font-style: italic;
+}
