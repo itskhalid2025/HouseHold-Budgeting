@@ -48,7 +48,7 @@ const config = {
     // CORS
     cors: {
         origin: (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [])
-            .concat(['http://localhost:5173', 'http://localhost:5174', 'https://householdbudgeting.netlify.app'])
+            .concat(['http://localhost:5173', 'http://localhost:5174', 'https://householdbudgeting.netlify.app', 'https://devserver-mobile-ui--householdbudgeting.netlify.app'])
             .map(url => url.trim())
             .filter(Boolean)
     }
