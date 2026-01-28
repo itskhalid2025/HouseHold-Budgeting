@@ -13,6 +13,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import Household from './pages/Household';
+import { getJoinRequests, approveJoinRequest, rejectJoinRequest } from './api/api';
 import Income from './pages/Income';
 import Savings from './pages/Savings';
 import Advisor from './pages/Advisor';
@@ -152,10 +153,116 @@ function ServerStatus() {
       <div className="server-status-content">
         <span className="server-status-icon">☕</span>
         <div className="server-status-text">
-          <strong>Waking up the server...</strong>
-          <p>Render's free tier takes about 30s to start. Hang tight!</p>
+          <strong>Loading please wait...</strong>
+          <p>Server is waking up. This may take up to 30s.</p>
         </div>
         <div className="server-status-loader"></div>
+      </div>
+    </div>
+  );
+}
+
+// AI Processing Notification
+function AINotification() {
+  const [status, setStatus] = useState('idle'); // idle, processing, done
+
+  useEffect(() => {
+    const handleStart = () => setStatus('processing');
+    const handleComplete = () => {
+      setStatus('done');
+      setTimeout(() => setStatus('idle'), 3000);
+    };
+
+    window.addEventListener('ai-processing-start', handleStart);
+    window.addEventListener('ai-processing-complete', handleComplete);
+
+    return () => {
+      window.removeEventListener('ai-processing-start', handleStart);
+      window.removeEventListener('ai-processing-complete', handleComplete);
+    };
+  }, []);
+
+  if (status === 'idle') return null;
+
+  return (
+    <div className={`ai-notification ${status === 'processing' ? 'processing' : 'done'}`}>
+      <div className="ai-notification-content">
+        <span className="ai-icon">{status === 'processing' ? '⏳' : '✅'}</span>
+        <span className="ai-text">
+          {status === 'processing' ? 'AI Processing...' : 'Done!'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// Join Request Notification (Polling)
+function JoinRequestNotification() {
+  const { isAuthenticated, user } = useAuth();
+  const [requests, setRequests] = useState([]);
+  const [visibleRequest, setVisibleRequest] = useState(null);
+
+  // Poll for join requests
+  useEffect(() => {
+    if (!isAuthenticated || !user) return;
+
+    const fetchRequests = async () => {
+      try {
+        const data = await getJoinRequests();
+        const pending = data.requests || [];
+
+        // Check for new requests (simplified logic: just show the first pending one if not already showing)
+        // In a real app we'd track seen IDs to avoid re-notifying, but this works for "active pending requests"
+        if (pending.length > 0 && !visibleRequest) {
+          // Only show if we haven't just acted on it? 
+          // Ideally we want to show it if it's NEW.
+          // For now, let's just show it if there is one and we aren't showing one.
+          setVisibleRequest(pending[0]);
+
+          // Auto-dismiss after 45s
+          setTimeout(() => {
+            setVisibleRequest(null);
+          }, 45000);
+        }
+      } catch (err) {
+        // Ignore errors
+      }
+    };
+
+    const interval = setInterval(fetchRequests, 15000); // Poll every 15s
+    // Initial fetch
+    fetchRequests();
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, user]);
+
+  const handleAction = async (requestId, action) => {
+    try {
+      if (action === 'accept') {
+        await approveJoinRequest(requestId, 'member');
+      } else {
+        await rejectJoinRequest(requestId);
+      }
+      setVisibleRequest(null);
+    } catch (err) {
+      console.error('Failed to handle join request', err);
+    }
+  };
+
+  if (!visibleRequest) return null;
+
+  return (
+    <div className="join-request-notification">
+      <div className="join-request-content">
+        <div className="join-header">
+          <strong>👤 Join Request</strong>
+          <div className="timer-bar"></div>
+        </div>
+        <p>{visibleRequest.user?.firstName} want to join.</p>
+        <div className="join-actions">
+          <button className="btn-accept" onClick={() => handleAction(visibleRequest.id, 'accept')}>Accept</button>
+          <button className="btn-reject" onClick={() => handleAction(visibleRequest.id, 'reject')}>Reject</button>
+        </div>
       </div>
     </div>
   );
@@ -165,6 +272,8 @@ function AppContent() {
   return (
     <div className="app">
       <ServerStatus />
+      <AINotification />
+      <JoinRequestNotification />
       <Header />
 
       <main className="app-main">
@@ -231,7 +340,7 @@ function AppContent() {
       </main>
 
       <footer className="app-footer">
-        <p>&copy; 2026 HouseHold Budgeting. Built with React + Vite.</p>
+        <p>&copy; 2026 HouseHold Budgeting.</p>
       </footer>
     </div>
   );

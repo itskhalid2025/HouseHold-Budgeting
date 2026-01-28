@@ -37,6 +37,15 @@ function stopRequest() {
     }
 }
 
+// AI Request tracking
+function startAIRequest() {
+    window.dispatchEvent(new CustomEvent('ai-processing-start'));
+}
+
+function stopAIRequest() {
+    window.dispatchEvent(new CustomEvent('ai-processing-complete'));
+}
+
 // Wrapper for fetch to track loading state
 async function trackedFetch(...args) {
     startRequest();
@@ -426,47 +435,52 @@ export async function deleteGoal(id) {
 
 export async function parseVoiceInput(transcript) {
     console.log('🎤 Voice Input:', transcript);
-    const response = await trackedFetch(`${API_BASE_URL}/smart/entry`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ text: transcript })
-    });
+    startAIRequest(); // Start AI tracking
+    try {
+        const response = await trackedFetch(`${API_BASE_URL}/smart/entry`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ text: transcript })
+        });
 
-    // The Smart Controller now returns { success, count, entries: [...] }
-    const result = await handleResponse(response);
+        // The Smart Controller now returns { success, count, entries: [...] }
+        const result = await handleResponse(response);
 
-    // Handle multiple entries
-    if (result.success && result.entries && result.entries.length > 0) {
-        // If multiple entries, summarize
-        if (result.count > 1) {
-            const totalAmount = result.entries.reduce((sum, e) => sum + parseFloat(e.record.amount), 0);
-            const descriptions = result.entries.map(e => e.classification.description).join(', ');
+        // Handle multiple entries
+        if (result.success && result.entries && result.entries.length > 0) {
+            // If multiple entries, summarize
+            if (result.count > 1) {
+                const totalAmount = result.entries.reduce((sum, e) => sum + parseFloat(e.record.amount), 0);
+                const descriptions = result.entries.map(e => e.classification.description).join(', ');
 
-            return {
-                isCreated: true,
-                type: 'Multiple',
-                description: descriptions,
-                amount: totalAmount.toFixed(2),
-                count: result.count,
-                entries: result.entries
-            };
-        } else {
-            // Single entry - return as before
-            const entry = result.entries[0];
-            return {
-                isCreated: true,
-                action: result.action,
-                table: entry.table,
-                description: entry.classification.description,
-                amount: entry.record.amount,
-                date: entry.record.date || entry.record.startDate,
-                type: entry.classification.type,
-                category: entry.classification.category
-            };
+                return {
+                    isCreated: true,
+                    type: 'Multiple',
+                    description: descriptions,
+                    amount: totalAmount.toFixed(2),
+                    count: result.count,
+                    entries: result.entries
+                };
+            } else {
+                // Single entry - return as before
+                const entry = result.entries[0];
+                return {
+                    isCreated: true,
+                    action: result.action,
+                    table: entry.table,
+                    description: entry.classification.description,
+                    amount: entry.record.amount,
+                    date: entry.record.date || entry.record.startDate,
+                    type: entry.classification.type,
+                    category: entry.classification.category
+                };
+            }
         }
-    }
 
-    return result;
+        return result;
+    } finally {
+        stopAIRequest(); // Stop AI tracking
+    }
 }
 
 // ================== PHASE 6: REPORTS API ==================
@@ -489,12 +503,17 @@ export async function getLatestReport(type = 'weekly') {
 
 export async function generateReport(reportType = 'weekly', dateStart = null, dateEnd = null) {
     console.log('📊 Generating report:', reportType);
-    const response = await trackedFetch(`${API_BASE_URL}/reports/generate`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ reportType, dateStart, dateEnd })
-    });
-    return handleResponse(response);
+    startAIRequest();
+    try {
+        const response = await trackedFetch(`${API_BASE_URL}/reports/generate`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ reportType, dateStart, dateEnd })
+        });
+        return handleResponse(response);
+    } finally {
+        stopAIRequest();
+    }
 }
 
 export async function getReportById(id) {
@@ -509,31 +528,46 @@ export async function getReportById(id) {
 
 export async function chatWithAdvisor(message, conversationId = null) {
     console.log('🤖 Sending to advisor:', message.substring(0, 50));
-    const response = await trackedFetch(`${API_BASE_URL}/advisor/chat`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ message, conversationId })
-    });
-    return handleResponse(response);
+    startAIRequest();
+    try {
+        const response = await trackedFetch(`${API_BASE_URL}/advisor/chat`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ message, conversationId })
+        });
+        return handleResponse(response);
+    } finally {
+        stopAIRequest();
+    }
 }
 
 export async function getRecommendations() {
     console.log('💡 Getting recommendations');
-    const response = await trackedFetch(`${API_BASE_URL}/advisor/recommendations`, {
-        method: 'POST',
-        headers: authHeaders()
-    });
-    return handleResponse(response);
+    startAIRequest();
+    try {
+        const response = await trackedFetch(`${API_BASE_URL}/advisor/recommendations`, {
+            method: 'POST',
+            headers: authHeaders()
+        });
+        return handleResponse(response);
+    } finally {
+        stopAIRequest();
+    }
 }
 
 export async function generateChartConfig(query) {
     console.log('📈 Generating chart config:', query);
-    const response = await trackedFetch(`${API_BASE_URL}/advisor/chart`, {
-        method: 'POST',
-        headers: authHeaders(),
-        body: JSON.stringify({ query })
-    });
-    return handleResponse(response);
+    startAIRequest();
+    try {
+        const response = await trackedFetch(`${API_BASE_URL}/advisor/chart`, {
+            method: 'POST',
+            headers: authHeaders(),
+            body: JSON.stringify({ query })
+        });
+        return handleResponse(response);
+    } finally {
+        stopAIRequest();
+    }
 }
 
 export async function getConversationHistory(conversationId) {

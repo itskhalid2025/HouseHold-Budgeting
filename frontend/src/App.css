@@ -860,4 +860,124 @@ body {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
   padding: 4px;
+}/* AI Notification Styles */
+.ai-notification {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10000;
+  padding: 12px 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+  animation: slideIn 0.3s ease-out;
 }
+
+.ai-notification.processing {
+  background: white;
+  border-left: 5px solid #eab308; /* Yellow */
+}
+
+.ai-notification.done {
+  background: white;
+  border-left: 5px solid #22c55e; /* Green */
+}
+
+.ai-notification-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #1f2937;
+  font-weight: 500;
+}
+
+.ai-icon {
+  font-size: 1.2rem;
+}
+
+/* Join Request Notification Styles */
+.join-request-notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 10000;
+  background: white; /* Dark mode adjustment might be needed if base is dark, keeping consistent with other notifications */
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
+  width: 300px;
+  overflow: hidden;
+  animation: slideUp 0.3s ease-out;
+  border: 1px solid rgba(0,0,0,0.1);
+}
+
+.join-request-content {
+  padding: 16px;
+  color: #333;
+}
+
+.join-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 0.9rem;
+  color: #4b5563;
+}
+
+.timer-bar {
+  height: 3px;
+  background: #7c3aed;
+  width: 100%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  animation: countdown 45s linear forwards;
+}
+
+.join-request-content p {
+  margin: 0 0 16px 0;
+  font-size: 0.95rem;
+  color: #111;
+}
+
+.join-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-accept, .btn-reject {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: opacity 0.2s;
+}
+
+.btn-accept {
+  background: #22c55e;
+  color: white;
+}
+
+.btn-reject {
+  background: #ef4444;
+  color: white;
+}
+
+.btn-accept:hover, .btn-reject:hover {
+  opacity: 0.9;
+}
+
+@keyframes countdown {
+  from { width: 100%; }
+  to { width: 0%; }
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
