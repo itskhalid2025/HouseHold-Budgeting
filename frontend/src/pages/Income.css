@@ -159,3 +159,40 @@
         align-self: flex-end;
     }
 }
+
+/* Light Theme Overrides */
+[data-theme='light'] .income-summary-card {
+    background: linear-gradient(135deg, rgba(34, 197, 94, 0.12), rgba(16, 185, 129, 0.06));
+    border: 1px solid rgba(34, 197, 94, 0.2);
+}
+
+[data-theme='light'] .summary-left h3,
+[data-theme='light'] .section-title,
+[data-theme='light'] .income-card h3,
+[data-theme='light'] .income-amount {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .summary-subtitle,
+[data-theme='light'] .income-freq {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .income-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .income-card:hover {
+    box-shadow: var(--shadow-md);
+    background: var(--bg-card);
+}
+
+[data-theme='light'] .income-footer {
+    border-top: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .status-badge {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+}

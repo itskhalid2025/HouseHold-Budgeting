@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { useTheme } from './context/ThemeContext';
+import { Sun, Moon } from 'lucide-react';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 import Logo from './assets/Logo.png';
 
@@ -23,6 +25,7 @@ import './App.css';
 // Header component with auth state
 function Header() {
   const { isAuthenticated, user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
   const navigate = useNavigate();
 
@@ -52,31 +55,46 @@ function Header() {
         {isAuthenticated ? (
           <>
             <nav className="main-nav">
-              <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Dashboard
-              </NavLink>
-              <NavLink to="/transactions" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Transactions
-              </NavLink>
-              <NavLink to="/income" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Income
-              </NavLink>
-              <NavLink to="/savings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Savings
-              </NavLink>
+              {user?.householdId && (
+                <>
+                  <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                    Dashboard
+                  </NavLink>
+                  <NavLink to="/transactions" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                    Transactions
+                  </NavLink>
+                  <NavLink to="/income" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                    Income
+                  </NavLink>
+                  <NavLink to="/savings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                    Savings
+                  </NavLink>
+                </>
+              )}
               <NavLink to="/household" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
                 Household
               </NavLink>
-              <NavLink to="/reports" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Reports
-              </NavLink>
-              <NavLink to="/advisor" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                AI Advisor
-              </NavLink>
-              <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Settings
-              </NavLink>
+              {user?.householdId && (
+                <>
+                  <NavLink to="/reports" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                    Reports
+                  </NavLink>
+                  <NavLink to="/advisor" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                    AI Advisor
+                  </NavLink>
+                  <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                    Settings
+                  </NavLink>
+                </>
+              )}
             </nav>
+            <button
+              className="theme-toggle-btn"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
             <div className="user-menu-container">
               <div
                 className="user-menu-trigger"

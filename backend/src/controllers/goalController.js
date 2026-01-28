@@ -27,24 +27,103 @@ export const createGoal = async (req, res) => {
         }
 
         logDB('create', 'Goal', { name });
-        const goal = await prisma.goal.create({
-            data: {
-                householdId,
-                name,
-                targetAmount: parseFloat(targetAmount),
-                currentAmount: parseFloat(currentAmount || 0),
-                type,
-                deadline: deadline ? new Date(deadline) : null,
-                isActive: true,
-                createdById: userId
+        // Start transaction to ensure atomicity
+        const result = await prisma.$transaction(async (prisma) => {
+            const goal = await prisma.goal.create({
+                data: {
+                    householdId,
+                    name,
+                    targetAmount: targetAmount ? parseFloat(targetAmount) : null,
+                    currentAmount: parseFloat(currentAmount || 0),
+                    type,
+                    deadline: deadline ? new Date(deadline) : null,
+                    isActive: true,
+                    createdById: userId
+                }
+            });
+
+            // If starting with funds, record it
+            if (goal.currentAmount > 0) {
+                await prisma.transaction.create({
+                    data: {
+                        householdId,
+                        userId,
+                        amount: goal.currentAmount,
+                        description: `Initial deposit for ${goal.name}`,
+                        category: 'Savings',
+                        subcategory: goal.name,
+                        type: 'SAVINGS',
+                        date: new Date(), // Today
+                        goalId: goal.id
+                    }
+                });
             }
+
+            return goal;
         });
 
-        logSuccess('goalController', 'createGoal', { id: goal.id });
-        res.status(201).json({ success: true, goal });
+        logSuccess('goalController', 'createGoal', { id: result.id });
+        res.status(201).json({ success: true, goal: result });
     } catch (error) {
         logError('goalController', 'createGoal', error);
         res.status(500).json({ error: 'Failed to create goal' });
+    }
+};
+
+// Add funds to a goal (Manual Contribution)
+export const addContribution = async (req, res) => {
+    logEntry('goalController', 'addContribution', { id: req.params.id, ...req.body });
+    try {
+        const { id } = req.params;
+        const { amount } = req.body;
+        const userId = req.user.id;
+        const householdId = req.user.householdId;
+
+        if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
+            return res.status(400).json({ error: 'Valid amount is required' });
+        }
+
+        // Verify goal exists and belongs to household
+        const goal = await prisma.goal.findUnique({
+            where: { id }
+        });
+
+        if (!goal || goal.householdId !== householdId) {
+            return res.status(404).json({ error: 'Goal not found' });
+        }
+
+        // Perform update and create transaction atomically
+        const result = await prisma.$transaction(async (prisma) => {
+            const updatedGoal = await prisma.goal.update({
+                where: { id },
+                data: {
+                    currentAmount: { increment: parseFloat(amount) }
+                }
+            });
+
+            await prisma.transaction.create({
+                data: {
+                    householdId,
+                    userId,
+                    amount: parseFloat(amount),
+                    description: `Manual contribution to ${goal.name}`,
+                    category: 'Savings',
+                    subcategory: goal.name,
+                    type: 'SAVINGS',
+                    date: new Date(),
+                    goalId: id
+                }
+            });
+
+            return updatedGoal;
+        });
+
+        logSuccess('goalController', 'addContribution', { id, amount });
+        res.json({ success: true, goal: result });
+
+    } catch (error) {
+        logError('goalController', 'addContribution', error);
+        res.status(500).json({ error: 'Failed to add contribution' });
     }
 };
 
@@ -76,6 +155,24 @@ export const getGoals = async (req, res) => {
                         firstName: true,
                         lastName: true
                     }
+                },
+                transactions: {
+                    where: { deletedAt: null }, // Only show active contributions
+                    select: {
+                        id: true,
+                        amount: true,
+                        date: true,
+                        description: true,
+                        user: {
+                            select: {
+                                id: true,
+                                firstName: true,
+                                lastName: true,
+                                avatarUrl: true
+                            }
+                        }
+                    },
+                    orderBy: { date: 'desc' }
                 }
             }
         });
@@ -186,6 +283,7 @@ export const getGoalSummary = async (req, res) => {
             return res.json({ totalSaved: 0, totalTarget: 0 });
         }
 
+        // 1. Get Overall Totals from Goals
         logDB('findMany', 'Goal', { householdId, isActive: true });
         const goals = await prisma.goal.findMany({
             where: { householdId, isActive: true }
@@ -194,10 +292,31 @@ export const getGoalSummary = async (req, res) => {
         const totalSaved = goals.reduce((sum, goal) => sum + Number(goal.currentAmount), 0);
         const totalTarget = goals.reduce((sum, goal) => sum + Number(goal.targetAmount), 0);
 
-        logSuccess('goalController', 'getGoalSummary', { totalSaved, totalTarget });
+        // 2. Get Monthly Savings (from Transactions in current month)
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+        const monthlySavingsAgg = await prisma.transaction.aggregate({
+            where: {
+                householdId,
+                type: 'SAVINGS',
+                deletedAt: null,
+                date: {
+                    gte: startOfMonth,
+                    lte: endOfMonth
+                }
+            },
+            _sum: { amount: true }
+        });
+
+        const monthlySaved = monthlySavingsAgg._sum.amount || 0;
+
+        logSuccess('goalController', 'getGoalSummary', { totalSaved, totalTarget, monthlySaved });
         res.json({
             totalSaved,
             totalTarget,
+            monthlySaved,
             count: goals.length
         });
     } catch (error) {

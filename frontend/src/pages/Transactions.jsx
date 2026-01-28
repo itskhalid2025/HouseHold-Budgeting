@@ -30,10 +30,12 @@ import { useAuth } from '../context/AuthContext';
 import usePolling from '../hooks/usePolling';
 import { formatDate, getUserColor } from '../utils/formatting';
 import { formatCurrency } from '../utils/currencyUtils';
+import { useTheme } from '../context/ThemeContext';
 import './Transactions.css';
 
 export default function Transactions() {
     const { user, currency } = useAuth();
+    const { theme } = useTheme();
     const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
 
     // Check granular permission for editing/deleting specific transactions
@@ -312,15 +314,23 @@ export default function Transactions() {
                         {transactions.length > 0 ? (
                             transactions.map(txn => {
                                 const userColor = txn.user ? getUserColor(txn.user.firstName) : '#334155';
-                                // Convert hex to rgba for background (approximate or use simple opacity if hex)
-                                // Standard approach: use a helper or just set border-left colored
+                                // Theme-aware background
+                                const bgStyle = theme === 'light'
+                                    ? { backgroundColor: `${userColor}44` }
+                                    : { background: `linear-gradient(90deg, ${userColor}44 0%, rgba(30, 41, 59, 0.8) 100%)` };
+
+                                const borderColor = theme === 'light'
+                                    ? `${userColor}88`
+                                    : `${userColor}88`;
+
                                 return (
                                     <div
                                         key={txn.id}
                                         className="transaction-card"
                                         style={{
-                                            background: `linear-gradient(90deg, ${userColor}44 0%, rgba(30, 41, 59, 0.8) 100%)`, // Stronger color (44 hex = ~25%)
-                                            borderColor: `${userColor}88`
+                                            ...bgStyle,
+                                            borderColor: borderColor,
+                                            borderLeft: `6px solid ${userColor}`
                                         }}
                                     >
                                         <div className="txn-left-group">

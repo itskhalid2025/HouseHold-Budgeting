@@ -276,7 +276,6 @@
     background: rgba(255, 255, 255, 0.2);
 }
 
-/* User Badge Styles from App.css or here */
 .user-badge {
     display: inline-block;
     background: rgba(255, 255, 255, 0.15);
@@ -287,4 +286,59 @@
     color: #e2e8f0;
     margin-top: 4px;
     font-weight: 500;
+}
+
+/* Light Theme Overrides */
+[data-theme='light'] .transaction-summary-card {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(220, 38, 38, 0.05));
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+[data-theme='light'] .summary-left h3,
+[data-theme='light'] .txn-desc,
+[data-theme='light'] .txn-date-simple {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .summary-subtitle,
+[data-theme='light'] .txn-category {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .filters-bar {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .filter-input,
+[data-theme='light'] .filter-select,
+[data-theme='light'] .filter-date {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .transaction-card {
+    border: 1px solid var(--border-light);
+    background: var(--bg-card) !important;
+}
+
+[data-theme='light'] .transaction-card:hover {
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme='light'] .btn-icon {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .btn-icon:hover {
+    background: var(--bg-active);
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .user-badge {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
 }

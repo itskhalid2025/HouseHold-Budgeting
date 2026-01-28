@@ -15,7 +15,10 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register as registerApi } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import './Auth.css';
+import Logo from '../assets/Logo.png';
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -53,7 +56,11 @@ export default function Register() {
             login(data.user, data.token);
             navigate('/');
         } catch (err) {
-            setError(err.message || 'Registration failed');
+            if (err.validationErrors && Array.isArray(err.validationErrors)) {
+                setError(err.validationErrors.map(e => e.message).join('. '));
+            } else {
+                setError(err.message || 'Registration failed');
+            }
         } finally {
             setLoading(false);
         }
@@ -63,7 +70,7 @@ export default function Register() {
         <div className="auth-container">
             <div className="auth-card auth-card-wide">
                 <div className="auth-header">
-                    <h1>🏠</h1>
+                    <h1><img src={Logo} alt="Logo" className="app-logo" /></h1>
                     <h2>Create Account</h2>
                     <p>Start managing your household finances</p>
                 </div>
@@ -112,15 +119,20 @@ export default function Register() {
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="phone">Phone (E.164 format)</label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
+                        <label htmlFor="phone">Phone Number</label>
+                        <PhoneInput
+                            country={'us'}
                             value={formData.phone}
-                            onChange={handleChange}
-                            placeholder="+1234567890"
-                            required
+                            onChange={(phone) => setFormData({ ...formData, phone: '+' + phone })}
+                            inputProps={{
+                                name: 'phone',
+                                required: true,
+                                autoFocus: false
+                            }}
+                            containerClass="phone-input-container"
+                            inputClass="phone-input-field"
+                            buttonClass="phone-input-button"
+                            preferredCountries={['us', 'gb', 'in', 'ca']}
                         />
                     </div>
 

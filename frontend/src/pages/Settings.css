@@ -17,7 +17,7 @@
     border-radius: 16px;
     padding: 2rem;
     border: 1px solid var(--border-light);
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
 }
 
 .settings-tabs {
@@ -41,7 +41,7 @@
 
 .tab-btn:hover {
     color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-hover);
 }
 
 .tab-btn.active {
@@ -70,7 +70,7 @@
     display: flex;
     gap: 1.5rem;
     align-items: center;
-    background: rgba(255, 255, 255, 0.03);
+    background: var(--bg-hover);
     padding: 2rem;
     border-radius: 12px;
     margin-bottom: 2rem;
@@ -126,7 +126,7 @@
 .select-field {
     width: 100%;
     padding: 0.75rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-primary);
     border: 1px solid var(--border-light);
     border-radius: 8px;
     color: var(--text-primary);
@@ -134,8 +134,8 @@
 }
 
 .select-field option {
-    background-color: #1e293b;
-    color: white;
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
 }
 
 .input-field.disabled {
@@ -144,7 +144,7 @@
 }
 
 .code-display {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--bg-hover);
     padding: 1rem;
     border-radius: 8px;
     font-family: monospace;
@@ -202,4 +202,48 @@
     color: #ef4444;
     border-radius: 8px;
     margin-top: 1rem;
+}
+
+/* Light theme button visibility improvements */
+[data-theme='light'] .btn-primary,
+[data-theme='light'] button[type="submit"] {
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: white;
+    border: none;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.3);
+}
+
+[data-theme='light'] .btn-primary:hover,
+[data-theme='light'] button[type="submit"]:hover {
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    transform: translateY(-1px);
+}
+
+/* Button primary small variant */
+.btn-primary-small {
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-primary-small:hover:not(:disabled) {
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+    transform: translateY(-1px);
+}
+
+.btn-primary-small:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.input-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
 }

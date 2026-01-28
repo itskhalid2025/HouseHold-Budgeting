@@ -184,6 +184,7 @@ export const validate = (schema) => {
       next();
     } catch (error) {
       if (error instanceof z.ZodError) {
+        console.error('❌ Zod Validation Error:', JSON.stringify(error.format(), null, 2));
         // Format validation errors for user-friendly response
         // Safety check for error.errors
         const errorList = error.errors || [];

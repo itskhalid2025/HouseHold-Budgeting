@@ -661,8 +661,142 @@ button:disabled {
     color: rgba(255, 255, 255, 0.7);
 }
 
-/* Warning Text */
 .warning-text {
     color: #eab308 !important;
     font-size: 14px;
+}
+
+/* Light Theme Overrides */
+[data-theme='light'] .loading-state {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .no-household {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .no-household h2 {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .no-household p {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .btn-secondary {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .btn-secondary:hover:not(:disabled) {
+    background: var(--bg-active);
+}
+
+[data-theme='light'] .household-header {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .household-info h1,
+[data-theme='light'] .members-section h2,
+[data-theme='light'] .invitations-section h2,
+[data-theme='light'] .pending-requests-section h2,
+[data-theme='light'] .member-name,
+[data-theme='light'] .request-name,
+[data-theme='light'] .modal h3 {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .invite-code {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .invite-code code,
+[data-theme='light'] .code-value {
+    background: rgba(124, 58, 237, 0.12);
+    color: #7c3aed;
+}
+
+[data-theme='light'] .member-card,
+[data-theme='light'] .request-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .member-email,
+[data-theme='light'] .request-email,
+[data-theme='light'] .request-date {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .invitation-card {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .invitation-email {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .modal {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .modal p {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .modal .form-group label {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .modal .form-group input,
+[data-theme='light'] .modal .form-group select {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .pending-request-banner {
+    background: rgba(234, 179, 8, 0.1);
+    border: 1px solid rgba(234, 179, 8, 0.25);
+}
+
+[data-theme='light'] .pending-info p {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .pending-requests-section {
+    background: rgba(124, 58, 237, 0.08);
+    border: 1px solid rgba(124, 58, 237, 0.2);
+}
+
+[data-theme='light'] .code-label {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .copy-btn {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .copy-btn:hover {
+    background: var(--bg-active);
+}
+
+[data-theme='light'] .code-hint {
+    color: var(--text-muted);
+}
+
+[data-theme='light'] .role-explanation {
+    background: var(--bg-hover);
+}
+
+[data-theme='light'] .role-explanation p,
+[data-theme='light'] .modal-description {
+    color: var(--text-secondary);
 }

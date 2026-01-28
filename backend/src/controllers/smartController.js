@@ -80,6 +80,7 @@ export async function processSmartEntry(req, res) {
                     let tableName;
 
                     // 3. Route based on Intent
+                    // 3. Route based on Intent
                     if (intent === 'INCOME') {
                         logDB('create', 'Income', { description });
                         createdRecord = await prisma.income.create({
@@ -95,6 +96,59 @@ export async function processSmartEntry(req, res) {
                             }
                         });
                         tableName = 'Income';
+
+                    } else if (intent === 'SAVINGS') {
+                        // Goal-Centric Savings Logic
+                        const goalName = subcategory || category || 'General Savings';
+
+                        logDB('upsert', 'Goal', { name: goalName });
+
+                        // Check if goal exists
+                        const existingGoal = await prisma.goal.findFirst({
+                            where: { householdId, name: goalName, isActive: true }
+                        });
+
+                        let goalId;
+                        if (existingGoal) {
+                            // Update existing
+                            const updatedGoal = await prisma.goal.update({
+                                where: { id: existingGoal.id },
+                                data: { currentAmount: { increment: parseFloat(amount) } }
+                            });
+                            goalId = updatedGoal.id;
+                        } else {
+                            // Create new (optional targetAmount is null)
+                            const newGoal = await prisma.goal.create({
+                                data: {
+                                    householdId,
+                                    name: goalName,
+                                    type: mapGoalType(category), // Need a helper for this or default
+                                    targetAmount: null,
+                                    currentAmount: parseFloat(amount),
+                                    createdById: userId
+                                }
+                            });
+                            goalId = newGoal.id;
+                        }
+
+                        // Create the transaction linked to the goal
+                        createdRecord = await prisma.transaction.create({
+                            data: {
+                                householdId,
+                                userId,
+                                amount: parseFloat(amount),
+                                description: description || `Saved for ${goalName}`,
+                                category: 'Savings',
+                                subcategory: goalName,
+                                type: 'SAVINGS',
+                                date: entryDate,
+                                aiCategorized: true,
+                                confidence: classification.confidence,
+                                goalId: goalId
+                            }
+                        });
+                        tableName = 'Transaction (Savings)';
+
                     } else {
                         logDB('create', 'Transaction', { description });
                         createdRecord = await prisma.transaction.create({
@@ -105,7 +159,7 @@ export async function processSmartEntry(req, res) {
                                 description: description || 'Expense',
                                 category,
                                 subcategory,
-                                type: type,
+                                type: type, // NEED or WANT
                                 date: entryDate,
                                 aiCategorized: true,
                                 confidence: classification.confidence,
@@ -167,4 +221,15 @@ function mapIncomeType(category) {
         'Passive': 'PASSIVE'
     };
     return map[category] || 'VARIABLE'; // Default
+}
+
+function mapGoalType(category) {
+    // Basic mapping, could be improved with AI context
+    const map = {
+        'Emergency Fund': 'EMERGENCY_FUND',
+        'Sinking Funds': 'SINKING_FUND',
+        'Debt': 'DEBT_PAYOFF',
+        'Long-Term': 'LONG_TERM'
+    };
+    return map[category] || 'SINKING_FUND'; // Default to generic saving
 }

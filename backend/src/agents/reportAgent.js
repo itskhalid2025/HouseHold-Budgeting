@@ -30,10 +30,26 @@ export async function generateReport(aggregatedData) {
                 byCategory,
                 byType,
                 byUser,
-                comparedToLastPeriod,
+                history, // Get history
                 dateRange,
                 reportType
             } = aggregatedData;
+
+            // COMPATIBILITY FIX: Calculate comparedToLastPeriod from history if missing
+            let comparedToLastPeriod = aggregatedData.comparedToLastPeriod;
+            if (!comparedToLastPeriod) {
+                if (history && history.length >= 2) {
+                    const current = history[history.length - 1].amount;
+                    const prev = history[history.length - 2].amount;
+                    const changeVal = prev > 0 ? ((current - prev) / prev) * 100 : 0;
+                    comparedToLastPeriod = {
+                        change: changeVal.toFixed(1),
+                        direction: changeVal > 0 ? 'increased' : changeVal < 0 ? 'decreased' : 'stable'
+                    };
+                } else {
+                    comparedToLastPeriod = { change: 0, direction: 'stable' };
+                }
+            }
 
             // Calculate savings rate
             const savingsRate = totalIncome > 0
@@ -119,8 +135,11 @@ Generate a financial report in VALID JSON format with these exact fields:
                 },
                 {
                     type: 'bar',
-                    title: 'This Period vs Last Period',
-                    data: [
+                    title: 'Period Comparison',
+                    data: (history && history.length > 0) ? history.map(h => ({
+                        period: h.period,
+                        amount: h.amount
+                    })) : [
                         {
                             period: 'Last Period',
                             amount: Math.round(totalSpent / (1 + parseFloat(comparedToLastPeriod.change) / 100))
