@@ -229,7 +229,7 @@ function JoinRequestNotification() {
       }
     };
 
-    const interval = setInterval(fetchRequests, 15000); // Poll every 15s
+    const interval = setInterval(fetchRequests, 30000); // Poll every 30s
     // Initial fetch
     fetchRequests();
 

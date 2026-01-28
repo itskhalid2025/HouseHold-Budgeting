@@ -1,0 +1,127 @@
+Here is your Redesigned Analytics Page — exactly with everything you requested:
+✔ Weekly / Monthly / Custom reports
+✔ Scrollable reports
+✔ Pie chart
+✔ Embedded AI Advisor section
+✔ Clean + Professional UI (Style A)
+
+✅ Functionalities You Can Add (Implementation Guide)
+
+Below is everything included in the redesigned Analytics Page and how you can implement each in your app.
+
+🔵 1. Top Tabs (Weekly, Monthly, Custom)
+Behavior:
+
+Default = Weekly
+
+Clicking a tab switches the dataset + charts.
+
+Smooth underline animation or fade switch.
+
+Implementation:
+const [mode, setMode] = useState("weekly");
+
+// render UI
+<Tabs
+  value={mode}
+  onChange={(newValue) => setMode(newValue)}
+  options={["weekly", "monthly", "custom"]}
+/>
+
+🔵 2. Scrollable Financial Report Section
+Features:
+
+A card that expands vertically
+
+Scrollable content inside
+
+Clean hierarchy:
+
+Total Spent
+
+Income
+
+Needs/Wants/Savings
+
+Insights
+
+Warning messages
+
+Implementation:
+.report-card {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 16px;
+  border-radius: 12px;
+  background: #fff;
+}
+
+🔵 3. Pie Chart (Needs / Wants / Savings)
+
+Use charting libraries like:
+
+Chart.js
+
+Recharts
+
+Nivo
+
+Example (Recharts):
+<PieChart>
+  <Pie
+    data={data}
+    dataKey="value"
+    outerRadius={80}
+    fill="#8884d8"
+    label
+  />
+</PieChart>
+
+🔵 4. AI Advisor Panel (Chat + Insights)
+Features:
+
+Fixed card under the graph
+
+Auto-generated insights (like you already have)
+
+Suggested questions:
+
+How can I save more money?
+
+Analyze my spending
+
+Help me reach my goals
+
+User input + send button
+
+Implementation:
+
+Use your existing AI advisor API and embed here.
+
+🔵 5. Bottom Navigation (Consistent across all pages)
+
+Icons:
+
+Home
+
+Transactions
+
+Add
+
+Analytics (active)
+
+Settings
+
+📸 Image generated successfully
+
+The image shows:
+
+Weekly/Monthly/Custom tabs
+
+Scrollable report
+
+Pie chart
+
+AI Financial Advisor
+
+Clean light mode UI

@@ -55,7 +55,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
  * @param {object} options - Configuration options
  * @returns {Promise<string>} - Generated text
  */
-export async function generateContent(prompt, options = {}) {
+export async function generateContent(promptOrParts, options = {}) {
     const {
         temperature = 0.7,
         maxTokens = 1024,
@@ -65,10 +65,18 @@ export async function generateContent(prompt, options = {}) {
     for (let attempt = 1; attempt <= retries; attempt++) {
         try {
             console.log(`🤖 [Gemini] Request using Key #${currentKeyIndex + 1}`);
-            console.log(`📝 [Input]: ${prompt.substring(0, 100)}${prompt.length > 100 ? '...' : ''}`);
+
+            let parts;
+            if (Array.isArray(promptOrParts)) {
+                parts = promptOrParts;
+                console.log(`📝 [Input]: Multimodal Input (${parts.length} parts)`);
+            } else {
+                parts = [{ text: promptOrParts }];
+                console.log(`📝 [Input]: ${promptOrParts.substring(0, 100)}${promptOrParts.length > 100 ? '...' : ''}`);
+            }
 
             const result = await model.generateContent({
-                contents: [{ role: 'user', parts: [{ text: prompt }] }],
+                contents: [{ role: 'user', parts: parts }],
                 generationConfig: {
                     temperature,
                     maxOutputTokens: maxTokens,
@@ -122,10 +130,27 @@ export async function generateContent(prompt, options = {}) {
  * @param {object} schema - Optional JSON schema for validation
  * @returns {Promise<object>} - Parsed JSON object
  */
-export async function generateJSON(prompt, schema = null, options = {}) {
-    const fullPrompt = `${prompt}\n\nReturn ONLY valid JSON, no markdown formatting or explanations.`;
+export async function generateJSON(promptOrParts, schema = null, options = {}) {
+    // Construct the JSON instruction
+    const jsonInstruction = "\n\nReturn ONLY valid JSON, no markdown formatting or explanations.";
 
-    const response = await generateContent(fullPrompt, options);
+    let fullInput;
+    if (Array.isArray(promptOrParts)) {
+        // If it's an array of parts, find the text part and append instruction, or add a new text part
+        fullInput = [...promptOrParts];
+        const lastTextIndex = fullInput.map(p => !!p.text).lastIndexOf(true);
+
+        if (lastTextIndex >= 0) {
+            fullInput[lastTextIndex] = { text: fullInput[lastTextIndex].text + jsonInstruction };
+        } else {
+            fullInput.push({ text: jsonInstruction });
+        }
+    } else {
+        // String input
+        fullInput = `${promptOrParts}${jsonInstruction}`;
+    }
+
+    const response = await generateContent(fullInput, options);
 
     try {
         // Remove markdown code blocks if present

@@ -433,15 +433,40 @@ export async function deleteGoal(id) {
 
 // ================== VOICE INPUT API ==================
 
-export async function parseVoiceInput(transcript) {
-    console.log('🎤 Voice Input:', transcript);
+export async function parseVoiceInput(input) {
+    console.log('🎤 Smart Input:', input);
     startAIRequest(); // Start AI tracking
     try {
-        const response = await trackedFetch(`${API_BASE_URL}/smart/entry`, {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify({ text: transcript })
-        });
+        let response;
+        const token = getToken();
+        // Headers for FormData (let browser set Content-Type)
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        // Text handling headers (requires Content-Type)
+        const authHeaders = {
+            'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` })
+        };
+
+        if (input instanceof Blob) {
+            console.log('🎤 Sending Audio File...');
+            const formData = new FormData();
+            formData.append('audio', input, 'voice-input.webm');
+
+            response = await trackedFetch(`${API_BASE_URL}/smart/entry`, {
+                method: 'POST',
+                headers: headers,
+                body: formData
+            });
+        } else {
+            console.log('📝 Sending Text...');
+            response = await trackedFetch(`${API_BASE_URL}/smart/entry`, {
+                method: 'POST',
+                headers: authHeaders,
+                body: JSON.stringify({ text: input })
+            });
+        }
 
         // The Smart Controller now returns { success, count, entries: [...] }
         const result = await handleResponse(response);

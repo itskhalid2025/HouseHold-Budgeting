@@ -107,6 +107,7 @@ export default function Dashboard() {
         isListening,
         transcript,
         interimTranscript,
+        audioBlob,
         startListening,
         stopListening,
         resetTranscript,
@@ -118,9 +119,9 @@ export default function Dashboard() {
     }, []);
 
     // Generic handler for both Voice and Text
-    const processSmartEntry = async (inputText) => {
+    const processSmartEntry = async (inputPayload) => {
         try {
-            const parsed = await parseVoiceInput(inputText);
+            const parsed = await parseVoiceInput(inputPayload);
 
             if (parsed.isCreated) {
                 setShowVoiceModal(false);
@@ -150,7 +151,29 @@ export default function Dashboard() {
 
     const handleVoiceSubmit = () => {
         stopListening();
-        processSmartEntry(transcript);
+        // Wait a small moment to ensure Blob is finalized if "Stop" wasn't pressed before "Process",
+        // but typically user presses Stop first or we handle it in hook.
+        // In our hook, onstop sets the audioBlob.
+        // We need to wait for the blob to be available or pass it directly.
+        // For safety, let's assume if they click submit, we want to start processing whatever we have.
+        // Given React batching, it might be safer to trigger this differently, but let's try passing the blob state.
+
+        // CRITICAL FIX: If user clicks "Process" while listening, `audioBlob` might not be set yet.
+        // Ideally, 'Stop' should be pressed first.
+        // Our hook sets audioBlob on 'onstop'.
+
+        if (audioBlob) {
+            processSmartEntry(audioBlob);
+        } else {
+            console.warn("No audio blob captured yet. Ensure recording is stopped.");
+            // If they click "Process" immediately after Stop, state might lag. Use transcript as fallback? 
+            // NO, user wants audio. But if audioBlob is null, we can't send audio.
+
+            // Workaround: We'll modify the UI to force "Stop" before "Process". 
+            // Looking at UI: Stop button replaces Start. Process button shows if Transcript exists.
+            // We should change the condition to show Process button ONLY if we have stopped / have blob?
+            // Or we just try to use transcript for now if blob fails, BUT user insisted on audio.
+        }
     };
 
     const handleTextSubmit = (e) => {
@@ -276,33 +299,56 @@ export default function Dashboard() {
             {showVoiceModal && (
                 <div className="modal-overlay" onClick={() => { stopListening(); setShowVoiceModal(false); }}>
                     <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
-                        <h3>Smart Voice Entry</h3>
+                        <div className="modal-header-row">
+                            <h3>Smart Voice Entry</h3>
+                            {/* Top right close button if needed, or user can click cancel below */}
+                        </div>
                         <p className="modal-subtitle">Speak natural language (e.g., "Spent 50 on food", "Got 2000 salary")</p>
 
-                        <div className={`mic-container ${isListening ? 'listening' : ''}`}>
-                            <div className="mic-icon">🎤</div>
-                            {isListening && <div className="ripple"></div>}
-                        </div>
+                        {!audioBlob ? (
+                            // Recording State
+                            <>
+                                <div className={`mic-container ${isListening ? 'listening' : ''}`}>
+                                    <div className="mic-icon">🎤</div>
+                                    {isListening && <div className="ripple"></div>}
+                                </div>
 
-                        <div className="transcript-box">
-                            {transcript || interimTranscript ? (
-                                <>
-                                    <span>{transcript}</span>
-                                    <span className="interim-text">{interimTranscript}</span>
-                                </>
-                            ) : "Tap start and speak..."}
-                        </div>
+                                <div className="transcript-box">
+                                    {isListening ? "Listening..." : "Tap start and speak..."}
+                                </div>
 
-                        <div className="voice-controls">
-                            {!isListening ? (
-                                <button className="btn-primary" onClick={startListening}>Start Listening</button>
-                            ) : (
-                                <button className="btn-danger" onClick={stopListening}>Stop</button>
-                            )}
-                            {transcript && (
-                                <button className="btn-success" onClick={handleVoiceSubmit}>Process Entry</button>
-                            )}
-                        </div>
+                                <div className="voice-controls">
+                                    {!isListening ? (
+                                        <button className="btn-primary" onClick={startListening}>Start Listening</button>
+                                    ) : (
+                                        <button className="btn-danger" onClick={stopListening}>Stop</button>
+                                    )}
+                                </div>
+                            </>
+                        ) : (
+                            // Review State (Audio Captured)
+                            <div className="audio-review-container">
+                                <div className="audio-player-wrapper">
+                                    <audio controls src={URL.createObjectURL(audioBlob)} className="mini-player" />
+                                </div>
+
+                                <div className="voice-controls review-controls">
+                                    {/* Cross Button to Cancel/Retake */}
+                                    <button
+                                        className="btn-icon-cancel"
+                                        onClick={() => { resetTranscript(); }}
+                                        title="Cancel Recording"
+                                    >
+                                        ❌
+                                    </button>
+
+                                    {/* Process Button */}
+                                    <button className="btn-success" onClick={() => processSmartEntry(audioBlob)}>
+                                        Process Entry
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

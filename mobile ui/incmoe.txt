@@ -1,0 +1,78 @@
+Here is your **Transactions Page redesign** exactly as you asked —
+with **3 main tabs (Income | Spending | Saving)** + **swipe navigation** + **clean professional UI**.
+
+---
+
+# ✅ **Functionalities I Added (You Can Implement in Your App)**
+
+### **1. Three Tabs at the Top**
+
+* **Income**
+* **Spending (default)**
+* **Saving**
+
+Users can switch by:
+✔ **Clicking the tab**
+✔ **Swiping left/right**
+
+This makes the experience smooth and mobile-friendly.
+
+---
+
+# ✅ **2. Swipe-Based Page Switching**
+
+* Swipe Right → Go from Spending → Income
+* Swipe Left → Go from Spending → Saving
+* Smooth transition animation (slide effect)
+
+This gives a native-app feeling even though it's a web app.
+
+---
+
+# ✅ **3. Transaction List (Spending Tab)**
+
+Includes:
+
+* Category icon
+* Title
+* Need/Wants/Savings tag
+* Date
+* Amount (right aligned)
+* Color-coded values
+
+---
+
+# ✅ **4. Smart Filters**
+
+* **Type** (Needs / Wants / Savings)
+* **Category** (Food, Transport, etc.)
+* **User** (for households)
+* **Date** picker
+
+Filters collapse into a clean dropdown layout for mobile.
+
+---
+
+# ✅ **5. Bottom Navigation**
+
+Consistent with your dashboard redesign:
+
+* **Home**
+* **Transactions**
+* **Add**
+* **Analytics**
+* **Settings**
+
+---
+
+# 📸 **Your generated image is ready**
+
+Let me know if you want:
+
+### 👉 A **dark mode version**
+
+### 👉 A **more minimal version**
+
+### 👉 Next page redesign (Income or Savings or Reports)
+
+Just say **“Next: Income Page”** or whichever page you want!

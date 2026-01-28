@@ -6,9 +6,17 @@ import { generateJSON } from '../services/geminiService.js';
  * @param {string} text - The raw text input (can contain multiple entries)
  * @returns {Promise<Object[]>} - Array of structured entries
  */
-export async function categorizeEntry(text) {
+export async function categorizeEntry(inputPayload) {
     return traceOperation('categorizeEntry', async () => {
         try {
+            // Handle both object wrapper and raw string (backward compatibility)
+            const rawText = typeof inputPayload === 'string' ? inputPayload : (inputPayload.text || '');
+            const audioData = typeof inputPayload === 'object' ? inputPayload.audio : null;
+            const mimeType = typeof inputPayload === 'object' ? inputPayload.mimeType : null;
+
+            const isAudio = !!audioData;
+            const inputLabel = isAudio ? "Audio Input" : "Text Input";
+
             // Provide current date context for relative date parsing
             const now = new Date();
             const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -18,7 +26,7 @@ export async function categorizeEntry(text) {
 
             console.log('📅 Date Context:', { currentDate, currentYear, currentMonth, currentDay });
 
-            const prompt = `
+            const systemInstruction = `
                 You are a financial categorization expert for a household budgeting app.
                 
                 **IMPORTANT CONTEXT**:
@@ -26,11 +34,10 @@ export async function categorizeEntry(text) {
                 - Current Year: ${currentYear}
                 - Current Month: ${currentMonth}
                 - Current Day: ${currentDay}
-
-                Analyze the following input text and extract ALL financial entries mentioned.
-                The user may mention MULTIPLE transactions in one message.
-
-                **Input Text**: "${text}"
+                - Users may speak in ANY language (English, Hindi, Hinglish, Spanish, etc.).
+                - You must TRANSLATE and INTERPRET the meaning to extract financial details.
+                
+                **Input Text**: "${!isAudio ? rawText : '(Audio File)'}"
 
                 **Date Parsing Rules** (CRITICAL):
                 - "yesterday" → ${new Date(now - 86400000).toISOString().split('T')[0]}
@@ -114,9 +121,21 @@ export async function categorizeEntry(text) {
                 ]}
             `;
 
-            console.log('🤖 [AI Prompt Preview]:', prompt.substring(0, 300) + '...');
+            let parts = [{ text: systemInstruction }];
 
-            const data = await generateJSON(prompt, null, { maxTokens: 4096 });
+            if (isAudio) {
+                parts.push({
+                    inlineData: {
+                        mimeType: mimeType || 'audio/webm',
+                        data: audioData
+                    }
+                });
+                parts.push({ text: "\n\nAnalyze the audio above and extract the transactions." });
+            }
+
+            console.log('🤖 [AI Request] Type:', isAudio ? 'Audio (Multimodal)' : 'Text Only');
+
+            const data = await generateJSON(parts, null, { maxTokens: 4096 });
             console.log('🤖 AI Categorization Result:', JSON.stringify(data, null, 2));
 
             // Ensure we always return the entries array
@@ -128,5 +147,5 @@ export async function categorizeEntry(text) {
             console.error('Categorization error:', error);
             throw error;
         }
-    }, { input: text });
+    }, { input: inputPayload });
 }

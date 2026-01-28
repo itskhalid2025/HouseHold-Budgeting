@@ -14,6 +14,19 @@ const router = express.Router();
  * @desc Process a natural language entry (voice/text) and create appropriate records
  * @access Private
  */
-router.post('/entry', authenticate, processSmartEntry);
+import multer from 'multer';
+
+// Configure multer for memory storage
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 } // 10 MB limit
+});
+
+/**
+ * @route POST /api/smart/entry
+ * @desc Process a natural language entry (voice/text) and create appropriate records
+ * @access Private
+ */
+router.post('/entry', authenticate, upload.single('audio'), processSmartEntry);
 
 export default router;

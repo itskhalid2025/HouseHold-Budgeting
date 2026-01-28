@@ -27,103 +27,77 @@ import { useState, useEffect, useCallback, useRef } from 'react';
  */
 export function useVoiceInput() {
     const [isListening, setIsListening] = useState(false);
-    const [transcript, setTranscript] = useState('');
+    const [transcript, setTranscript] = useState(''); // Keep for compatibility, though emptiness implies "processing audio"
     const [error, setError] = useState('');
     const [isSupported, setIsSupported] = useState(false);
+    const [audioBlob, setAudioBlob] = useState(null);
 
-    const [interimTranscript, setInterimTranscript] = useState('');
-
-    const recognitionRef = useRef(null);
+    const mediaRecorderRef = useRef(null);
+    const chunksRef = useRef([]);
 
     useEffect(() => {
         // Check for browser support
-        if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+        if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
             setIsSupported(true);
-
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            recognitionRef.current = new SpeechRecognition();
-
-            recognitionRef.current.continuous = true;
-            recognitionRef.current.interimResults = true;
-            recognitionRef.current.lang = 'en-US';
-
-            recognitionRef.current.onstart = () => {
-                setIsListening(true);
-                setError('');
-            };
-
-            recognitionRef.current.onresult = (event) => {
-                let interim = '';
-                let final = '';
-
-                // Re-build transcript from ALL results in the current session
-                // This prevents duplication issues on mobile/Android where 'isFinal' behavior varies
-                for (let i = 0; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        final += event.results[i][0].transcript + ' ';
-                    } else {
-                        interim += event.results[i][0].transcript;
-                    }
-                }
-
-                setTranscript(final.trim());
-                setInterimTranscript(interim);
-            };
-
-            recognitionRef.current.onerror = (event) => {
-                console.error('Speech recognition error', event.error);
-                if (event.error === 'not-allowed') {
-                    setError('Microphone access denied');
-                } else if (event.error === 'no-speech') {
-                    setError('No speech detected');
-                } else {
-                    setError(`Error: ${event.error}`);
-                }
-                setIsListening(false);
-            };
-
-            recognitionRef.current.onend = () => {
-                setIsListening(false);
-                setInterimTranscript('');
-            };
-
         } else {
             setIsSupported(false);
-            setError('Browser does not support voice input');
+            setError('Browser does not support audio recording');
         }
 
         return () => {
-            if (recognitionRef.current) {
-                recognitionRef.current.stop();
+            if (mediaRecorderRef.current && isListening) {
+                mediaRecorderRef.current.stop();
             }
         };
-    }, []);
-
-    const startListening = useCallback(() => {
-        if (recognitionRef.current && !isListening) {
-            try {
-                recognitionRef.current.start();
-            } catch (err) {
-                console.error('Failed to start recognition:', err);
-            }
-        }
     }, [isListening]);
 
+    const startListening = useCallback(async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            mediaRecorderRef.current = new MediaRecorder(stream);
+            chunksRef.current = [];
+
+            mediaRecorderRef.current.ondataavailable = (e) => {
+                if (e.data.size > 0) {
+                    chunksRef.current.push(e.data);
+                }
+            };
+
+            mediaRecorderRef.current.onstop = () => {
+                const blob = new Blob(chunksRef.current, { type: 'audio/webm' });
+                setAudioBlob(blob);
+
+                // Stop all tracks to release microphone
+                stream.getTracks().forEach(track => track.stop());
+            };
+
+            mediaRecorderRef.current.start();
+            setIsListening(true);
+            setError('');
+            setAudioBlob(null); // Clear previous
+        } catch (err) {
+            console.error('Failed to start recording:', err);
+            setError('Microphone access denied or error');
+            setIsListening(false);
+        }
+    }, []);
+
     const stopListening = useCallback(() => {
-        if (recognitionRef.current && isListening) {
-            recognitionRef.current.stop();
+        if (mediaRecorderRef.current && isListening) {
+            mediaRecorderRef.current.stop();
+            setIsListening(false);
         }
     }, [isListening]);
 
     const resetTranscript = useCallback(() => {
         setTranscript('');
-        setInterimTranscript('');
+        setAudioBlob(null);
     }, []);
 
     return {
         isListening,
-        transcript,
-        interimTranscript,
+        transcript, // Will be empty in this new mode until we process it, or we can use it for status
+        audioBlob,  // The actual audio file
         startListening,
         stopListening,
         resetTranscript,

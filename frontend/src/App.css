@@ -860,7 +860,9 @@ body {
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.1);
   padding: 4px;
-}/* AI Notification Styles */
+}
+
+/* AI Notification Styles */
 .ai-notification {
   position: fixed;
   top: 20px;
@@ -877,12 +879,14 @@ body {
 
 .ai-notification.processing {
   background: white;
-  border-left: 5px solid #eab308; /* Yellow */
+  border-left: 5px solid #eab308;
+  /* Yellow */
 }
 
 .ai-notification.done {
   background: white;
-  border-left: 5px solid #22c55e; /* Green */
+  border-left: 5px solid #22c55e;
+  /* Green */
 }
 
 .ai-notification-content {
@@ -903,13 +907,14 @@ body {
   bottom: 20px;
   right: 20px;
   z-index: 10000;
-  background: white; /* Dark mode adjustment might be needed if base is dark, keeping consistent with other notifications */
+  background: white;
+  /* Dark mode adjustment might be needed if base is dark, keeping consistent with other notifications */
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.3);
   width: 300px;
   overflow: hidden;
   animation: slideUp 0.3s ease-out;
-  border: 1px solid rgba(0,0,0,0.1);
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .join-request-content {
@@ -947,7 +952,8 @@ body {
   gap: 10px;
 }
 
-.btn-accept, .btn-reject {
+.btn-accept,
+.btn-reject {
   flex: 1;
   padding: 8px;
   border: none;
@@ -967,17 +973,79 @@ body {
   color: white;
 }
 
-.btn-accept:hover, .btn-reject:hover {
+.btn-accept:hover,
+.btn-reject:hover {
   opacity: 0.9;
 }
 
 @keyframes countdown {
-  from { width: 100%; }
-  to { width: 0%; }
+  from {
+    width: 100%;
+  }
+
+  to {
+    width: 0%;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
+/* Audio Review UI */
+.audio-review-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.audio-player-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.mini-player {
+  width: 100%;
+  max-width: 300px;
+  height: 40px;
+}
+
+.review-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  justify-content: center;
+}
+
+.btn-icon-cancel {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 18px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-icon-cancel:hover {
+  background: rgba(239, 68, 68, 0.25);
+  transform: scale(1.05);
+}
