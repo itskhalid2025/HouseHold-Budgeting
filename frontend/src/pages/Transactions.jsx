@@ -282,20 +282,26 @@ export default function Transactions() {
                         </option>
                     ))}
                 </select>
-                <input
-                    type="date"
-                    name="startDate"
-                    value={filters.startDate}
-                    onChange={handleFilterChange}
-                    className="filter-date"
-                />
-                <input
-                    type="date"
-                    name="endDate"
-                    value={filters.endDate}
-                    onChange={handleFilterChange}
-                    className="filter-date"
-                />
+                <div className="date-filter-group">
+                    <label className="date-label">From:</label>
+                    <input
+                        type="date"
+                        name="startDate"
+                        value={filters.startDate}
+                        onChange={handleFilterChange}
+                        className="filter-date"
+                    />
+                </div>
+                <div className="date-filter-group">
+                    <label className="date-label">To:</label>
+                    <input
+                        type="date"
+                        name="endDate"
+                        value={filters.endDate}
+                        onChange={handleFilterChange}
+                        className="filter-date"
+                    />
+                </div>
             </div>
 
             {error && <div className="error-banner">{error}</div>}

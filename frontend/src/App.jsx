@@ -132,21 +132,29 @@ function Header() {
 // Server Status component to handle cold starts
 function ServerStatus() {
   const [isSlow, setIsSlow] = useState(false);
+  const [isAIProcessing, setIsAIProcessing] = useState(false);
 
   useEffect(() => {
     const handleSlow = () => setIsSlow(true);
     const handleReady = () => setIsSlow(false);
+    const handleAIStart = () => setIsAIProcessing(true);
+    const handleAIComplete = () => setIsAIProcessing(false);
 
     window.addEventListener('api-slow', handleSlow);
     window.addEventListener('api-ready', handleReady);
+    window.addEventListener('ai-processing-start', handleAIStart);
+    window.addEventListener('ai-processing-complete', handleAIComplete);
 
     return () => {
       window.removeEventListener('api-slow', handleSlow);
       window.removeEventListener('api-ready', handleReady);
+      window.removeEventListener('ai-processing-start', handleAIStart);
+      window.removeEventListener('ai-processing-complete', handleAIComplete);
     };
   }, []);
 
-  if (!isSlow) return null;
+  // Hide server banner when AI is processing
+  if (!isSlow || isAIProcessing) return null;
 
   return (
     <div className="server-status-banner">
