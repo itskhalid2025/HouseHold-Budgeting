@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { useTheme } from './context/ThemeContext';
+import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 import Logo from './assets/Logo.png';
@@ -376,7 +376,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <ThemeProvider>
+          <AppContent />
+        </ThemeProvider>
       </AuthProvider>
     </Router>
   );

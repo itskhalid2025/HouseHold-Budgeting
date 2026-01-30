@@ -81,6 +81,8 @@ model Transaction {
   splits        SplitExpense[]
   household     Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
   user          User            @relation(fields: [userId], references: [id])
+  goalId        String?         @map("goal_id")
+  goal          Goal?           @relation(fields: [goalId], references: [id])
 
   @@index([householdId, date])
   @@index([category, type])
@@ -141,7 +143,8 @@ model Goal {
   updatedAt     DateTime  @updatedAt @map("updated_at")
   createdById   String?   @map("created_by_id")
   createdBy     User?     @relation(fields: [createdById], references: [id])
-  household     Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  household     Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
 
   @@index([householdId, isActive])
   @@map("goals")
