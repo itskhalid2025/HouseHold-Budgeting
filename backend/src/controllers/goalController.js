@@ -18,8 +18,26 @@ export const createGoal = async (req, res) => {
     logEntry('goalController', 'createGoal', req.body);
     try {
         const { name, targetAmount, currentAmount, type, deadline } = req.body;
-        const userId = req.user.id;
+        let userId = req.user.id;
         const householdId = req.user.householdId;
+
+        // Allow assigning to another user in the same household
+        if (req.body.userId && req.body.userId !== userId) {
+            // Verify the target user is in the household
+            const targetUser = await prisma.user.findFirst({
+                where: {
+                    id: req.body.userId,
+                    householdId: householdId
+                }
+            });
+
+            if (!targetUser) {
+                return res.status(400).json({
+                    error: 'Target user not found in your household'
+                });
+            }
+            userId = req.body.userId;
+        }
 
         if (!householdId) {
             logError('goalController', 'createGoal', new Error('User must belong to a household'));
@@ -76,8 +94,26 @@ export const addContribution = async (req, res) => {
     try {
         const { id } = req.params;
         const { amount } = req.body;
-        const userId = req.user.id;
+        let userId = req.user.id;
         const householdId = req.user.householdId;
+
+        // Allow assigning to another user in the same household
+        if (req.body.userId && req.body.userId !== userId) {
+            // Verify the target user is in the household
+            const targetUser = await prisma.user.findFirst({
+                where: {
+                    id: req.body.userId,
+                    householdId: householdId
+                }
+            });
+
+            if (!targetUser) {
+                return res.status(400).json({
+                    error: 'Target user not found in your household'
+                });
+            }
+            userId = req.body.userId;
+        }
 
         if (!amount || isNaN(amount) || parseFloat(amount) <= 0) {
             return res.status(400).json({ error: 'Valid amount is required' });

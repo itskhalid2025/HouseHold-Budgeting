@@ -18,7 +18,7 @@ import { useState, useEffect } from 'react';
 
 import {
     getTransactions,
-    getHousehold,
+    getMembers,
     getTransactionSummary,
     addTransaction,
     updateTransaction,
@@ -63,10 +63,10 @@ export default function Transactions() {
     const [members, setMembers] = useState([]);
 
     useEffect(() => {
-        // Load household members for filter
-        getHousehold().then(data => {
-            if (data.household?.members) {
-                setMembers(data.household.members);
+        // Load household members
+        getMembers().then(data => {
+            if (data.members) {
+                setMembers(data.members);
             }
         }).catch(err => console.error('Failed to load members:', err));
     }, []);
@@ -77,13 +77,15 @@ export default function Transactions() {
     const [editingTxn, setEditingTxn] = useState(null);
 
     // Form states
+
     const [formData, setFormData] = useState({
         description: '',
         amount: '',
         date: new Date().toISOString().split('T')[0],
         category: '',
         type: 'NEED',
-        merchant: ''
+        merchant: '',
+        userId: user?.id || ''
     });
 
 
@@ -160,7 +162,10 @@ export default function Transactions() {
                 description: formData.description,
                 amount: parseFloat(formData.amount),
                 date: formData.date,
-                type: formData.type
+                amount: parseFloat(formData.amount),
+                date: formData.date,
+                type: formData.type,
+                userId: formData.userId
             };
 
             // Only include optional fields if they have values
@@ -206,7 +211,10 @@ export default function Transactions() {
             date: txn.date.split('T')[0],
             category: txn.category,
             type: txn.type,
-            merchant: txn.merchant || ''
+            category: txn.category,
+            type: txn.type,
+            merchant: txn.merchant || '',
+            userId: txn.userId
         });
         setShowAddModal(true);
     };
@@ -218,7 +226,10 @@ export default function Transactions() {
             date: new Date().toISOString().split('T')[0],
             category: '',
             type: 'NEED',
-            merchant: ''
+            category: '',
+            type: 'NEED',
+            merchant: '',
+            userId: user?.id || ''
         });
     };
 
@@ -503,17 +514,28 @@ export default function Transactions() {
                                     placeholder="e.g. Walmart"
                                 />
                             </div>
+                            <div className="form-group">
+                                <label>Paid By</label>
+                                <select name="userId" value={formData.userId} onChange={handleInputChange}>
+                                    {members.map(member => (
+                                        <option key={member.id} value={member.id}>
+                                            {member.firstName} {member.lastName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             <div className="modal-actions">
                                 <button type="button" className="btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
                                 <button type="submit" className="btn-primary">Save</button>
                             </div>
                         </form>
                     </div>
-                </div>
-            )}
+                </div >
+            )
+            }
 
 
-        </div>
+        </div >
     );
 }
 

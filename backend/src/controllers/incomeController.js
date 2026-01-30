@@ -54,9 +54,35 @@ async function addIncome(req, res) {
         logEntry('incomeController', 'addIncome', req.body);
         try {
             const { amount, source, type, frequency, startDate, endDate } = req.body;
-            const userId = req.user.id;
+            let userId = req.user.id;
             const householdId = req.user.householdId;
             const userRole = req.user.role;
+
+            console.log('DEBUG: addIncome', { bodyUserId: req.body.userId, sessionUserId: userId });
+
+            // Allow assigning to another user in the same household
+            if (req.body.userId && req.body.userId !== userId) {
+                console.log('DEBUG: Attempting to override user');
+                // Verify the target user is in the household
+                const targetUser = await prisma.user.findFirst({
+                    where: {
+                        id: req.body.userId,
+                        householdId: householdId
+                    }
+                });
+
+                if (!targetUser) {
+                    console.log('DEBUG: Target user not found');
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Target user not found in your household'
+                    });
+                }
+                userId = req.body.userId;
+                console.log('DEBUG: User overridden to', userId);
+            } else {
+                console.log('DEBUG: No user override, using session user');
+            }
 
             // VIEWER cannot add income
             if (userRole === 'VIEWER') {

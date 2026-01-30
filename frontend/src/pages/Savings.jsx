@@ -25,7 +25,8 @@ import {
     getMonthlyIncomeTotal, // NEW
     chatWithAdvisor, // NEW
     deleteTransaction, // NEW
-    addContribution // NEW
+    addContribution, // NEW
+    getMembers // NEW
 } from '../api/api';
 import { useAuth } from '../context/AuthContext';
 import usePolling from '../hooks/usePolling';
@@ -39,6 +40,7 @@ export default function Savings() {
 
     const [goals, setGoals] = useState([]);
     const [summary, setSummary] = useState({ totalSaved: 0, totalTarget: 0 });
+    const [members, setMembers] = useState([]);
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -51,16 +53,22 @@ export default function Savings() {
         targetAmount: '',
         currentAmount: '',
         type: 'LONG_TERM',
-        deadline: ''
+        type: 'LONG_TERM',
+        deadline: '',
+        userId: user?.id || ''
     });
 
     // Manual Contribution State
     const [showContributeModal, setShowContributeModal] = useState(false);
     const [contributeAmount, setContributeAmount] = useState('');
+    const [contributeUserId, setContributeUserId] = useState('');
     const [selectedGoalId, setSelectedGoalId] = useState(null);
 
     useEffect(() => {
         fetchData();
+        getMembers().then(data => {
+            if (data.members) setMembers(data.members);
+        }).catch(err => console.error('Failed to load members', err));
     }, []);
 
     usePolling(fetchData, 10000);
@@ -100,7 +108,10 @@ export default function Savings() {
                 targetAmount: parseFloat(formData.targetAmount),
                 currentAmount: parseFloat(formData.currentAmount || 0),
                 type: formData.type,
-                deadline: formData.deadline || null
+                currentAmount: parseFloat(formData.currentAmount || 0),
+                type: formData.type,
+                deadline: formData.deadline || null,
+                userId: formData.userId
             };
 
             if (editingGoal) {
@@ -145,7 +156,9 @@ export default function Savings() {
             targetAmount: goal.targetAmount,
             currentAmount: goal.currentAmount,
             type: goal.type,
-            deadline: goal.deadline ? goal.deadline.split('T')[0] : ''
+            type: goal.type,
+            deadline: goal.deadline ? goal.deadline.split('T')[0] : '',
+            userId: goal.createdById // Assume creator editing
         });
         setShowAddModal(true);
     };
@@ -155,9 +168,11 @@ export default function Savings() {
         if (!selectedGoalId || !contributeAmount) return;
 
         try {
-            await addContribution(selectedGoalId, parseFloat(contributeAmount));
+            // Update api.js to handle object
+            await addContribution(selectedGoalId, { amount: parseFloat(contributeAmount), userId: contributeUserId });
             setShowContributeModal(false);
             setContributeAmount('');
+            setContributeUserId('');
             setSelectedGoalId(null);
             fetchData(); // Refresh to show new total and history
         } catch (err) {
@@ -171,7 +186,8 @@ export default function Savings() {
             targetAmount: '',
             currentAmount: '',
             type: 'LONG_TERM',
-            deadline: ''
+            deadline: '',
+            userId: user?.id || ''
         });
     };
 
@@ -302,7 +318,7 @@ export default function Savings() {
                                         {canAction && (
                                             <div className="card-actions">
                                                 <button
-                                                    onClick={() => { setSelectedGoalId(goal.id); setShowContributeModal(true); }}
+                                                    onClick={() => { setSelectedGoalId(goal.id); setContributeUserId(user?.id); setShowContributeModal(true); }}
                                                     className="btn-icon add-funds"
                                                     title="Add Funds"
                                                     style={{ fontSize: '0.9rem', marginRight: '5px' }}
@@ -477,45 +493,72 @@ export default function Savings() {
                                         />
                                     </div>
                                 </div>
+
+                                <div className="form-group">
+                                    <label>Goal Owner / Initial Deposit By</label>
+                                    <select name="userId" value={formData.userId} onChange={handleInputChange}>
+                                        {members.map(member => (
+                                            <option key={member.id} value={member.id}>
+                                                {member.firstName} {member.lastName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
                                 <div className="modal-actions">
                                     <button type="button" className="btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
                                     <button type="submit" className="btn-primary">Save Goal</button>
+                                </div>
+                            </form>
+                        </div >
+                    </div >
+                )
+            }
+
+            {/* Contribute Modal */}
+            {
+                showContributeModal && (
+                    <div className="modal-overlay" onClick={() => setShowContributeModal(false)}>
+                        <div className="modal small-modal" onClick={e => e.stopPropagation()}>
+                            <h3>Add Funds</h3>
+                            <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '15px' }}>
+                                Manually add savings to this goal.
+                            </p>
+                            <form onSubmit={handleContributeSubmit}>
+                                <div className="form-group">
+                                    <label>Amount</label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={contributeAmount}
+                                        onChange={(e) => setContributeAmount(e.target.value)}
+                                        required
+                                        placeholder="0.00"
+                                        autoFocus
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label>Contributed By</label>
+                                    <select
+                                        value={contributeUserId}
+                                        onChange={(e) => setContributeUserId(e.target.value)}
+                                    >
+                                        <option value="">{user?.firstName} (You)</option>
+                                        {members.filter(m => m.id !== user?.id).map(member => (
+                                            <option key={member.id} value={member.id}>
+                                                {member.firstName} {member.lastName}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="modal-actions">
+                                    <button type="button" className="btn-secondary" onClick={() => setShowContributeModal(false)}>Cancel</button>
+                                    <button type="submit" className="btn-primary">Add Funds</button>
                                 </div>
                             </form>
                         </div>
                     </div>
                 )
             }
-
-            {/* Contribute Modal */}
-            {showContributeModal && (
-                <div className="modal-overlay" onClick={() => setShowContributeModal(false)}>
-                    <div className="modal small-modal" onClick={e => e.stopPropagation()}>
-                        <h3>Add Funds</h3>
-                        <p style={{ fontSize: '0.9rem', color: '#64748b', marginBottom: '15px' }}>
-                            Manually add savings to this goal.
-                        </p>
-                        <form onSubmit={handleContributeSubmit}>
-                            <div className="form-group">
-                                <label>Amount</label>
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    value={contributeAmount}
-                                    onChange={(e) => setContributeAmount(e.target.value)}
-                                    required
-                                    placeholder="0.00"
-                                    autoFocus
-                                />
-                            </div>
-                            <div className="modal-actions">
-                                <button type="button" className="btn-secondary" onClick={() => setShowContributeModal(false)}>Cancel</button>
-                                <button type="submit" className="btn-primary">Add Funds</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
         </div >
     );
 }

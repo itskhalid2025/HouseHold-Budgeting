@@ -486,3 +486,45 @@ export const leaveHousehold = async (req, res) => {
         });
     }
 };
+/**
+ * Get household members list
+ * GET /api/households/members
+ */
+export const getMembers = async (req, res) => {
+    logEntry('householdController', 'getMembers');
+    try {
+        const { householdId } = req.user;
+
+        if (!householdId) {
+            return res.status(400).json({
+                success: false,
+                error: 'You are not a member of any household'
+            });
+        }
+
+        const members = await prisma.user.findMany({
+            where: { householdId },
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                role: true,
+                avatarUrl: true
+            }
+        });
+
+        logSuccess('householdController', 'getMembers', { count: members.length });
+        return res.status(200).json({
+            success: true,
+            members
+        });
+
+    } catch (error) {
+        logError('householdController', 'getMembers', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to fetch household members'
+        });
+    }
+};

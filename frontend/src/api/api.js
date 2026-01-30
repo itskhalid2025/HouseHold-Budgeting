@@ -234,6 +234,13 @@ export async function updateMemberRole(memberId, role) {
     return handleResponse(response);
 }
 
+export async function getMembers() {
+    const response = await trackedFetch(`${API_BASE_URL}/households/members`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
 // ================== INVITATION API ==================
 
 export async function sendInvitation(email, role) {
@@ -434,12 +441,19 @@ export async function deleteGoal(id) {
 }
 
 // Add funds to a goal
-export async function addContribution(goalId, amount) {
-    console.log('💰 Adding contribution:', { goalId, amount });
+export async function addContribution(goalId, amountOrData) {
+    let payload = {};
+    if (typeof amountOrData === 'object') {
+        payload = amountOrData;
+    } else {
+        payload = { amount: amountOrData };
+    }
+
+    console.log('💰 Adding contribution:', { goalId, ...payload });
     const response = await trackedFetch(`${API_BASE_URL}/goals/${goalId}/contribute`, {
         method: 'POST',
         headers: authHeaders(),
-        body: JSON.stringify({ amount })
+        body: JSON.stringify(payload)
     });
     return handleResponse(response);
 }
@@ -639,6 +653,7 @@ export default {
     leaveHousehold,
     removeMember,
     updateMemberRole,
+    getMembers,
     sendInvitation,
     getInvitations,
     acceptInvitation,

@@ -134,7 +134,8 @@ export const addTransactionSchema = z.object({
   merchant: z.string().optional(),
   category: z.string().optional(),
   subcategory: z.string().optional(),
-  type: z.enum(['NEED', 'WANT']).optional().default('NEED')
+  type: z.enum(['NEED', 'WANT']).optional().default('NEED'),
+  userId: z.string().uuid().optional() // Allow assigning to another user
 });
 
 // Schema for updating a transaction
@@ -145,7 +146,8 @@ export const updateTransactionSchema = z.object({
   merchant: z.string().optional(),
   category: z.string().optional(),
   subcategory: z.string().optional(),
-  type: z.enum(['NEED', 'WANT']).optional()
+  type: z.enum(['NEED', 'WANT']).optional(),
+  userId: z.string().uuid().optional()
 });
 
 // Schema for adding income
@@ -155,7 +157,8 @@ export const addIncomeSchema = z.object({
   type: z.enum(['PRIMARY', 'VARIABLE', 'PASSIVE']),
   frequency: z.enum(['ONE_TIME', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
-  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional()
+  endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  userId: z.string().uuid().optional()
 });
 
 // Schema for updating income
@@ -166,7 +169,8 @@ export const updateIncomeSchema = z.object({
   frequency: z.enum(['ONE_TIME', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY']).optional(),
   startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
   endDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable().optional(),
-  isActive: z.boolean().optional()
+  isActive: z.boolean().optional(),
+  userId: z.string().uuid().optional()
 });
 
 // Validation middleware factory

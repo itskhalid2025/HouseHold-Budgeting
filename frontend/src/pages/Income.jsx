@@ -15,7 +15,8 @@
 import { useState, useEffect } from 'react';
 import {
     getIncomes,
-    getHousehold,
+
+    getMembers,
     addIncome,
     updateIncome,
     deleteIncome,
@@ -50,17 +51,18 @@ export default function Income() {
         type: 'PRIMARY',
         frequency: 'MONTHLY',
         startDate: new Date().toISOString().split('T')[0],
-        endDate: ''
+        endDate: '',
+        userId: user?.id || ''
     });
 
     const [members, setMembers] = useState([]);
 
     useEffect(() => {
         fetchData();
-        // Load members for filter
-        getHousehold().then(data => {
-            if (data.household?.members) {
-                setMembers(data.household.members);
+        // Load members
+        getMembers().then(data => {
+            if (data.members) {
+                setMembers(data.members);
             }
         }).catch(err => console.error('Failed to load members:', err));
     }, []);
@@ -103,7 +105,10 @@ export default function Income() {
                 source: formData.source,
                 amount: parseFloat(formData.amount),
                 type: formData.type,
-                frequency: formData.frequency
+                amount: parseFloat(formData.amount),
+                type: formData.type,
+                frequency: formData.frequency,
+                userId: formData.userId
             };
 
             // Only include optional dates if they have values
@@ -148,7 +153,9 @@ export default function Income() {
             type: inc.type,
             frequency: inc.frequency,
             startDate: inc.startDate.split('T')[0],
-            endDate: inc.endDate ? inc.endDate.split('T')[0] : ''
+
+            endDate: inc.endDate ? inc.endDate.split('T')[0] : '',
+            userId: inc.userId
         });
         setShowAddModal(true);
     };
@@ -160,7 +167,8 @@ export default function Income() {
             type: 'PRIMARY',
             frequency: 'MONTHLY',
             startDate: new Date().toISOString().split('T')[0],
-            endDate: ''
+            endDate: '',
+            userId: user?.id || ''
         });
     };
 
@@ -350,14 +358,25 @@ export default function Income() {
                                     />
                                 </div>
                             </div>
+                            <div className="form-group">
+                                <label>Received By</label>
+                                <select name="userId" value={formData.userId} onChange={handleInputChange}>
+                                    {members.map(member => (
+                                        <option key={member.id} value={member.id}>
+                                            {member.firstName} {member.lastName}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
                             <div className="modal-actions">
                                 <button type="button" className="btn-secondary" onClick={() => setShowAddModal(false)}>Cancel</button>
                                 <button type="submit" className="btn-primary">Save</button>
                             </div>
                         </form>
                     </div>
-                </div>
-            )}
-        </div>
+                </div >
+            )
+            }
+        </div >
     );
 }
