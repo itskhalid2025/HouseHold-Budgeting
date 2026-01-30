@@ -31,8 +31,6 @@ export const sendEmail = async (to, subject, html) => {
         return info;
     } catch (error) {
         logError('emailService', 'sendEmail', error);
-        // Don't throw logic error, just log it. Email failure shouldn't crash the app flow in most cases,
-        // but for verification it's critical.
         console.error("Email send failed. Ensure SMTP_HOST, SMTP_USER, SMTP_PASS are set in .env");
         throw error;
     }
@@ -47,15 +45,41 @@ export const sendVerificationEmail = async (user, token) => {
     const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`;
 
     const html = `
-        <h1>Welcome to Household Budget!</h1>
-        <p>Hi ${user.firstName},</p>
-        <p>Please verify your email address to activate your account.</p>
-        <a href="${verificationUrl}" style="padding: 10px 20px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 5px;">Verify Email</a>
-        <p>Or copy this link: ${verificationUrl}</p>
-        <p>This link expires in 24 hours.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="color: #6d28d9; margin: 0;">Household Budget</h1>
+                <p style="color: #666;">Welcome to the family!</p>
+            </div>
+            
+            <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px; color: #333;">Hi ${user.firstName},</p>
+                <p style="font-size: 16px; color: #333; line-height: 1.5;">
+                    Thanks for registering! Please verify your email address to activate your account and start managing your budget.
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${verificationUrl}" style="background-color: #7c3aed; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Verify Email</a>
+                </div>
+                
+                <p style="font-size: 14px; color: #666; text-align: center;">
+                    This link is valid for <strong>30 minutes</strong>.
+                </p>
+                
+                <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+                
+                <p style="font-size: 12px; color: #999; text-align: center;">
+                    If the button doesn't work, copy and paste this link:<br>
+                    <a href="${verificationUrl}" style="color: #7c3aed;">${verificationUrl}</a>
+                </p>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #aaa;">
+                &copy; ${new Date().getFullYear()} Household Budgeting. All rights reserved.
+            </div>
+        </div>
     `;
 
-    return sendEmail(user.email, 'Verify your email', html);
+    return sendEmail(user.email, 'Verify your email - Household Budget', html);
 };
 
 /**
@@ -67,14 +91,31 @@ export const sendPasswordResetEmail = async (user, token) => {
     const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
 
     const html = `
-        <h1>Password Reset Request</h1>
-        <p>Hi ${user.firstName},</p>
-        <p>You requested a password reset. Click the button below to reset your password.</p>
-        <a href="${resetUrl}" style="padding: 10px 20px; background-color: #2196F3; color: white; text-decoration: none; border-radius: 5px;">Reset Password</a>
-        <p>Or copy this link: ${resetUrl}</p>
-        <p>This link expires in 1 hour.</p>
-        <p>If you didn't request this, please ignore this email.</p>
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h1 style="color: #6d28d9; margin: 0;">Household Budget</h1>
+            </div>
+            
+            <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                <p style="font-size: 16px; color: #333;">Hi ${user.firstName},</p>
+                <p style="font-size: 16px; color: #333;">
+                    You requested a password reset. Click the button below to set a new password.
+                </p>
+                
+                <div style="text-align: center; margin: 30px 0;">
+                    <a href="${resetUrl}" style="background-color: #2196F3; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; font-size: 16px; display: inline-block;">Reset Password</a>
+                </div>
+                
+                <p style="font-size: 14px; color: #666; text-align: center;">
+                    This link is valid for <strong>1 hour</strong>.
+                </p>
+                
+                <p style="font-size: 12px; color: #999; text-align: center;">
+                    If you didn't request this, you can safely ignore this email.
+                </p>
+            </div>
+        </div>
     `;
 
-    return sendEmail(user.email, 'Reset your password', html);
+    return sendEmail(user.email, 'Reset your password - Household Budget', html);
 };

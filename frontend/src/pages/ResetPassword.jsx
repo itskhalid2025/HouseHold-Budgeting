@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './Auth.css';
+import Logo from '../assets/Logo.png';
 
 export default function ResetPassword() {
     const [searchParams] = useSearchParams();
@@ -32,7 +33,7 @@ export default function ResetPassword() {
         setMessage('');
 
         try {
-            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
             await axios.post(`${API_URL}/auth/reset-password`, {
                 token,
                 newPassword
@@ -44,33 +45,43 @@ export default function ResetPassword() {
 
         } catch (error) {
             setStatus('error');
-            setMessage(error.response?.data?.error || 'Failed to reset password. Token may be expired.');
+            setMessage(error.response?.data?.error || 'Failed to reset password. The link may have expired.');
         }
     };
 
     if (!token) {
         return (
-            <div className="auth-page">
-                <div className="auth-container">
-                    <p className="error-text">Invalid reset link. Token missing.</p>
-                    <Link to="/login" className="btn-secondary">Back to Login</Link>
+            <div className="auth-container">
+                <div className="auth-card">
+                    <div className="auth-header">
+                        <h1><img src={Logo} alt="Logo" className="app-logo" /></h1>
+                        <h2>Invalid Link</h2>
+                        <p>The reset token is missing or invalid.</p>
+                    </div>
+                    <div className="auth-links">
+                        <Link to="/login" className="auth-button" style={{ textDecoration: 'none', display: 'block', textAlign: 'center' }}>
+                            Back to Login
+                        </Link>
+                    </div>
                 </div>
             </div>
         );
     }
 
     return (
-        <div className="auth-page">
-            <div className="auth-container">
+        <div className="auth-container">
+            <div className="auth-card">
                 <div className="auth-header">
-                    <h1>Reset Password</h1>
-                    <p>Enter your new password below.</p>
+                    <h1><img src={Logo} alt="Logo" className="app-logo" /></h1>
+                    <h2>Reset Password</h2>
+                    <p>Please enter your new password below.</p>
                 </div>
 
                 {status === 'success' ? (
-                    <div className="auth-status-message">
-                        <p className="success-text">{message}</p>
-                        <p>Redirecting to login...</p>
+                    <div className="auth-status-content" style={{ textAlign: 'center' }}>
+                        <div className="status-icon success-animation">✅</div>
+                        <p className="status-text success">{message}</p>
+                        <p className="redirect-notice">Redirecting to login...</p>
                     </div>
                 ) : (
                     <form onSubmit={handleSubmit} className="auth-form">
@@ -82,6 +93,7 @@ export default function ResetPassword() {
                                 onChange={(e) => setNewPassword(e.target.value)}
                                 required
                                 placeholder="Min 8 characters"
+                                autoFocus
                             />
                         </div>
                         <div className="form-group">
@@ -95,13 +107,17 @@ export default function ResetPassword() {
                             />
                         </div>
 
-                        {status === 'error' && <div className="error-msg">{message}</div>}
+                        {status === 'error' && (
+                            <div className="auth-error">
+                                <span>❌</span> {message}
+                            </div>
+                        )}
 
-                        <button type="submit" disabled={status === 'loading'} className="btn-primary">
-                            {status === 'loading' ? 'Resetting...' : 'Reset Password'}
+                        <button type="submit" disabled={status === 'loading'} className="auth-button">
+                            {status === 'loading' ? 'Resetting Password...' : 'Reset Password'}
                         </button>
 
-                        <div className="auth-footer">
+                        <div className="auth-links">
                             <Link to="/login">Back to Login</Link>
                         </div>
                     </form>

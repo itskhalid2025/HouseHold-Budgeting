@@ -16,8 +16,77 @@ import {
     Send, Bot, User, Sparkles, TrendingUp,
     DollarSign, Target
 } from 'lucide-react';
+import {
+    PieChart, Pie, BarChart, Bar, LineChart, Line, Cell,
+    XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
+} from 'recharts';
 import { chatWithAdvisor } from '../api/api';
 import './Advisor.css';
+
+const COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6', '#ec4899'];
+
+const ChatChart = ({ data }) => {
+    if (!data || !data.data || data.data.length === 0) return null;
+
+    const { type, title, data: chartData } = data;
+
+    return (
+        <div className="advisor-chart-container" style={{ marginTop: '1rem', width: '100%', height: '250px' }}>
+            {title && <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', opacity: 0.8 }}>{title}</h4>}
+            <ResponsiveContainer width="100%" height="100%">
+                {type === 'pie' ? (
+                    <PieChart>
+                        <Pie
+                            data={chartData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={40}
+                            outerRadius={70}
+                            paddingAngle={5}
+                            dataKey="value"
+                        >
+                            {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip
+                            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                            itemStyle={{ color: '#fff' }}
+                        />
+                        <Legend iconType="circle" />
+                    </PieChart>
+                ) : type === 'line' ? (
+                    <LineChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                        <XAxis dataKey="period" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                        <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
+                        <Tooltip
+                            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                            itemStyle={{ color: '#fff' }}
+                        />
+                        <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981' }} />
+                    </LineChart>
+                ) : (
+                    <BarChart data={chartData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
+                        <XAxis dataKey="period" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                        <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
+                        <Tooltip
+                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                            contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px' }}
+                            itemStyle={{ color: '#fff' }}
+                        />
+                        <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]}>
+                            {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                )}
+            </ResponsiveContainer>
+        </div>
+    );
+};
 
 export default function Advisor() {
     const [messages, setMessages] = useState([
@@ -83,9 +152,27 @@ export default function Advisor() {
                 }
 
                 // Add AI response
+                // Parse AI response (it might be JSON string now)
+                let content = data.response;
+                let chartData = null;
+
+                try {
+                    // unexpected JSON token check or simple heuristics
+                    if (content.trim().startsWith('{')) {
+                        const parsed = JSON.parse(content);
+                        if (parsed.text) {
+                            content = parsed.text;
+                            chartData = parsed.chartData;
+                        }
+                    }
+                } catch (e) {
+                    console.log('Response is not JSON, displaying as text');
+                }
+
                 const aiMessageObj = {
                     role: 'assistant',
-                    content: data.response,
+                    content: content,
+                    chartData: chartData,
                     timestamp: data.timestamp
                 };
                 setMessages(prev => [...prev, aiMessageObj]);
@@ -160,7 +247,16 @@ export default function Advisor() {
                             )}
 
                             <div className={`message-bubble ${msg.role === 'user' ? 'user' : 'bot'} ${msg.isError ? 'error' : ''}`}>
-                                {msg.content}
+                                {msg.role === 'assistant' ? (
+                                    <div className="message-content" dangerouslySetInnerHTML={{ __html: msg.content }} />
+                                ) : (
+                                    <div className="message-content">{msg.content}</div>
+                                )}
+
+                                {msg.chartData && (
+                                    <ChatChart data={msg.chartData} />
+                                )}
+
                                 <div className="message-time">
                                     {formatTime(msg.timestamp)}
                                 </div>

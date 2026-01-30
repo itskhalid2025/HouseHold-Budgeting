@@ -321,7 +321,7 @@ export default function Savings() {
                                             {excessAmount > 0 && (
                                                 <span>🎉 Exceeded by {formatCurrency(excessAmount, currency)}!</span>
                                             )}
-                                            {excessAmount ==0 && (
+                                            {excessAmount == 0 && (
                                                 <span>🎉 Congratualtions! You have reached your goal!</span>
                                             )}
                                         </div>

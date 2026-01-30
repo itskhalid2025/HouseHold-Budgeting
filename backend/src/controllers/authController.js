@@ -81,7 +81,7 @@ export const register = async (req, res) => {
 
         // Generate verification token
         const verificationToken = crypto.randomBytes(32).toString('hex');
-        const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+        const verificationTokenExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
         // Create user
         logDB('create', 'User', { email });

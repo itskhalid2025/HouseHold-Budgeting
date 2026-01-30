@@ -24,17 +24,26 @@ const conversations = new Map();
  * Helper function to get household financial snapshot
  */
 async function getHouseholdSnapshot(householdId) {
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const ninetyDaysAgo = new Date();
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
 
-    // Get transactions
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+    // Get transactions (90 days for trends)
     const transactions = await prisma.transaction.findMany({
         where: {
             householdId,
             deletedAt: null,
-            date: { gte: thirtyDaysAgo }
-        }
+            date: { gte: ninetyDaysAgo }
+        },
+        orderBy: { date: 'desc' }
     });
+
+    const recentTransactions = transactions.filter(t => new Date(t.date) >= new Date(new Date().setDate(new Date().getDate() - 30)));
 
     // Get income
     const incomes = await prisma.income.findMany({
@@ -55,19 +64,35 @@ async function getHouseholdSnapshot(householdId) {
         where: { householdId, isActive: true }
     });
 
-    // Calculate totals
-    const monthlySpending = transactions.reduce((sum, t) => sum + Number(t.amount), 0);
+    // Calculate totals (last 30 days)
+    const monthlySpending = recentTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
     const monthlyIncome = incomes.reduce((sum, i) => sum + Number(i.amount), 0);
 
-    const needs = transactions
+    // Weekly spending breakdown
+    const thisWeek = transactions.filter(t => new Date(t.date) >= sevenDaysAgo);
+    const lastWeek = transactions.filter(t => {
+        const date = new Date(t.date);
+        return date >= fourteenDaysAgo && date < sevenDaysAgo;
+    });
+
+    const thisWeekSpending = thisWeek.reduce((sum, t) => sum + Number(t.amount), 0);
+    const lastWeekSpending = lastWeek.reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const thisWeekNeeds = thisWeek.filter(t => t.type === 'NEED').reduce((sum, t) => sum + Number(t.amount), 0);
+    const thisWeekWants = thisWeek.filter(t => t.type === 'WANT').reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const lastWeekNeeds = lastWeek.filter(t => t.type === 'NEED').reduce((sum, t) => sum + Number(t.amount), 0);
+    const lastWeekWants = lastWeek.filter(t => t.type === 'WANT').reduce((sum, t) => sum + Number(t.amount), 0);
+
+    const needs = recentTransactions
         .filter(t => t.type === 'NEED')
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
-    const wants = transactions
+    const wants = recentTransactions
         .filter(t => t.type === 'WANT')
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
-    const savings = transactions
+    const savings = recentTransactions
         .filter(t => t.type === 'SAVINGS')
         .reduce((sum, t) => sum + Number(t.amount), 0);
 
@@ -75,8 +100,8 @@ async function getHouseholdSnapshot(householdId) {
         ? ((monthlyIncome - monthlySpending) / monthlyIncome * 100).toFixed(1)
         : 0;
 
-    // Top categories
-    const categoryMap = transactions.reduce((acc, t) => {
+    // Top categories (last 30 days)
+    const categoryMap = recentTransactions.reduce((acc, t) => {
         const catName = t.category || 'Uncategorized';
         if (!acc[catName]) {
             acc[catName] = {
@@ -93,20 +118,24 @@ async function getHouseholdSnapshot(householdId) {
         .sort((a, b) => b.amount - a.amount)
         .slice(0, 5);
 
-    const topWants = topCategories.filter(c => c.type === 'WANT');
-
     // Format goals
     const formattedGoals = goals.map(g => ({
         name: g.name,
         currentAmount: Number(g.currentAmount),
         targetAmount: Number(g.targetAmount),
-        progress: ((Number(g.currentAmount) / Number(g.targetAmount)) * 100).toFixed(0),
+        progress: Number(g.targetAmount) > 0 ? ((Number(g.currentAmount) / Number(g.targetAmount)) * 100).toFixed(0) : '0',
         deadline: g.deadline?.toISOString().split('T')[0] || null
     }));
 
     return {
         monthlyIncome,
         monthlySpending,
+        thisWeekSpending,
+        lastWeekSpending,
+        thisWeekNeeds,
+        thisWeekWants,
+        lastWeekNeeds,
+        lastWeekWants,
         needs,
         wants,
         savings,
@@ -115,7 +144,6 @@ async function getHouseholdSnapshot(householdId) {
         savingsPercent: monthlySpending > 0 ? ((savings / monthlySpending) * 100).toFixed(1) : '0',
         savingsRate,
         topCategories,
-        topWants,
         goals: formattedGoals,
         currency: household?.currency || 'USD',
         currencySymbol: getCurrencySymbol(household?.currency || 'USD')

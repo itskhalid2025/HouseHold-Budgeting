@@ -102,7 +102,33 @@
     font-size: 0.95rem;
     line-height: 1.6;
     position: relative;
+    /* white-space: pre-wrap; Removed to support HTML */
+}
+
+.message-content {
     white-space: pre-wrap;
+    /* Default for user messages */
+}
+
+.message-bubble.bot .message-content {
+    white-space: normal;
+    /* Bot messages use HTML */
+}
+
+.message-content ul {
+    margin: 0.5rem 0;
+    padding-left: 1.5rem;
+}
+
+.message-content li {
+    margin-bottom: 0.25rem;
+}
+
+.advisor-chart-container {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .message-bubble.bot {

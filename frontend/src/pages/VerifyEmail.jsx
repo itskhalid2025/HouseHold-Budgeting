@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
-import './Auth.css'; // Reusing auth styles
+import './Auth.css';
+import Logo from '../assets/Logo.png';
 
 export default function VerifyEmail() {
     const [searchParams] = useSearchParams();
@@ -14,24 +15,22 @@ export default function VerifyEmail() {
     useEffect(() => {
         if (!token) {
             setStatus('error');
-            setMessage('Invalid verification link.');
+            setMessage('Invalid verification link. Please check your email or try registering again.');
             return;
         }
 
         const verify = async () => {
             try {
-                // Determine API URL based on environment (assuming Vite env or hardcoded equivalent for now)
-                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
+                const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
                 await axios.get(`${API_URL}/auth/verify-email?token=${token}`);
                 setStatus('success');
-                setMessage('Email verified successfully! You can now login.');
+                setMessage('Email verified successfully! Your account is now active.');
 
-                // Redirect to login after 3 seconds
-                setTimeout(() => navigate('/login'), 3000);
+                // Redirect to login after 5 seconds
+                setTimeout(() => navigate('/login'), 5000);
             } catch (error) {
                 setStatus('error');
-                setMessage(error.response?.data?.error || 'Verification failed. Link may be expired.');
+                setMessage(error.response?.data?.error || 'Verification failed. The link may have expired or is invalid.');
             }
         };
 
@@ -39,26 +38,39 @@ export default function VerifyEmail() {
     }, [token, navigate]);
 
     return (
-        <div className="auth-page">
-            <div className="auth-container">
+        <div className="auth-container">
+            <div className="auth-card">
                 <div className="auth-header">
-                    <h1>Email Verification</h1>
+                    <h1><img src={Logo} alt="Logo" className="app-logo" /></h1>
+                    <h2>Email Verification</h2>
                 </div>
 
-                <div className="auth-status-message" style={{ textAlign: 'center', padding: '20px' }}>
-                    {status === 'verifying' && <div className="loader"></div>}
+                <div className="auth-status-content" style={{ textAlign: 'center', padding: '10px 0' }}>
+                    {status === 'verifying' && (
+                        <div className="status-icon pulse">⏳</div>
+                    )}
 
-                    <p className={status === 'error' ? 'error-text' : 'success-text'}>
+                    {status === 'success' && (
+                        <div className="status-icon success-animation">✅</div>
+                    )}
+
+                    {status === 'error' && (
+                        <div className="status-icon error-animation">❌</div>
+                    )}
+
+                    <p className={`status-text ${status}`}>
                         {message}
                     </p>
 
                     {status === 'success' && (
-                        <p>Redirecting to login...</p>
+                        <p className="redirect-notice">Redirecting to login in 5 seconds...</p>
                     )}
 
-                    {status === 'error' && (
-                        <Link to="/login" className="btn-secondary">Back to Login</Link>
-                    )}
+                    <div className="auth-links" style={{ marginTop: '30px' }}>
+                        <Link to="/login" className="auth-button" style={{ textDecoration: 'none', display: 'block' }}>
+                            {status === 'success' ? 'Go to Login Now' : 'Back to Login'}
+                        </Link>
+                    </div>
                 </div>
             </div>
         </div>

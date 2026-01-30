@@ -32,8 +32,11 @@ export default function Register() {
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
-    const navigate = useNavigate();
+    const [success, setSuccess] = useState(false);
+
+    // We don't login anymore, just redirect logic or auth context if needed
+    // const { login } = useAuth(); 
+    // const navigate = useNavigate();
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -52,9 +55,9 @@ export default function Register() {
 
         try {
             const { confirmPassword, ...registerData } = formData;
-            const data = await registerApi(registerData);
-            login(data.user, data.token);
-            navigate('/');
+            // The API might return token/user, but we ignore it for now as email needs verification
+            await registerApi(registerData);
+            setSuccess(true);
         } catch (err) {
             if (err.validationErrors && Array.isArray(err.validationErrors)) {
                 setError(err.validationErrors.map(e => e.message).join('. '));
@@ -65,6 +68,35 @@ export default function Register() {
             setLoading(false);
         }
     };
+
+    if (success) {
+        return (
+            <div className="auth-page">
+                <div className="auth-container">
+                    <div className="auth-card">
+                        <div className="auth-header">
+                            <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>📩</h1>
+                            <h2>Verify Your Email</h2>
+                            <p>We've sent a verification link to <strong>{formData.email}</strong></p>
+                        </div>
+
+                        <div className="auth-status-message" style={{ textAlign: 'center' }}>
+                            <p style={{ marginBottom: '20px', lineHeight: '1.5', color: 'var(--text-secondary)' }}>
+                                Please check your inbox and click the link to activate your account.
+                                The link is valid for 30 minutes.
+                            </p>
+
+                            <div className="auth-links">
+                                <Link to="/login" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                                    Back to Login
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="auth-container">
