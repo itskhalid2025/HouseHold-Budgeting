@@ -18,19 +18,25 @@ import { getCurrencySymbol } from '../utils/currencySymbols.js';
 /**
  * Helper function to aggregate transaction data for reports
  */
-async function aggregateTransactionData(householdId, dateStart, dateEnd) {
-    logDB('aggregate', 'Transaction', { householdId, dateStart, dateEnd });
+async function aggregateTransactionData(householdId, dateStart, dateEnd, userIds = []) {
+    logDB('aggregate', 'Transaction', { householdId, dateStart, dateEnd, userIds });
+
+    const where = {
+        householdId,
+        deletedAt: null,
+        date: {
+            gte: dateStart,
+            lte: dateEnd
+        }
+    };
+
+    if (userIds && userIds.length > 0) {
+        where.userId = { in: userIds };
+    }
 
     // Get all transactions in date range
     const transactions = await prisma.transaction.findMany({
-        where: {
-            householdId,
-            deletedAt: null,
-            date: {
-                gte: dateStart,
-                lte: dateEnd
-            }
-        },
+        where,
         include: {
             user: {
                 select: { firstName: true, lastName: true }
@@ -38,17 +44,23 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd) {
         }
     });
 
+    const incomeWhere = {
+        householdId,
+        isActive: true,
+        startDate: { lte: dateEnd },
+        OR: [
+            { endDate: null },
+            { endDate: { gte: dateStart } }
+        ]
+    };
+
+    if (userIds && userIds.length > 0) {
+        incomeWhere.userId = { in: userIds };
+    }
+
     // Get income data
     const incomes = await prisma.income.findMany({
-        where: {
-            householdId,
-            isActive: true,
-            startDate: { lte: dateEnd },
-            OR: [
-                { endDate: null },
-                { endDate: { gte: dateStart } }
-            ]
-        }
+        where: incomeWhere
     });
 
     // Get household settings for currency
@@ -86,13 +98,18 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd) {
 
     const byCategory = Object.values(categoryMap).sort((a, b) => b.amount - a.amount);
 
-    // Get all household members to ensure everyone is listed
+    // Get household members (filter if userIds provided)
+    const membersWhere = { householdId };
+    if (userIds && userIds.length > 0) {
+        membersWhere.id = { in: userIds };
+    }
+
     const members = await prisma.user.findMany({
-        where: { householdId },
+        where: membersWhere,
         select: { id: true, firstName: true, lastName: true, role: true }
     });
 
-    // Initialize map with all members
+    // Initialize map with members
     const userMap = members.reduce((acc, user) => {
         acc[user.id] = {
             id: user.id,
@@ -151,28 +168,139 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd) {
 
     const byUser = Object.values(userMap).sort((a, b) => b.spent - a.spent);
 
-    // Calculate comparison to last period
-    const periodLength = Math.ceil((dateEnd - dateStart) / (1000 * 60 * 60 * 24));
-    const lastPeriodStart = new Date(dateStart);
-    lastPeriodStart.setDate(lastPeriodStart.getDate() - periodLength);
-    const lastPeriodEnd = new Date(dateStart);
-    lastPeriodEnd.setDate(lastPeriodEnd.getDate() - 1);
+    // --- Dynamic Trend / History Logic ---
+    let history = [];
 
-    const lastPeriodTransactions = await prisma.transaction.findMany({
-        where: {
-            householdId,
-            deletedAt: null,
-            date: {
-                gte: lastPeriodStart,
-                lte: lastPeriodEnd
+    // CUSTOM REPORT: Dynamic Segmentation
+    if (dateStart && dateEnd) { // Likely Custom
+        const durationDays = Math.ceil((dateEnd - dateStart) / (1000 * 60 * 60 * 24));
+        let interval = 'day';
+        if (durationDays > 90) interval = 'month';
+        else if (durationDays > 14) interval = 'week';
+
+        // Bucketize transactions
+        const buckets = {};
+
+        // Helper to get bucket key
+        const getBucketKey = (date, interval) => {
+            const d = new Date(date);
+            if (interval === 'month') return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+            if (interval === 'week') {
+                const day = d.getDay();
+                const diff = d.getDate() - day + (day === 0 ? -6 : 1); // adjust when day is sunday
+                const monday = new Date(d.setDate(diff));
+                return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
             }
-        }
-    });
+            return d.toISOString().split('T')[0]; // Day
+        };
 
-    const lastPeriodSpent = lastPeriodTransactions.reduce((sum, t) => sum + Number(t.amount), 0);
-    const change = lastPeriodSpent > 0
-        ? ((totalSpent - lastPeriodSpent) / lastPeriodSpent) * 100
-        : 0;
+        // Initialize buckets (optional, but good for gaps) - skipped for brevity, just grouping valid data
+        transactions.forEach(t => {
+            const key = getBucketKey(t.date, interval);
+            if (!buckets[key]) buckets[key] = { period: key, amount: 0 };
+            buckets[key].amount += Number(t.amount);
+        });
+
+        history = Object.values(buckets).sort((a, b) => a.period.localeCompare(b.period));
+
+        // Format labels for frontend
+        history = history.map(h => {
+            const d = new Date(h.period);
+            let label = h.period;
+            if (interval === 'month') label = d.toLocaleDateString('default', { month: 'short', year: '2-digit' });
+            else if (interval === 'week') label = `Wk ${d.getDate()} ${d.toLocaleDateString('default', { month: 'short' })}`; // "Wk 12 Jan"
+            else label = d.toLocaleDateString('default', { weekday: 'short', day: 'numeric' }); // "Mon 12"
+            return { period: label, amount: h.amount };
+        });
+
+    } else {
+        // STANDARD REPORT: 3-Period History (Current, Prev, Pre-Prev)
+        const periods = [];
+
+        // Helper to get ranges
+        const getRange = (baseStart, baseEnd, offset) => {
+            const s = new Date(baseStart);
+            const e = new Date(baseEnd);
+            if (dateEnd && dateStart) {
+                // Should not hit here if we handled custom above, but fallback:
+                const diff = baseEnd - baseStart;
+                s.setTime(s.getTime() - (diff * offset));
+                e.setTime(e.getTime() - (diff * offset));
+                return { start: s, end: e };
+            }
+            // Logic for weekly/monthly auto-calc already sets start/end in wrapper, 
+            // but let's assume standard intervals:
+            // Actually, we can just use the passed dateStart/dateEnd as 'Current' 
+            // and shift back based on standard durations?
+            // "dateEnd" is usually "now".
+            // Let's use simple logic: Monthly = 1 month shifts. Weekly = 1 week shifts.
+
+            // NOTE: The caller 'generateReportInternal' sets start/end for Current.
+            // We need to infer the shift type.
+            // Let's rely on simple Date math.
+            const isMonthly = (dateEnd - dateStart) > (20 * 24 * 3600 * 1000); // Rough check > 20 days
+
+            const shiftDate = (d, count) => {
+                const newDate = new Date(d);
+                if (isMonthly) newDate.setMonth(newDate.getMonth() - count);
+                else newDate.setDate(newDate.getDate() - (7 * count));
+                return newDate;
+            };
+
+            const sNew = shiftDate(dateStart, offset);
+            const eNew = shiftDate(dateEnd, offset);
+            // Ensure full days for history
+            sNew.setHours(0, 0, 0, 0);
+            eNew.setHours(23, 59, 59, 999);
+            return { start: sNew, end: eNew };
+        };
+
+        // 0 = Current, 1 = Prev, 2 = Pre-Prev
+        for (let i = 2; i >= 0; i--) { // Order: Oldest to Newest
+            const { start: pStart, end: pEnd } = getRange(dateStart, dateEnd, i);
+
+            // Query DB for this chunks total
+            // Optimization: We could have fetched all 3 months data at once, but this is safer for boundaries
+            // We already have 'transactions' for Current (i=0).
+            let amount = 0;
+            if (i === 0) {
+                amount = totalSpent;
+            } else {
+                const histTrans = await prisma.transaction.aggregate({
+                    _sum: { amount: true },
+                    where: {
+                        householdId,
+                        deletedAt: null,
+                        date: { gte: pStart, lte: pEnd },
+                        ...(userIds?.length ? { userId: { in: userIds } } : {})
+                    }
+                });
+                amount = Number(histTrans._sum.amount || 0);
+            }
+
+            // Label
+            let label = '';
+            // Basic label logic
+            const midDate = new Date((pStart.getTime() + pEnd.getTime()) / 2);
+            if ((dateEnd - dateStart) > (20 * 24 * 3600 * 1000)) { // Monthly
+                label = midDate.toLocaleDateString('default', { month: 'short' });
+            } else { // Weekly
+                label = `Wk ${midDate.getDate()} ${midDate.toLocaleDateString('default', { month: 'short' })}`;
+                // Or just Start Date
+                // label = pStart.toLocaleDateString('default', {day: 'numeric', month: 'short'});
+            }
+            // if (i === 0) label = "This Period"; // Removed to show actual date label (e.g. Jan)
+            // User requested: "mentioning x axis the month or the week"
+            // Let's stick to the generated names. 
+            // Override Current for clarity?
+            // "Current" vs "Jan". "Jan" is better.
+
+            periods.push({ period: label, amount });
+        }
+        history = periods;
+    }
+
+    // --- End Dynamic Trend ---
 
     return {
         totalSpent,
@@ -181,10 +309,7 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd) {
         byType,
         byCategory,
         byUser,
-        comparedToLastPeriod: {
-            change: change.toFixed(1),
-            direction: change < 0 ? 'down' : 'up'
-        },
+        history, // New field for charts
         dateRange: {
             start: dateStart.toISOString().split('T')[0],
             end: dateEnd.toISOString().split('T')[0]
@@ -228,6 +353,72 @@ export async function listReports(req, res) {
  * Get latest report by type
  * GET /api/reports/latest
  */
+/**
+ * Internal helper to generate a report
+ */
+async function generateReportInternal(householdId, reportType, dateStart, dateEnd, userIds = []) {
+    // Calculate date range if not provided
+    let start = dateStart ? new Date(dateStart) : new Date();
+    let end = dateEnd ? new Date(dateEnd) : new Date();
+
+    if (!dateStart || !dateEnd) {
+        if (reportType === 'weekly') {
+            start.setDate(end.getDate() - 7);
+        } else if (reportType === 'monthly') {
+            start.setMonth(end.getMonth() - 1);
+        }
+    }
+
+    // Force comparison OFF for custom reports by ensuring userIds (or a flag) inhibits it in aggregation, 
+    // or we just trust the aggregation logic we updated.
+
+    // Aggregate data
+    const aggregatedData = await aggregateTransactionData(householdId, start, end, userIds);
+    aggregatedData.reportType = reportType;
+
+    // If specific users, add context for AI
+    if (userIds && userIds.length > 0) {
+        const users = await prisma.user.findMany({
+            where: { id: { in: userIds } },
+            select: { firstName: true, lastName: true }
+        });
+        if (users.length > 0) {
+            aggregatedData.targetUser = users.map(u => `${u.firstName} ${u.lastName}`).join(', ');
+        }
+    }
+
+    // Generate AI report
+    const reportResult = await generateReport(aggregatedData);
+
+    if (!reportResult.success) {
+        throw new Error('AI generation failed');
+    }
+
+    // INJECT HISTORY into the report content so frontend can use it
+    if (aggregatedData.history) {
+        if (!reportResult.report) reportResult.report = {}; // Safety
+        reportResult.report.history = aggregatedData.history;
+    }
+
+    // Save to database
+    // Note: 'userId' field on Report model might be singular or non-existent.
+    // We are just saving the JSON content which has the specifics.
+    logDB('create', 'Report', { householdId, type: reportType, userIds });
+    return await prisma.report.create({
+        data: {
+            householdId,
+            type: reportType,
+            dateStart: start,
+            dateEnd: end,
+            content: reportResult
+        }
+    });
+}
+
+/**
+ * Get latest report by type
+ * GET /api/reports/latest
+ */
 export async function getLatestReport(req, res) {
     logEntry('reportsController', 'getLatestReport');
     try {
@@ -246,10 +437,15 @@ export async function getLatestReport(req, res) {
         });
 
         if (!report) {
-            return res.status(404).json({
-                success: false,
-                message: 'No reports found. Generate one first!'
-            });
+            logEntry('reportsController', 'getLatestReport', 'Auto-generating missing report...');
+            try {
+                const newReport = await generateReportInternal(householdId, type);
+                logSuccess('reportsController', 'getLatestReport', { id: newReport.id, generated: true });
+                return res.json({ success: true, report: newReport });
+            } catch (genError) {
+                logError('reportsController', 'getLatestReport', genError);
+                return res.status(500).json({ success: false, error: 'Failed to generate report' });
+            }
         }
 
         logSuccess('reportsController', 'getLatestReport', { id: report.id });
@@ -269,55 +465,13 @@ export async function generateNewReport(req, res) {
     logEntry('reportsController', 'generateNewReport', req.body);
     try {
         const householdId = req.user.householdId;
-        const { reportType = 'weekly', dateStart, dateEnd } = req.body;
+        const { reportType = 'weekly', dateStart, dateEnd, userIds } = req.body;
 
         if (!householdId) {
-            logError('reportsController', 'generateNewReport', new Error('No household'));
             return res.status(400).json({ success: false, error: 'Household required' });
         }
 
-        // Calculate date range if not provided
-        let start, end;
-        if (dateStart && dateEnd) {
-            start = new Date(dateStart);
-            end = new Date(dateEnd);
-        } else {
-            end = new Date();
-            start = new Date();
-
-            if (reportType === 'weekly') {
-                start.setDate(end.getDate() - 7);
-            } else if (reportType === 'monthly') {
-                start.setMonth(end.getMonth() - 1);
-            }
-        }
-
-        // Aggregate data
-        const aggregatedData = await aggregateTransactionData(householdId, start, end);
-        aggregatedData.reportType = reportType;
-
-        // Generate AI report
-        const reportResult = await generateReport(aggregatedData);
-
-        if (!reportResult.success) {
-            logError('reportsController', 'generateNewReport', new Error('AI generation failed'));
-            return res.status(500).json({
-                success: false,
-                error: 'Failed to generate AI report'
-            });
-        }
-
-        // Save to database
-        logDB('create', 'Report', { householdId, type: reportType });
-        const savedReport = await prisma.report.create({
-            data: {
-                householdId,
-                type: reportType,
-                dateStart: start,
-                dateEnd: end,
-                content: reportResult
-            }
-        });
+        const savedReport = await generateReportInternal(householdId, reportType, dateStart, dateEnd, userIds);
 
         logSuccess('reportsController', 'generateNewReport', { id: savedReport.id });
         res.status(201).json({

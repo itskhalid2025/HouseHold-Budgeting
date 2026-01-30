@@ -183,6 +183,9 @@ async function listTransactions(req, res) {
             // Type filter (NEED/WANT)
             if (req.query.type) {
                 where.type = req.query.type;
+            } else {
+                // Default: Exclude SAVINGS unless explicitly requested
+                where.type = { not: 'SAVINGS' };
             }
 
             // User filter (who logged it)
@@ -411,8 +414,19 @@ async function deleteTransaction(req, res) {
         });
 
         if (!existingTransaction) {
-            logError('transactionController', 'deleteTransaction', new Error('Not found'));
-            return res.status(404).json({ success: false, error: 'Transaction not found' });
+            logError('transactionController', 'deleteTransaction', new Error(`Transaction not found. ID: ${id}, HH: ${householdId}`));
+            // Check if it exists but in another household or deleted
+            const techCheck = await prisma.transaction.findUnique({ where: { id } });
+            console.log('DEBUG: 404 Investigation:', {
+                searchedId: id,
+                searchedHousehold: householdId,
+                foundRecord: techCheck ? {
+                    id: techCheck.id,
+                    householdId: techCheck.householdId,
+                    deletedAt: techCheck.deletedAt
+                } : 'NULL'
+            });
+            return res.status(404).json({ success: false, error: 'Transaction not found or access denied' });
         }
 
         // Check permissions: Owner can delete all, Editor can only delete own
@@ -424,6 +438,17 @@ async function deleteTransaction(req, res) {
             return res.status(403).json({
                 success: false,
                 error: 'You can only delete transactions you created'
+            });
+        }
+
+        // GOAL SYNC: If transaction is linked to a goal, decrease the goal amount
+        if (existingTransaction.goalId) {
+            logDB('update', 'Goal', { id: existingTransaction.goalId, action: 'decrement' });
+            await prisma.goal.update({
+                where: { id: existingTransaction.goalId },
+                data: {
+                    currentAmount: { decrement: existingTransaction.amount }
+                }
             });
         }
 
@@ -486,7 +511,8 @@ async function getTransactionSummary(req, res) {
                 where: {
                     householdId,
                     deletedAt: null,
-                    date: { gte: startDate, lte: endDate }
+                    date: { gte: startDate, lte: endDate },
+                    type: { not: 'SAVINGS' } // Exclude savings
                 },
                 _sum: { amount: true },
                 _count: true
@@ -498,7 +524,8 @@ async function getTransactionSummary(req, res) {
                 where: {
                     householdId,
                     deletedAt: null,
-                    date: { gte: startDate, lte: endDate }
+                    date: { gte: startDate, lte: endDate },
+                    type: { not: 'SAVINGS' } // Exclude savings
                 },
                 _sum: { amount: true },
                 _count: true
@@ -510,7 +537,8 @@ async function getTransactionSummary(req, res) {
                 where: {
                     householdId,
                     deletedAt: null,
-                    date: { gte: startDate, lte: endDate }
+                    date: { gte: startDate, lte: endDate },
+                    type: { not: 'SAVINGS' } // Exclude savings
                 },
                 _sum: { amount: true },
                 _count: true

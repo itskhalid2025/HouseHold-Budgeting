@@ -10,6 +10,7 @@
  * @requires ../api/api
  * @requires ./Login.css
  */
+import Logo from '../assets/Logo.png';
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -45,7 +46,7 @@ export default function Login() {
         <div className="auth-container">
             <div className="auth-card">
                 <div className="auth-header">
-                    <h1>🏠</h1>
+                    <h1><img src={Logo} alt="Logo" className="app-logo" /></h1>
                     <h2>Welcome Back</h2>
                     <p>Sign in to manage your household budget</p>
                 </div>

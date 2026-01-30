@@ -24,41 +24,61 @@
     color: var(--text-primary);
 }
 
+/* Summary Card */
 .savings-summary-card {
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
     border-radius: 16px;
-    padding: 2rem;
-    color: white;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 3rem;
-    box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.summary-left h3 {
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-    opacity: 0.9;
+.summary-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
-.summary-subtitle {
+.summary-item h3 {
     font-size: 0.9rem;
-    opacity: 0.8;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
 }
 
-.total-amount {
-    font-size: 2.5rem;
+.summary-value {
+    font-size: 1.8rem;
     font-weight: 700;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    color: #f8fafc;
+    margin-bottom: 4px;
 }
 
-.total-target {
-    font-size: 1rem;
-    opacity: 0.9;
-    text-align: right;
-    display: block;
-    margin-top: 0.5rem;
+.summary-value.highlight-green {
+    color: #10b981;
+}
+
+.summary-value.muted {
+    color: #cbd5e1;
+}
+
+.summary-sub {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.summary-divider {
+    width: 1px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin: 0 20px;
 }
 
 /* Filters */
@@ -118,6 +138,70 @@
 .savings-card.inactive {
     opacity: 0.7;
     background: #f9fafb;
+}
+
+/* Exceeded / Celebration State */
+.savings-card.exceeded {
+    background: linear-gradient(135deg, #4c1d95 0%, #1e1b4b 100%);
+    border: 1px solid #8b5cf6;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.savings-card.exceeded::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle, #f472b6 20%, transparent 20%),
+        radial-gradient(circle, #fbbf24 20%, transparent 20%),
+        radial-gradient(circle, #34d399 20%, transparent 20%);
+    background-size: 80px 80px, 60px 60px, 40px 40px;
+    background-position: 10px 10px, 40px 30px, 20px 50px;
+    opacity: 0.1;
+    pointer-events: none;
+    animation: confetti 20s linear infinite;
+}
+
+@keyframes confetti {
+    0% {
+        background-position: 10px 10px, 40px 30px, 20px 50px;
+    }
+
+    100% {
+        background-position: 10px 400px, 40px 430px, 20px 450px;
+    }
+}
+
+.excess-message {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    font-weight: 600;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+
+    100% {
+        transform: scale(1);
+    }
 }
 
 .savings-header {
@@ -320,4 +404,70 @@
     padding: 0.2rem 0.6rem;
     border-radius: 12px;
     border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Light Theme Overrides */
+[data-theme='light'] .savings-summary-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-hover) 100%);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme='light'] .summary-item h3 {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .summary-value {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .summary-sub {
+    color: var(--text-muted);
+}
+
+[data-theme='light'] .summary-divider {
+    background-color: var(--border-light);
+}
+
+[data-theme='light'] .filter-input,
+[data-theme='light'] .filter-select {
+    background: var(--bg-card);
+}
+
+[data-theme='light'] .savings-card.inactive {
+    background: var(--bg-hover);
+}
+
+[data-theme='light'] .savings-card.exceeded {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(168, 139, 250, 0.08) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.15);
+}
+
+[data-theme='light'] .savings-card.exceeded::before {
+    opacity: 0.3;
+}
+
+[data-theme='light'] .goal-header h3,
+[data-theme='light'] .goal-title {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .goal-deadline,
+[data-theme='light'] .creator-badge,
+[data-theme='light'] .goal-meta {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .progress-bar {
+    background: var(--bg-hover);
+}
+
+[data-theme='light'] .card-footer {
+    border-top: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .creator-badge {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
 }

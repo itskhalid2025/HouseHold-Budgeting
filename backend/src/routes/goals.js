@@ -15,7 +15,8 @@ import {
     getGoals,
     updateGoal,
     deleteGoal,
-    getGoalSummary
+    getGoalSummary,
+    addContribution // NEW
 } from '../controllers/goalController.js';
 
 const router = express.Router();
@@ -28,5 +29,6 @@ router.post('/', createGoal);
 router.get('/', getGoals); // Support ?active=true
 router.put('/:id', updateGoal);
 router.delete('/:id', deleteGoal);
+router.post('/:id/contribute', addContribution); // NEW
 
 export default router;

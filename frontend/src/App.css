@@ -38,8 +38,50 @@
   --shadow-md: 0 10px 30px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 25px 50px rgba(0, 0, 0, 0.5);
 
+  /* Utility Colors */
+  --bg-hover: rgba(255, 255, 255, 0.05);
+  --bg-active: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.1);
+
+  /* Status Overrides (Dark) */
+  --success-bg: rgba(34, 197, 94, 0.2);
+  --danger-bg: rgba(239, 68, 68, 0.2);
+  --warning-bg: rgba(234, 179, 8, 0.2);
+
   /* Spacing */
   --header-height: 70px;
+}
+
+[data-theme='light'] {
+  /* Light Theme Colors - Warm Beige/Cream Palette */
+  --bg-primary: #EDE8D0;
+  --bg-secondary: #ffffff;
+  --bg-card: #ffffff;
+  --bg-glass: rgba(255, 255, 255, 0.9);
+
+  /* Text Colors with Better Contrast */
+  --text-primary: #2c2416;
+  --text-secondary: #5c4f3a;
+  --text-muted: #8c7e6a;
+
+  /* Utility Colors - Warm Tones */
+  --bg-hover: rgba(139, 110, 74, 0.08);
+  --bg-active: rgba(139, 110, 74, 0.15);
+  --glass-border: rgba(139, 110, 74, 0.12);
+
+  /* Status Overrides (Light) */
+  --success-bg: rgba(34, 197, 94, 0.12);
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --warning-bg: rgba(234, 179, 8, 0.12);
+
+  /* Borders - Warm Neutrals */
+  --border-light: rgba(139, 110, 74, 0.15);
+  --border-medium: rgba(139, 110, 74, 0.25);
+
+  /* Shadows - Softer for light mode */
+  --shadow-sm: 0 1px 2px rgba(44, 36, 22, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(44, 36, 22, 0.08), 0 2px 4px -1px rgba(44, 36, 22, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(44, 36, 22, 0.1), 0 4px 6px -2px rgba(44, 36, 22, 0.05);
 }
 
 * {
@@ -201,15 +243,14 @@ body {
 }
 
 .user-name {
-  color: white;
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.4), rgba(168, 85, 247, 0.2));
+  color: var(--text-primary);
+  background: var(--bg-hover);
   padding: 8px 16px;
   border-radius: 24px;
   font-weight: 600;
   font-size: 14px;
-  border: 1px solid rgba(168, 85, 247, 0.4);
+  border: 1px solid var(--border-light);
   white-space: nowrap;
-  box-shadow: 0 0 10px rgba(124, 58, 237, 0.2);
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -229,6 +270,27 @@ body {
 
 .logout-btn:hover {
   background: rgba(239, 68, 68, 0.25);
+}
+
+.theme-toggle-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+  color: var(--text-primary);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--bg-glass);
+  transform: scale(1.1);
+  border-color: var(--primary);
 }
 
 /* ========================================

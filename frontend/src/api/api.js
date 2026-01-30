@@ -71,7 +71,9 @@ async function handleResponse(response) {
             details: data.details || data.message || data,
             validationErrors: data.errors // Zod validation errors
         });
-        throw new Error(data.error || data.message || `Request failed with status ${response.status}`);
+        const error = new Error(data.error || data.message || `Request failed with status ${response.status}`);
+        if (data.errors) error.validationErrors = data.errors;
+        throw error;
     }
     return data;
 }
@@ -431,6 +433,17 @@ export async function deleteGoal(id) {
     return handleResponse(response);
 }
 
+// Add funds to a goal
+export async function addContribution(goalId, amount) {
+    console.log('💰 Adding contribution:', { goalId, amount });
+    const response = await trackedFetch(`${API_BASE_URL}/goals/${goalId}/contribute`, {
+        method: 'POST',
+        headers: authHeaders(),
+        body: JSON.stringify({ amount })
+    });
+    return handleResponse(response);
+}
+
 // ================== VOICE INPUT API ==================
 
 export async function parseVoiceInput(input) {
@@ -470,6 +483,7 @@ export async function parseVoiceInput(input) {
 
         // The Smart Controller now returns { success, count, entries: [...] }
         const result = await handleResponse(response);
+        console.log('🎤 Smart Entry Result:', result); // DEBUG
 
         // Handle multiple entries
         if (result.success && result.entries && result.entries.length > 0) {
@@ -526,14 +540,14 @@ export async function getLatestReport(type = 'weekly') {
     return handleResponse(response);
 }
 
-export async function generateReport(reportType = 'weekly', dateStart = null, dateEnd = null) {
-    console.log('📊 Generating report:', reportType);
+export async function generateReport(reportType = 'weekly', dateStart = null, dateEnd = null, userIds = []) {
+    console.log('📊 Generating report:', reportType, userIds?.length ? `for ${userIds.length} users` : 'household');
     startAIRequest();
     try {
         const response = await trackedFetch(`${API_BASE_URL}/reports/generate`, {
             method: 'POST',
             headers: authHeaders(),
-            body: JSON.stringify({ reportType, dateStart, dateEnd })
+            body: JSON.stringify({ reportType, dateStart, dateEnd, userIds })
         });
         return handleResponse(response);
     } finally {

@@ -55,12 +55,14 @@ export default function Dashboard() {
             const totalIncome = incomeData.monthlyTotal || 0;
             const savings = totalIncome - totalExpenses;
             const totalSaved = goalData.totalSaved || 0;
+            const monthlySaved = goalData.monthlySaved || 0;
 
             setStats({
                 income: totalIncome,
                 expenses: totalExpenses,
                 savings: savings,
-                totalSaved: totalSaved
+                totalSaved: totalSaved,
+                monthlySaved: monthlySaved
             });
 
             setRecentTransactions(recentTxns.transactions || []);
@@ -225,18 +227,18 @@ export default function Dashboard() {
             {/* Summary Cards */}
             <div className="stats-grid">
                 <div className="stat-card">
-                    <h3>Total Income</h3>
+                    <h3>Monthly Income</h3>
                     <p className="amount income">{formatCurrency(stats.income, currency)}</p>
                 </div>
                 <div className="stat-card">
-                    <h3>Total Expenses</h3>
+                    <h3>Monthly Expenses</h3>
                     <p className="amount expense">{formatCurrency(stats.expenses, currency)}</p>
                 </div>
 
                 <div className="stat-card">
-                    <h3>Goals Saved</h3>
+                    <h3>Monthly Savings</h3>
                     <p className="amount savings-positive">
-                        {formatCurrency(stats.totalSaved, currency)}
+                        {formatCurrency(stats.monthlySaved, currency)}
                     </p>
                 </div>
             </div>

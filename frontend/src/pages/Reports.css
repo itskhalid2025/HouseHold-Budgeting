@@ -191,6 +191,90 @@
     margin: 0.25rem 0 0;
 }
 
+/* Summary Card */
+.savings-summary-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.custom-filters {
+    background: var(--bg-card);
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border: 1px solid var(--border-light);
+    display: flex;
+    gap: 1.5rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+    min-width: 200px;
+}
+
+.filter-group label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.date-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.report-section-title {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.multi-select-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    background: var(--bg-card-secondary);
+    padding: 0.75rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-light);
+    max-height: 150px;
+    overflow-y: auto;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    cursor: pointer;
+    user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+    accent-color: var(--primary);
+    width: 1rem;
+    height: 1rem;
+}
+
+.checkbox-label:hover {
+    color: var(--text-primary);
+}
+
 /* AI Insights */
 .insights-section {
     background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
@@ -624,4 +708,102 @@
     height: 3rem;
     color: #ef4444;
     margin-bottom: 1rem;
+}
+
+/* Light Theme Overrides */
+[data-theme='light'] .reports-container,
+[data-theme='light'] .page-title {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .page-subtitle {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .tabs-container {
+    border-bottom: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .tab-btn {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .tab-btn:hover {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .stat-label {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .stat-value {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .report-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .section-header h3,
+[data-theme='light'] .insight-title,
+[data-theme='light'] .spending-name {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .insight-text,
+[data-theme='light'] .category-name {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .category-bar-bg {
+    background: var(--bg-hover);
+}
+
+[data-theme='light'] .loading-container {
+    background: var(--bg-card);
+}
+
+[data-theme='light'] .loading-text {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .no-data-message {
+    color: var(--text-muted);
+}
+
+/* Light theme for dark insights section */
+[data-theme='light'] .insights-section {
+    background: linear-gradient(135deg, var(--bg-card) 0%, rgba(237, 232, 208, 0.5) 100%);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+    box-shadow: var(--shadow-md);
+}
+
+[data-theme='light'] .main-insight h2 {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .main-insight .summary {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .insight-card {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .label-insight,
+[data-theme='light'] .label-highlight,
+[data-theme='light'] .label-recommendation {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .insight-text {
+    color: var(--text-primary);
 }
