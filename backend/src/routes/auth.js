@@ -19,7 +19,8 @@ import {
     me,
     logout,
     forgotPassword,
-    resetPassword
+    resetPassword,
+    verifyEmail,
 } from '../controllers/authController.js';
 import {
     validate,
@@ -212,4 +213,8 @@ router.get('/me', authenticate, me);
 // Logout (stateless - client discards token)
 router.post('/logout', authenticate, logout);
 
+// Verify email
+router.get('/verify-email', verifyEmail);
+
 export default router;
+// Register verifyEmail route

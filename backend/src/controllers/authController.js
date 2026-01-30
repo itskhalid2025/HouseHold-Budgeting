@@ -20,6 +20,7 @@ import crypto from 'crypto';
 import prisma from '../services/db.js';
 import config from '../utils/config.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../services/emailService.js';
 
 
 /**
@@ -78,6 +79,10 @@ export const register = async (req, res) => {
         // Hash password
         const passwordHash = await bcrypt.hash(password, 12);
 
+        // Generate verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
         // Create user
         logDB('create', 'User', { email });
         const user = await prisma.user.create({
@@ -88,7 +93,10 @@ export const register = async (req, res) => {
                 firstName,
                 lastName,
                 currency: currency || 'USD',
-                role: 'VIEWER' // Default role
+                role: 'VIEWER', // Default role
+                verificationToken,
+                verificationTokenExpiry,
+                emailVerified: false
             },
             select: {
                 id: true,
@@ -103,6 +111,9 @@ export const register = async (req, res) => {
             }
         });
 
+        // Send verification email
+        await sendVerificationEmail(user, verificationToken);
+
         // Generate JWT
         const token = generateToken(user);
 
@@ -110,7 +121,8 @@ export const register = async (req, res) => {
         return res.status(201).json({
             success: true,
             user,
-            token
+            token,
+            message: 'Registration successful. Please check your email to verify your account.'
         });
 
     } catch (error) {
@@ -170,6 +182,15 @@ export const login = async (req, res) => {
             return res.status(401).json({
                 success: false,
                 error: 'Invalid credentials'
+            });
+        }
+
+        if (!user.emailVerified) {
+            logError('authController', 'login', new Error('Email not verified'));
+            return res.status(403).json({
+                success: false,
+                error: 'Email not verified. Please check your inbox.',
+                code: 'EMAIL_NOT_VERIFIED'
             });
         }
 
@@ -280,7 +301,8 @@ export const forgotPassword = async (req, res) => {
             }
         });
 
-        // TODO: Send email with reset link
+        // Send email with reset link
+        await sendPasswordResetEmail(user, resetToken);
         logSuccess('authController', 'forgotPassword', { email });
 
         return res.status(200).json({
@@ -353,5 +375,50 @@ export const resetPassword = async (req, res) => {
             success: false,
             error: 'Failed to reset password'
         });
+    }
+};
+
+/**
+ * Verify email with token
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+export const verifyEmail = async (req, res) => {
+    logEntry('authController', 'verifyEmail', { token: req.query.token });
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            return res.status(400).json({ success: false, error: 'Token is required' });
+        }
+
+        const user = await prisma.user.findFirst({
+            where: {
+                verificationToken: token,
+                verificationTokenExpiry: {
+                    gt: new Date()
+                }
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, error: 'Invalid or expired verification token' });
+        }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                emailVerified: true,
+                verificationToken: null,
+                verificationTokenExpiry: null
+            }
+        });
+
+        logSuccess('authController', 'verifyEmail', { userId: user.id });
+        res.json({ success: true, message: 'Email verified successfully' });
+
+    } catch (error) {
+        logError('authController', 'verifyEmail', error);
+        res.status(500).json({ success: false, error: 'Failed to verify email' });
     }
 };

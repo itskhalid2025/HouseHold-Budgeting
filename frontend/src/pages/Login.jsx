@@ -36,7 +36,11 @@ export default function Login() {
             login(data.user, data.token);
             navigate('/');
         } catch (err) {
-            setError(err.message || 'Login failed');
+            if (err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+                setError('Please verify your email address to login. Check your inbox.');
+            } else {
+                setError(err.message || 'Login failed');
+            }
         } finally {
             setLoading(false);
         }

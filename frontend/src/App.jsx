@@ -19,6 +19,8 @@ import { getJoinRequests, approveJoinRequest, rejectJoinRequest } from './api/ap
 import Income from './pages/Income';
 import Savings from './pages/Savings';
 import Advisor from './pages/Advisor';
+import VerifyEmail from './pages/VerifyEmail';
+import ResetPassword from './pages/ResetPassword';
 
 import './App.css';
 
@@ -360,6 +362,16 @@ function AppContent() {
           <Route path="/forgot-password" element={
             <PublicRoute>
               <ForgotPassword />
+            </PublicRoute>
+          } />
+          <Route path="/verify-email" element={
+            <PublicRoute>
+              <VerifyEmail />
+            </PublicRoute>
+          } />
+          <Route path="/reset-password" element={
+            <PublicRoute>
+              <ResetPassword />
             </PublicRoute>
           } />
         </Routes>
