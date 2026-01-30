@@ -120,12 +120,12 @@ export async function processSmartEntry(req, res) {
                             // Create new (optional targetAmount is null)
                             const newGoal = await prisma.goal.create({
                                 data: {
-                                    householdId,
+                                    household: { connect: { id: householdId } },
                                     name: goalName,
-                                    type: mapGoalType(category), // Need a helper for this or default
+                                    type: mapGoalType(category),
                                     targetAmount: null,
                                     currentAmount: parseFloat(amount),
-                                    createdById: userId
+                                    createdBy: { connect: { id: userId } }
                                 }
                             });
                             goalId = newGoal.id;

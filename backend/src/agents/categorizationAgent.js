@@ -78,9 +78,12 @@ export async function categorizeEntry(inputPayload) {
                    - Health (Gym, Barber, Salon, Wellness)
 
                    **IF SAVINGS**:
-                   - Emergency Fund
-                   - Long-Term (Investments, Education)
-                   - Sinking Funds (Car, Holiday, Vacation)
+                   - Category: "Emergency Fund", "Sinking Funds", "Debt Payoff", "Long-Term"
+                   - **SUBCATEGORY (CRITICAL)**: You MUST extract the specific name of the goal if mentioned.
+                     - Input: "saved for house" -> Subcategory: "House"
+                     - Input: "put money in car fund" -> Subcategory: "Car"
+                     - Input: "saving for holiday" -> Subcategory: "Holiday"
+                     - Input: "invested in stocks" -> Subcategory: "Stocks"
 
                 3. **Multiple Entries**:
                    - If the user provides multiple items (separated by "then", "and", commas, or new lines), extract EACH as a separate entry.
