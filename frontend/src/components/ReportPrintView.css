@@ -1,0 +1,339 @@
+/* ReportPrintView.css - Based on ReportsDesktop.css */
+
+.print-container {
+    padding: 40px;
+    max-width: 1200px;
+    margin: 0 auto;
+    color: #fff;
+    background-color: #0f172a;
+    /* Force dark theme background for consistency */
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Header */
+.print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #334155;
+    padding-bottom: 1rem;
+}
+
+.print-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.print-subtitle {
+    color: #94a3b8;
+    margin-top: 0.5rem;
+    font-size: 1.2rem;
+}
+
+/* Stats Grid */
+.print-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.print-stat-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 1rem;
+    padding: 1.5rem;
+}
+
+.print-stat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.print-icon-wrapper {
+    padding: 0.75rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Icon Colors */
+.icon-red {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.icon-green {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.icon-blue {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.icon-teal {
+    background: rgba(20, 184, 166, 0.1);
+    color: #14b8a6;
+}
+
+.print-trend-badge {
+    display: flex;
+    align-items: center;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.trend-up {
+    color: #10b981;
+}
+
+.trend-down {
+    color: #ef4444;
+}
+
+.print-stat-label {
+    color: #94a3b8;
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+.print-stat-value {
+    color: #fff;
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin: 0.25rem 0 0;
+}
+
+/* AI Insights */
+.print-insights-section {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+    border-radius: 1rem;
+    padding: 2.5rem;
+    margin-bottom: 3rem;
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.print-insights-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.print-main-insight h2 {
+    font-size: 1.8rem;
+    margin: 0 0 1rem;
+}
+
+.print-main-insight .summary {
+    font-size: 1.2rem;
+    line-height: 1.6;
+    color: #e0e7ff;
+    margin-bottom: 1.5rem;
+}
+
+.print-insight-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.75rem;
+    padding: 1.2rem;
+    margin-bottom: 1rem;
+}
+
+.print-insight-label {
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+
+.label-insight {
+    color: #bfdbfe;
+}
+
+.label-highlight {
+    color: #86efac;
+}
+
+.label-recommendation {
+    color: #fde047;
+}
+
+.print-insight-text {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.print-highlights-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+/* Charts Grid */
+.print-charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.print-chart-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 1rem;
+    padding: 2rem;
+    position: relative;
+    page-break-inside: avoid;
+}
+
+.print-chart-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 1.5rem;
+    text-align: center;
+}
+
+.print-chart-container {
+    height: 350px;
+    width: 100%;
+}
+
+.print-no-data {
+    height: 300px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #64748b;
+    font-style: italic;
+    border: 1px dashed #334155;
+    border-radius: 0.5rem;
+}
+
+/* Member Breakdown */
+.print-breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+}
+
+.print-member-card {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 0.75rem;
+    padding: 1.5rem;
+    page-break-inside: avoid;
+}
+
+.print-member-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.print-member-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.print-member-avatar {
+    width: 3.5rem;
+    height: 3.5rem;
+    background: #3b82f6;
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.5rem;
+}
+
+.print-member-name {
+    font-weight: 600;
+    font-size: 1.2rem;
+    color: #fff;
+    margin: 0;
+}
+
+.print-member-role {
+    font-size: 0.8rem;
+    background: rgba(59, 130, 246, 0.1);
+    color: #93c5fd;
+    padding: 2px 8px;
+    border-radius: 99px;
+    text-transform: uppercase;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    margin-left: 0.5rem;
+}
+
+.print-member-stats {
+    text-align: right;
+}
+
+.print-member-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.print-member-percent {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin: 0;
+}
+
+/* Stacked Progress Bar */
+.print-stacked-bar {
+    height: 1rem;
+    width: 100%;
+    background: #1e293b;
+    border-radius: 99px;
+    display: flex;
+    overflow: hidden;
+    margin-bottom: 1rem;
+    border: 1px solid #334155;
+}
+
+.print-legend-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.print-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #cbd5e1;
+}
+
+.print-encouragement {
+    text-align: center;
+    color: #94a3b8;
+    font-style: italic;
+    margin-top: 4rem;
+    padding: 2rem;
+    border-top: 1px solid #334155;
+}

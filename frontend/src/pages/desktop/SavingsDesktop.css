@@ -1,0 +1,473 @@
+/*
+ * Savings & Goals Styles
+ *
+ * UI definitions for savings progress bars, goal cards,
+ * and summary statistics for household financial targets.
+ */
+
+.savings-page {
+
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.savings-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.savings-page .page-header h1 {
+    font-size: 2rem;
+    color: var(--text-primary);
+}
+
+/* Summary Card */
+.savings-summary-card {
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 30px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.summary-item h3 {
+    font-size: 0.9rem;
+    color: #94a3b8;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 600;
+}
+
+.summary-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #f8fafc;
+    margin-bottom: 4px;
+}
+
+.summary-value.highlight-green {
+    color: #10b981;
+}
+
+.summary-value.muted {
+    color: #cbd5e1;
+}
+
+.summary-sub {
+    font-size: 0.8rem;
+    color: #64748b;
+}
+
+.summary-divider {
+    width: 1px;
+    height: 50px;
+    background-color: rgba(255, 255, 255, 0.1);
+    margin: 0 20px;
+}
+
+/* Filters */
+.savings-page .filters-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    background: var(--bg-card);
+    padding: 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--border-light);
+}
+
+.savings-page .filter-input,
+.savings-page .filter-select {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.savings-page .filter-input:focus,
+.savings-page .filter-select:focus {
+    border-color: #10b981;
+}
+
+.savings-page .filter-input {
+    flex: 1;
+}
+
+/* Grid */
+.savings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.savings-card {
+    background: var(--bg-card);
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.savings-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+}
+
+.savings-card.inactive {
+    opacity: 0.7;
+    background: #f9fafb;
+}
+
+/* Exceeded / Celebration State */
+.savings-card.exceeded {
+    background: linear-gradient(135deg, #4c1d95 0%, #1e1b4b 100%);
+    border: 1px solid #8b5cf6;
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.3);
+    position: relative;
+    overflow: hidden;
+}
+
+.savings-card.exceeded::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle, #f472b6 20%, transparent 20%),
+        radial-gradient(circle, #fbbf24 20%, transparent 20%),
+        radial-gradient(circle, #34d399 20%, transparent 20%);
+    background-size: 80px 80px, 60px 60px, 40px 40px;
+    background-position: 10px 10px, 40px 30px, 20px 50px;
+    opacity: 0.1;
+    pointer-events: none;
+    animation: confetti 20s linear infinite;
+}
+
+@keyframes confetti {
+    0% {
+        background-position: 10px 10px, 40px 30px, 20px 50px;
+    }
+
+    100% {
+        background-position: 10px 400px, 40px 430px, 20px 450px;
+    }
+}
+
+.excess-message {
+    background: rgba(139, 92, 246, 0.2);
+    color: #c4b5fd;
+    padding: 0.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    text-align: center;
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    font-weight: 600;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.savings-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.goal-type {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+/* Type Colors */
+.goal-type.emergency_fund {
+    background: #fee2e2;
+    color: #ef4444;
+}
+
+.goal-type.sinking_fund {
+    background: #dbeafe;
+    color: #3b82f6;
+}
+
+.goal-type.debt_payoff {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+.goal-type.long_term {
+    background: #d1fae5;
+    color: #10b981;
+}
+
+.savings-card h3 {
+    font-size: 1.25rem;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    font-weight: 600;
+}
+
+.savings-progress {
+    margin: 1.5rem 0;
+}
+
+.progress-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+.progress-bar-bg {
+    height: 8px;
+    background: #e5e7eb;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: #10b981;
+    border-radius: 4px;
+    transition: width 0.5s ease-out;
+}
+
+.savings-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    border-top: 1px solid #f3f4f6;
+    padding-top: 1rem;
+    margin-top: 1rem;
+}
+
+.deadline-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* Modal */
+.savings-page .modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    backdrop-filter: blur(4px);
+}
+
+.savings-page .modal {
+    background: var(--bg-secondary);
+    padding: 2rem;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    animation: slideIn 0.2s ease-out;
+    border: 1px solid var(--border-light);
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.modal h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--text-primary);
+}
+
+.form-group {
+    margin-bottom: 1.25rem;
+}
+
+.form-row {
+    display: flex;
+    gap: 1rem;
+}
+
+.form-row .form-group {
+    flex: 1;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid var(--border-light);
+    border-radius: 8px;
+    font-size: 1rem;
+    transition: border-color 0.2s;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-primary);
+}
+
+.form-group input:focus,
+.form-group select:focus {
+    border-color: #10b981;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.status-badge {
+    background: #f3f4f6;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    color: #6b7280;
+}
+
+.savings-page .header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.savings-page .creator-badge {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.2rem 0.6rem;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Light Theme Overrides */
+[data-theme='light'] .savings-summary-card {
+    background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-hover) 100%);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme='light'] .summary-item h3 {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .summary-value {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .summary-sub {
+    color: var(--text-muted);
+}
+
+[data-theme='light'] .summary-divider {
+    background-color: var(--border-light);
+}
+
+[data-theme='light'] .filter-input,
+[data-theme='light'] .filter-select {
+    background: var(--bg-card);
+}
+
+[data-theme='light'] .savings-card.inactive {
+    background: var(--bg-hover);
+}
+
+[data-theme='light'] .savings-card.exceeded {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(168, 139, 250, 0.08) 100%);
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.15);
+}
+
+[data-theme='light'] .savings-card.exceeded::before {
+    opacity: 0.3;
+}
+
+[data-theme='light'] .goal-header h3,
+[data-theme='light'] .goal-title {
+    color: var(--text-primary);
+}
+
+[data-theme='light'] .goal-deadline,
+[data-theme='light'] .creator-badge,
+[data-theme='light'] .goal-meta {
+    color: var(--text-secondary);
+}
+
+[data-theme='light'] .progress-bar {
+    background: var(--bg-hover);
+}
+
+[data-theme='light'] .card-footer {
+    border-top: 1px solid var(--border-light);
+}
+
+[data-theme='light'] .creator-badge {
+    background: var(--bg-hover);
+    border: 1px solid var(--border-light);
+}

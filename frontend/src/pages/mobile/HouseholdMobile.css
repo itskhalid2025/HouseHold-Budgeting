@@ -1,0 +1,331 @@
+.household-mobile,
+.household-empty {
+    padding: 16px;
+    padding-bottom: 80px;
+    background-color: var(--bg-primary);
+    min-height: 100vh;
+}
+
+/* Empty State */
+.empty-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 60px;
+    text-align: center;
+}
+
+.empty-icon-circle {
+    width: 80px;
+    height: 80px;
+    background: var(--bg-card);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+    box-shadow: var(--shadow-sm);
+    color: var(--primary);
+}
+
+.household-empty h2 {
+    font-size: 24px;
+    margin-bottom: 8px;
+    color: var(--text-primary);
+}
+
+.household-empty p {
+    color: var(--text-secondary);
+    max-width: 280px;
+    margin-bottom: 40px;
+}
+
+.action-buttons-col {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+    max-width: 320px;
+}
+
+.pending-status-card {
+    background: var(--warning-bg);
+    border: 1px solid var(--warning);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-align: left;
+    width: 100%;
+}
+
+.pulse-icon {
+    color: var(--warning);
+    animation: pulse 2s infinite;
+}
+
+/* Header Card */
+.hh-header-card {
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    border-radius: 20px;
+    padding: 24px;
+    color: white;
+    text-align: center;
+    margin-bottom: 24px;
+    margin-top: env(safe-area-inset-top);
+    box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+}
+
+.hh-header-card h1 {
+    margin: 0 0 16px;
+    font-size: 28px;
+}
+
+.invite-code-row {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 8px 16px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    backdrop-filter: blur(4px);
+}
+
+.code-display {
+    font-family: monospace;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+.hh-badge-row {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.role-pill {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+.leave-btn {
+    background: rgba(239, 68, 68, 0.3);
+    border: none;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+}
+
+/* Section Containers */
+.section-container {
+    margin-bottom: 24px;
+}
+
+.section-container h3 {
+    margin: 0 0 12px;
+    font-size: 18px;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.count-badge {
+    background: var(--bg-hover);
+    color: var(--text-secondary);
+    border-radius: 12px;
+    padding: 2px 8px;
+    font-size: 12px;
+}
+
+/* Request Cards */
+.req-card-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.email-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.req-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.circle-check {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.circle-x {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+/* Members List */
+.members-list {
+    background: var(--bg-card);
+    border-radius: 16px;
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+}
+
+.member-item {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.member-item:last-child {
+    border-bottom: none;
+}
+
+.member-avatar-lg {
+    width: 48px;
+    height: 48px;
+    background: var(--bg-hover);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.member-details {
+    flex: 1;
+}
+
+.name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.owner-shield {
+    color: #f59e0b;
+}
+
+.role-text {
+    font-size: 12px;
+    color: var(--text-secondary);
+    text-transform: capitalize;
+}
+
+.edit-role-btn {
+    background: none;
+    border: 1px solid var(--border-light);
+    color: var(--text-secondary);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+/* Role Select in Modal */
+.role-select-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.role-option {
+    flex: 1;
+    background: var(--bg-card);
+    border: 2px solid var(--border-light);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.role-option.selected {
+    border-color: var(--primary);
+    background: rgba(124, 58, 237, 0.05);
+}
+
+.role-option span {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.role-option small {
+    font-size: 10px;
+    color: var(--text-secondary);
+}
+
+.modal-space {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.modal-text {
+    color: var(--text-secondary);
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.modal-text.warning {
+    color: var(--danger);
+    font-weight: 500;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}

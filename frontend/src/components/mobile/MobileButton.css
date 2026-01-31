@@ -1,0 +1,78 @@
+.mobile-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.1s active, opacity 0.2s;
+    width: 100%;
+    /* Default full width on mobile usually */
+    font-family: inherit;
+    gap: 8px;
+}
+
+.mobile-btn:active {
+    transform: scale(0.98);
+}
+
+.mobile-btn:disabled {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* Variants */
+.mobile-btn-primary {
+    background: linear-gradient(135deg, #6A35FF, #A98CFF);
+    color: white;
+    box-shadow: 0 4px 12px rgba(106, 53, 255, 0.25);
+}
+
+.mobile-btn-secondary {
+    background: #FFFFFF;
+    border: 1px solid #E2E8F0;
+    color: #6A35FF;
+}
+
+.mobile-btn-danger {
+    background: #FF4D67;
+    color: white;
+}
+
+.mobile-btn-ghost {
+    background: transparent;
+    color: #64748B;
+}
+
+/* Sizes */
+.mobile-btn-sm {
+    height: 36px;
+    font-size: 13px;
+    padding: 0 12px;
+}
+
+.mobile-btn-md {
+    height: 48px;
+    font-size: 16px;
+    padding: 0 16px;
+}
+
+.mobile-btn-lg {
+    height: 56px;
+    font-size: 18px;
+    padding: 0 24px;
+}
+
+/* Dark Mode */
+@media (prefers-color-scheme: dark) {
+    .mobile-btn-secondary {
+        background: transparent;
+        border-color: #334155;
+        color: #A98CFF;
+    }
+
+    .mobile-btn-ghost {
+        color: #94A3B8;
+    }
+}

@@ -1,0 +1,249 @@
+.settings-mobile {
+    padding: 20px;
+    padding-bottom: 90px;
+    background-color: var(--bg-primary);
+    min-height: 100vh;
+}
+
+.settings-header {
+    margin-bottom: 24px;
+    padding-top: env(safe-area-inset-top);
+}
+
+.settings-header h1 {
+    font-size: 28px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* Menu Items */
+.menu-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    margin-bottom: 32px;
+}
+
+.menu-card {
+    padding: 20px !important;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.menu-card:active {
+    background: var(--bg-hover);
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.menu-icon {
+    color: var(--primary);
+}
+
+.menu-text {
+    flex: 1;
+    font-weight: 600;
+    font-size: 16px;
+    color: var(--text-primary);
+}
+
+.menu-text-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-sub {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.menu-arrow {
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+/* Logout */
+.logout-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+.logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+    border: none;
+    padding: 12px 24px;
+    border-radius: 30px;
+    font-weight: 600;
+    font-size: 15px;
+    cursor: pointer;
+}
+
+.app-version {
+    font-size: 11px;
+    color: var(--text-secondary);
+    opacity: 0.5;
+}
+
+/* Sub Page Styles */
+.sub-page {
+    padding: 20px;
+    padding-top: max(20px, env(safe-area-inset-top));
+    background-color: var(--bg-primary);
+    min-height: 100vh;
+    animation: slideIn 0.3s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+.sub-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 16px;
+}
+
+.back-btn {
+    background: none;
+    border: none;
+    color: var(--primary);
+    font-weight: 600;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.sub-header h2 {
+    font-size: 20px;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* Profile specific */
+.profile-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 32px;
+}
+
+.avatar-xl {
+    width: 80px;
+    height: 80px;
+    background: var(--bg-hover);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.role-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    padding: 4px 12px;
+    border-radius: 12px;
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+    margin-top: 4px;
+}
+
+.info-row,
+.action-row {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    gap: 12px;
+    color: var(--text-primary);
+}
+
+.action-row {
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.row-left {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.icon-muted {
+    color: var(--text-secondary);
+}
+
+.divider {
+    height: 1px;
+    background: var(--border-light);
+    margin: 4px 0;
+}
+
+/* Messages */
+.msg-banner {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.msg-banner.success {
+    background: var(--success-bg);
+    color: var(--success);
+}
+
+.msg-banner.error {
+    background: var(--danger-bg);
+    color: var(--danger);
+}
+
+/* Household Form */
+.form-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.select-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Toggles */
+.toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    color: var(--text-primary);
+}
+
+.toggle-switch {
+    width: 20px;
+    height: 20px;
+}

@@ -1,0 +1,394 @@
+import React, { useState, useEffect } from 'react';
+import {
+    getTransactions,
+    getMembers,
+    getTransactionSummary,
+    addTransaction,
+    updateTransaction,
+    deleteTransaction
+} from '../../api/api';
+import { useAuth } from '../../context/AuthContext';
+import usePolling from '../../hooks/usePolling';
+import { formatDate, getUserColor } from '../../utils/formatting';
+import { formatCurrency } from '../../utils/currencyUtils';
+import MobileCard from '../../components/mobile/MobileCard';
+import MobileModal from '../../components/mobile/MobileModal';
+import MobileButton from '../../components/mobile/MobileButton';
+import MobileInput from '../../components/mobile/MobileInput';
+import { Search, Filter, Plus, Trash2, Edit2, Calendar } from 'lucide-react';
+import './TransactionsMobile.css';
+
+export default function TransactionsMobile() {
+    const { user, currency } = useAuth();
+    const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
+
+    // State (Ported from Desktop)
+    const [transactions, setTransactions] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalExpenses, setTotalExpenses] = useState(0);
+    const [filters, setFilters] = useState({
+        type: '',
+        category: '',
+        startDate: '',
+        endDate: '',
+        search: '',
+        userId: ''
+    });
+    const [members, setMembers] = useState([]);
+    const [showFilterModal, setShowFilterModal] = useState(false);
+
+    // Modal & Form State
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [editingTxn, setEditingTxn] = useState(null);
+    const [formData, setFormData] = useState({
+        description: '',
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        category: '',
+        type: 'NEED',
+        merchant: '',
+        userId: user?.id || ''
+    });
+
+    // Check granular permission for editing/deleting specific transactions
+    const canModifyTransaction = (txn) => {
+        if (!user) return false;
+        if (user.role === 'OWNER') return true;
+        return user.role === 'EDITOR' && txn.userId === user.id;
+    };
+
+    // Data Fetching
+    useEffect(() => {
+        getMembers().then(data => {
+            if (data.members) setMembers(data.members);
+        }).catch(err => console.error('Failed to load members:', err));
+    }, []);
+
+    const { refetch } = usePolling(fetchTransactions, 10000, true, [page, filters]);
+
+    useEffect(() => {
+        fetchTransactions({ isInitial: true });
+    }, [page, filters]);
+
+    async function fetchTransactions(options = {}) {
+        try {
+            const isPoll = options.isPoll;
+            if (!isPoll && transactions.length === 0) setLoading(true);
+
+            const [data, summary] = await Promise.all([
+                getTransactions({ page, limit: 20, ...filters }),
+                getTransactionSummary()
+            ]);
+
+            setTransactions(data.transactions);
+            setTotalPages(data.pagination.pages);
+            setTotalExpenses(summary.summary?.totalSpent || 0);
+            setLoading(false);
+        } catch (err) {
+            if (!options.isPoll) setError(err.message);
+            setLoading(false);
+        }
+    }
+
+    // Handlers
+    const handleInputChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+        if (name !== 'search') setPage(1); // Debounce search in a real app, strict reset for selects
+    };
+
+    const handleSubmit = async () => {
+        setError('');
+        try {
+            const payload = {
+                description: formData.description,
+                amount: parseFloat(formData.amount),
+                date: formData.date,
+                type: formData.type,
+                userId: formData.userId,
+                category: formData.category || undefined,
+                merchant: formData.merchant || undefined
+            };
+
+            if (editingTxn) {
+                await updateTransaction(editingTxn.id, payload);
+            } else {
+                await addTransaction(payload);
+            }
+
+            setShowAddModal(false);
+            setEditingTxn(null);
+            resetForm();
+            fetchTransactions();
+        } catch (err) {
+            setError(err.message || 'Failed to save transaction');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (!window.confirm('Delete this transaction?')) return;
+        try {
+            await deleteTransaction(id);
+            fetchTransactions();
+            setShowAddModal(false); // Close modal if open (editing)
+        } catch (err) {
+            setError(err.message);
+        }
+    };
+
+    const openEditModal = (txn) => {
+        if (!canModifyTransaction(txn)) return;
+        setEditingTxn(txn);
+        setFormData({
+            description: txn.description,
+            amount: txn.amount,
+            date: txn.date.split('T')[0],
+            category: txn.category,
+            type: txn.type,
+            merchant: txn.merchant || '',
+            userId: txn.userId
+        });
+        setShowAddModal(true);
+    };
+
+    const resetForm = () => {
+        setFormData({
+            description: '',
+            amount: '',
+            date: new Date().toISOString().split('T')[0],
+            category: '',
+            type: 'NEED',
+            merchant: '',
+            userId: user?.id || ''
+        });
+    };
+
+    return (
+        <div className="mobile-page transactions-mobile">
+            {/* Header with Search */}
+            <header className="txn-header">
+                <h1>Transactions</h1>
+                <div className="search-bar">
+                    <Search size={20} className="search-icon" />
+                    <input
+                        type="text"
+                        name="search"
+                        placeholder="Search..."
+                        value={filters.search}
+                        onChange={handleFilterChange}
+                    />
+                    <button className={`filter-btn ${showFilterModal ? 'active' : ''}`} onClick={() => setShowFilterModal(true)}>
+                        <Filter size={20} />
+                    </button>
+                </div>
+            </header>
+
+            {/* Transaction List */}
+            <div className="txn-list">
+                {loading && transactions.length === 0 ? (
+                    <p className="loading-text">Loading...</p>
+                ) : transactions.length === 0 ? (
+                    <p className="empty-text">No transactions found.</p>
+                ) : (
+                    transactions.map(txn => (
+                        <div key={txn.id} className="mobile-txn-card" onClick={() => openEditModal(txn)}>
+                            <div className="txn-left">
+                                <div className="txn-icon-circle-lg">
+                                    {txn.category?.icon || '💸'}
+                                </div>
+                                <div className="txn-details">
+                                    <p className="txn-desc">{txn.description}</p>
+                                    <div className="txn-meta">
+                                        <span className="txn-date">{formatDate(txn.date)}</span>
+                                        <span className="bullet">•</span>
+                                        <span className="txn-user" style={{ color: getUserColor(txn.user?.id) }}>
+                                            {txn.user?.firstName}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="txn-right">
+                                <p className={`txn-amount ${txn.type?.toLowerCase()}`}>
+                                    {formatCurrency(-parseFloat(txn.amount), currency)}
+                                </p>
+                                <span className={`txn-type-badge ${txn.type?.toLowerCase()}`}>
+                                    {txn.type}
+                                </span>
+                            </div>
+                        </div>
+                    ))
+                )}
+
+                {/* Pagination Controls */}
+                {totalPages > 1 && (
+                    <div className="mobile-pagination">
+                        <MobileButton
+                            variant="secondary"
+                            size="sm"
+                            disabled={page === 1}
+                            onClick={() => setPage(p => Math.max(1, p - 1))}
+                        >
+                            Prev
+                        </MobileButton>
+                        <span>{page} / {totalPages}</span>
+                        <MobileButton
+                            variant="secondary"
+                            size="sm"
+                            disabled={page === totalPages}
+                            onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                        >
+                            Next
+                        </MobileButton>
+                    </div>
+                )}
+            </div>
+
+            {/* Add FAB */}
+            {canEdit && (
+                <div className="fab-container">
+                    <button
+                        className="fab-main"
+                        onClick={() => { setEditingTxn(null); resetForm(); setShowAddModal(true); }}
+                    >
+                        <Plus size={28} color="white" />
+                    </button>
+                </div>
+            )}
+
+            {/* Filter Modal (Bottom Sheet) */}
+            <MobileModal isOpen={showFilterModal} onClose={() => setShowFilterModal(false)} title="Filter Transactions">
+                <div className="filter-form">
+                    <div className="filter-group">
+                        <label>Type</label>
+                        <select name="type" value={filters.type} onChange={handleFilterChange}>
+                            <option value="">All Types</option>
+                            <option value="NEED">Needs</option>
+                            <option value="WANT">Wants</option>
+                        </select>
+                    </div>
+                    <div className="filter-group">
+                        <label>Category</label>
+                        <select name="category" value={filters.category} onChange={handleFilterChange}>
+                            <option value="">All Categories</option>
+                            <option value="Food">Food</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Housing">Housing</option>
+                            <option value="Entertainment">Entertainment</option>
+                        </select>
+                    </div>
+                    <div className="filter-group">
+                        <label>User</label>
+                        <select name="userId" value={filters.userId} onChange={handleFilterChange}>
+                            <option value="">All Users</option>
+                            {members.map(m => (
+                                <option key={m.id} value={m.id}>{m.firstName} {m.lastName}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="filter-group">
+                        <label>Date Range</label>
+                        <div className="date-inputs">
+                            <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} />
+                            <span>to</span>
+                            <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} />
+                        </div>
+                    </div>
+                    <MobileButton onClick={() => setShowFilterModal(false)}>Apply Filters</MobileButton>
+                </div>
+            </MobileModal>
+
+            {/* Add/Edit Modal */}
+            <MobileModal
+                isOpen={showAddModal}
+                onClose={() => setShowAddModal(false)}
+                title={editingTxn ? 'Edit Transaction' : 'New Transaction'}
+            >
+                <div className="txn-form">
+                    <div className="amount-input-wrapper">
+                        <span className="currency-prefix">$</span>
+                        <input
+                            type="number"
+                            name="amount"
+                            className="amount-input-lg"
+                            placeholder="0.00"
+                            value={formData.amount}
+                            onChange={handleInputChange}
+                            autoFocus={!editingTxn}
+                        />
+                    </div>
+
+                    <MobileInput
+                        label="Description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        placeholder="What is this for?"
+                    />
+
+                    <div className="form-row">
+                        <div className="form-col">
+                            <label>Date</label>
+                            <input
+                                type="date"
+                                name="date"
+                                className="mobile-native-input"
+                                value={formData.date}
+                                onChange={handleInputChange}
+                            />
+                        </div>
+                        <div className="form-col">
+                            <label>Type</label>
+                            <select name="type" className="mobile-native-select" value={formData.type} onChange={handleInputChange}>
+                                <option value="NEED">Need</option>
+                                <option value="WANT">Want</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="form-group">
+                        <label>Category</label>
+                        <select name="category" className="mobile-native-select" value={formData.category} onChange={handleInputChange}>
+                            <option value="">Select Category</option>
+                            <option value="Food">Food</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Housing">Housing</option>
+                            <option value="Entertainment">Entertainment</option>
+                        </select>
+                    </div>
+
+                    {user?.role !== 'VIEWER' && (
+                        <div className="form-group">
+                            <label>Paid By</label>
+                            <select name="userId" className="mobile-native-select" value={formData.userId} onChange={handleInputChange}>
+                                {members.map(m => (
+                                    <option key={m.id} value={m.id}>{m.firstName} {m.lastName}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
+                    {error && <p className="error-message">{error}</p>}
+
+                    <div className="modal-actions">
+                        {editingTxn && (
+                            <MobileButton variant="danger" onClick={() => handleDelete(editingTxn.id)} className="mr-2">
+                                <Trash2 size={20} />
+                            </MobileButton>
+                        )}
+                        <MobileButton onClick={handleSubmit} disabled={!formData.amount || !formData.description}>
+                            {editingTxn ? 'Save Changes' : 'Add Transaction'}
+                        </MobileButton>
+                    </div>
+                </div>
+            </MobileModal>
+        </div>
+    );
+}

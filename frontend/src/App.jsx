@@ -5,6 +5,8 @@ import { ThemeProvider, useTheme } from './context/ThemeContext';
 import { Sun, Moon } from 'lucide-react';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 import Logo from './assets/Logo.png';
+import useIsMobile from './hooks/useIsMobile';
+import Navbar from './components/mobile/Navbar';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -296,16 +298,25 @@ function JoinRequestNotification() {
   );
 }
 
+import { SmartEntryProvider } from './context/SmartEntryContext';
+import GlobalSmartEntry from './components/mobile/GlobalSmartEntry';
+
+// ... (previous imports)
+
 function AppContent() {
+  const isMobile = useIsMobile();
+
   return (
     <div className="app">
       <ServerStatus />
       <AINotification />
       <JoinRequestNotification />
-      <Header />
+      {!isMobile && <Header />}
 
       <main className="app-main">
+        <GlobalSmartEntry />
         <Routes>
+          {/* ... existing routes ... */}
           {/* Protected Routes */}
           <Route path="/" element={
             <ProtectedRoute>
@@ -377,9 +388,12 @@ function AppContent() {
         </Routes>
       </main>
 
-      <footer className="app-footer">
-        <p>&copy; 2026 HouseHold Budgeting.</p>
-      </footer>
+      {!isMobile && (
+        <footer className="app-footer">
+          <p>&copy; 2026 HouseHold Budgeting.</p>
+        </footer>
+      )}
+      {isMobile && <Navbar />}
     </div>
   );
 }
@@ -389,7 +403,9 @@ function App() {
     <Router>
       <AuthProvider>
         <ThemeProvider>
-          <AppContent />
+          <SmartEntryProvider>
+            <AppContent />
+          </SmartEntryProvider>
         </ThemeProvider>
       </AuthProvider>
     </Router>
