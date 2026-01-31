@@ -14,7 +14,7 @@ import MobileCard from '../../components/mobile/MobileCard';
 import MobileModal from '../../components/mobile/MobileModal';
 import MobileButton from '../../components/mobile/MobileButton';
 import MobileInput from '../../components/mobile/MobileInput';
-import { Plus, Trash2, Edit2, TrendingUp, Calendar, User } from 'lucide-react';
+import { Plus, Trash2, Edit2, TrendingUp, Calendar, User, Filter, X } from 'lucide-react';
 import './IncomeMobile.css';
 
 export default function IncomeMobile() {
@@ -27,6 +27,19 @@ export default function IncomeMobile() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [members, setMembers] = useState([]);
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [filters, setFilters] = useState({
+        type: '',
+        frequency: '',
+        userId: ''
+    });
+
+    const filteredIncomes = incomes.filter(inc => {
+        if (filters.type && inc.type !== filters.type) return false;
+        if (filters.frequency && inc.frequency !== filters.frequency) return false;
+        if (filters.userId && inc.userId !== filters.userId) return false;
+        return true;
+    });
 
     // Modal & Form State
     const [showAddModal, setShowAddModal] = useState(false);
@@ -159,7 +172,12 @@ export default function IncomeMobile() {
         <div className="mobile-page income-mobile">
             {/* Header */}
             <header className="mobile-header-simple">
-                <h1>Income</h1>
+                <div className="header-top-row">
+                    <h1>Income</h1>
+                    <button className={`filter-icon-btn ${Object.values(filters).some(Boolean) ? 'active' : ''}`} onClick={() => setShowFilterModal(true)}>
+                        <Filter size={20} />
+                    </button>
+                </div>
                 <div className="total-badge">
                     <span>Total Monthly:</span>
                     <strong>{formatCurrency(monthlyStats.total, currency)}</strong>
@@ -170,14 +188,14 @@ export default function IncomeMobile() {
             <div className="income-list">
                 {loading && incomes.length === 0 ? (
                     <p className="loading-text">Loading...</p>
-                ) : incomes.length === 0 ? (
+                ) : filteredIncomes.length === 0 ? (
                     <div className="empty-state">
                         <TrendingUp size={48} className="empty-icon" />
-                        <p>No income sources yet.</p>
-                        <p className="sub-text">Add your salary or other earnings.</p>
+                        <p>{incomes.length === 0 ? "No income sources yet." : "No matching income found."}</p>
+                        {incomes.length === 0 && <p className="sub-text">Add your salary or other earnings.</p>}
                     </div>
                 ) : (
-                    incomes.map(inc => (
+                    filteredIncomes.map(inc => (
                         <div key={inc.id} className="mobile-income-card" onClick={() => openEditModal(inc)}>
                             <div className="inc-main">
                                 <div className="inc-icon-wrapper">
@@ -300,6 +318,60 @@ export default function IncomeMobile() {
                     </div>
                 </div>
             </MobileModal>
-        </div>
+
+
+            {/* Filter Modal */}
+            <MobileModal isOpen={showFilterModal} onClose={() => setShowFilterModal(false)} title="Filter Income">
+                <div className="filter-form">
+                    <div className="filter-group">
+                        <label>Type</label>
+                        <select
+                            value={filters.type}
+                            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                            className="mobile-native-select"
+                        >
+                            <option value="">All Types</option>
+                            <option value="PRIMARY">Primary</option>
+                            <option value="VARIABLE">Variable</option>
+                            <option value="PASSIVE">Passive</option>
+                        </select>
+                    </div>
+                    <div className="filter-group">
+                        <label>Frequency</label>
+                        <select
+                            value={filters.frequency}
+                            onChange={(e) => setFilters({ ...filters, frequency: e.target.value })}
+                            className="mobile-native-select"
+                        >
+                            <option value="">All Frequencies</option>
+                            <option value="WEEKLY">Weekly</option>
+                            <option value="BIWEEKLY">Bi-Weekly</option>
+                            <option value="MONTHLY">Monthly</option>
+                            <option value="ONE_TIME">One Time</option>
+                        </select>
+                    </div>
+                    <div className="filter-group">
+                        <label>Received By</label>
+                        <select
+                            value={filters.userId}
+                            onChange={(e) => setFilters({ ...filters, userId: e.target.value })}
+                            className="mobile-native-select"
+                        >
+                            <option value="">All Users</option>
+                            {members.map(m => (
+                                <option key={m.id} value={m.id}>{m.firstName}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div className="modal-actions">
+                        <MobileButton variant="secondary" onClick={() => {
+                            setFilters({ type: '', frequency: '', userId: '' });
+                            setShowFilterModal(false);
+                        }}>Clear Filters</MobileButton>
+                        <MobileButton onClick={() => setShowFilterModal(false)}>Apply</MobileButton>
+                    </div>
+                </div>
+            </MobileModal>
+        </div >
     );
 }

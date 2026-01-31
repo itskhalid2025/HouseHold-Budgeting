@@ -18,7 +18,95 @@ import MobileInput from '../../components/mobile/MobileInput';
 import { Search, Filter, Plus, Trash2, Edit2, Calendar } from 'lucide-react';
 import './TransactionsMobile.css';
 
+// Import Sibling Tabs
+import IncomeMobile from './IncomeMobile';
+import SavingsMobile from './SavingsMobile';
+
+// -----------------------------------------------------------------------------
+// MAIN COMPONENT: TransactionsMobile (Tab Container)
+// -----------------------------------------------------------------------------
 export default function TransactionsMobile() {
+    const [activeTab, setActiveTab] = useState('spending'); // 'income' | 'spending' | 'saving'
+    const [touchStart, setTouchStart] = useState(null);
+    const [touchEnd, setTouchEnd] = useState(null);
+
+    // Swipe Logic
+    const minSwipeDistance = 50;
+
+    const onTouchStart = (e) => {
+        setTouchEnd(null);
+        setTouchStart(e.targetTouches[0].clientX);
+    };
+
+    const onTouchMove = (e) => {
+        setTouchEnd(e.targetTouches[0].clientX);
+    };
+
+    const onTouchEnd = () => {
+        if (!touchStart || !touchEnd) return;
+        const distance = touchStart - touchEnd;
+        const isLeftSwipe = distance > minSwipeDistance;
+        const isRightSwipe = distance < -minSwipeDistance;
+
+        if (isLeftSwipe) {
+            // Swipe Left -> Go Right
+            if (activeTab === 'income') setActiveTab('spending');
+            else if (activeTab === 'spending') setActiveTab('saving');
+        }
+
+        if (isRightSwipe) {
+            // Swipe Right -> Go Left
+            if (activeTab === 'saving') setActiveTab('spending');
+            else if (activeTab === 'spending') setActiveTab('income');
+        }
+    };
+
+    return (
+        <div className="transactions-mobile-wrapper">
+            {/* Tab Navigation */}
+            <div className="mobile-tabs">
+                <button
+                    className={`mobile-tab ${activeTab === 'income' ? 'active' : ''}`}
+                    data-tab="income"
+                    onClick={() => setActiveTab('income')}
+                >
+                    Income
+                </button>
+                <button
+                    className={`mobile-tab ${activeTab === 'spending' ? 'active' : ''}`}
+                    data-tab="spending"
+                    onClick={() => setActiveTab('spending')}
+                >
+                    Spending
+                </button>
+                <button
+                    className={`mobile-tab ${activeTab === 'saving' ? 'active' : ''}`}
+                    data-tab="saving"
+                    onClick={() => setActiveTab('saving')}
+                >
+                    Saving
+                </button>
+            </div>
+
+            {/* Swipeable Content Area */}
+            <div
+                className="tab-content"
+                onTouchStart={onTouchStart}
+                onTouchMove={onTouchMove}
+                onTouchEnd={onTouchEnd}
+            >
+                {activeTab === 'income' && <IncomeMobile />}
+                {activeTab === 'spending' && <SpendingTab />}
+                {activeTab === 'saving' && <SavingsMobile />}
+            </div>
+        </div>
+    );
+}
+
+// -----------------------------------------------------------------------------
+// INTERNAL COMPONENT: SpendingTab (Original Transactions Logic)
+// -----------------------------------------------------------------------------
+function SpendingTab() {
     const { user, currency } = useAuth();
     const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
 
@@ -174,8 +262,21 @@ export default function TransactionsMobile() {
     return (
         <div className="mobile-page transactions-mobile">
             {/* Header with Search */}
+            {/* Header with Search */}
             <header className="txn-header">
-                <h1>Transactions</h1>
+                <div className="header-top-row">
+                    <h1>Transactions</h1>
+                    <button className={`filter-icon-btn ${Object.values(filters).some(Boolean) && filters.type !== '' ? 'active' : ''}`} onClick={() => setShowFilterModal(true)}>
+                        <Filter size={20} />
+                    </button>
+                </div>
+
+                {/* Expense Tracker Card */}
+                <div className="spending-summary-card">
+                    <div className="summary-label">Total Spent This Month</div>
+                    <div className="summary-amount">{formatCurrency(totalExpenses, currency)}</div>
+                </div>
+
                 <div className="search-bar">
                     <Search size={20} className="search-icon" />
                     <input
@@ -185,9 +286,6 @@ export default function TransactionsMobile() {
                         value={filters.search}
                         onChange={handleFilterChange}
                     />
-                    <button className={`filter-btn ${showFilterModal ? 'active' : ''}`} onClick={() => setShowFilterModal(true)}>
-                        <Filter size={20} />
-                    </button>
                 </div>
             </header>
 
@@ -392,3 +490,7 @@ export default function TransactionsMobile() {
         </div>
     );
 }
+
+// -----------------------------------------------------------------------------
+// END: SpendingTab
+// -----------------------------------------------------------------------------

@@ -9,17 +9,14 @@
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import {
   PieChart, Pie, BarChart, Bar, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import {
-  FileText, Download, TrendingUp, TrendingDown,
+  FileText, TrendingUp, TrendingDown,
   DollarSign, Users, RefreshCw, AlertCircle, ChevronDown, Calendar, Filter
 } from 'lucide-react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 
 // API & Context Imports (Preserved)
 import { getLatestReport, generateReport, getHousehold } from '../../api/api';
@@ -30,7 +27,7 @@ import { formatCurrency } from '../../utils/currencyUtils';
 // Import standalone CSS
 import './ReportsMobile.css';
 import ChatbotButton from '../../components/mobile/ChatbotButton';
-import ReportPrintView from '../../components/ReportPrintView';
+
 
 /**
  * Chart Color Palette - Neo Neon Series
@@ -59,7 +56,7 @@ export default function ReportsMobile() {
   const [report, setReport] = useState(null);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
-  const [exporting, setExporting] = useState(false);
+
   const [activeTab, setActiveTab] = useState('weekly');
   const [error, setError] = useState('');
   const [pieView, setPieView] = useState('all'); // 'all' or userId
@@ -69,9 +66,7 @@ export default function ReportsMobile() {
   // Check if we are on mobile
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
-  // Ref for the Print View component
-  const printRef = useRef(null);
-  const [showPrintView, setShowPrintView] = useState(false);
+
 
   // --- Custom Report State ---
   const [customStart, setCustomStart] = useState('');
@@ -99,79 +94,11 @@ export default function ReportsMobile() {
     }
   };
 
-  // --- Logic: Export PDF ---
-  const handleExportPDF = async () => {
-    if (!report) return;
-    setExporting(true);
-    setShowPrintView(true);
 
-    // Wait for render
-    setTimeout(async () => {
-      try {
-        const input = printRef.current;
-
-        if (!input) {
-          console.error("Print view ref is null");
-          setExporting(false);
-          setShowPrintView(false);
-          return;
-        }
-
-        const canvas = await html2canvas(input, {
-          scale: 2,
-          backgroundColor: '#0f172a',
-          useCORS: true,
-          logging: false,
-          windowWidth: 1600, // Force desktop width for capture
-          width: 1200 // Explicit capture width
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = pdf.internal.pageSize.getHeight();
-        const imgWidth = canvas.width;
-        const imgHeight = canvas.height;
-        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-
-        const finalWidth = pdfWidth - 20;
-        const finalHeight = (imgHeight * finalWidth) / imgWidth;
-
-        pdf.addImage(imgData, 'PNG', 10, 10, finalWidth, finalHeight);
-
-        pdf.setFontSize(8);
-        pdf.setTextColor(150);
-        pdf.text(`Report Generated via Household Budgeting App - ${new Date().toLocaleDateString()}`, 10, pdfHeight - 10);
-
-        pdf.save(`Household_Report_${activeTab}_${new Date().toISOString().split('T')[0]}.pdf`);
-      } catch (err) {
-        console.error('PDF Export failed', err);
-        alert('Failed to export PDF');
-      } finally {
-        setExporting(false);
-        setShowPrintView(false);
-      }
-    }, 1000); // Increased timeout to ensure charts align
-  };
 
   // ... render return
 
-  {/* Hidden Print View using Portal */ }
-  {
-    showPrintView && report && createPortal(
-      <div style={{ position: 'fixed', top: 0, left: 0, width: '1200px', zIndex: -1000, opacity: 0, pointerEvents: 'none' }}>
-        <ReportPrintView
-          ref={printRef}
-          report={report}
-          currency={currency}
-          activeTab={activeTab}
-          dateRange={activeTab === 'custom' && customStart && customEnd ? `${customStart} to ${customEnd}` : ''}
-        />
-      </div>,
-      document.body
-    )
-  }
-  // ...
+
 
   // --- Effect: Fetch Members (Preserved) ---
   useEffect(() => {
@@ -303,15 +230,7 @@ export default function ReportsMobile() {
             <span>Analytics</span>
           </h1>
           <div className="header-actions">
-            <button
-              onClick={handleExportPDF}
-              disabled={exporting || !report}
-              className="neo-btn-icon"
-              title="Export PDF"
-              aria-label="Export Report as PDF"
-            >
-              {exporting ? <RefreshCw className="spin" size={18} /> : <Download size={20} />}
-            </button>
+
             {(activeTab !== 'custom') && (
               <button
                 onClick={() => handleGenerateReport(activeTab)}

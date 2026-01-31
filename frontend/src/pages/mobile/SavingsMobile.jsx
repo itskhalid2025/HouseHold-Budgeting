@@ -16,7 +16,7 @@ import MobileCard from '../../components/mobile/MobileCard';
 import MobileButton from '../../components/mobile/MobileButton';
 import MobileModal from '../../components/mobile/MobileModal';
 import MobileInput from '../../components/mobile/MobileInput';
-import { Plus, Trash2, Edit2, TrendingUp, History, X, Check } from 'lucide-react';
+import { Plus, Trash2, Edit2, TrendingUp, History, X, Check, Filter } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import './SavingsMobile.css';
 
@@ -29,6 +29,22 @@ export default function SavingsMobile() {
     const [members, setMembers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const [showFilterModal, setShowFilterModal] = useState(false);
+    const [filters, setFilters] = useState({
+        type: '',
+        status: '' // 'completed', 'in_progress'
+    });
+
+    const filteredGoals = goals.filter(goal => {
+        if (filters.type && goal.type !== filters.type) return false;
+        if (filters.status) {
+            const progress = (parseFloat(goal.currentAmount || 0) / parseFloat(goal.targetAmount || 1)) * 100;
+            const isComplete = progress >= 100;
+            if (filters.status === 'completed' && !isComplete) return false;
+            if (filters.status === 'in_progress' && isComplete) return false;
+        }
+        return true;
+    });
 
     // UI State
     const [activeModal, setActiveModal] = useState(null); // 'create', 'edit', 'contribute', 'history'
@@ -167,9 +183,14 @@ export default function SavingsMobile() {
         <div className="mobile-page savings-mobile">
             {/* Header Summary */}
             <div className="savings-header-card">
-                <div className="total-saved">
-                    <span className="label">Total Saved</span>
-                    <h1>{formatCurrency(summary.totalSaved, currency)}</h1>
+                <div className="header-top">
+                    <div className="total-saved">
+                        <span className="label">Total Saved</span>
+                        <h1>{formatCurrency(summary.totalSaved, currency)}</h1>
+                    </div>
+                    <button className={`filter-icon-btn ${Object.values(filters).some(Boolean) ? 'active' : ''}`} onClick={() => setShowFilterModal(true)}>
+                        <Filter size={20} />
+                    </button>
                 </div>
                 <div className="summary-row">
                     <div className="stat-col">
@@ -188,17 +209,19 @@ export default function SavingsMobile() {
 
             {/* Goals List */}
             <div className="goals-list">
-                {goals.length === 0 ? (
+                {filteredGoals.length === 0 ? (
                     <div className="empty-state">
                         <TrendingUp size={48} className="text-gray-300 mb-4" />
-                        <p>No savings goals yet.</p>
-                        <MobileButton onClick={() => {
-                            setGoalForm({ name: '', targetAmount: '', currentAmount: '', type: 'LONG_TERM', deadline: '', userId: user.id });
-                            setActiveModal('create');
-                        }}>Create First Goal</MobileButton>
+                        <p>{goals.length === 0 ? "No savings goals yet." : "No matching goals found."}</p>
+                        {goals.length === 0 && (
+                            <MobileButton onClick={() => {
+                                setGoalForm({ name: '', targetAmount: '', currentAmount: '', type: 'LONG_TERM', deadline: '', userId: user.id });
+                                setActiveModal('create');
+                            }}>Create First Goal</MobileButton>
+                        )}
                     </div>
                 ) : (
-                    goals.map(goal => {
+                    filteredGoals.map(goal => {
                         const current = parseFloat(goal.currentAmount || 0);
                         const target = parseFloat(goal.targetAmount || 0);
                         const percent = target > 0 ? Math.min(100, (current / target) * 100) : 0;
@@ -338,6 +361,45 @@ export default function SavingsMobile() {
                     ) : (
                         <p className="no-data-text">No contributions yet.</p>
                     )}
+                </div>
+            </MobileModal>
+
+            {/* Filter Modal */}
+            <MobileModal isOpen={showFilterModal} onClose={() => setShowFilterModal(false)} title="Filter Goals">
+                <div className="filter-form">
+                    <div className="filter-group">
+                        <label>Type</label>
+                        <select
+                            value={filters.type}
+                            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                            className="mobile-native-select"
+                        >
+                            <option value="">All Types</option>
+                            <option value="LONG_TERM">Long Term</option>
+                            <option value="EMERGENCY_FUND">Emergency Fund</option>
+                            <option value="SINKING_FUND">Sinking Fund</option>
+                            <option value="DEBT_PAYOFF">Debt Payoff</option>
+                        </select>
+                    </div>
+                    <div className="filter-group">
+                        <label>Status</label>
+                        <select
+                            value={filters.status}
+                            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                            className="mobile-native-select"
+                        >
+                            <option value="">All Statuses</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                        </select>
+                    </div>
+                    <div className="modal-actions">
+                        <MobileButton variant="secondary" onClick={() => {
+                            setFilters({ type: '', status: '' });
+                            setShowFilterModal(false);
+                        }}>Clear Filters</MobileButton>
+                        <MobileButton onClick={() => setShowFilterModal(false)}>Apply</MobileButton>
+                    </div>
                 </div>
             </MobileModal>
         </div>

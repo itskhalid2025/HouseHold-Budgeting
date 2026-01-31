@@ -30,7 +30,27 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
         stopListening();
     };
 
-    // ... handleSmartSubmit ...
+    const handleSmartSubmit = async (input) => {
+        if (!input) return;
+        setLoading(true);
+        try {
+            const result = await parseVoiceInput(input);
+            console.log('Smart Entry Result:', result);
+
+            if (result.success || result.isCreated) {
+                if (onEntryComplete) onEntryComplete(result);
+                handleClose();
+            } else {
+                console.warn("Smart entry processed but returned unsuccessful status", result);
+                alert("Could not process entry. Please try again.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert("Failed to process smart entry: " + err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     return (
         <MobileModal
