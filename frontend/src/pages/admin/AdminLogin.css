@@ -1,0 +1,14 @@
+/* Admin Login Styles */
+.admin-login-container {
+    font-family: 'Inter', sans-serif;
+}
+
+.login-card {
+    backdrop-filter: blur(12px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.form-group input:focus {
+    border-color: #3b82f6 !important;
+    background: rgba(0, 0, 0, 0.4) !important;
+}

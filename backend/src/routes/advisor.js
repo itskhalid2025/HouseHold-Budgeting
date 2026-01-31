@@ -18,6 +18,7 @@ import {
     generateChart
 } from '../controllers/advisorController.js';
 import { authenticate } from '../middleware/auth.js';
+import { trackAiUsage } from '../middleware/trackAiUsage.js';
 
 const router = express.Router();
 
@@ -49,7 +50,7 @@ router.use(authenticate);
  *       200:
  *         description: AI response
  */
-router.post('/chat', chat);
+router.post('/chat', trackAiUsage, chat);
 
 /**
  * @swagger
@@ -63,7 +64,7 @@ router.post('/chat', chat);
  *       200:
  *         description: Structured recommendations
  */
-router.post('/recommendations', getRecommendations);
+router.post('/recommendations', trackAiUsage, getRecommendations);
 
 /**
  * @swagger
@@ -89,7 +90,7 @@ router.post('/recommendations', getRecommendations);
  *       200:
  *         description: Chart configuration
  */
-router.post('/chart', generateChart);
+router.post('/chart', trackAiUsage, generateChart);
 
 /**
  * @swagger

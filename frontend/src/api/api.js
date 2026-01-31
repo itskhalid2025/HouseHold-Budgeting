@@ -632,10 +632,82 @@ export async function getConversationHistory(conversationId) {
 }
 
 export async function clearConversation(conversationId) {
-    console.log('🗑️ Clearing conversation');
-    const response = await trackedFetch(`${API_BASE_URL}/advisor/conversation/${conversationId}`, {
+    console.log('🧹 Clearing conversation');
+    const response = await trackedFetch(`${API_BASE_URL}/advisor/history/${conversationId}`, {
         method: 'DELETE',
         headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+// ================== ADMIN API ==================
+
+export async function adminLogin(email, password) {
+    const response = await trackedFetch(`${API_BASE_URL}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    });
+    return handleResponse(response);
+}
+
+export async function getAdminMe() {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/me`, {
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return handleResponse(response);
+}
+
+export async function inviteAdmin(email) {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/invite`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+    });
+    return handleResponse(response);
+}
+
+export async function registerAdmin(data) {
+    const response = await trackedFetch(`${API_BASE_URL}/admin/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    });
+    return handleResponse(response);
+}
+
+export async function getAdminUsers() {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/users`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+}
+
+export async function getAdminHouseholds() {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/households`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+}
+
+export async function toggleUserAiRestriction(userId, isRestricted) {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/users/${userId}/restriction`, {
+        method: 'PATCH',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ isAiRestricted: isRestricted })
     });
     return handleResponse(response);
 }
@@ -690,5 +762,13 @@ export default {
     getRecommendations,
     generateChartConfig,
     getConversationHistory,
-    clearConversation
+    clearConversation,
+    // Admin
+    adminLogin,
+    registerAdmin,
+    getAdminMe,
+    inviteAdmin,
+    getAdminUsers,
+    getAdminHouseholds,
+    toggleUserAiRestriction
 };

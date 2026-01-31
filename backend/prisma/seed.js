@@ -1,7 +1,7 @@
 // Seed file with realistic test data
 // Run with: node prisma/seed.js
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, AdminLevel } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -56,7 +56,7 @@ async function main() {
             passwordHash: adminPassword,
             firstName: 'Khalid',
             lastName: 'Admin',
-            role: 'SUPER_ADMIN',
+            adminLevel: AdminLevel.SUPER_ADMIN,
             isSuperAdmin: true,
             isActive: true
         }

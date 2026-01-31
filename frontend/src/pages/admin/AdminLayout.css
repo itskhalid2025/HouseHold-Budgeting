@@ -1,0 +1,18 @@
+/* Admin Layout Styles */
+.admin-layout {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Scrollbar for sidebar */
+aside::-webkit-scrollbar {
+    width: 6px;
+}
+
+aside::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+aside::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+}

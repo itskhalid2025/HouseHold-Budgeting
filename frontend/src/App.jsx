@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
@@ -23,6 +23,14 @@ import Savings from './pages/Savings';
 import Advisor from './pages/Advisor';
 import VerifyEmail from './pages/VerifyEmail';
 import ResetPassword from './pages/ResetPassword';
+import AdminLogin from './pages/admin/AdminLogin';
+import AdminLayout from './pages/admin/AdminLayout';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminHouseholds from './pages/admin/AdminHouseholds';
+import AdminAiUsage from './pages/admin/AdminAiUsage';
+import AdminRegister from './pages/admin/AdminRegister';
+import AdminSettings from './pages/admin/AdminSettings';
 
 import './App.css';
 
@@ -301,10 +309,28 @@ function JoinRequestNotification() {
 import { SmartEntryProvider } from './context/SmartEntryContext';
 import GlobalSmartEntry from './components/mobile/GlobalSmartEntry';
 
-// ... (previous imports)
+
 
 function AppContent() {
   const isMobile = useIsMobile();
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
+
+  if (isAdminRoute) {
+    return (
+      <Routes>
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin/register" element={<AdminRegister />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="users" element={<AdminUsers />} />
+          <Route path="households" element={<AdminHouseholds />} />
+          <Route path="ai-usage" element={<AdminAiUsage />} />
+          <Route path="settings" element={<AdminSettings />} />
+        </Route>
+      </Routes>
+    );
+  }
 
   return (
     <div className="app">
