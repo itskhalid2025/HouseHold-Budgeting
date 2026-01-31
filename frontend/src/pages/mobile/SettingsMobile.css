@@ -9,16 +9,16 @@
   --v-bg-dark: #0f0c29;
   --v-bg-mid: #302b63;
   --v-bg-light: #24243e;
-  
+
   --v-primary-gradient: linear-gradient(135deg, #ff00cc 0%, #333399 100%);
   --v-accent-gradient: linear-gradient(to right, #00d2ff, #3a7bd5);
-  --v-card-gradient: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.03) 100%);
-  
+  --v-card-gradient: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.03) 100%);
+
   --v-neon-pink: #ff00cc;
   --v-electric-blue: #00d2ff;
   --v-text-white: #ffffff;
   --v-text-muted: rgba(255, 255, 255, 0.6);
-  
+
   /* -- Spacing & Radius -- */
   --v-radius-lg: 24px;
   --v-radius-md: 16px;
@@ -81,8 +81,13 @@
 }
 
 @keyframes floatOrb {
-  0% { transform: translate(0, 0) scale(1); }
-  100% { transform: translate(20px, 40px) scale(1.1); }
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+
+  100% {
+    transform: translate(20px, 40px) scale(1.1);
+  }
 }
 
 /* -- Header -- */
@@ -151,16 +156,24 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-.gradient-1 { background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%); }
-.gradient-2 { background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%); }
-.gradient-3 { background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%); }
+.gradient-1 {
+  background: linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%);
+}
+
+.gradient-2 {
+  background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+}
+
+.gradient-3 {
+  background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+}
 
 .menu-icon {
   color: #fff;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .menu-text-col {
@@ -181,7 +194,7 @@
 }
 
 .menu-arrow {
-  color: rgba(255,255,255,0.3);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 /* -- Sub Pages -- */
@@ -192,7 +205,8 @@
   width: 100%;
   height: 100%;
   z-index: 10;
-  background: #0f0c29; /* Fallback */
+  background: #0f0c29;
+  /* Fallback */
   background: linear-gradient(to bottom, #0f0c29, #302b63);
   animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   display: flex;
@@ -200,8 +214,13 @@
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); }
-  to { transform: translateX(0); }
+  from {
+    transform: translateX(100%);
+  }
+
+  to {
+    transform: translateX(0);
+  }
 }
 
 .sub-header {
@@ -212,14 +231,14 @@
   background: rgba(15, 12, 41, 0.8);
   backdrop-filter: blur(10px);
   z-index: 20;
-  border-bottom: 1px solid rgba(255,255,255,0.05);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .back-btn {
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   border: none;
   color: var(--v-text-white);
   padding: 8px 16px;
@@ -231,7 +250,7 @@
 }
 
 .back-btn:active {
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
 }
 
 .rotate-180 {
@@ -272,8 +291,13 @@
 }
 
 @keyframes spinSlow {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .avatar-xl {
@@ -302,7 +326,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   padding: 4px 12px;
   border-radius: 20px;
   font-size: 12px;
@@ -317,7 +341,8 @@
   padding: 8px 0;
 }
 
-.info-row, .action-row {
+.info-row,
+.action-row {
   display: flex;
   align-items: center;
   padding: 16px 20px;
@@ -330,7 +355,7 @@
 }
 
 .clickable:active {
-  background: rgba(255,255,255,0.05);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .row-left {
@@ -346,7 +371,7 @@
   width: 36px;
   height: 36px;
   border-radius: 10px;
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.1);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -372,7 +397,7 @@
 
 .divider-gradient {
   height: 1px;
-  background: linear-gradient(to right, transparent, rgba(255,255,255,0.2), transparent);
+  background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.2), transparent);
   margin: 0;
 }
 
@@ -385,8 +410,8 @@
 }
 
 .vibrant-input input {
-  background: rgba(0,0,0,0.3) !important;
-  border: 1px solid rgba(255,255,255,0.1) !important;
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
   color: #fff !important;
   border-radius: 12px !important;
   padding: 14px !important;
@@ -415,13 +440,14 @@
 .mobile-select {
   width: 100%;
   appearance: none;
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,255,255,0.1);
-  color: #fff;
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #000000;
   font-size: 16px;
   padding: 16px;
   border-radius: 12px;
   outline: none;
+  font-weight: 500;
 }
 
 .select-arrow {
@@ -501,10 +527,10 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(255,255,255,0.1);
+  background-color: rgba(255, 255, 255, 0.1);
   transition: .4s;
   border-radius: 34px;
-  border: 1px solid rgba(255,255,255,0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .toggle-slider:before {
@@ -517,15 +543,15 @@
   background-color: #fff;
   transition: .4s;
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-.toggle-switch-vibrant:checked + .toggle-slider {
+.toggle-switch-vibrant:checked+.toggle-slider {
   background: var(--v-electric-blue);
   border-color: transparent;
 }
 
-.toggle-switch-vibrant:checked + .toggle-slider:before {
+.toggle-switch-vibrant:checked+.toggle-slider:before {
   transform: translateX(22px);
 }
 
@@ -559,8 +585,15 @@
 }
 
 @keyframes popIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .logout-section {
@@ -598,6 +631,6 @@
 
 .app-version {
   font-size: 11px;
-  color: rgba(255,255,255,0.3);
+  color: rgba(255, 255, 255, 0.3);
   font-family: monospace;
 }

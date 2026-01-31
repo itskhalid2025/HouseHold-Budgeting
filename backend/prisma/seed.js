@@ -44,6 +44,26 @@ async function main() {
     await prisma.user.deleteMany({});
 
     // =====================================================
+    // 0. CREATE PLATFORM ADMIN
+    // =====================================================
+    console.log('\n🛡️ Creating Platform Admin...');
+    const adminPassword = await bcrypt.hash('HouseHold@@2026', 10);
+    await prisma.platformAdmin.deleteMany({ where: { email: 'khalidacsform@gmail.com' } }); // Ensure clean slate
+    await prisma.platformAdmin.create({
+        data: {
+            email: 'khalidacsform@gmail.com',
+            username: 'admin',
+            passwordHash: adminPassword,
+            firstName: 'Khalid',
+            lastName: 'Admin',
+            role: 'SUPER_ADMIN',
+            isSuperAdmin: true,
+            isActive: true
+        }
+    });
+    console.log('  ✅ Admin created: khalidacsform@gmail.com');
+
+    // =====================================================
     // 1. CREATE 7 USERS
     // =====================================================
     console.log('\n👤 Creating 7 users...');
