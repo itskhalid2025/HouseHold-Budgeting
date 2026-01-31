@@ -1,10 +1,115 @@
-
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Send, Bot, User, Sparkles, TrendingUp, DollarSign, Target, ArrowUp, X } from 'lucide-react';
 import { chatWithAdvisor } from '../../api/api';
-import { useNavigate } from 'react-router-dom';
+import {
+    PieChart, Pie, Cell,
+    BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend
+} from 'recharts';
+
 import MobileCard from '../../components/mobile/MobileCard';
 import './AdvisorMobile.css';
+
+// Vibrant Modern Palette
+const COLORS = [
+    '#10B981', // Emerald (Success/Savings)
+    '#F43F5E', // Rose (Needs/Expenses)
+    '#3B82F6', // Blue (Wants)
+    '#F59E0B', // Amber (Warnings)
+    '#8B5CF6', // Violet
+    '#EC4899', // Pink
+    '#06B6D4', // Cyan
+    '#6366F1'  // Indigo
+];
+
+// Helper Component for Charts
+const MessageChart = ({ chart }) => {
+    if (!chart || !chart.data) return null;
+    const height = 280; // Slightly taller for legend space
+
+    // Normalize data keys
+    const normalizedData = chart.data.map(d => ({
+        ...d,
+        name: d.name || d.period || d.label || 'Unknown',
+        value: Number(d.value || d.amount || 0)
+    }));
+
+    // Common Tooltip Style
+    const tooltipStyle = {
+        backgroundColor: 'rgba(30, 30, 40, 0.95)',
+        borderRadius: '12px',
+        border: '1px solid rgba(255,255,255,0.1)',
+        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
+        padding: '8px 12px',
+        color: '#fff'
+    };
+
+    if (chart.type === 'pie') {
+        return (
+            <div style={{ width: '100%', height, marginTop: 16 }}>
+                <ResponsiveContainer>
+                    <PieChart>
+                        <Pie
+                            data={normalizedData}
+                            innerRadius={65}
+                            outerRadius={85}
+                            paddingAngle={4}
+                            dataKey="value"
+                            stroke="none"
+                        >
+                            {normalizedData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Pie>
+                        <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#fff' }} formatter={(value) => `$${value}`} />
+                        <Legend
+                            verticalAlign="bottom"
+                            height={70}
+                            wrapperStyle={{ fontSize: '12px', paddingTop: '20px', color: '#cbd5e1' }}
+                            width="100%"
+                        />
+                    </PieChart>
+                </ResponsiveContainer>
+            </div>
+        );
+    }
+
+    if (chart.type === 'bar') {
+        return (
+            <div style={{ width: '100%', height, marginTop: 12 }}>
+                <ResponsiveContainer>
+                    <BarChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--text-secondary)' }} />
+                        <YAxis fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} tick={{ fill: 'var(--text-secondary)' }} />
+                        <Tooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={tooltipStyle} />
+                        <Bar dataKey="value" radius={[4, 4, 4, 4]}>
+                            {normalizedData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                            ))}
+                        </Bar>
+                    </BarChart>
+                </ResponsiveContainer>
+            </div>
+        );
+    }
+
+    if (chart.type === 'line') {
+        return (
+            <div style={{ width: '100%', height, marginTop: 12 }}>
+                <ResponsiveContainer>
+                    <LineChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                        <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--text-secondary)' }} />
+                        <YAxis fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} tick={{ fill: 'var(--text-secondary)' }} />
+                        <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                        <Line type="monotone" dataKey="value" stroke="var(--primary)" strokeWidth={3} dot={{ r: 4, fill: 'var(--primary)' }} />
+                    </LineChart>
+                </ResponsiveContainer>
+            </div>
+        );
+    }
+
+    return null;
+};
 
 export default function AdvisorMobile() {
     const navigate = useNavigate();
@@ -12,6 +117,7 @@ export default function AdvisorMobile() {
         {
             role: 'assistant',
             content: "Hi! I'm your AI financial advisor. How can I help you today?",
+            chart: null,
             timestamp: new Date().toISOString()
         }
     ]);
@@ -51,15 +157,33 @@ export default function AdvisorMobile() {
                 if (!conversationId && data.conversationId) setConversationId(data.conversationId);
 
                 let content = data.response;
+                let chartData = null;
+
                 try {
-                    if (content.trim().startsWith('{')) {
-                        const parsed = JSON.parse(content);
-                        if (parsed.text) content = parsed.text;
+                    // Check for JSON response (often used for charts)
+                    const jsonStart = content.indexOf('{');
+                    const jsonEnd = content.lastIndexOf('}');
+
+                    if (jsonStart !== -1 && jsonEnd !== -1) {
+                        const potentialJson = content.substring(jsonStart, jsonEnd + 1);
+                        const parsed = JSON.parse(potentialJson);
+
+                        // If the JSON contains 'text' or 'chartData' properties, extract them
+                        if (parsed.text || parsed.chartData) {
+                            if (parsed.text) content = parsed.text;
+                            if (parsed.chartData) chartData = parsed.chartData;
+                        }
                     }
-                } catch (e) { /* ignore */ }
+                } catch (e) {
+                    // Fallback: Use standard Markdown parsing if JSON fails
+                    console.log("Not a strictly valid JSON response, rendering as text.");
+                }
 
                 setMessages(prev => [...prev, {
-                    role: 'assistant', content, timestamp: data.timestamp
+                    role: 'assistant',
+                    content,
+                    chart: chartData,
+                    timestamp: data.timestamp
                 }]);
             } else {
                 setMessages(prev => [...prev, {
@@ -108,6 +232,7 @@ export default function AdvisorMobile() {
                         )}
                         <div className={`msg-bubble ${msg.role} ${msg.isError ? 'error' : ''}`}>
                             <div className="msg-text" dangerouslySetInnerHTML={{ __html: msg.content }} />
+                            {msg.chart && <MessageChart chart={msg.chart} />}
                             <span className="msg-time">{formatTime(msg.timestamp)}</span>
                         </div>
                     </div>

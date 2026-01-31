@@ -47,9 +47,10 @@ export default function SavingsMobile() {
     });
 
     // UI State
-    const [activeModal, setActiveModal] = useState(null); // 'create', 'edit', 'contribute', 'history'
+    const [activeModal, setActiveModal] = useState(null); // 'create', 'edit', 'contribute', 'history', 'success'
     const [selectedGoal, setSelectedGoal] = useState(null);
     const [expandedGoalId, setExpandedGoalId] = useState(null);
+    const [successMessage, setSuccessMessage] = useState({ title: '', message: '' });
 
     // Forms
     const [goalForm, setGoalForm] = useState({
@@ -120,15 +121,31 @@ export default function SavingsMobile() {
             // Celebration
             const goal = goals.find(g => g.id === selectedGoal.id);
             const newTotal = (parseFloat(goal.currentAmount) || 0) + parseFloat(contribForm.amount);
-            if (newTotal >= parseFloat(goal.targetAmount)) {
+            const target = parseFloat(goal.targetAmount);
+
+            if (newTotal >= target) {
                 confetti({
                     particleCount: 150,
                     spread: 70,
                     origin: { y: 0.6 }
                 });
+
+                setActiveModal('success');
+                if (newTotal > target) {
+                    setSuccessMessage({
+                        title: 'Target Exceeded! 🚀',
+                        message: `Amazing! You've exceeded your goal of ${formatCurrency(target, currency)} by ${formatCurrency(newTotal - target, currency)}.`
+                    });
+                } else {
+                    setSuccessMessage({
+                        title: 'Goal Reached! 🎉',
+                        message: `Valid! You've successfully saved ${formatCurrency(target, currency)} for ${goal.name}.`
+                    });
+                }
+            } else {
+                setActiveModal(null);
             }
 
-            setActiveModal(null);
             fetchData();
         } catch (err) { setError(err.message); }
     };
@@ -400,6 +417,21 @@ export default function SavingsMobile() {
                         }}>Clear Filters</MobileButton>
                         <MobileButton onClick={() => setShowFilterModal(false)}>Apply</MobileButton>
                     </div>
+                </div>
+            </MobileModal>
+
+            {/* Success Modal */}
+            <MobileModal
+                isOpen={activeModal === 'success'}
+                onClose={() => setActiveModal(null)}
+                title={successMessage.title}
+            >
+                <div className="success-modal-content" style={{ textAlign: 'center', padding: '20px 0' }}>
+                    <div className="success-icon" style={{ fontSize: '48px', marginBottom: '16px' }}>🏆</div>
+                    <p style={{ fontSize: '16px', color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: '1.5' }}>
+                        {successMessage.message}
+                    </p>
+                    <MobileButton onClick={() => setActiveModal(null)}>Awesome!</MobileButton>
                 </div>
             </MobileModal>
         </div>
