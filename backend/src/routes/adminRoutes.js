@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginAdmin, getMe, createInvitation, getAllUsers, getAllHouseholds, updateUserRestriction, registerAdmin, getDashboardStats } from '../controllers/adminController.js';
+import { loginAdmin, getMe, createInvitation, getAllUsers, getAllHouseholds, updateUserRestriction, registerAdmin, getDashboardStats, getAiAnalytics } from '../controllers/adminController.js';
 import { authenticateAdmin, requireSuperAdmin } from '../middleware/adminAuth.js';
 
 const router = express.Router();
@@ -12,6 +12,7 @@ router.post('/register', registerAdmin);
 router.get('/me', authenticateAdmin, getMe);
 router.post('/invite', authenticateAdmin, requireSuperAdmin, createInvitation);
 router.get('/dashboard-stats', authenticateAdmin, getDashboardStats);
+router.get('/ai-stats', authenticateAdmin, getAiAnalytics);
 
 // Management
 router.get('/users', authenticateAdmin, getAllUsers);

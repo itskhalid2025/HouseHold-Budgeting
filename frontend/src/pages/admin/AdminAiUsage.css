@@ -1,11 +1,40 @@
-/* AdminAiUsage.css */
-
 .admin-ai-page {
-    padding: 2rem;
-    animation: fadeIn 0.5s ease-out;
+    position: relative;
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
-/* Metric Cards */
+.view-mode-toggle {
+    display: flex;
+    gap: 8px;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.toggle-btn {
+    padding: 6px 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.2s;
+}
+
+.toggle-btn.active {
+    background: var(--surface-light);
+    color: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.toggle-btn:hover:not(.active) {
+    color: #fff;
+}
+
 .metric-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
@@ -14,41 +43,18 @@
 }
 
 .metric-card {
-    background: var(--neon-bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    /* Softer initial border */
+    background: var(--surface-card);
+    border: 1px solid var(--border-color);
     padding: 1.5rem;
-    border-radius: 16px;
-    backdrop-filter: blur(10px);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .metric-card:hover {
-    transform: translateY(-5px);
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    border-color: rgba(255, 255, 255, 0.1);
 }
-
-/* Subtle glow behind card on hover */
-.metric-card::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(255, 255, 255, 0.06), transparent 40%);
-    opacity: 0;
-    transition: opacity 0.5s;
-    pointer-events: none;
-}
-
-.metric-card:hover::before {
-    opacity: 1;
-}
-
 
 .metric-header {
     display: flex;
@@ -58,15 +64,15 @@
 }
 
 .metric-label {
-    font-size: 0.85rem;
-    color: var(--text-muted);
+    font-size: 0.9rem;
     font-weight: 500;
+    color: var(--text-muted);
+    margin: 0;
 }
 
 .metric-icon-box {
     padding: 8px;
     background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -74,132 +80,288 @@
 }
 
 .metric-value {
-    font-size: 2rem;
+    font-size: 1.8rem;
     font-weight: 700;
     color: #fff;
-    letter-spacing: -1px;
-    text-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.02em;
+}
+
+.metric-subtext {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
 }
 
 /* Charts Grid */
 .charts-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 2fr 1fr;
     gap: 1.5rem;
 }
 
-@media (min-width: 1024px) {
-    .charts-grid {
-        grid-template-columns: 2fr 1fr;
-    }
-}
-
 .chart-panel {
-    background: var(--neon-bg-card);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    border-radius: 16px;
+    background: var(--surface-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
     padding: 1.5rem;
-    display: flex;
-    flex-direction: column;
+    min-height: 400px;
 }
 
 .panel-title {
+    margin: 0 0 1.5rem 0;
     font-size: 1.1rem;
-    font-weight: 700;
+    font-weight: 600;
     color: #fff;
-    margin-bottom: 1.5rem;
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
-/* Custom Bar Chart */
+/* Updated Trend Chart for Dynamic Data */
+.trend-chart-container {
+    height: 320px;
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
 .trend-chart {
-    height: 250px;
     display: flex;
     align-items: flex-end;
+    justify-content: space-between;
+    height: 100%;
+    padding-bottom: 2rem;
     gap: 12px;
-    padding-bottom: 20px;
+    min-width: 100%;
 }
 
 .trend-column {
-    flex: 1;
-    height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: flex-end;
     align-items: center;
-    gap: 8px;
+    flex: 1;
+    min-width: 30px;
+    height: 100%;
+    position: relative;
+    group: hover;
     cursor: pointer;
 }
 
 .trend-bar-track {
-    width: 100%;
-    height: 100%;
+    flex: 1;
+    width: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
     display: flex;
     align-items: flex-end;
+    margin-bottom: 12px;
     position: relative;
+    overflow: hidden;
 }
 
-.trend-bar {
+/* Stacked Bar */
+.trend-bar-stacked {
     width: 100%;
-    background: linear-gradient(to top, var(--neon-blue), var(--neon-cyan));
-    border-radius: 6px 6px 0 0;
-    opacity: 0.7;
-    transition: all 0.3s ease;
-    box-shadow: 0 0 10px rgba(0, 242, 255, 0.1);
+    border-radius: 6px;
+    transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 4px;
+    display: flex;
+    flex-direction: column-reverse;
+    /* Stack from bottom up */
+    overflow: hidden;
 }
 
-.trend-column:hover .trend-bar {
-    opacity: 1;
-    box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
-    transform: scaleY(1.02);
+.bar-segment {
+    width: 100%;
+    transition: height 0.6s ease;
+}
+
+.segment-smart {
+    background-color: #00ff9d;
+}
+
+.segment-chat {
+    background-color: #0066ff;
+}
+
+.segment-report {
+    background-color: #bc13fe;
+}
+
+/* Interactive Hover States */
+.trend-column:hover .trend-bar-track {
+    background: rgba(255, 255, 255, 0.08);
+    /* Highlight track on hover */
+}
+
+.trend-column:hover .trend-label {
+    color: #fff;
+    font-weight: 600;
 }
 
 .trend-label {
     font-size: 0.75rem;
     color: var(--text-muted);
-    font-weight: 500;
+    white-space: nowrap;
+    position: absolute;
+    bottom: 0;
+    transform: rotate(0deg);
+    text-align: center;
+    width: 100%;
+    transition: color 0.2s;
 }
 
-/* Services List */
+.trend-label.active {
+    color: #fff;
+    font-weight: bold;
+}
+
+/* Tooltip */
+.chart-tooltip {
+    position: absolute;
+    bottom: 100%;
+    /* Above the bar */
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(10, 10, 20, 0.95);
+    border: 1px solid var(--border-color);
+    padding: 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    z-index: 100;
+    min-width: 160px;
+    margin-bottom: 12px;
+    pointer-events: none;
+    backdrop-filter: blur(8px);
+    animation: fadeIn 0.15s ease-out;
+}
+
+/* Tooltip Arrow */
+.chart-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(10, 10, 20, 0.95) transparent transparent transparent;
+}
+
+.tooltip-header {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 8px;
+    text-align: center;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 4px;
+}
+
+.tooltip-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #cbd5e1;
+    margin-bottom: 4px;
+    gap: 12px;
+}
+
+.tooltip-row.total {
+    margin-top: 4px;
+    font-weight: 600;
+    color: #fff;
+}
+
+.tooltip-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 4px 0;
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+.dot-smart {
+    background-color: #00ff9d;
+}
+
+.dot-chat {
+    background-color: #0066ff;
+}
+
+.dot-report {
+    background-color: #bc13fe;
+}
+
+.val {
+    font-family: 'JetBrains Mono', monospace;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(5px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
+/* Service Distribution */
 .service-list {
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 1.5rem;
 }
 
 .service-item {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
 .service-header {
     display: flex;
     justify-content: space-between;
     font-size: 0.9rem;
-}
-
-.service-name {
-    font-weight: 500;
-    color: #dedede;
+    color: #e2e8f0;
 }
 
 .service-stats {
-    color: var(--text-muted);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    opacity: 0.8;
 }
 
 .progress-track {
-    width: 100%;
-    height: 6px;
+    height: 8px;
     background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
+    border-radius: 4px;
     overflow: hidden;
 }
 
 .progress-fill {
     height: 100%;
-    border-radius: 10px;
-    box-shadow: 0 0 8px currentColor;
+    border-radius: 4px;
+    transition: width 0.8s ease-out;
+}
+
+@media (max-width: 768px) {
+    .charts-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .trend-chart {
+        gap: 8px;
+    }
+
+    .trend-label {
+        font-size: 0.65rem;
+    }
 }

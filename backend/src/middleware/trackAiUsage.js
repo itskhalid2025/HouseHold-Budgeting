@@ -28,16 +28,14 @@ export const trackAiUsage = (requestType) => async (req, res, next) => {
 
         // 2. Determine Limit (User Settings > Default)
         // aiSettings structure: { "chat": { "enabled": true, "limit": 50 } }
-        // We map requestType (CHAT) to key (chat)
         const settingKey = requestType === 'SMART_ENTRY' ? 'smartEntry' : requestType.toLowerCase();
 
         let userSettings = user.aiSettings || {};
-        // If stored as string (Prisma sometimes does this), parse it
         if (typeof userSettings === 'string') userSettings = JSON.parse(userSettings);
 
         const limitConfig = userSettings?.[settingKey] || {};
 
-        // Check Enabled Status (Default true if not set)
+        // Check Enabled Status
         const isEnabled = limitConfig.enabled !== false;
         if (!isEnabled) {
             return res.status(403).json({
@@ -70,7 +68,7 @@ export const trackAiUsage = (requestType) => async (req, res, next) => {
             });
         }
 
-        // 5. Add Warning Header (if approaching limit)
+        // 5. Add Warning Header
         const remaining = monthlyLimit - usageCount;
         if (remaining <= 3) {
             res.setHeader('X-AI-Warning', `${remaining} ${requestType} uses remaining.`);
@@ -80,19 +78,28 @@ export const trackAiUsage = (requestType) => async (req, res, next) => {
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
         const country = getCountryFromIp(ip);
 
-        if (country && user.country !== country) {
-             /* await */ prisma.user.update({
-            where: { id: user.id },
-            data: { country, lastIp: ip }
-        }).catch(err => console.error('Failed to update user location:', err));
+        if (country) {
+            // Update User
+            if (user.country !== country) {
+                prisma.user.update({
+                    where: { id: user.id },
+                    data: { country, lastIp: ip }
+                }).catch(err => console.error('Failed to update user location:', err));
+            }
+
+            // Sync to Household (if user belongs to one)
+            if (user.householdId) {
+                prisma.household.update({
+                    where: { id: user.householdId }, // householdId is UUID from user
+                    data: { country }
+                }).catch(err => console.error('Failed to update household location:', err));
+            }
         }
 
         next();
 
     } catch (error) {
         console.error('AI Tracking Middleware Error:', error);
-        // Fail open? No, fail safe for quotas.
         res.status(500).json({ success: false, error: 'AI Service Error' });
     }
 };
-

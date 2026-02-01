@@ -790,6 +790,17 @@ export const deleteHouseholdAdmin = async (householdId) => {
     return handleResponse(response);
 };
 
+export const getAdminAiStats = async (period = 'month') => {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/ai-stats?period=${period}`, {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return handleResponse(response);
+};
+
 export default {
     register,
     login,
@@ -852,5 +863,7 @@ export default {
     updateUserAdmin,
     deleteUserAdmin,
     updateHouseholdAdmin,
-    deleteHouseholdAdmin
+    deleteHouseholdAdmin,
+    getAdminDashboardStats,
+    getAdminAiStats
 };

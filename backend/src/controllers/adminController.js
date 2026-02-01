@@ -483,3 +483,151 @@ export const getDashboardStats = async (req, res) => {
         res.status(500).json({ success: false, error: 'Server error' });
     }
 };
+
+// Get Detailed AI Analytics
+export const getAiAnalytics = async (req, res) => {
+    try {
+        const { period = 'month' } = req.query; // 'month' (current) or 'history' (past year)
+
+        // 1. Current Month Overview (Always needed for Stat Cards)
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        // Fetch all logs for current month to calculate granular stats
+        const currentMonthLogs = await prisma.aiUsageLog.findMany({
+            where: { createdAt: { gte: startOfMonth } },
+            select: { type: true, tokens: true, createdAt: true }
+        });
+
+        const stats = {
+            totalRequests: currentMonthLogs.length,
+            totalTokens: currentMonthLogs.reduce((acc, log) => acc + (log.tokens || 0), 0),
+            byType: {
+                CHAT: 0,
+                SMART_ENTRY: 0,
+                REPORT: 0
+            }
+        };
+
+        currentMonthLogs.forEach(log => {
+            if (stats.byType[log.type] !== undefined) {
+                stats.byType[log.type]++;
+            }
+        });
+
+        // 2. Trend Data (Dynamic based on period)
+        let trendData = [];
+
+        if (period === 'history') {
+            // Last 12 Months
+            const twelveMonthsAgo = new Date();
+            twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 11);
+            twelveMonthsAgo.setDate(1); // Start of that month
+
+            const historyLogs = await prisma.aiUsageLog.findMany({
+                where: { createdAt: { gte: twelveMonthsAgo } },
+                select: { createdAt: true, type: true }
+            });
+
+            // Bucket by Month
+            const monthlyBuckets = {};
+            // Initialize last 12 months with 0s
+            for (let i = 0; i < 12; i++) {
+                const d = new Date(twelveMonthsAgo);
+                d.setMonth(d.getMonth() + i);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                monthlyBuckets[key] = { total: 0, chat: 0, smartEntry: 0, report: 0 };
+            }
+
+            historyLogs.forEach(log => {
+                const d = new Date(log.createdAt);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                if (monthlyBuckets[key]) {
+                    monthlyBuckets[key].total++;
+                    if (log.type === 'CHAT') monthlyBuckets[key].chat++;
+                    else if (log.type === 'SMART_ENTRY') monthlyBuckets[key].smartEntry++;
+                    else if (log.type === 'REPORT') monthlyBuckets[key].report++;
+                }
+            });
+
+            // Format for frontend
+            trendData = Object.entries(monthlyBuckets).sort().map(([key, data]) => {
+                const [y, m] = key.split('-');
+                const dateObj = new Date(parseInt(y), parseInt(m) - 1);
+                return {
+                    label: dateObj.toLocaleDateString('default', { month: 'short', year: '2-digit' }),
+                    value: data.total,
+                    chat: data.chat,
+                    smartEntry: data.smartEntry,
+                    report: data.report
+                };
+            });
+
+        } else {
+            // Last 30 Days (Daily)
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+            thirtyDaysAgo.setHours(0, 0, 0, 0);
+
+            const dailyLogs = await prisma.aiUsageLog.findMany({
+                where: { createdAt: { gte: thirtyDaysAgo } },
+                select: { createdAt: true, type: true }
+            });
+
+            const dailyBuckets = {};
+            for (let i = 0; i < 30; i++) {
+                const d = new Date(thirtyDaysAgo);
+                d.setDate(d.getDate() + i);
+                const key = d.toISOString().split('T')[0];
+                dailyBuckets[key] = { total: 0, chat: 0, smartEntry: 0, report: 0 };
+            }
+
+            dailyLogs.forEach(log => {
+                const key = log.createdAt.toISOString().split('T')[0];
+                if (dailyBuckets[key]) {
+                    dailyBuckets[key].total++;
+                    if (log.type === 'CHAT') dailyBuckets[key].chat++;
+                    else if (log.type === 'SMART_ENTRY') dailyBuckets[key].smartEntry++;
+                    else if (log.type === 'REPORT') dailyBuckets[key].report++;
+                }
+            });
+
+            trendData = Object.entries(dailyBuckets).sort().map(([key, data]) => {
+                const d = new Date(key);
+                return {
+                    label: d.toLocaleDateString('default', { month: 'short', day: 'numeric' }),
+                    value: data.total,
+                    chat: data.chat,
+                    smartEntry: data.smartEntry,
+                    report: data.report
+                };
+            });
+        }
+
+        // 3. Service Distribution (Percentage)
+        const total = stats.totalRequests || 1; // avoid div by 0
+        const distribution = [
+            { label: 'Smart Entry', type: 'SMART_ENTRY', count: stats.byType.SMART_ENTRY, percentage: Math.round((stats.byType.SMART_ENTRY / total) * 100), color: '#00ff9d' },
+            { label: 'Advisor Chat', type: 'CHAT', count: stats.byType.CHAT, percentage: Math.round((stats.byType.CHAT / total) * 100), color: '#0066ff' },
+            { label: 'Reports', type: 'REPORT', count: stats.byType.REPORT, percentage: Math.round((stats.byType.REPORT / total) * 100), color: '#bc13fe' }
+        ].sort((a, b) => b.count - a.count);
+
+
+        res.json({
+            success: true,
+            analytics: {
+                stats: {
+                    totalRequests: stats.totalRequests,
+                    totalTokens: stats.totalTokens, // Cost Basis
+                    avgLatency: '0.8s' // Mock
+                },
+                trend: trendData,
+                distribution
+            }
+        });
+
+    } catch (error) {
+        console.error('AI Analytics Error:', error);
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+};
