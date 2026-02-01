@@ -49,7 +49,7 @@ export async function categorizeEntry(inputPayload) {
                 **Input Text**: "${!isAudio && !hasMedia ? rawText : '(Media Files provided)'}"
 
                 **Image/PDF Analysis Rules (CRITICAL)**:
-                 - If images/PDFs are provided, treat them as RECEIPTS, INVOICES, or BILLS.
+                 - If images/PDFs are provided, treat them as RECEIPTS, INVOICES, BILLS, or SALARY SLIPS.
                  - **Multiple Files**: Analyze ALL provided pages together. They may be part of the same bill or separate bills.
                  - **Merchant & Date**: Extract the Merchant Name and Date (use 'today' if missing).
                  - **Itemization (CRITICAL)**: If the receipt lists multiple items, **DO NOT** just output the total. You must **SPLIT** the receipt into individual line items IF they belong to different categories or types (Need vs Want).
@@ -122,7 +122,8 @@ export async function categorizeEntry(inputPayload) {
                             "category": string,
                             "subcategory": string | null,
                             "date": "YYYY-MM-DD",
-                            "confidence": number (0-1)
+                            "confidence": number (0-1),
+                            "Merchant:"string
                         }
                     ]
                 }
@@ -168,7 +169,7 @@ export async function categorizeEntry(inputPayload) {
                     });
                     parts.push({ text: `\n[File ${index + 1}]` });
                 });
-                parts.push({ text: "\n\nAnalyze the images/PDFs above (Receipts/Bills) and extract the transactions/items as per the Itemization Rules." });
+                parts.push({ text: "\n\nAnalyze the images/PDFs above (Receipts, Bills, Salary Slips, or any financial document) and extract the transactions/items (Income, Expenses, or Savings) as per the Itemization Rules." });
             }
 
             console.log('🤖 [AI Request] Type:', isAudio ? 'Audio (Multimodal)' : hasMedia ? `Media (${mediaItems.length})` : 'Text Only');

@@ -48,6 +48,6 @@ router.post('/entry', authenticate, trackAiUsage('SMART_ENTRY'), upload.single('
  * @access Private
  */
 import { analyzeImage } from '../controllers/smartController.js';
-router.post('/analyze-image', authenticate, trackAiUsage('IMAGE_ANALYSIS'), upload.array('images', 10), analyzeImage);
+router.post('/analyze-image', authenticate, trackAiUsage('SMART_ENTRY'), upload.array('images', 10), analyzeImage);
 
 export default router;

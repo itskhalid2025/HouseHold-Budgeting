@@ -290,7 +290,7 @@ export async function analyzeImage(req, res) {
                     data: {
                         userId,
                         householdId,
-                        type: 'IMAGE_ANALYSIS',
+                        type: 'SMART_ENTRY',
                         tokens: aiResponse.usage?.totalTokens || 0
                     }
                 });
@@ -375,10 +375,10 @@ export async function analyzeImage(req, res) {
                         });
                         table = 'Transaction';
                     }
-                    createdRecords.push({ table, record, item });
+                    createdRecords.push({ table, record, classification: item });
 
                 } catch (e) {
-                    errors.push({ index: i, error: e.message, item });
+                    errors.push({ index: i, error: e.message, classification: item });
                 }
             }
 
