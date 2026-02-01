@@ -256,29 +256,30 @@ export async function analyzeImage(req, res) {
     return traceOperation('analyzeImage', async () => {
         logEntry('smartController', 'analyzeImage', { hasFile: !!req.file });
         try {
-            const imageFile = req.file;
+            const files = req.files;
             const userId = req.user.id;
             const householdId = req.user.householdId;
 
-            if (!imageFile) {
-                return res.status(400).json({ success: false, error: 'Image file is required' });
+            if (!files || files.length === 0) {
+                return res.status(400).json({ success: false, error: 'No image or PDF files uploaded' });
             }
 
             // Prepare input for agent
-            const agentInput = {
-                image: imageFile.buffer.toString('base64'),
-                mimeType: imageFile.mimetype
-            };
+            // Map all files to the input format expected by categorizationAgent
+            const mediaItems = files.map(file => ({
+                data: file.buffer.toString('base64'),
+                mimeType: file.mimetype
+            }));
 
             // Call categorization agent
-            logSuccess('smartController', 'analyzeImage', 'Calling AI for image analysis');
-            const aiResponse = await categorizeEntry(agentInput);
+            logSuccess('smartController', 'analyzeImage', `Calling AI for ${files.length} file(s)`);
+            const aiResponse = await categorizeEntry({ media: mediaItems });
             const { entries } = aiResponse;
 
             if (!entries || entries.length === 0) {
                 return res.status(422).json({
                     success: false,
-                    error: 'Could not extract any valid transactions from the image.',
+                    error: 'Could not extract any valid transactions from the provided files.',
                     aiResponse
                 });
             }

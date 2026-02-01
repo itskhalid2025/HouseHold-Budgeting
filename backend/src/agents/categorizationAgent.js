@@ -11,13 +11,20 @@ export async function categorizeEntry(inputPayload) {
         try {
             // Handle both object wrapper and raw string (backward compatibility)
             const rawText = typeof inputPayload === 'string' ? inputPayload : (inputPayload.text || '');
+
             const audioData = typeof inputPayload === 'object' ? inputPayload.audio : null;
-            const imageData = typeof inputPayload === 'object' ? inputPayload.image : null;
-            const mimeType = typeof inputPayload === 'object' ? inputPayload.mimeType : null;
+            // 'media' is an array of { data: base64, mimeType: string }
+            const mediaItems = typeof inputPayload === 'object' ? inputPayload.media : null;
+
+            // Backward compatibility for single image
+            if (!mediaItems && typeof inputPayload === 'object' && inputPayload.image) {
+                // If single image passed old way, wrap it
+                // We'll normalize this in controller but good for safety
+            }
 
             const isAudio = !!audioData;
-            const isImage = !!imageData;
-            const inputLabel = isAudio ? "Audio Input" : isImage ? "Image Input (Receipt)" : "Text Input";
+            const hasMedia = mediaItems && mediaItems.length > 0;
+            const inputLabel = isAudio ? "Audio Input" : hasMedia ? `Image/PDF Input (${mediaItems.length} files)` : "Text Input";
 
             // Provide current date context for relative date parsing
             const now = new Date();
@@ -39,10 +46,11 @@ export async function categorizeEntry(inputPayload) {
                 - Users may speak in ANY language (English, Hindi, Hinglish, Spanish, etc.).
                 - You must TRANSLATE and INTERPRET the meaning to extract financial details.
                 
-                **Input Text**: "${!isAudio && !isImage ? rawText : '(Media File provided)'}"
+                **Input Text**: "${!isAudio && !hasMedia ? rawText : '(Media Files provided)'}"
 
-                **Image Analysis Rules (CRITICAL for Images)**:
-                 - If an image is provided, treat it as a RECEIPT, INVOICE, or BILL.
+                **Image/PDF Analysis Rules (CRITICAL)**:
+                 - If images/PDFs are provided, treat them as RECEIPTS, INVOICES, or BILLS.
+                 - **Multiple Files**: Analyze ALL provided pages together. They may be part of the same bill or separate bills.
                  - **Merchant & Date**: Extract the Merchant Name and Date (use 'today' if missing).
                  - **Itemization (CRITICAL)**: If the receipt lists multiple items, **DO NOT** just output the total. You must **SPLIT** the receipt into individual line items IF they belong to different categories or types (Need vs Want).
                    - **Example**: A Walmart receipt has Eggs (Need/Food), Water (Need/Food), and a Lobster (Want/Dining).
@@ -139,17 +147,31 @@ export async function categorizeEntry(inputPayload) {
 
             let parts = [{ text: systemInstruction }];
 
-            if (isAudio || isImage) {
+
+            if (isAudio) {
                 parts.push({
                     inlineData: {
-                        mimeType: mimeType || (isAudio ? 'audio/webm' : 'image/jpeg'),
-                        data: isAudio ? audioData : imageData
+                        mimeType: 'audio/webm', // Opus/Vorbis usually
+                        data: audioData
                     }
                 });
-                parts.push({ text: isAudio ? "\n\nAnalyze the audio above and extract the transactions." : "\n\nAnalyze the image above (Receipt/Bill) and extract the transactions/items as per the Itemization Rules." });
+                parts.push({ text: "\n\nAnalyze the audio above and extract the transactions." });
             }
 
-            console.log('🤖 [AI Request] Type:', isAudio ? 'Audio (Multimodal)' : isImage ? 'Image (Vision)' : 'Text Only');
+            if (hasMedia) {
+                mediaItems.forEach((item, index) => {
+                    parts.push({
+                        inlineData: {
+                            mimeType: item.mimeType || 'image/jpeg',
+                            data: item.data
+                        }
+                    });
+                    parts.push({ text: `\n[File ${index + 1}]` });
+                });
+                parts.push({ text: "\n\nAnalyze the images/PDFs above (Receipts/Bills) and extract the transactions/items as per the Itemization Rules." });
+            }
+
+            console.log('🤖 [AI Request] Type:', isAudio ? 'Audio (Multimodal)' : hasMedia ? `Media (${mediaItems.length})` : 'Text Only');
 
             const data = await generateJSON(parts, null, { maxTokens: 4096 });
             console.log('🤖 AI Categorization Result:', JSON.stringify(data, null, 2));

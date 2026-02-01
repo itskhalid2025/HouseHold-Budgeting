@@ -14,7 +14,9 @@
  */
 
 import { useState, useEffect } from 'react';
-import { getTransactionSummary, getMonthlyIncomeTotal, getGoalSummary, parseVoiceInput, getTransactions } from '../../api/api';
+import { getTransactionSummary, getMonthlyIncomeTotal, getGoalSummary, parseVoiceInput, getTransactions, analyzeImage } from '../../api/api';
+
+import { Upload, FileText, Image as ImageIcon } from 'lucide-react'; // Assuming we have lucide-react
 import TrendLineChart from '../../components/charts/TrendLineChart';
 import usePolling from '../../hooks/usePolling';
 import useVoiceInput from '../../hooks/useVoiceInput';
@@ -151,6 +153,70 @@ export default function DashboardDesktop() {
         }
     };
 
+    // ================== DRAG & DROP HANDLERS ==================
+    const [isDragging, setIsDragging] = useState(false);
+    const [analyzingImage, setAnalyzingImage] = useState(false);
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+    };
+
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            handleImageAnalysis(files);
+        }
+    };
+
+    const handleFileSelect = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) {
+            handleImageAnalysis(files);
+        }
+    };
+
+    const handleImageAnalysis = async (files) => {
+        if (!files || files.length === 0) return;
+
+        // Validate types
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
+        const validFiles = files.filter(f => validTypes.includes(f.type) || f.type.startsWith('image/'));
+
+        if (validFiles.length === 0) {
+            alert("Please upload valid image files (JPG, PNG) or PDFs.");
+            return;
+        }
+
+        setAnalyzingImage(true);
+        try {
+            const result = await analyzeImage(validFiles);
+            console.log("Analysis Result:", result);
+
+            if (result.success || result.isCreated) {
+                // Success feedback
+                const count = result.count || 1;
+                const total = result.amount || result.record?.amount || 0;
+                alert(`✅ Successfully analyzed ${validFiles.length} file(s)!\nMatched ${count} transaction(s) totaling ${formatCurrency(total, currency)}.`);
+                fetchDashboardData();
+            } else {
+                alert("Analysis complete but no transactions were confidently extracted. Please check the receipt clarity.");
+            }
+        } catch (err) {
+            console.error("Image analysis failed:", err);
+            alert("Failed to analyze files: " + err.message);
+        } finally {
+            setAnalyzingImage(false);
+        }
+    };
+
     const handleVoiceSubmit = () => {
         stopListening();
         // Wait a small moment to ensure Blob is finalized if "Stop" wasn't pressed before "Process",
@@ -203,8 +269,41 @@ export default function DashboardDesktop() {
                     <h1>Dashboard</h1>
                     <p>Welcome to HouseHold Budgeting! Your financial overview.</p>
                 </div>
+
                 <div className="smart-actions">
-                    {/* + Add Button Removed */}
+                    {/* Drop Zone / Smart Scan Button */}
+                    <button
+                        className={`btn-smart-scan ${isDragging ? 'dragging' : ''} ${analyzingImage ? 'analyzing' : ''}`}
+                        onDragOver={handleDragOver}
+                        onDragLeave={handleDragLeave}
+                        onDrop={handleDrop}
+                        onClick={() => document.getElementById('desktop-file-input').click()}
+                        title="Click to Scan or Drag Receipts here"
+                        disabled={analyzingImage}
+                    >
+                        <input
+                            type="file"
+                            id="desktop-file-input"
+                            multiple
+                            accept="image/*,application/pdf"
+                            style={{ display: 'none' }}
+                            onChange={handleFileSelect}
+                        />
+                        {analyzingImage ? (
+                            <>
+                                <div className="spinner-small-btn"></div>
+                                <span>Analyzing...</span>
+                            </>
+                        ) : (
+                            <>
+                                <div className="icon-row">
+                                    <ImageIcon size={20} />
+                                </div>
+                                <span>{isDragging ? 'Drop Here!' : 'Smart Scan'}</span>
+                            </>
+                        )}
+                    </button>
+
                     {isSupported && (
                         <button
                             className="btn-smart-voice"
@@ -298,88 +397,92 @@ export default function DashboardDesktop() {
             </div>
 
             {/* Voice Input Modal */}
-            {showVoiceModal && (
-                <div className="modal-overlay" onClick={() => { stopListening(); setShowVoiceModal(false); }}>
-                    <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header-row">
-                            <h3>Smart Voice Entry</h3>
-                            {/* Top right close button if needed, or user can click cancel below */}
-                        </div>
-                        <p className="modal-subtitle">Speak natural language (e.g., "Spent 50 on food", "Got 2000 salary")</p>
-
-                        {!audioBlob ? (
-                            // Recording State
-                            <>
-                                <div className={`mic-container ${isListening ? 'listening' : ''}`}>
-                                    <div className="mic-icon">🎤</div>
-                                    {isListening && <div className="ripple"></div>}
-                                </div>
-
-                                <div className="transcript-box">
-                                    {isListening ? "Listening..." : "Tap start and speak..."}
-                                </div>
-
-                                <div className="voice-controls">
-                                    {!isListening ? (
-                                        <button className="btn-primary" onClick={startListening}>Start Listening</button>
-                                    ) : (
-                                        <button className="btn-danger" onClick={stopListening}>Stop</button>
-                                    )}
-                                </div>
-                            </>
-                        ) : (
-                            // Review State (Audio Captured)
-                            <div className="audio-review-container">
-                                <div className="audio-player-wrapper">
-                                    <audio controls src={URL.createObjectURL(audioBlob)} className="mini-player" />
-                                </div>
-
-                                <div className="voice-controls review-controls">
-                                    {/* Cross Button to Cancel/Retake */}
-                                    <button
-                                        className="btn-icon-cancel"
-                                        onClick={() => { resetTranscript(); }}
-                                        title="Cancel Recording"
-                                    >
-                                        ❌
-                                    </button>
-
-                                    {/* Process Button */}
-                                    <button className="btn-success" onClick={() => processSmartEntry(audioBlob)}>
-                                        Process Entry
-                                    </button>
-                                </div>
+            {
+                showVoiceModal && (
+                    <div className="modal-overlay" onClick={() => { stopListening(); setShowVoiceModal(false); }}>
+                        <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
+                            <div className="modal-header-row">
+                                <h3>Smart Voice Entry</h3>
+                                {/* Top right close button if needed, or user can click cancel below */}
                             </div>
-                        )}
+                            <p className="modal-subtitle">Speak natural language (e.g., "Spent 50 on food", "Got 2000 salary")</p>
+
+                            {!audioBlob ? (
+                                // Recording State
+                                <>
+                                    <div className={`mic-container ${isListening ? 'listening' : ''}`}>
+                                        <div className="mic-icon">🎤</div>
+                                        {isListening && <div className="ripple"></div>}
+                                    </div>
+
+                                    <div className="transcript-box">
+                                        {isListening ? "Listening..." : "Tap start and speak..."}
+                                    </div>
+
+                                    <div className="voice-controls">
+                                        {!isListening ? (
+                                            <button className="btn-primary" onClick={startListening}>Start Listening</button>
+                                        ) : (
+                                            <button className="btn-danger" onClick={stopListening}>Stop</button>
+                                        )}
+                                    </div>
+                                </>
+                            ) : (
+                                // Review State (Audio Captured)
+                                <div className="audio-review-container">
+                                    <div className="audio-player-wrapper">
+                                        <audio controls src={URL.createObjectURL(audioBlob)} className="mini-player" />
+                                    </div>
+
+                                    <div className="voice-controls review-controls">
+                                        {/* Cross Button to Cancel/Retake */}
+                                        <button
+                                            className="btn-icon-cancel"
+                                            onClick={() => { resetTranscript(); }}
+                                            title="Cancel Recording"
+                                        >
+                                            ❌
+                                        </button>
+
+                                        {/* Process Button */}
+                                        <button className="btn-success" onClick={() => processSmartEntry(audioBlob)}>
+                                            Process Entry
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* Text Input Modal */}
-            {showTextModal && (
-                <div className="modal-overlay" onClick={() => setShowTextModal(false)}>
-                    <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
-                        <h3>Smart Text Entry</h3>
-                        <p className="modal-subtitle">Type natural language (e.g., "Paid 100 for internet")</p>
+            {
+                showTextModal && (
+                    <div className="modal-overlay" onClick={() => setShowTextModal(false)}>
+                        <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
+                            <h3>Smart Text Entry</h3>
+                            <p className="modal-subtitle">Type natural language (e.g., "Paid 100 for internet")</p>
 
-                        <form onSubmit={handleTextSubmit}>
-                            <textarea
-                                className="smart-text-input"
-                                value={textInput}
-                                onChange={(e) => setTextInput(e.target.value)}
-                                placeholder="Describe your transaction..."
-                                autoFocus
-                                rows={3}
-                            />
+                            <form onSubmit={handleTextSubmit}>
+                                <textarea
+                                    className="smart-text-input"
+                                    value={textInput}
+                                    onChange={(e) => setTextInput(e.target.value)}
+                                    placeholder="Describe your transaction..."
+                                    autoFocus
+                                    rows={3}
+                                />
 
-                            <div className="voice-controls" style={{ marginTop: '16px' }}>
-                                <button type="button" className="btn-secondary" onClick={() => setShowTextModal(false)}>Cancel</button>
-                                <button type="submit" className="btn-success">Process Entry</button>
-                            </div>
-                        </form>
+                                <div className="voice-controls" style={{ marginTop: '16px' }}>
+                                    <button type="button" className="btn-secondary" onClick={() => setShowTextModal(false)}>Cancel</button>
+                                    <button type="submit" className="btn-success">Process Entry</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </div>
-            )}
+                )
+            }
         </div>
     );
 }

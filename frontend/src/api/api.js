@@ -562,8 +562,8 @@ export async function parseVoiceInput(input) {
     }
 }
 
-export async function analyzeImage(imageFile) {
-    console.log('🖼️ Analyzing Image...');
+export async function analyzeImage(files) {
+    console.log('🖼️ Analyzing Image(s)...');
     startAIRequest();
     try {
         const token = getToken();
@@ -572,7 +572,15 @@ export async function analyzeImage(imageFile) {
         if (token) headers['Authorization'] = `Bearer ${token}`;
 
         const formData = new FormData();
-        formData.append('image', imageFile);
+
+        // Handle array of files
+        if (Array.isArray(files)) {
+            files.forEach(file => {
+                formData.append('images', file);
+            });
+        } else {
+            formData.append('images', files); // Fallback for single file
+        }
 
         const response = await trackedFetch(`${API_BASE_URL}/smart/analyze-image`, {
             method: 'POST',

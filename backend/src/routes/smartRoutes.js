@@ -19,7 +19,7 @@ import multer from 'multer';
 // Configure multer for memory storage
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 10 * 1024 * 1024 } // 10 MB limit
+    limits: { fileSize: 25 * 1024 * 1024 } // 25 MB limit
 });
 
 /**
@@ -44,10 +44,10 @@ router.post('/entry', authenticate, trackAiUsage('SMART_ENTRY'), upload.single('
 
 /**
  * @route POST /api/smart/analyze-image
- * @desc Analyze an uploaded image (receipt) and extract transaction details
+ * @desc Analyze uploaded images/PDFs (receipts) and extract transaction details
  * @access Private
  */
 import { analyzeImage } from '../controllers/smartController.js';
-router.post('/analyze-image', authenticate, trackAiUsage('IMAGE_ANALYSIS'), upload.single('image'), analyzeImage);
+router.post('/analyze-image', authenticate, trackAiUsage('IMAGE_ANALYSIS'), upload.array('images', 10), analyzeImage);
 
 export default router;

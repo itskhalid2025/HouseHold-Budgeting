@@ -13,12 +13,14 @@
 ## How to Test
 1.  **Navigate** to the **Smart Entry** menu (usually the floating "+" button on mobile or dashboard).
 2.  **Select** the new "**Scan Receipt**" option.
-3.  **Upload** a receipt image (e.g., a Walmart receipt with food and non-food items).
-4.  **Wait** for the "Analyzing Receipt..." process to complete.
+3.  **Upload** 1 or more receipt images/PDFs (Max 25MB total).
+    -   **Mobile**: Tap "Scan" to take a photo, or "Upload" to select multiple files from Gallery/Storage.
+    -   **Desktop**: Drag & Drop multiple files onto the "Drop Receipts / PDF" zone on the Dashboard.
+4.  **Wait** for the analysis to complete.
 5.  **Verify** that:
-    -   The receipt is split into multiple transactions if applicable (e.g., Eggs as Need/Food, Lobster as Want/Dining).
-    -   The correct Date and Merchant Name are applied to all entries.
-    -   The transactions appear in your Dashboard/Transactions list.
+    -   Multiple receipts are processed correctly.
+    -   A single multi-page PDF is analyzed as one document (or multiple receipts if distinct).
+    -   Transactions are created and itemized properly.
 
 ## Database & Logs
 -   Check `AiUsageLog` table to see new `IMAGE_ANALYSIS` entries.

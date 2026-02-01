@@ -53,19 +53,22 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
     };
 
     const handleImageUpload = async (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
+        const fileList = e.target.files;
+        if (!fileList || fileList.length === 0) return;
+
+        // Convert FileList to Array
+        const files = Array.from(fileList);
 
         setLoading(true);
         try {
-            const result = await analyzeImage(file);
+            const result = await analyzeImage(files);
             console.log('Image Analysis Result:', result);
             if (result.success || result.isCreated) {
                 if (onEntryComplete) onEntryComplete(result);
                 handleClose();
             } else {
                 console.warn("Image processed but returned unsuccessful status", result);
-                alert("Could not process image. Please try again or check the receipt clarity.");
+                alert("Could not process image(s). Please try again or check the receipt clarity.");
             }
         } catch (err) {
             console.error(err);
@@ -103,40 +106,81 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
 
             {mode === 'image' && (
                 <div className="image-interface" style={{ textAlign: 'center', padding: '20px' }}>
-                    <div className="upload-container" style={{
-                        border: '2px dashed rgba(255,255,255,0.2)',
-                        borderRadius: '12px',
-                        padding: '40px 20px',
-                        marginBottom: '20px'
-                    }}>
-                        <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            id="receipt-upload"
-                            style={{ display: 'none' }}
-                            onChange={handleImageUpload}
-                            disabled={loading}
-                        />
-                        <label htmlFor="receipt-upload" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '15px', cursor: 'pointer' }}>
-                            <div style={{
-                                width: '80px', height: '80px',
-                                background: 'rgba(0, 242, 255, 0.1)',
-                                borderRadius: '50%',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                color: 'var(--neon-cyan)'
-                            }}>
-                                <Camera size={40} />
-                            </div>
-                            <span style={{ fontSize: '1.1rem', fontWeight: '600' }}>
-                                {loading ? 'Analyzing Receipt...' : 'Tap to Capture'}
-                            </span>
-                            <span className="text-muted" style={{ fontSize: '0.9rem' }}>
-                                {loading ? 'Extracting items & prices...' : 'Upload a receipt or bill'}
-                            </span>
-                        </label>
+                    <div className="image-options-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        {/* Option 1: Camera (Scan) */}
+                        <div className="upload-container" style={{
+                            border: '2px dashed rgba(0, 242, 255, 0.3)',
+                            borderRadius: '12px',
+                            padding: '20px',
+                            background: 'rgba(0, 242, 255, 0.05)'
+                        }}>
+                            <input
+                                type="file"
+                                accept="image/*"
+                                capture="environment"
+                                id="camera-upload"
+                                style={{ display: 'none' }}
+                                onChange={handleImageUpload}
+                                disabled={loading}
+                            />
+                            <label htmlFor="camera-upload" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                <div style={{
+                                    width: '50px', height: '50px',
+                                    background: 'rgba(0, 242, 255, 0.1)',
+                                    borderRadius: '50%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: 'var(--neon-cyan)'
+                                }}>
+                                    <Camera size={24} />
+                                </div>
+                                <span style={{ fontWeight: '600' }}>Snap Photo</span>
+                            </label>
+                        </div>
+
+                        {/* Option 2: Gallery/Files (Upload) */}
+                        <div className="upload-container" style={{
+                            border: '2px dashed rgba(255, 255, 255, 0.2)',
+                            borderRadius: '12px',
+                            padding: '20px',
+                            background: 'rgba(255, 255, 255, 0.05)'
+                        }}>
+                            <input
+                                type="file"
+                                accept="image/*,application/pdf"
+                                multiple
+                                id="file-upload"
+                                style={{ display: 'none' }}
+                                onChange={handleImageUpload}
+                                disabled={loading}
+                            />
+                            <label htmlFor="file-upload" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                                <div style={{
+                                    width: '50px', height: '50px',
+                                    background: 'rgba(255, 255, 255, 0.1)',
+                                    borderRadius: '50%',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                    color: '#fff'
+                                }}>
+                                    <Sparkles size={24} />
+                                </div>
+                                <span style={{ fontWeight: '600' }}>Upload File(s)</span>
+                            </label>
+                        </div>
                     </div>
-                    {loading && <div className="loading-spinner"></div>}
+
+                    <div style={{ marginTop: '20px' }}>
+                        {loading && (
+                            <div className="loading-status">
+                                <div className="loading-spinner"></div>
+                                <p style={{ marginTop: '10px', color: 'var(--text-muted)' }}>Analyzing Receipt(s)...</p>
+                            </div>
+                        )}
+                        {!loading && (
+                            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '10px' }}>
+                                Supports JPG, PNG, HEIC, PDF (Max 25MB)
+                            </p>
+                        )}
+                    </div>
                 </div>
             )}
 

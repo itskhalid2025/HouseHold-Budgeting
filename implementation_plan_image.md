@@ -16,15 +16,29 @@ Enhance the user interface for the Image Analysis feature on both Desktop and Mo
 ### Backend
 #### [MODIFY] [smartRoutes.js](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/backend/src/routes/smartRoutes.js)
 -   Update `multer` configuration:
-    -   Increase `limits.fileSize` to 25MB (`25 * 1024 * 1024`).
-    -   (Optional) Add file filter to accept images and PDFs.
+    -   Increase `limits.fileSize` to 25MB.
+    -   Change `upload.single('image')` to **`upload.array('images', 10)`** (Limit 10 files).
+
+#### [MODIFY] [smartController.js](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/backend/src/controllers/smartController.js)
+-   Update `analyzeImage` to handle `req.files` (array) instead of `req.file`.
+-   Map all files to Gemini `inlineData` parts.
+-   Gemini can handle multiple images in one prompt context, allowing it to correlate data (e.g., if a bill spans 2 pages).
+
+#### [MODIFY] [categorizationAgent.js](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/backend/src/agents/categorizationAgent.js)
+-   Update `categorizeEntry` to accept an array of media items.
+-   Construct `parts` payload with multiple `inlineData` objects.
 
 ### Frontend
 #### [MODIFY] [DashboardDesktop.jsx](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/pages/desktop/DashboardDesktop.jsx)
--   Add a **Drop Zone** area in the `smart-actions` container (left of "Smart Voice").
--   Implement drag-and-drop events (`onDrop`, `onDragOver`).
--   Handle file selection and call `analyzeImage` (already imported/available in api.js).
--   Show a loading state/modal during analysis.
+-   Update dropzone to accept multiple files logic.
+-   Call API with all selected files.
+
+#### [MODIFY] [GlobalSmartEntry.jsx](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/components/mobile/GlobalSmartEntry.jsx)
+-   Add `multiple` attribute to the file input.
+-   Update handler to convert `FileList` to array.
+
+#### [MODIFY] [api.js](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/api/api.js)
+-   Update `analyzeImage` to iterate over files and append to `FormData` with same key `'images'`.
 
 #### [MODIFY] [DashboardDesktop.css](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/pages/desktop/DashboardDesktop.css)
 -   Style the new Drop Zone (dashed border, centering, hover effects).
