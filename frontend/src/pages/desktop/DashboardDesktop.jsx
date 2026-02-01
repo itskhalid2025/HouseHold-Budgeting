@@ -81,16 +81,21 @@ export default function DashboardDesktop() {
 
             if (allTxns.transactions) {
                 allTxns.transactions.forEach(t => {
+                    if (!t.date || t.amount === undefined || t.amount === null) return;
                     const d = t.date.split('T')[0];
                     if (dailyMap[d] !== undefined) {
-                        dailyMap[d] += parseFloat(t.amount);
+                        // Use absolute value for spending chart if amounts are negative
+                        const amount = Math.abs(parseFloat(t.amount));
+                        if (!isNaN(amount)) {
+                            dailyMap[d] += amount;
+                        }
                     }
                 });
             }
 
             const chartData = Object.keys(dailyMap).map(date => ({
                 date: new Date(date).toLocaleDateString(undefined, { weekday: 'short' }),
-                amount: dailyMap[date]
+                amount: Math.round(dailyMap[date])
             }));
 
             setTrendData(chartData);

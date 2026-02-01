@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { getAdminDashboardStats } from '../../api/api';
 import './AdminDashboard.css';
 import { Activity, Users, Home, Cpu, Server } from 'lucide-react';

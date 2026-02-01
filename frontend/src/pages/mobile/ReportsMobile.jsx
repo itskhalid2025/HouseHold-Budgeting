@@ -64,7 +64,7 @@ export default function ReportsMobile() {
   const [viewMode, setViewMode] = useState('scrolling'); // 'scrolling' or 'swipe'
 
   // Check if we are on mobile
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
 
 

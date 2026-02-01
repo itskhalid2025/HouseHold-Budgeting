@@ -1,7 +1,20 @@
 # Desktop Redesign Guide: Modern Minimal + FinTech Professional
 
 > [!IMPORTANT]
-> **Desktop Only**: These changes MUST strictly apply only to desktop views (width > 768px). The mobile experience (layout, navigation, routing) must remain completely untouched and function exactly as it currently does.
+> **Desktop Only**: These changes MUST strictly apply only to desktop views (width >= 768px). The mobile experience (layout, navigation, routing) must remain completely untouched and function exactly as it currently does.
+
+## 0. Strict Viewport Boundary Rule
+
+To prevent "mixing" of mobile and desktop views, the following strict boundary MUST be followed:
+- **Mobile Platform**: Viewport width `< 768px`.
+- **Desktop Platform**: Viewport width `>= 768px`.
+
+**Technical Specification:**
+- **JavaScript**: Use `window.innerWidth < 768` to identify mobile.
+- **CSS (Mobile-First or Segregated)**:
+  - Mobile styles: `@media (max-width: 767px)`
+  - Desktop styles: `@media (min-width: 768px)`
+- **No Shared Layout**: Conditional rendering in `App.jsx` must be the primary gatekeeper for layout components.
 
 ## 1. Analysis of Current Desktop
 

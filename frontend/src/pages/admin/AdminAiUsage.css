@@ -354,7 +354,7 @@
     transition: width 0.8s ease-out;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
     .charts-grid {
         grid-template-columns: 1fr;
     }
