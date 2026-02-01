@@ -21,19 +21,24 @@ const AdminHouseholds = () => {
 
     useEffect(() => {
         fetchHouseholds();
+
+        // Auto-refresh every 30 seconds
+        const interval = setInterval(() => fetchHouseholds(true), 30000);
+        return () => clearInterval(interval);
     }, []);
 
-    const fetchHouseholds = async () => {
+    const fetchHouseholds = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const data = await api.getAdminHouseholds();
             if (data.success) {
                 setHouseholds(data.households);
             }
         } catch (err) {
             console.error('Failed to fetch households', err);
+            if (!silent) alert('Failed to load household data.');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 

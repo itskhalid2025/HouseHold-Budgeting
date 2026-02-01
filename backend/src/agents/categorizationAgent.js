@@ -123,7 +123,7 @@ export async function categorizeEntry(inputPayload) {
                             "subcategory": string | null,
                             "date": "YYYY-MM-DD",
                             "confidence": number (0-1),
-                            "Merchant:"string
+                            "merchant": string | null
                         }
                     ]
                 }

@@ -84,29 +84,29 @@ const AdminUsers = () => {
 
     /**
      * Fetches the list of all users from the API.
-     * Sets loading state before and after the API call.
-     * @returns {Promise<void>}
+     * @param {boolean} silent - If true, skip the loading spinner for background updates.
      */
-    const fetchUsers = useCallback(async () => {
+    const fetchUsers = useCallback(async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const data = await api.getAdminUsers();
             if (data.success) {
                 setUsers(data.users);
-            } else {
-                console.error('API call to getAdminUsers reported an error:', data.message);
-                // Optionally, display a user-friendly error message
             }
         } catch (error) {
             console.error('Failed to fetch users:', error);
-            alert('Failed to load user data. Please try again.');
+            if (!silent) alert('Failed to load user data.');
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     }, []);
 
     useEffect(() => {
         fetchUsers();
+
+        // Auto-refresh every 30 seconds to keep stats updated
+        const interval = setInterval(() => fetchUsers(true), 30000);
+        return () => clearInterval(interval);
     }, [fetchUsers]);
 
     /**

@@ -17,11 +17,13 @@ const AdminAiUsage = () => {
 
     useEffect(() => {
         fetchAnalytics();
+        const interval = setInterval(() => fetchAnalytics(true), 30000);
+        return () => clearInterval(interval);
     }, [viewMode]);
 
-    const fetchAnalytics = async () => {
-        setLoading(true);
+    const fetchAnalytics = async (silent = false) => {
         try {
+            if (!silent) setLoading(true);
             const res = await api.getAdminAiStats(viewMode);
             if (res.success) {
                 setStats({
@@ -33,7 +35,7 @@ const AdminAiUsage = () => {
         } catch (error) {
             console.error('Failed to fetch AI stats:', error);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 

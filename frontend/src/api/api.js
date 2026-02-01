@@ -773,7 +773,7 @@ export async function registerAdmin(data) {
 
 export async function getAdminUsers() {
     const token = localStorage.getItem('adminToken');
-    const response = await trackedFetch(`${API_BASE_URL}/admin/users`, {
+    const response = await trackedFetch(`${API_BASE_URL}/admin/users?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     return handleResponse(response);
@@ -781,7 +781,7 @@ export async function getAdminUsers() {
 
 export async function getAdminHouseholds() {
     const token = localStorage.getItem('adminToken');
-    const response = await trackedFetch(`${API_BASE_URL}/admin/households`, {
+    const response = await trackedFetch(`${API_BASE_URL}/admin/households?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     return handleResponse(response);
@@ -789,7 +789,7 @@ export async function getAdminHouseholds() {
 
 export async function getAdminDashboardStats() {
     const token = localStorage.getItem('adminToken');
-    const response = await trackedFetch(`${API_BASE_URL}/admin/dashboard-stats`, {
+    const response = await trackedFetch(`${API_BASE_URL}/admin/dashboard-stats?t=${Date.now()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
     });
     return handleResponse(response);

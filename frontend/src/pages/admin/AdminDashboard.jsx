@@ -8,23 +8,26 @@ const AdminDashboard = () => {
     const [activity, setActivity] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const fetchStats = async () => {
-            try {
-                const data = await getAdminDashboardStats();
-                if (data.success) {
-                    setStats(data.stats);
-                    setActivity(data.recentActivity);
-                }
-            } catch (err) {
-                console.error("Failed to load admin stats", err);
-            } finally {
-                setLoading(false);
+    const fetchStats = useCallback(async (silent = false) => {
+        try {
+            if (!silent) setLoading(true);
+            const data = await getAdminDashboardStats();
+            if (data.success) {
+                setStats(data.stats);
+                setActivity(data.recentActivity);
             }
-        };
-
-        fetchStats();
+        } catch (err) {
+            console.error("Failed to load admin stats", err);
+        } finally {
+            if (!silent) setLoading(false);
+        }
     }, []);
+
+    useEffect(() => {
+        fetchStats();
+        const interval = setInterval(() => fetchStats(true), 15000); // Faster refresh (15s) for live activity feed
+        return () => clearInterval(interval);
+    }, [fetchStats]);
 
     if (loading) {
         return (
