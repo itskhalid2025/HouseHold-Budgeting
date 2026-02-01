@@ -129,24 +129,29 @@ The **Platform Admin Portal** is a restricted interface for super-admins to over
 
 ---
 
-# 6️⃣ AI USAGE TRACKING SYSTEM
+# 6️⃣ ADVANCED ANALYTICS & CONTROL (Phase 6)
 
-### 📊 Metric Definition
-*   **Request:** 1 call to `parseVoiceInput` or `Advisor`.
-*   **Token:** Estimated characters / 4 (standard approximation).
+### 📊 Enhanced AI Tracking
+*   **Granular Types:** Track usage by category: `CHAT`, `SMART_ENTRY`, `REPORT`.
+*   **Geolocalization:** Track User Country & IP Address.
 
-### 🚦 Enforcement Logic
-1.  **User Initiation:** User speaks or types.
-2.  **Check:** Middleware verfies `!user.isAiRestricted`.
-3.  **Execute:** Call Gemini API.
-4.  **Track:**
-    ```javascript
-    await prisma.user.update({
-        where: { id: userId },
-        data: {
-            aiRequestCount: { increment: 1 },
-            aiTokenCount: { increment: estimatedTokens }
-        }
-    });
-    ```
-5.  **Limit (Optional):** If `aiTokenCount > MONTHLY_LIMIT`, auto-set `isAiRestricted = true`.
+### 🚦 Granular Permissions
+Instead of a single "Block AI" toggle, Admins can now manage specific permissions via `aiSettings` JSON:
+```json
+{
+  "chat": true,
+  "smartEntry": false,
+  "reports": true
+}
+```
+
+### 🛠 Extended Management
+#### User Operations
+*   **Edit Profile:** Update Name, Email Verification Status, Password.
+*   **Delete User:** Hard delete user account (and reassign/delete associated data).
+
+#### Household Operations
+*   **Granular AI Settings:** Apply permissions at the household level.
+*   **Delete Household:** Cascade delete all members and transactions.
+*   **See House Hold location:** able to see the location of the household on the map.
+
