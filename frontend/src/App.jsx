@@ -307,17 +307,38 @@ function JoinRequestNotification() {
 }
 
 // AI Limit Notification
-function AiLimitNotification() {
-  const [notification, setNotification] = useState(null); // { type: 'warning' | 'error', message: string }
+function AiLimitNotification({ isMobile }) {
+  const [notification, setNotification] = useState(null); // { type: 'warning' | 'error', message: string, title: string }
 
   useEffect(() => {
     const handleWarning = (e) => {
-      setNotification({ type: 'warning', message: e.detail });
-      setTimeout(() => setNotification(null), 8000);
+      // Backend msg: "2 chat uses remaining."
+      setNotification({
+        type: 'warning',
+        title: 'Low Usage Warning',
+        message: e.detail
+      });
+      // Warning stays for 8s
+      setTimeout(() => setNotification(null), 4000);
     };
+
     const handleError = (e) => {
-      setNotification({ type: 'error', message: e.detail });
-      setTimeout(() => setNotification(null), 8000);
+      // Backend msg examples: "Your monthly limit of 50 reached...", "AI access is globally restricted..."
+      let title = 'AI Limit Reached';
+      if (e.detail && (
+        e.detail.toLowerCase().includes('restricted') ||
+        e.detail.toLowerCase().includes('disabled')
+      )) {
+        title = 'AI Access Blocked';
+      }
+
+      setNotification({
+        type: 'error',
+        title: title,
+        message: e.detail
+      });
+      // Error stays for 8s
+      setTimeout(() => setNotification(null), 4000);
     };
 
     window.addEventListener('ai-warning', handleWarning);
@@ -331,29 +352,39 @@ function AiLimitNotification() {
 
   if (!notification) return null;
 
+  // Banner Style (mimicking ServerStatus)
+  const bannerStyle = {
+    position: 'fixed',
+    top: '20px',
+    right: '20px',
+    left: isMobile ? '20px' : 'auto',
+    zIndex: 9999,
+    background: 'white',
+    // Border color based on type
+    borderLeft: `5px solid ${notification.type === 'error' ? '#ef4444' : '#ff9800'}`,
+    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.15)',
+    borderRadius: '8px',
+    padding: '16px',
+    animation: 'slideIn 0.3s ease-out',
+    maxWidth: isMobile ? 'none' : '350px'
+  };
+
+  const icon = notification.type === 'error' ? '🚫' : '⚠️';
+  const textColor = '#333';
+  const subTextColor = '#666';
+
   return (
-    <div style={{
-      position: 'fixed',
-      top: '80px',
-      right: '20px',
-      zIndex: 9999,
-      padding: '16px',
-      borderRadius: '8px',
-      backgroundColor: notification.type === 'error' ? '#ef4444' : '#f59e0b',
-      color: '#fff',
-      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-      display: 'flex',
-      alignItems: 'center',
-      gap: '12px',
-      maxWidth: '350px',
-      animation: 'slideIn 0.3s ease'
-    }}>
-      <span style={{ fontSize: '20px' }}>{notification.type === 'error' ? '🚫' : '⚠️'}</span>
-      <div>
-        <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '2px' }}>
-          {notification.type === 'error' ? 'Create Limit Reached' : 'Usage Warning'}
+    <div style={bannerStyle}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '15px' }}>
+        <span style={{ fontSize: '24px', lineHeight: 1 }}>{icon}</span>
+        <div>
+          <strong style={{ display: 'block', color: textColor, marginBottom: '4px', fontSize: '15px' }}>
+            {notification.title}
+          </strong>
+          <p style={{ margin: 0, fontSize: '13px', color: subTextColor, lineHeight: '1.4' }}>
+            {notification.message}
+          </p>
         </div>
-        <div style={{ fontSize: '13px' }}>{notification.message}</div>
       </div>
     </div>
   );
@@ -387,7 +418,7 @@ function AppContent() {
     <div className="app">
       <ServerStatus />
       <AINotification />
-      <AiLimitNotification />
+      <AiLimitNotification isMobile={isMobile} />
       <JoinRequestNotification />
       {!isMobile && <Header />}
 

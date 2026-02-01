@@ -12,10 +12,12 @@ export async function categorizeEntry(inputPayload) {
             // Handle both object wrapper and raw string (backward compatibility)
             const rawText = typeof inputPayload === 'string' ? inputPayload : (inputPayload.text || '');
             const audioData = typeof inputPayload === 'object' ? inputPayload.audio : null;
+            const imageData = typeof inputPayload === 'object' ? inputPayload.image : null;
             const mimeType = typeof inputPayload === 'object' ? inputPayload.mimeType : null;
 
             const isAudio = !!audioData;
-            const inputLabel = isAudio ? "Audio Input" : "Text Input";
+            const isImage = !!imageData;
+            const inputLabel = isAudio ? "Audio Input" : isImage ? "Image Input (Receipt)" : "Text Input";
 
             // Provide current date context for relative date parsing
             const now = new Date();
@@ -37,7 +39,18 @@ export async function categorizeEntry(inputPayload) {
                 - Users may speak in ANY language (English, Hindi, Hinglish, Spanish, etc.).
                 - You must TRANSLATE and INTERPRET the meaning to extract financial details.
                 
-                **Input Text**: "${!isAudio ? rawText : '(Audio File)'}"
+                **Input Text**: "${!isAudio && !isImage ? rawText : '(Media File provided)'}"
+
+                **Image Analysis Rules (CRITICAL for Images)**:
+                 - If an image is provided, treat it as a RECEIPT, INVOICE, or BILL.
+                 - **Merchant & Date**: Extract the Merchant Name and Date (use 'today' if missing).
+                 - **Itemization (CRITICAL)**: If the receipt lists multiple items, **DO NOT** just output the total. You must **SPLIT** the receipt into individual line items IF they belong to different categories or types (Need vs Want).
+                   - **Example**: A Walmart receipt has Eggs (Need/Food), Water (Need/Food), and a Lobster (Want/Dining).
+                   - **Action**: Create 3 separate entries.
+                   - **Shared Data**: All 3 entries share the same Date and Merchant (Description).
+                 - **Tax/Tip**: If splitting, distribute tax/tip proportionally or add it to the largest item.
+                 - **Blurry Images**: If individual items are unreadable, fall back to the **Total Amount** as a single entry.
+
 
                 **Date Parsing Rules** (CRITICAL):
                 - "yesterday" → ${new Date(now - 86400000).toISOString().split('T')[0]}
@@ -126,17 +139,17 @@ export async function categorizeEntry(inputPayload) {
 
             let parts = [{ text: systemInstruction }];
 
-            if (isAudio) {
+            if (isAudio || isImage) {
                 parts.push({
                     inlineData: {
-                        mimeType: mimeType || 'audio/webm',
-                        data: audioData
+                        mimeType: mimeType || (isAudio ? 'audio/webm' : 'image/jpeg'),
+                        data: isAudio ? audioData : imageData
                     }
                 });
-                parts.push({ text: "\n\nAnalyze the audio above and extract the transactions." });
+                parts.push({ text: isAudio ? "\n\nAnalyze the audio above and extract the transactions." : "\n\nAnalyze the image above (Receipt/Bill) and extract the transactions/items as per the Itemization Rules." });
             }
 
-            console.log('🤖 [AI Request] Type:', isAudio ? 'Audio (Multimodal)' : 'Text Only');
+            console.log('🤖 [AI Request] Type:', isAudio ? 'Audio (Multimodal)' : isImage ? 'Image (Vision)' : 'Text Only');
 
             const data = await generateJSON(parts, null, { maxTokens: 4096 });
             console.log('🤖 AI Categorization Result:', JSON.stringify(data, null, 2));

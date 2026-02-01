@@ -38,6 +38,16 @@ import { trackAiUsage } from '../middleware/trackAiUsage.js';
  * @desc Process a natural language entry (voice/text) and create appropriate records
  * @access Private
  */
+// Update upload to handle both audio and images if needed, or create specific ones. 
+// For now, we utilize the same limit but might want to allow 'image' field.
 router.post('/entry', authenticate, trackAiUsage('SMART_ENTRY'), upload.single('audio'), processSmartEntry);
+
+/**
+ * @route POST /api/smart/analyze-image
+ * @desc Analyze an uploaded image (receipt) and extract transaction details
+ * @access Private
+ */
+import { analyzeImage } from '../controllers/smartController.js';
+router.post('/analyze-image', authenticate, trackAiUsage('IMAGE_ANALYSIS'), upload.single('image'), analyzeImage);
 
 export default router;

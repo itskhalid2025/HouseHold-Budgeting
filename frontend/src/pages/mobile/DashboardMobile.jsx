@@ -6,14 +6,14 @@ import {
     getTransactions
 } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import usePolling from '../../hooks/usePolling';
 import { formatCurrency } from '../../utils/currencyUtils';
 import { formatDate } from '../../utils/formatting';
 import TrendLineChart from '../../components/charts/TrendLineChart';
-import { Sun, Moon } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ChatbotButton from '../../components/mobile/ChatbotButton';
+import UserGuide from '../../components/UserGuide';
 
 // Mobile Components
 import MobileCard from '../../components/mobile/MobileCard';
@@ -22,9 +22,9 @@ import './DashboardMobile.css';
 
 export default function DashboardMobile() {
     const { user, currency } = useAuth();
-    const { theme, toggleTheme } = useTheme();
 
     // State
+    const [showGuide, setShowGuide] = useState(false);
     const [stats, setStats] = useState({
         income: 0,
         expenses: 0,
@@ -113,8 +113,8 @@ export default function DashboardMobile() {
                     <h2 className="username">{user?.firstName || 'User'}</h2>
                 </div>
                 <div className="header-actions">
-                    <button className="icon-btn" onClick={toggleTheme}>
-                        {theme === 'dark' ? <Sun size={24} /> : <Moon size={24} />}
+                    <button className="icon-btn" onClick={() => setShowGuide(true)} title="Platform Guide">
+                        <HelpCircle size={24} />
                     </button>
                     <Link to="/settings" className="avatar-small">
                         {(user?.firstName?.[0] || 'U').toUpperCase()}
@@ -178,7 +178,11 @@ export default function DashboardMobile() {
                     )}
                 </div>
             </div>
+
             <ChatbotButton />
+
+            {/* User Guide Modal */}
+            <UserGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
         </div>
     );
 }

@@ -299,31 +299,98 @@ export const updateUser = async (req, res) => {
     }
 };
 
-// Delete User
+// Delete User with proper cleanup/handover
 export const deleteUser = async (req, res) => {
     try {
         const { userId } = req.params;
 
-        // Prevent deleting self (if admin is also a user? usually not linked, but good practice)
-        // Checks handled by middleware usually.
+        // 1. Fetch user to verify existence and check context
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            include: {
+                adminHouseholds: {
+                    include: {
+                        members: {
+                            orderBy: { createdAt: 'asc' },
+                            select: { id: true }
+                        }
+                    }
+                }
+            }
+        });
 
-        const user = await prisma.user.findUnique({ where: { id: userId } });
-        if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+        if (!user) {
+            return res.status(404).json({ success: false, error: 'User not found' });
+        }
 
-        // If user is Admin of a household, warn or block? 
-        // For now, we cascade delete. Prisma schema handles most relations.
-        // However, if they are the ONLY admin of a household, that household might be left orphan if not handled.
-        // The schema says `adminId` on Household is simple field. 
-        // Relation "HouseholdAdmin": User @relation("HouseholdAdmin")
-        // Household `admin User` relation.
+        // 2. Prepare database operations
+        await prisma.$transaction(async (tx) => {
+            // A. Handle Owned Households (Transfer or Delete)
+            if (user.adminHouseholds && user.adminHouseholds.length > 0) {
+                for (const household of user.adminHouseholds) {
+                    const otherMembers = household.members.filter(m => m.id !== userId);
 
-        // Let's delete.
-        await prisma.user.delete({ where: { id: userId } });
+                    if (otherMembers.length > 0) {
+                        // Promote the oldest remaining member (successor)
+                        const successor = otherMembers[0];
+                        console.log(`[DeleteUser] Transferring household ${household.id} ownership to ${successor.id}`);
 
-        res.json({ success: true, message: 'User deleted successfully' });
+                        await tx.household.update({
+                            where: { id: household.id },
+                            data: { adminId: successor.id }
+                        });
+
+                        await tx.user.update({
+                            where: { id: successor.id },
+                            data: { role: 'OWNER' }
+                        });
+                    } else {
+                        // No other members - Delete the household entirely
+                        console.log(`[DeleteUser] Deleting orphaned household ${household.id}`);
+                        await tx.household.delete({
+                            where: { id: household.id }
+                        });
+                    }
+                }
+            }
+
+            // B. Delete User's Data (that doesn't cascade automatically)
+            // Note: We delete these manually as schema might not have Cascade on all relations
+
+            // Delete SplitExpenses linked to user's transactions first
+            await tx.splitExpense.deleteMany({
+                where: {
+                    transaction: {
+                        userId: userId
+                    }
+                }
+            });
+
+            await tx.transaction.deleteMany({ where: { userId } });
+            await tx.income.deleteMany({ where: { userId } });
+            await tx.loan.deleteMany({ where: { userId } });
+            await tx.feedback.deleteMany({ where: { userId } });
+
+            // Goals where user is creator
+            await tx.goal.updateMany({
+                where: { createdById: userId },
+                data: { createdById: null } // Or delete? Keeping goal if household exists seems safer, just remove owner link
+            });
+
+            // Invitations sent by user
+            await tx.invitation.deleteMany({ where: { invitedById: userId } });
+
+            // C. Finally, Delete the User
+            await tx.user.delete({
+                where: { id: userId }
+            });
+        });
+
+        res.json({ success: true, message: 'User and associated data deleted successfully' });
+
     } catch (error) {
         console.error('Delete User Error:', error);
-        res.status(500).json({ success: false, error: 'Failed to delete user' });
+        res.status(500).json({ success: false, error: 'Failed to delete user. Ensure they are not the sole admin of a shared household.' });
     }
 };
 
@@ -629,5 +696,34 @@ export const getAiAnalytics = async (req, res) => {
     } catch (error) {
         console.error('AI Analytics Error:', error);
         res.status(500).json({ success: false, error: 'Server error' });
+    }
+};
+
+// Update AI Limits for ALL Users (Bulk Action)
+export const updateAllUserAiLimits = async (req, res) => {
+    try {
+        const { aiSettings } = req.body;
+
+        if (!aiSettings) {
+            return res.status(400).json({ success: false, error: 'AI Settings are required' });
+        }
+
+        // We use updateMany to apply this to every user in the database
+        // NOTE: This OVERWRITES existing individual preferences, which is the intended "Global Reset" behavior.
+        const result = await prisma.user.updateMany({
+            data: {
+                aiSettings: aiSettings
+            }
+        });
+
+        res.json({
+            success: true,
+            message: `Successfully updated AI limits for ${result.count} users.`,
+            count: result.count
+        });
+
+    } catch (error) {
+        console.error('Bulk AI Update Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to update global limits.' });
     }
 };

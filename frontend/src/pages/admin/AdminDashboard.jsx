@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getAdminDashboardStats } from '../../api/api';
+import './AdminDashboard.css';
+import { Activity, Users, Home, Cpu, Server } from 'lucide-react';
 
 const AdminDashboard = () => {
     const [stats, setStats] = useState(null);
@@ -25,90 +27,125 @@ const AdminDashboard = () => {
     }, []);
 
     if (loading) {
-        return <div style={{ padding: '32px', color: '#fff' }}>Loading dashboard...</div>;
+        return (
+            <div className="admin-page-container">
+                <div className="loading-spinner"></div>
+            </div>
+        );
     }
 
     return (
         <div className="admin-page-container">
-            <h2 className="admin-page-title">Dashboard Overview</h2>
+            <header className="page-header">
+                <div>
+                    <h2 className="page-title">Command Center</h2>
+                    <p className="page-subtitle">System Overview & Live Metrics</p>
+                </div>
+            </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '24px' }}>
+            <div className="dashboard-grid">
                 <StatsCard
                     title="Total Users"
                     value={stats?.totalUsers || 0}
                     change={`+${stats?.newUsers || 0} this week`}
+                    icon={<Users size={24} color="var(--neon-blue)" />}
+                    changeType={stats?.newUsers > 0 ? 'positive' : 'neutral'}
                 />
                 <StatsCard
                     title="Total Households"
                     value={stats?.totalHouseholds || 0}
                     change={`+${stats?.newHouseholds || 0} this week`}
+                    icon={<Home size={24} color="var(--neon-purple)" />}
+                    changeType={stats?.newHouseholds > 0 ? 'positive' : 'neutral'}
                 />
                 <StatsCard
                     title="Total AI Requests"
                     value={stats?.totalAiRequests || 0}
                     change={`+${stats?.todayAiRequests || 0} today`}
+                    icon={<Cpu size={24} color="var(--neon-cyan)" />}
+                    changeType={stats?.todayAiRequests > 0 ? 'positive' : 'neutral'}
                 />
                 <StatsCard
                     title="System Status"
-                    value="Online"
-                    change="Stable"
-                    valueColor="#10b981"
+                    value="ONLINE"
+                    change="All Systems Stable"
+                    valueColor="var(--neon-green)"
+                    icon={<Server size={24} color="var(--neon-green)" />}
+                    changeType="positive"
                 />
             </div>
 
-            <div className="glass-card" style={{ marginTop: '32px' }}>
-                <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: '16px', color: 'var(--neon-text-main)' }}>Recent AI Activity</h3>
+            <div className="dashboard-section">
+                <div className="section-header">
+                    <h3 className="section-title">
+                        <Activity size={20} color="var(--neon-red)" />
+                        Live Activity Feed
+                    </h3>
+                    <div className="live-indicator" title="Live"></div>
+                </div>
 
                 {activity.length === 0 ? (
-                    <div style={{ color: 'var(--neon-text-muted)', fontSize: '14px' }}>
-                        No recent activity logs found.
+                    <div className="text-center" style={{ padding: '2rem', color: 'var(--text-muted)' }}>
+                        No recent activity logs detected.
                     </div>
                 ) : (
-                    <table className="admin-table">
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Action</th>
-                                <th>Country</th>
-                                <th>Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {activity.map(log => (
-                                <tr key={log.id}>
-                                    <td>
-                                        <div style={{ fontWeight: '500', color: '#fff' }}>{log.user}</div>
-                                        <div style={{ fontSize: '12px', color: 'var(--neon-text-muted)' }}>{log.email}</div>
-                                    </td>
-                                    <td>
-                                        <span className={`badge badge-${getColorForType(log.type)}`}>
-                                            {log.type}
-                                        </span>
-                                    </td>
-                                    <td>{log.country || 'N/A'}</td>
-                                    <td>{new Date(log.createdAt).toLocaleString()}</td>
+                    <div className="overflow-x-auto">
+                        <table className="activity-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Action Type</th>
+                                    <th>Origin</th>
+                                    <th>Timestamp</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {activity.map(log => (
+                                    <tr key={log.id}>
+                                        <td>
+                                            <div className="user-snippet">
+                                                <span className="user-snippet-name">{log.user}</span>
+                                                <span className="user-snippet-email">{log.email}</span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span className={`badge badge-${log.type}`}>
+                                                {formatActionType(log.type)}
+                                            </span>
+                                        </td>
+                                        <td style={{ fontFamily: 'monospace', color: 'var(--neon-cyan)' }}>
+                                            {log.country || 'UNKNOWN'}
+                                        </td>
+                                        <td>
+                                            <span className="time-badge">
+                                                {new Date(log.createdAt).toLocaleString()}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 )}
             </div>
         </div>
     );
 };
 
-const getColorForType = (type) => {
-    if (type === 'CHAT') return 'blue';
-    if (type === 'SMART_ENTRY') return 'purple';
-    if (type === 'REPORT') return 'green';
-    return 'gray';
+const formatActionType = (type) => {
+    return type.replace('_', ' ');
 };
 
-const StatsCard = ({ title, value, change, valueColor = '#fff' }) => (
-    <div className="glass-card">
-        <div style={{ color: 'var(--neon-text-muted)', fontSize: '14px', marginBottom: '8px' }}>{title}</div>
-        <div style={{ fontSize: '28px', fontWeight: '700', color: valueColor, marginBottom: '4px' }}>{value}</div>
-        <div style={{ fontSize: '12px', color: 'var(--neon-cyan)' }}>{change}</div>
+const StatsCard = ({ title, value, change, icon, valueColor = '#fff', changeType = 'neutral' }) => (
+    <div className="stat-card">
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
+            <div className="stat-title">{title}</div>
+            <div style={{ opacity: 0.8 }}>{icon}</div>
+        </div>
+        <div className="stat-value" style={{ color: valueColor }}>{value}</div>
+        <div className={`stat-change ${changeType}`}>
+            {change}
+        </div>
     </div>
 );
 

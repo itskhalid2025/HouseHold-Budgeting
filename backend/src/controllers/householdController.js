@@ -425,16 +425,32 @@ export const leaveHousehold = async (req, res) => {
 
         // If OWNER is leaving and there are others...
         if (role === 'OWNER') {
-            const otherOwners = await prisma.user.count({
+            const otherOwnersCount = await prisma.user.count({
                 where: { householdId, role: 'OWNER', NOT: { id: userId } }
             });
 
-            if (otherOwners === 0) {
-                logError('householdController', 'leaveHousehold', new Error('Only admin cannot leave'));
-                return res.status(400).json({
-                    success: false,
-                    error: 'You are the only Admin. Please promote another member to Admin before leaving.'
+            if (otherOwnersCount === 0) {
+                // Determine successor (oldest member who is not the leaving user)
+                const successor = await prisma.user.findFirst({
+                    where: { householdId, NOT: { id: userId } },
+                    orderBy: { createdAt: 'asc' }
                 });
+
+                if (successor) {
+                    logDB('info', 'Transferring ownership', { from: userId, to: successor.id });
+
+                    // Transfer ownership
+                    await prisma.$transaction([
+                        prisma.user.update({
+                            where: { id: successor.id },
+                            data: { role: 'OWNER' }
+                        }),
+                        prisma.household.update({
+                            where: { id: householdId },
+                            data: { adminId: successor.id }
+                        })
+                    ]);
+                }
             }
         }
 

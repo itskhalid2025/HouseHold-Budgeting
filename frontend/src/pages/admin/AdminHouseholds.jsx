@@ -14,6 +14,11 @@ const AdminHouseholds = () => {
     const [editFormData, setEditFormData] = useState({});
     const [showEditModal, setShowEditModal] = useState(false);
 
+    const [filterCountry, setFilterCountry] = useState('All');
+    const [filterMembers, setFilterMembers] = useState('All');
+
+    const uniqueCountries = [...new Set(households.map(h => h.country || 'Global').filter(Boolean))].sort();
+
     useEffect(() => {
         fetchHouseholds();
     }, []);
@@ -52,10 +57,10 @@ const AdminHouseholds = () => {
             country: hh.country || '',
             chatLimit: hh.aiSettings?.chat?.limit ?? 50,
             smartEntryLimit: hh.aiSettings?.smartEntry?.limit ?? 100,
-            reportLimit: hh.aiSettings?.reports?.limit ?? 5,
+            reportsLimit: hh.aiSettings?.reports?.limit ?? 5,
             chatEnabled: hh.aiSettings?.chat?.enabled ?? true,
             smartEntryEnabled: hh.aiSettings?.smartEntry?.enabled ?? true,
-            reportEnabled: hh.aiSettings?.reports?.enabled ?? true
+            reportsEnabled: hh.aiSettings?.reports?.enabled ?? true
         });
         setShowEditModal(true);
     };
@@ -65,7 +70,7 @@ const AdminHouseholds = () => {
             const aiSettings = {
                 chat: { limit: parseInt(editFormData.chatLimit), enabled: editFormData.chatEnabled },
                 smartEntry: { limit: parseInt(editFormData.smartEntryLimit), enabled: editFormData.smartEntryEnabled },
-                reports: { limit: parseInt(editFormData.reportLimit), enabled: editFormData.reportEnabled }
+                reports: { limit: parseInt(editFormData.reportsLimit), enabled: editFormData.reportsEnabled }
             };
 
             const payload = {
@@ -84,6 +89,18 @@ const AdminHouseholds = () => {
             alert('Failed to update household');
         }
     };
+
+    const filteredHouseholds = households.filter(h => {
+        const matchesCountry = filterCountry === 'All' || (h.country || 'Global') === filterCountry;
+
+        let matchesMembers = true;
+        const count = h.members.length;
+        if (filterMembers === '1') matchesMembers = count === 1;
+        else if (filterMembers === '2-3') matchesMembers = count >= 2 && count <= 3;
+        else if (filterMembers === '4+') matchesMembers = count >= 4;
+
+        return matchesCountry && matchesMembers;
+    });
 
     if (loading) {
         return (
@@ -106,6 +123,36 @@ const AdminHouseholds = () => {
                 </div>
             </div>
 
+            {/* Filters Toolbar */}
+            <div className="filters-toolbar" style={{ display: 'flex', gap: '15px', padding: '0 24px 16px', borderBottom: '1px solid var(--border-color)', marginBottom: '16px' }}>
+                <div className="filter-group">
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginRight: '8px' }}>Country:</label>
+                    <select
+                        value={filterCountry}
+                        onChange={(e) => setFilterCountry(e.target.value)}
+                        className="neon-input"
+                        style={{ padding: '6px 12px', width: 'auto', display: 'inline-block' }}
+                    >
+                        <option value="All">All Countries</option>
+                        {uniqueCountries.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </div>
+                <div className="filter-group">
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginRight: '8px' }}>Size:</label>
+                    <select
+                        value={filterMembers}
+                        onChange={(e) => setFilterMembers(e.target.value)}
+                        className="neon-input"
+                        style={{ padding: '6px 12px', width: 'auto', display: 'inline-block' }}
+                    >
+                        <option value="All">All Sizes</option>
+                        <option value="1">Single Member</option>
+                        <option value="2-3">2-3 Members</option>
+                        <option value="4+">4+ Members</option>
+                    </select>
+                </div>
+            </div>
+
             {/* Households Table */}
             <div className="table-container">
                 <div className="overflow-x-auto">
@@ -120,11 +167,11 @@ const AdminHouseholds = () => {
                             </tr>
                         </thead>
                         <tbody>
-                            {households.length === 0 ? (
+                            {filteredHouseholds.length === 0 ? (
                                 <tr>
-                                    <td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>No households registered.</td>
+                                    <td colSpan="5" style={{ textAlign: 'center', padding: '3rem' }}>No households match your filters.</td>
                                 </tr>
-                            ) : households.map(hh => (
+                            ) : filteredHouseholds.map(hh => (
                                 <tr key={hh.id}>
                                     <td>
                                         <div className="household-cell">
@@ -159,18 +206,18 @@ const AdminHouseholds = () => {
                                         </div>
                                     </td>
                                     <td>
-                                        <div style={{ display: 'flex', gap: '8px', fontSize: '0.8rem' }}>
-                                            <div className="stat-pill total" title="Total This Month">
-                                                <span className="icon">Σ</span> {hh.aiUsageMonth?.total || 0}
+                                        <div className="stat-pills-group text-mode">
+                                            <div className="stat-pill total" title="Total usage this month">
+                                                <span className="stat-label">Total:</span> {hh.aiUsageMonth?.total || 0}
                                             </div>
-                                            <div className="stat-pill chat" title="Chat">
-                                                <span className="icon">💬</span> {hh.aiUsageMonth?.chat || 0}
+                                            <div className="stat-pill chat" title="Chat messages">
+                                                <span className="stat-label">Chat:</span> {hh.aiUsageMonth?.chat || 0}
                                             </div>
-                                            <div className="stat-pill smart" title="Smart Entry">
-                                                <span className="icon">⚡</span> {hh.aiUsageMonth?.smartEntry || 0}
+                                            <div className="stat-pill smart" title="Smart Entry parses">
+                                                <span className="stat-label">Smart:</span> {hh.aiUsageMonth?.smartEntry || 0}
                                             </div>
-                                            <div className="stat-pill report" title="Reports">
-                                                <span className="icon">📊</span> {hh.aiUsageMonth?.reports || 0}
+                                            <div className="stat-pill report" title="Reports generated">
+                                                <span className="stat-label">Report:</span> {hh.aiUsageMonth?.reports || 0}
                                             </div>
                                         </div>
                                     </td>
@@ -326,16 +373,6 @@ const AdminHouseholds = () => {
                                                         </span>
                                                     </div>
                                                 </div>
-                                            </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingLeft: '12px', borderLeft: '1px solid rgba(255,255,255,0.1)' }}>
-                                                <label style={{ fontSize: '0.7rem', fontWeight: 'bold', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 0 }}>Limit</label>
-                                                <input
-                                                    type="number"
-                                                    className="setting-limit-input"
-                                                    value={editFormData[`${setting.key}Limit`]}
-                                                    onChange={e => setEditFormData({ ...editFormData, [`${setting.key}Limit`]: e.target.value })}
-                                                    disabled={!editFormData[`${setting.key}Enabled`]}
-                                                />
                                             </div>
                                         </div>
                                     ))}

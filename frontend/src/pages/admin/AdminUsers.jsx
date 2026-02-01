@@ -58,6 +58,18 @@ const AdminUsers = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
 
+    const [filterCountry, setFilterCountry] = useState('All');
+    const [filterStatus, setFilterStatus] = useState('All');
+
+    // Global Limit State
+    const [showGlobalModal, setShowGlobalModal] = useState(false);
+    const [globalFormData, setGlobalFormData] = useState({
+        chatLimit: 50, smartEntryLimit: 100, reportsLimit: 5,
+        chatEnabled: true, smartEntryEnabled: true, reportsEnabled: true
+    });
+
+    const uniqueCountries = [...new Set(users.map(u => u.country || 'Unknown').filter(Boolean))].sort();
+
     /**
      * @type {[UserData|null, React.Dispatch<React.SetStateAction<UserData|null>>]}
      */
@@ -142,10 +154,10 @@ const AdminUsers = () => {
             password: '', // Password is never pre-filled for security
             chatLimit: user.aiSettings?.chat?.limit ?? 50,
             smartEntryLimit: user.aiSettings?.smartEntry?.limit ?? 100,
-            reportLimit: user.aiSettings?.reports?.limit ?? 5,
+            reportsLimit: user.aiSettings?.reports?.limit ?? 5,
             chatEnabled: user.aiSettings?.chat?.enabled ?? true,
             smartEntryEnabled: user.aiSettings?.smartEntry?.enabled ?? true,
-            reportEnabled: user.aiSettings?.reports?.enabled ?? true
+            reportsEnabled: user.aiSettings?.reports?.enabled ?? true
         });
         setShowEditModal(true);
     };
@@ -157,6 +169,14 @@ const AdminUsers = () => {
     const handleFormChange = (e) => {
         const { name, value, type, checked } = e.target;
         setEditFormData(prevData => ({
+            ...prevData,
+            [name]: type === 'checkbox' ? checked : value
+        }));
+    };
+
+    const handleGlobalFormChange = (e) => {
+        const { name, value, type, checked } = e.target;
+        setGlobalFormData(prevData => ({
             ...prevData,
             [name]: type === 'checkbox' ? checked : value
         }));
@@ -177,7 +197,7 @@ const AdminUsers = () => {
             const aiSettings = {
                 chat: { limit: parseInt(editFormData.chatLimit, 10), enabled: editFormData.chatEnabled },
                 smartEntry: { limit: parseInt(editFormData.smartEntryLimit, 10), enabled: editFormData.smartEntryEnabled },
-                reports: { limit: parseInt(editFormData.reportLimit, 10), enabled: editFormData.reportEnabled }
+                reports: { limit: parseInt(editFormData.reportsLimit, 10), enabled: editFormData.reportsEnabled }
             };
 
             const payload = {
@@ -206,15 +226,47 @@ const AdminUsers = () => {
         }
     };
 
+    const handleSaveGlobalLimits = async () => {
+        if (!window.confirm('WARNING: This will overwrite AI quotas for ALL users. Continue?')) {
+            return;
+        }
+
+        try {
+            const aiSettings = {
+                chat: { limit: parseInt(globalFormData.chatLimit, 10), enabled: globalFormData.chatEnabled },
+                smartEntry: { limit: parseInt(globalFormData.smartEntryLimit, 10), enabled: globalFormData.smartEntryEnabled },
+                reports: { limit: parseInt(globalFormData.reportsLimit, 10), enabled: globalFormData.reportsEnabled }
+            };
+
+            const res = await api.updateAllUsersAiLimits(aiSettings);
+            if (res.success) {
+                alert(`Success: Updated limits for ${res.count} users.`);
+                setShowGlobalModal(false);
+                fetchUsers();
+            } else {
+                alert('Failed to update global limits: ' + res.error);
+            }
+        } catch (error) {
+            console.error('Bulk update failed:', error);
+            alert('An unexpected error occurred.');
+        }
+    };
+
     /**
      * Filters the list of users based on the search term.
      * @type {UserData[]}
      */
-    const filteredUsers = users.filter(user =>
-        user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        user.lastName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredUsers = users.filter(user => {
+        const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            user.lastName.toLowerCase().includes(searchTerm.toLowerCase());
+
+        const matchesCountry = filterCountry === 'All' || (user.country || 'Unknown') === filterCountry;
+        const matchesStatus = filterStatus === 'All' ||
+            (filterStatus === 'Verified' ? user.emailVerified : !user.emailVerified);
+
+        return matchesSearch && matchesCountry && matchesStatus;
+    });
 
     /**
      * Closes the modal and resets editing state.
@@ -231,8 +283,9 @@ const AdminUsers = () => {
      */
     useEffect(() => {
         const handleKeyDown = (event) => {
-            if (event.key === 'Escape' && showEditModal) {
-                closeModal();
+            if (event.key === 'Escape') {
+                if (showEditModal) closeModal();
+                if (showGlobalModal) setShowGlobalModal(false);
             }
         };
 
@@ -240,7 +293,7 @@ const AdminUsers = () => {
         return () => {
             document.removeEventListener('keydown', handleKeyDown);
         };
-    }, [showEditModal]);
+    }, [showEditModal, showGlobalModal]);
 
     return (
         <main className="admin-page-container" role="main" aria-label="User Management Section">
@@ -249,29 +302,61 @@ const AdminUsers = () => {
                     <h1 className="page-title" id="user-management-title">User Management</h1>
                     <p className="page-subtitle" id="user-management-description">Manage platform users, verify accounts, and configure AI quotas.</p>
                 </div>
-                <div className="search-container" role="search">
-                    <Search className="search-icon" aria-hidden="true" />
-                    <input
-                        type="text"
-                        placeholder="Search users by email or name..."
-                        className="search-input"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        aria-label="Search users"
-                        aria-describedby="search-description"
-                        id="user-search-input"
-                    />
-                    <span id="search-description" className="sr-only">Enter user email or first name to search.</span>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                    <button className="btn btn-secondary" onClick={() => setShowGlobalModal(true)} style={{ whiteSpace: 'nowrap' }}>
+                        <Zap size={16} /> Global Limits
+                    </button>
+                    <div className="search-container" role="search">
+                        <Search className="search-icon" aria-hidden="true" />
+                        <input
+                            type="text"
+                            placeholder="Search..."
+                            className="search-input"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            aria-label="Search users"
+                        />
+                    </div>
                 </div>
             </header>
 
-            <section className="table-container" aria-labelledby="user-management-title" aria-describedby="user-management-description">
+            {/* Filters Toolbar */}
+            <div className="filters-toolbar" style={{ display: 'flex', gap: '15px', padding: '0 24px 16px', borderBottom: '1px solid var(--border-color)' }}>
+                <div className="filter-group">
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginRight: '8px' }}>Country:</label>
+                    <select
+                        value={filterCountry}
+                        onChange={(e) => setFilterCountry(e.target.value)}
+                        className="form-input"
+                        style={{ padding: '6px 12px', width: 'auto' }}
+                    >
+                        <option value="All">All Countries</option>
+                        {uniqueCountries.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                </div>
+                <div className="filter-group">
+                    <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginRight: '8px' }}>Status:</label>
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="form-input"
+                        style={{ padding: '6px 12px', width: 'auto' }}
+                    >
+                        <option value="All">All Statuses</option>
+                        <option value="Verified">Verified</option>
+                        <option value="Pending">Pending</option>
+                    </select>
+                </div>
+            </div>
+
+            <section className="table-container" aria-labelledby="user-management-title" aria-describedby="user-management-description" style={{ marginTop: '0' }}>
                 <div className="overflow-x-auto">
                     <table className="data-table" role="table" aria-label="List of platform users">
                         <caption className="sr-only">Table displaying all platform users with their details and AI usage.</caption>
                         <thead>
                             <tr>
-                                <th scope="col" aria-sort="none">User</th>
+                                <th scope="col" aria-sort="none">Name</th>
+                                <th scope="col" aria-sort="none">Email</th>
                                 <th scope="col" aria-sort="none">Country</th>
                                 <th scope="col" aria-sort="none">Household</th>
                                 <th scope="col" aria-sort="none">Verified</th>
@@ -282,38 +367,38 @@ const AdminUsers = () => {
                         <tbody>
                             {loading ? (
                                 <tr className="table-message-row">
-                                    <td colSpan="6" role="alert" aria-live="polite">
+                                    <td colSpan="7" role="alert" aria-live="polite">
                                         <div className="loading-spinner" aria-hidden="true"></div>
                                         <span>Loading user data...</span>
                                     </td>
                                 </tr>
                             ) : filteredUsers.length === 0 ? (
                                 <tr className="table-message-row">
-                                    <td colSpan="6" role="alert" aria-live="polite">
+                                    <td colSpan="7" role="alert" aria-live="polite">
                                         No users found matching your search criteria.
                                     </td>
                                 </tr>
                             ) : filteredUsers.map((user, index) => (
-                                <tr key={user.id} aria-rowindex={index + 2}> {/* +1 for header, +1 for 0-index */}
+                                <tr key={user.id} aria-rowindex={index + 2}>
                                     <td aria-colindex="1">
                                         <div className="user-cell">
                                             <div className="user-avatar-small" aria-hidden="true">
                                                 {user.firstName ? user.firstName[0] : '?'}
                                             </div>
-                                            <div>
-                                                <span className="user-text-name">{user.firstName} {user.lastName}</span>
-                                                <span className="user-text-email">{user.email}</span>
-                                            </div>
+                                            <span className="user-text-name">{user.firstName} {user.lastName}</span>
                                         </div>
                                     </td>
                                     <td aria-colindex="2">
+                                        <span className="user-text-email">{user.email}</span>
+                                    </td>
+                                    <td aria-colindex="3">
                                         {user.country ? (
                                             <span>{user.country}</span>
                                         ) : (
                                             <span className="text-muted-italic">Unknown</span>
                                         )}
                                     </td>
-                                    <td aria-colindex="3">
+                                    <td aria-colindex="4">
                                         {user.householdName ? (
                                             <span className="badge badge-household">
                                                 {user.householdName}
@@ -322,28 +407,28 @@ const AdminUsers = () => {
                                             <span className="text-muted-small-italic">No Household</span>
                                         )}
                                     </td>
-                                    <td aria-colindex="4">
+                                    <td aria-colindex="5">
                                         <span className={`badge ${user.emailVerified ? 'badge-verified' : 'badge-pending'}`}>
                                             {user.emailVerified ? 'Verified' : 'Pending'}
                                         </span>
                                     </td>
-                                    <td aria-colindex="5">
-                                        <div className="stat-pills-group">
-                                            <div className="stat-pill total" title="Total AI interactions this month" aria-label={`Total AI usage this month: ${user.aiUsageMonth?.total || 0}`}>
-                                                <Activity className="icon" size={14} aria-hidden="true" /> {user.aiUsageMonth?.total || 0}
+                                    <td aria-colindex="6">
+                                        <div className="stat-pills-group text-mode">
+                                            <div className="stat-pill total" title="Total AI interactions this month">
+                                                <span className="stat-label">Total:</span> {user.aiUsageMonth?.total || 0}
                                             </div>
-                                            <div className="stat-pill chat" title="Chat messages this month" aria-label={`Chat messages usage this month: ${user.aiUsageMonth?.chat || 0}`}>
-                                                <MessageSquare className="icon" size={14} aria-hidden="true" /> {user.aiUsageMonth?.chat || 0}
+                                            <div className="stat-pill chat" title="Chat messages this month">
+                                                <span className="stat-label">Chat:</span> {user.aiUsageMonth?.chat || 0}
                                             </div>
-                                            <div className="stat-pill smart" title="Smart Entry parses this month" aria-label={`Smart entry usage this month: ${user.aiUsageMonth?.smartEntry || 0}`}>
-                                                <Zap className="icon" size={14} aria-hidden="true" /> {user.aiUsageMonth?.smartEntry || 0}
+                                            <div className="stat-pill smart" title="Smart Entry parses this month">
+                                                <span className="stat-label">Smart:</span> {user.aiUsageMonth?.smartEntry || 0}
                                             </div>
-                                            <div className="stat-pill report" title="Reports generated this month" aria-label={`Reports usage this month: ${user.aiUsageMonth?.reports || 0}`}>
-                                                <BarChart2 className="icon" size={14} aria-hidden="true" /> {user.aiUsageMonth?.reports || 0}
+                                            <div className="stat-pill report" title="Reports generated this month">
+                                                <span className="stat-label">Report:</span> {user.aiUsageMonth?.reports || 0}
                                             </div>
                                         </div>
                                     </td>
-                                    <td aria-colindex="6" className="text-center">
+                                    <td aria-colindex="7" className="text-center">
                                         <div className="action-buttons">
                                             <button
                                                 onClick={() => handleEditClick(user)}
@@ -542,7 +627,105 @@ const AdminUsers = () => {
                     </div>
                 </div>
             )}
-        </main>
+
+            {/* Global Limits Modal */}
+            {showGlobalModal && (
+                <div
+                    className="modal-overlay"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="global-limits-modal-title"
+                >
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <div>
+                                <h2 className="modal-title" id="global-limits-modal-title">Global AI Quotas</h2>
+                                <p className="page-subtitle" style={{ margin: 0 }}>Set default limits for ALL users</p>
+                            </div>
+                            <button
+                                onClick={() => setShowGlobalModal(false)}
+                                className="close-btn"
+                                aria-label="Close global limits modal"
+                            >
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="modal-body">
+                            <div className="alert-warning" style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#fff3cd', color: '#856404', borderRadius: '4px', border: '1px solid #ffeeba' }}>
+                                <strong>Warning:</strong> Saving these settings will overwrite AI quotas for <strong>all users</strong> in the database.
+                            </div>
+
+                            <section className="form-section">
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                    {[{
+                                        key: 'chat',
+                                        label: 'Advisor Chat',
+                                        desc: 'Default chat limit for all users',
+                                        icon: <MessageSquare size={16} />
+                                    }, {
+                                        key: 'smartEntry',
+                                        label: 'Smart Entry',
+                                        desc: 'Default smart entry limit',
+                                        icon: <Zap size={16} />
+                                    }, {
+                                        key: 'reports',
+                                        label: 'Financial Reports',
+                                        desc: 'Default report generation limit',
+                                        icon: <BarChart2 size={16} />
+                                    }].map((setting) => {
+                                        const isEnabled = globalFormData[`${setting.key}Enabled`];
+                                        return (
+                                            <div key={setting.key} className="setting-row">
+                                                <div className="checkbox-wrapper">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`global-${setting.key}Enabled`}
+                                                        name={`${setting.key}Enabled`}
+                                                        checked={isEnabled}
+                                                        onChange={handleGlobalFormChange}
+                                                    />
+                                                    <div>
+                                                        <label htmlFor={`global-${setting.key}Enabled`} className="setting-label">
+                                                            {setting.icon} {setting.label}
+                                                        </label>
+                                                        <div className="setting-description">{setting.desc}</div>
+                                                    </div>
+                                                </div>
+                                                <div className="setting-limit-control">
+                                                    <label htmlFor={`global-${setting.key}Limit`}>Limit</label>
+                                                    <input
+                                                        type="number"
+                                                        id={`global-${setting.key}Limit`}
+                                                        name={`${setting.key}Limit`}
+                                                        className="setting-limit-input"
+                                                        value={globalFormData[`${setting.key}Limit`] || ''}
+                                                        onChange={handleGlobalFormChange}
+                                                        disabled={!isEnabled}
+                                                        min="0"
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </section>
+                        </div>
+
+                        <div className="modal-footer">
+                            <button onClick={() => setShowGlobalModal(false)} className="btn btn-secondary">
+                                Cancel
+                            </button>
+                            <button onClick={handleSaveGlobalLimits} className="btn btn-primary">
+                                <Check size={18} />
+                                Apply to All Users
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+        </main >
     );
 };
 

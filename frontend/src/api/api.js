@@ -80,7 +80,11 @@ async function handleResponse(response) {
 
     if (!response.ok) {
         // Check for specific error codes for Events
-        if (data.code === 'LIMIT_REACHED' || data.code === 'FEATURE_DISABLED') {
+        if (data.code && (
+            data.code.startsWith('LIMIT_') ||
+            data.code.startsWith('FEATURE_') ||
+            data.code.includes('RESTRICTED')
+        )) {
             window.dispatchEvent(new CustomEvent('ai-error', { detail: data.error }));
         }
 
@@ -558,6 +562,60 @@ export async function parseVoiceInput(input) {
     }
 }
 
+export async function analyzeImage(imageFile) {
+    console.log('🖼️ Analyzing Image...');
+    startAIRequest();
+    try {
+        const token = getToken();
+        // Headers (let browser set Content-Type for FormData)
+        const headers = {};
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+
+        const formData = new FormData();
+        formData.append('image', imageFile);
+
+        const response = await trackedFetch(`${API_BASE_URL}/smart/analyze-image`, {
+            method: 'POST',
+            headers: headers,
+            body: formData
+        });
+
+        const result = await handleResponse(response);
+        console.log('🖼️ Image Analysis Result:', result);
+
+        // Standardize output format to match voice/text entry
+        if (result.success && result.entries && result.entries.length > 0) {
+            if (result.count > 1) {
+                const totalAmount = result.entries.reduce((sum, e) => sum + parseFloat(e.record.amount), 0);
+                const descriptions = result.entries.map(e => e.classification.description).join(', ');
+                return {
+                    isCreated: true,
+                    type: 'Multiple (Receipt)',
+                    description: descriptions,
+                    amount: totalAmount.toFixed(2),
+                    count: result.count,
+                    entries: result.entries
+                };
+            } else {
+                const entry = result.entries[0];
+                return {
+                    isCreated: true,
+                    action: result.action,
+                    table: entry.table,
+                    description: entry.classification.description,
+                    amount: entry.record.amount,
+                    date: entry.record.date || entry.record.startDate,
+                    type: entry.classification.type,
+                    category: entry.classification.category
+                };
+            }
+        }
+        return result;
+    } finally {
+        stopAIRequest();
+    }
+}
+
 // ================== PHASE 6: REPORTS API ==================
 
 export async function getReports() {
@@ -766,6 +824,19 @@ export const deleteUserAdmin = async (userId) => {
     return handleResponse(response);
 };
 
+export const updateAllUsersAiLimits = async (aiSettings) => {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/users/ai-limits/bulk`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ aiSettings }),
+    });
+    return handleResponse(response);
+};
+
 export const updateHouseholdAdmin = async (householdId, data) => {
     const token = localStorage.getItem('adminToken');
     const response = await trackedFetch(`${API_BASE_URL}/admin/households/${householdId}`, {
@@ -862,6 +933,7 @@ export default {
     toggleUserAiRestriction,
     updateUserAdmin,
     deleteUserAdmin,
+    updateAllUsersAiLimits,
     updateHouseholdAdmin,
     deleteHouseholdAdmin,
     getAdminDashboardStats,

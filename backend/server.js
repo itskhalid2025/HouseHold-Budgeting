@@ -71,7 +71,10 @@ const prisma = new PrismaClient();
 app.use(helmet({
     contentSecurityPolicy: false, // HELMET blocks Swagger UI by default, disable CSP for dev
 }));
-app.use(cors({ origin: config.cors.origin }));
+app.use(cors({
+    origin: config.cors.origin,
+    exposedHeaders: ['X-AI-Warning']
+}));
 app.use(express.json());
 
 app.use(morgan('dev'));

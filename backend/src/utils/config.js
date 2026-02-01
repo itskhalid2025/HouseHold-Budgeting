@@ -34,7 +34,9 @@ const config = {
         apiKeys: [
             process.env.GEMINI_API_KEY,
             process.env.GEMINI_API_KEY2,
-            process.env.GEMINI_API_KEY3
+            process.env.GEMINI_API_KEY3,
+            process.env.GEMINI_API_KEY4,
+            process.env.GEMINI_API_KEY5
         ].filter(Boolean),
         model: 'gemini-2.5-flash'
     },

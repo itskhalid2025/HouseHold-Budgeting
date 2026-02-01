@@ -247,3 +247,155 @@ function mapGoalType(category) {
     };
     return map[category] || 'SINKING_FUND'; // Default to generic saving
 }
+
+/**
+ * Analyze an uploaded image (receipt)
+ * POST /api/smart/analyze-image
+ */
+export async function analyzeImage(req, res) {
+    return traceOperation('analyzeImage', async () => {
+        logEntry('smartController', 'analyzeImage', { hasFile: !!req.file });
+        try {
+            const imageFile = req.file;
+            const userId = req.user.id;
+            const householdId = req.user.householdId;
+
+            if (!imageFile) {
+                return res.status(400).json({ success: false, error: 'Image file is required' });
+            }
+
+            // Prepare input for agent
+            const agentInput = {
+                image: imageFile.buffer.toString('base64'),
+                mimeType: imageFile.mimetype
+            };
+
+            // Call categorization agent
+            logSuccess('smartController', 'analyzeImage', 'Calling AI for image analysis');
+            const aiResponse = await categorizeEntry(agentInput);
+            const { entries } = aiResponse;
+
+            if (!entries || entries.length === 0) {
+                return res.status(422).json({
+                    success: false,
+                    error: 'Could not extract any valid transactions from the image.',
+                    aiResponse
+                });
+            }
+
+            // Log AI Usage
+            try {
+                await prisma.aiUsageLog.create({
+                    data: {
+                        userId,
+                        householdId,
+                        type: 'IMAGE_ANALYSIS',
+                        tokens: aiResponse.usage?.totalTokens || 0
+                    }
+                });
+            } catch (err) { console.error('Token log error', err); }
+
+            const createdRecords = [];
+            const errors = [];
+
+            // Process entries (Itemization supported)
+            for (let i = 0; i < entries.length; i++) {
+                const item = entries[i];
+                const { intent, type, amount, description, category, subcategory, date } = item;
+
+                // Default date if missing
+                const entryDate = date ? new Date(date) : new Date();
+
+                try {
+                    let record;
+                    let table;
+
+                    if (intent === 'INCOME') {
+                        record = await prisma.income.create({
+                            data: {
+                                householdId,
+                                userId,
+                                amount: parseFloat(amount),
+                                source: description || 'Income',
+                                type: mapIncomeType(category),
+                                frequency: 'ONE_TIME',
+                                startDate: entryDate,
+                                isActive: true
+                            }
+                        });
+                        table = 'Income';
+                    } else if (intent === 'SAVINGS') {
+                        const goalName = subcategory || category || 'General Savings';
+                        // Check/Create Goal Logic (Simulate Reuse)
+                        let goal = await prisma.goal.findFirst({ where: { householdId, name: goalName, isActive: true } });
+                        if (!goal) {
+                            goal = await prisma.goal.create({
+                                data: {
+                                    household: { connect: { id: householdId } },
+                                    createdBy: { connect: { id: userId } },
+                                    name: goalName,
+                                    type: mapGoalType(category),
+                                    currentAmount: parseFloat(amount),
+                                    targetAmount: null
+                                }
+                            });
+                        } else {
+                            await prisma.goal.update({
+                                where: { id: goal.id },
+                                data: { currentAmount: { increment: parseFloat(amount) } }
+                            });
+                        }
+
+                        record = await prisma.transaction.create({
+                            data: {
+                                householdId, userId, amount: parseFloat(amount),
+                                description: description || `Saved: ${goalName}`,
+                                category: 'Savings', subcategory: goalName,
+                                type: 'SAVINGS', date: entryDate,
+                                aiCategorized: true, confidence: item.confidence,
+                                goalId: goal.id
+                            }
+                        });
+                        table = 'Transaction (Savings)';
+                    } else {
+                        // Expense
+                        record = await prisma.transaction.create({
+                            data: {
+                                householdId, userId,
+                                amount: parseFloat(amount),
+                                description: description || 'Item',
+                                category: category || 'Uncategorized',
+                                subcategory: subcategory,
+                                type: type || 'WANT', // Default to WANT if unclear
+                                date: entryDate,
+                                aiCategorized: true,
+                                confidence: item.confidence
+                            }
+                        });
+                        table = 'Transaction';
+                    }
+                    createdRecords.push({ table, record, item });
+
+                } catch (e) {
+                    errors.push({ index: i, error: e.message, item });
+                }
+            }
+
+            // Update Household Last Modified
+            if (createdRecords.length > 0) {
+                await prisma.household.update({ where: { id: householdId }, data: { lastModifiedAt: new Date() } });
+            }
+
+            res.status(201).json({
+                success: true,
+                count: createdRecords.length,
+                entries: createdRecords,
+                errors: errors.length ? errors : undefined
+            });
+
+        } catch (error) {
+            logError('smartController', 'analyzeImage', error);
+            res.status(500).json({ success: false, error: 'Image analysis failed' });
+        }
+    }, { userId: req.user?.id });
+}

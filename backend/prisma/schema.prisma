@@ -57,6 +57,7 @@ model Household {
   currency          String             @default("USD")
   isAiRestricted    Boolean            @default(false) @map("is_ai_restricted")
   aiRequestCount    Int                @default(0) @map("ai_request_count")
+  aiSettings        Json?              @map("ai_settings")
   country           String?
   customCategories  CustomCategory[]
   goals             Goal[]
