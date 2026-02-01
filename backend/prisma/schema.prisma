@@ -31,6 +31,10 @@ model User {
   isAiRestricted          Boolean       @default(false) @map("is_ai_restricted")
   aiRequestCount          Int           @default(0) @map("ai_request_count")
   aiTokenCount            Int           @default(0) @map("ai_token_count")
+  country                 String?
+  lastIp                  String?       @map("last_ip")
+  aiSettings              Json?         @map("ai_settings") // { chat: {limit: 50, enabled: true}, ... }
+  aiLogs                  AiUsageLog[]
   goals                   Goal[]
   adminHouseholds         Household[]   @relation("HouseholdAdmin")
   incomes                 Income[]
@@ -53,8 +57,10 @@ model Household {
   currency          String             @default("USD")
   isAiRestricted    Boolean            @default(false) @map("is_ai_restricted")
   aiRequestCount    Int                @default(0) @map("ai_request_count")
+  country           String?
   customCategories  CustomCategory[]
   goals             Goal[]
+  aiLogs            AiUsageLog[]
   admin             User               @relation("HouseholdAdmin", fields: [adminId], references: [id])
   incomes           Income[]
   invitations       Invitation[]
@@ -417,4 +423,27 @@ enum AdminLevel {
   STANDARD
   MODERATOR
   ADMINISTRATOR
+}
+
+enum AiLogType {
+  CHAT
+  SMART_ENTRY
+  REPORT
+}
+
+model AiUsageLog {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  householdId String?   @map("household_id")
+  type        AiLogType
+  tokens      Int       @default(0)
+  country     String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  household   Household? @relation(fields: [householdId], references: [id])
+
+  @@index([userId, type])
+  @@index([householdId, type])
+  @@index([createdAt])
+  @@map("ai_usage_logs")
 }

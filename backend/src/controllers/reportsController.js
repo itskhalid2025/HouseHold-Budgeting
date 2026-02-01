@@ -356,7 +356,7 @@ export async function listReports(req, res) {
 /**
  * Internal helper to generate a report
  */
-async function generateReportInternal(householdId, reportType, dateStart, dateEnd, userIds = []) {
+async function generateReportInternal(householdId, reportType, dateStart, dateEnd, userIds = [], actorUserId = null) {
     // Calculate date range if not provided
     let start = dateStart ? new Date(dateStart) : new Date();
     let end = dateEnd ? new Date(dateEnd) : new Date();
@@ -400,6 +400,22 @@ async function generateReportInternal(householdId, reportType, dateStart, dateEn
         reportResult.report.history = aggregatedData.history;
     }
 
+    // Log AI Usage
+    if (actorUserId) {
+        try {
+            await prisma.aiUsageLog.create({
+                data: {
+                    userId: actorUserId,
+                    householdId,
+                    type: 'REPORT',
+                    tokens: reportResult.usage?.totalTokens || 0
+                }
+            });
+        } catch (logErr) {
+            console.error('Failed to log AI usage:', logErr);
+        }
+    }
+
     // Save to database
     // Note: 'userId' field on Report model might be singular or non-existent.
     // We are just saving the JSON content which has the specifics.
@@ -439,7 +455,8 @@ export async function getLatestReport(req, res) {
         if (!report) {
             logEntry('reportsController', 'getLatestReport', 'Auto-generating missing report...');
             try {
-                const newReport = await generateReportInternal(householdId, type);
+                // Pass req.user.id as actorUserId
+                const newReport = await generateReportInternal(householdId, type, undefined, undefined, [], req.user.id);
                 logSuccess('reportsController', 'getLatestReport', { id: newReport.id, generated: true });
                 return res.json({ success: true, report: newReport });
             } catch (genError) {
@@ -471,7 +488,8 @@ export async function generateNewReport(req, res) {
             return res.status(400).json({ success: false, error: 'Household required' });
         }
 
-        const savedReport = await generateReportInternal(householdId, reportType, dateStart, dateEnd, userIds);
+        // Pass req.user.id as actorUserId
+        const savedReport = await generateReportInternal(householdId, reportType, dateStart, dateEnd, userIds, req.user.id);
 
         logSuccess('reportsController', 'generateNewReport', { id: savedReport.id });
         res.status(201).json({

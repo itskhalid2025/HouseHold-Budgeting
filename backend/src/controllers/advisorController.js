@@ -202,6 +202,20 @@ export async function chat(req, res) {
         );
         conversations.set(convId, conversationHistory);
 
+        // Log AI Usage
+        try {
+            await prisma.aiUsageLog.create({
+                data: {
+                    userId,
+                    householdId,
+                    type: 'CHAT',
+                    tokens: result.usage?.totalTokens || 0
+                }
+            });
+        } catch (logErr) {
+            console.error('Failed to log AI usage:', logErr);
+        }
+
         // Clean up old conversations (keep only last 50 messages)
         if (conversationHistory.length > 50) {
             conversations.set(convId, conversationHistory.slice(-50));

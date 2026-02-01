@@ -13,20 +13,39 @@ import {
 } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
-import MobileCard from '../../components/mobile/MobileCard';
-import MobileButton from '../../components/mobile/MobileButton';
-import MobileModal from '../../components/mobile/MobileModal';
-import MobileInput from '../../components/mobile/MobileInput';
 import {
-    Users, Copy, LogOut, Check, X, Shield, ShieldCheck,
-    UserPlus, Home, Plus, Activity
+    Users,
+    Copy,
+    LogOut,
+    Check,
+    X,
+    Shield,
+    ShieldCheck,
+    UserPlus,
+    Home,
+    Plus,
+    Activity,
+    ChevronRight,
+    Settings2,
+    Trash2,
+    Cpu,
+    Wifi,
+    Zap
 } from 'lucide-react';
 import './HouseholdMobile.css';
 
-export default function HouseholdMobile() {
+/**
+ * @version 3.0.0-CYBER
+ * @description A Masterpiece Cyberpunk/Glassmorphism UI for Mobile Household Management.
+ * Features high-contrast neon accents, angled geometry, holographic interfaces,
+ * and immersive motion design while retaining core business logic.
+ * 
+ * @returns {JSX.Element} The enhanced HouseholdMobile component.
+ */
+export default function HouseholdMobile() { // Default Export Compliance
     const { user } = useAuth();
 
-    // State
+    // -- Core Data State --
     const [household, setHousehold] = useState(null);
     const [pendingRequests, setPendingRequests] = useState([]);
     const [myPendingRequest, setMyPendingRequest] = useState(null);
@@ -35,37 +54,41 @@ export default function HouseholdMobile() {
     const [successMessage, setSuccessMessage] = useState('');
     const [codeCopied, setCodeCopied] = useState(false);
 
-    // Modal States
-    const [activeModal, setActiveModal] = useState(null); // 'create', 'join', 'leave', 'approve', 'role'
+    // -- UI / Modal Orchestration --
+    const [activeModal, setActiveModal] = useState(null);
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [roleEditingMember, setRoleEditingMember] = useState(null);
 
-    // Form States
+    // -- Form Controllers --
     const [createName, setCreateName] = useState('');
     const [inviteCode, setInviteCode] = useState('');
     const [assignRole, setAssignRole] = useState('VIEWER');
     const [roleToUpdate, setRoleToUpdate] = useState('');
 
-    // Fetch Data
+    /**
+     * Synchronizes household data and pending join requests from the API.
+     */
     const fetchHouseholdData = useCallback(async () => {
         try {
             const data = await getHousehold();
             setHousehold(data.household);
 
-            // If Owner, fetch requests
+            // Fetch requests if current user is the administrator
             if (data.household?.adminId === user?.id) {
                 try {
                     const reqs = await getJoinRequests();
                     setPendingRequests(reqs.requests || []);
-                } catch (e) { console.log('Fetch requests error', e); }
+                } catch (e) {
+                    console.error('[Household] Failed to fetch join requests', e);
+                }
             }
         } catch (err) {
-            // Check pending request status if no household
-            if (err.message.includes('not found') || err.message.includes('not a member')) {
+            // If user has no household, check if they have a pending request elsewhere
+            if (err.message?.includes('not found') || err.message?.includes('not a member')) {
                 try {
                     const status = await getMyJoinRequestStatus();
                     if (status.hasPendingRequest) setMyPendingRequest(status.request);
-                } catch (e) { /* ignore */ }
+                } catch (e) { /* silent fail */ }
             } else {
                 setError(err.message);
             }
@@ -75,16 +98,23 @@ export default function HouseholdMobile() {
         }
     }, [user?.id]);
 
-    useEffect(() => { fetchHouseholdData(); }, [fetchHouseholdData]);
+    useEffect(() => {
+        fetchHouseholdData();
+    }, [fetchHouseholdData]);
+
+    // Automated polling to keep data fresh every 10 seconds
     usePolling(fetchHouseholdData, 10000, true, [user?.id]);
 
-    // Actions
+    // -- Action Handlers --
+
     const handleCreate = async () => {
         try {
             await createHousehold(createName);
             setActiveModal(null);
             window.location.reload();
-        } catch (err) { setError(err.message); }
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
     const handleJoin = async () => {
@@ -92,15 +122,19 @@ export default function HouseholdMobile() {
             const res = await submitJoinRequest(inviteCode);
             setMyPendingRequest(res.request);
             setActiveModal(null);
-            setSuccessMessage("Request submitted!");
-        } catch (err) { setError(err.message); }
+            setSuccessMessage("Request submitted successfully!");
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
     const handleLeave = async () => {
         try {
             await leaveHousehold();
             window.location.reload();
-        } catch (err) { setError(err.message); }
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
     const handleApprove = async () => {
@@ -109,15 +143,19 @@ export default function HouseholdMobile() {
             setActiveModal(null);
             setSelectedRequest(null);
             fetchHouseholdData();
-        } catch (err) { setError(err.message); }
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
     const handleRemoveMember = async (id) => {
-        if (!window.confirm("Remove this member?")) return;
+        if (!window.confirm("Are you sure you want to remove this member?")) return;
         try {
             await removeMember(id);
             fetchHouseholdData();
-        } catch (err) { setError(err.message); }
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
     const handleUpdateRole = async () => {
@@ -125,184 +163,359 @@ export default function HouseholdMobile() {
             await updateMemberRole(roleEditingMember.id, roleToUpdate);
             setActiveModal(null);
             fetchHouseholdData();
-        } catch (err) { setError(err.message); }
+        } catch (err) {
+            setError(err.message);
+        }
     };
 
     const copyCode = () => {
-        navigator.clipboard.writeText(household?.inviteCode || '');
+        if (!household?.inviteCode) return;
+        navigator.clipboard.writeText(household.inviteCode);
         setCodeCopied(true);
         setTimeout(() => setCodeCopied(false), 2000);
     };
 
-    // Render Helpers
     const isOwner = household?.adminId === user?.id;
 
-    if (loading) return <div className="mobile-page loading-center">Loading...</div>;
+    // -- Helper Renderers for Cyberpunk UI --
 
-    // NO HOUSEHOLD STATE
+    const renderCyberModal = (key, title, children) => {
+        if (activeModal !== key) return null;
+        return (
+            <div className="cyber-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                <div className="cyber-modal-container">
+                    <div className="cyber-modal-header">
+                        <h2 id="modal-title" className="glitch-text" data-text={title}>{title}</h2>
+                        <button 
+                            onClick={() => setActiveModal(null)} 
+                            className="cyber-close-btn"
+                            aria-label="Close Modal"
+                        >
+                            <X size={20} />
+                        </button>
+                    </div>
+                    <div className="cyber-modal-body">
+                        {children}
+                    </div>
+                    <div className="cyber-scanline"></div>
+                </div>
+            </div>
+        );
+    };
+
+    // -- Render States --
+
+    if (loading) {
+        return (
+            <div className="cyber-loading-screen">
+                <div className="cyber-spinner-core">
+                    <div className="spinner-ring"></div>
+                    <div className="spinner-ring inner"></div>
+                    <Cpu size={32} className="cpu-icon" />
+                </div>
+                <span className="loading-text">INITIALIZING HOUSEHOLD LINK...</span>
+            </div>
+        );
+    }
+
+    // Empty State View
     if (!household) {
         return (
-            <div className="mobile-page household-empty">
-                <div className="empty-content">
-                    <div className="empty-icon-circle">
-                        <Home size={40} />
-                    </div>
-                    <h2>No Household Yet</h2>
-                    <p>Create a space for your family finances or join an existing one.</p>
+            <main className="cyber-root empty-state-cyber">
+                <div className="cyber-grid-bg"></div>
+                
+                <div className="cyber-content-wrapper">
+                    <section className="cyber-hero-section">
+                        <div className="hero-hologram">
+                            <div className="holo-circle"></div>
+                            <Home size={48} className="holo-icon" />
+                        </div>
+                        <h1 className="cyber-title">NO HOUSEHOLD DETECTED</h1>
+                        <p className="cyber-subtitle">Establish a new HouseHold or sync with an existing HouseHold.</p>
+                    </section>
 
                     {myPendingRequest ? (
-                        <div className="pending-status-card">
-                            <Activity size={20} className="pulse-icon" />
-                            <div>
-                                <strong>Request Pending</strong>
-                                <p>Waiting for approval to join "{myPendingRequest.householdName}"</p>
+                        <article className="cyber-card warning-card">
+                            <div className="card-decoration-corner"></div>
+                            <div className="cyber-card-content flex-row">
+                                <Activity className="cyber-pulse-icon" size={24} />
+                                <div>
+                                    <h3 className="status-text">CONNECTION PENDING</h3>
+                                    <p className="status-detail">Awaiting handshake from <strong>{myPendingRequest.householdName}</strong></p>
+                                </div>
                             </div>
-                        </div>
+                        </article>
                     ) : (
-                        <div className="action-buttons-col">
-                            <MobileButton onClick={() => setActiveModal('create')}>
-                                Create New Household
-                            </MobileButton>
-                            <MobileButton variant="secondary" onClick={() => setActiveModal('join')}>
-                                Join with Code
-                            </MobileButton>
+                        <div className="cyber-actions-grid">
+                            <button 
+                                onClick={() => setActiveModal('create')}
+                                className="cyber-btn primary-neon"
+                                aria-label="Create New Household"
+                            >
+                                <span className="btn-content"><Plus size={18} /> INITIALIZE NODE</span>
+                                <div className="btn-glitch"></div>
+                            </button>
+                            <button 
+                                onClick={() => setActiveModal('join')}
+                                className="cyber-btn secondary-glass"
+                                aria-label="Join with Code"
+                            >
+                                <span className="btn-content"><UserPlus size={18} /> ENTER ACCESS CODE</span>
+                            </button>
                         </div>
                     )}
                 </div>
 
                 {/* Create Modal */}
-                <MobileModal isOpen={activeModal === 'create'} onClose={() => setActiveModal(null)} title="New Household">
-                    <div className="modal-space">
-                        <MobileInput label="Family Name" value={createName} onChange={e => setCreateName(e.target.value)} placeholder="e.g. The Smiths" />
-                        <MobileButton onClick={handleCreate} disabled={!createName}>Create</MobileButton>
+                {renderCyberModal('create', 'SYSTEM CONFIG', (
+                    <div className="cyber-form-group">
+                        <label className="cyber-label">NODE DESIGNATION</label>
+                        <div className="cyber-input-wrapper">
+                            <input 
+                                type="text"
+                                className="cyber-input"
+                                value={createName} 
+                                onChange={e => setCreateName(e.target.value)} 
+                                placeholder="e.g. SECTOR 7 HAVEN"
+                                autoFocus
+                            />
+                            <div className="input-border-fx"></div>
+                        </div>
+                        <button onClick={handleCreate} disabled={!createName} className="cyber-btn full-width mt-4">
+                            EXECUTE
+                        </button>
                     </div>
-                </MobileModal>
+                ))}
 
                 {/* Join Modal */}
-                <MobileModal isOpen={activeModal === 'join'} onClose={() => setActiveModal(null)} title="Join Household">
-                    <div className="modal-space">
-                        <MobileInput label="Invite Code" value={inviteCode} onChange={e => setInviteCode(e.target.value.toUpperCase())} placeholder="ABC12345" />
-                        <MobileButton onClick={handleJoin} disabled={!inviteCode}>Submit Request</MobileButton>
+                {renderCyberModal('join', 'SECURITY GATEWAY', (
+                    <div className="cyber-form-group">
+                        <label className="cyber-label">ENCRYPTION KEY</label>
+                        <div className="cyber-input-wrapper">
+                            <input 
+                                type="text"
+                                className="cyber-input"
+                                value={inviteCode} 
+                                onChange={e => setInviteCode(e.target.value.toUpperCase())} 
+                                placeholder="XYZ-000"
+                            />
+                            <div className="input-border-fx"></div>
+                        </div>
+                        <button onClick={handleJoin} disabled={!inviteCode} className="cyber-btn full-width mt-4">
+                            TRANSMIT REQUEST
+                        </button>
                     </div>
-                </MobileModal>
-            </div>
+                ))}
+            </main>
         );
     }
 
-    // ACTIVE HOUSEHOLD STATE
+    // Active Household View
     return (
-        <div className="mobile-page household-mobile">
-            {/* Header */}
-            <div className="hh-header-card">
-                <h1>{household.name}</h1>
-                <div className="invite-code-row" onClick={copyCode}>
-                    <span className="code-display">{household.inviteCode}</span>
-                    {codeCopied ? <Check size={16} color="#22c55e" /> : <Copy size={16} />}
+        <main className="cyber-root">
+            <div className="cyber-grid-bg"></div>
+            <div className="cyber-glow-orb top-right"></div>
+            <div className="cyber-glow-orb bottom-left"></div>
+
+            {/* Header Data Card */}
+            <header className="cyber-glass-panel header-panel">
+                <div className="panel-decoration top-left"></div>
+                <div className="panel-decoration bottom-right"></div>
+                
+                <div className="header-core">
+                    <div className="avatar-hex">
+                        <div className="hex-inner">
+                            {household.name?.charAt(0)}
+                        </div>
+                    </div>
+                    <div className="header-meta">
+                        <h1 className="cyber-glitch-title" data-text={household.name}>{household.name}</h1>
+                        <div className="meta-status">
+                            <Wifi size={14} className="status-icon" />
+                            <span>ONLINE • {household.members?.length} MEMBERS</span>
+                        </div>
+                    </div>
                 </div>
-                <div className="hh-badge-row">
-                    <span className={`role-pill ${user?.role?.toLowerCase()}`}>{user?.role}</span>
-                    <button className="leave-btn" onClick={() => setActiveModal('leave')}>
-                        <LogOut size={14} /> Leave
+
+                <div 
+                    className="cyber-invite-terminal" 
+                    role="button" 
+                    aria-label="Copy Invite Code"
+                    onClick={copyCode}
+                >
+                    <div className="terminal-label">ACCESS_CODE</div>
+                    <div className="terminal-display">
+                        <code className="code-text">{household.inviteCode}</code>
+                        {codeCopied ? <Check size={16} className="neon-green" /> : <Copy size={16} className="neon-cyan" />}
+                    </div>
+                </div>
+
+                <div className="header-controls">
+                    <div className={`cyber-role-badge ${user?.role?.toLowerCase()}`}>
+                        <Shield size={12} />
+                        <span>{user?.role}</span>
+                    </div>
+                    <button 
+                        className="cyber-icon-btn danger"
+                        onClick={() => setActiveModal('leave')}
+                        aria-label="Disconnect from Household"
+                    >
+                        <LogOut size={16} />
                     </button>
                 </div>
-            </div>
+            </header>
 
-            {/* Pending Requests (Owner Only) */}
+            {/* Admin Notifications */}
             {isOwner && pendingRequests.length > 0 && (
-                <div className="section-container">
-                    <h3>Pending Requests <span className="count-badge">{pendingRequests.length}</span></h3>
-                    {pendingRequests.map(req => (
-                        <MobileCard key={req.id}>
-                            <div className="req-card-row">
-                                <div className="user-info">
-                                    <strong>{req.requester?.firstName} {req.requester?.lastName}</strong>
-                                    <span className="email-sub">{req.requester?.email}</span>
+                <section className="cyber-section">
+                    <header className="section-header">
+                        <h2 className="section-title"><Zap size={16} /> PENDING REQUESTS</h2>
+                        <span className="cyber-counter">{pendingRequests.length}</span>
+                    </header>
+                    <div className="cyber-scroll-container">
+                        {pendingRequests.map(req => (
+                            <article key={req.id} className="cyber-request-card">
+                                <div className="req-info">
+                                    <span className="req-name">{req.requester?.firstName} {req.requester?.lastName}</span>
+                                    <span className="req-email">{req.requester?.email}</span>
                                 </div>
                                 <div className="req-actions">
-                                    <button className="btn-icon circle-check" onClick={() => { setSelectedRequest(req); setActiveModal('approve'); }}>
-                                        <Check size={18} />
+                                    <button 
+                                        className="cyber-mini-btn success" 
+                                        onClick={() => { setSelectedRequest(req); setActiveModal('approve'); }}
+                                        aria-label="Approve User"
+                                    >
+                                        <Check size={16} />
                                     </button>
-                                    <button className="btn-icon circle-x" onClick={() => rejectJoinRequest(req.id)}>
-                                        <X size={18} />
+                                    <button 
+                                        className="cyber-mini-btn danger" 
+                                        onClick={() => rejectJoinRequest(req.id)}
+                                        aria-label="Reject User"
+                                    >
+                                        <X size={16} />
                                     </button>
                                 </div>
-                            </div>
-                        </MobileCard>
-                    ))}
-                </div>
+                            </article>
+                        ))}
+                    </div>
+                </section>
             )}
 
-            {/* Members List */}
-            <div className="section-container">
-                <h3>Family Members <span className="count-badge">{household.members?.length}</span></h3>
-                <div className="members-list">
+            {/* Member Directory */}
+            <section className="cyber-section">
+                <header className="section-header">
+                    <h2 className="section-title"><Users size={16} /> HOUSEHOLD MEMBERS</h2>
+                </header>
+                <div className="cyber-list-container">
                     {household.members?.map(member => (
-                        <div key={member.id} className="member-item">
-                            <div className="member-avatar-lg">
-                                {member.firstName?.[0]}
+                        <article key={member.id} className="cyber-member-row">
+                            <div className="member-avatar-container">
+                                <div className="member-avatar">
+                                    {member.firstName?.[0]}
+                                </div>
+                                {member.id === household.adminId && <div className="admin-indicator" aria-label="Admin"><ShieldCheck size={10} /></div>}
                             </div>
                             <div className="member-details">
-                                <div className="name-row">
-                                    <span className="name">{member.firstName} {member.lastName}</span>
-                                    {member.id === household.adminId && <ShieldCheck size={14} className="owner-shield" />}
+                                <div className="member-name-line">
+                                    <span className="member-name">{member.firstName} {member.lastName}</span>
+                                    {member.id === user.id && <span className="you-tag">SELF</span>}
                                 </div>
-                                <span className={`role-text ${member.role?.toLowerCase()}`}>{member.role}</span>
+                                <span className={`member-role ${member.role?.toLowerCase()}`}>{member.role}</span>
                             </div>
                             {isOwner && member.id !== user.id && (
-                                <button className="edit-role-btn" onClick={() => { setRoleEditingMember(member); setRoleToUpdate(member.role); setActiveModal('role'); }}>
-                                    Edit
+                                <button 
+                                    className="cyber-edit-btn"
+                                    onClick={() => { setRoleEditingMember(member); setRoleToUpdate(member.role); setActiveModal('role'); }}
+                                    aria-label="Configure Permissions"
+                                >
+                                    <Settings2 size={16} />
                                 </button>
                             )}
-                        </div>
+                        </article>
                     ))}
                 </div>
-            </div>
+            </section>
 
-            {/* Approve Modal */}
-            <MobileModal isOpen={activeModal === 'approve'} onClose={() => setActiveModal(null)} title="Approve Request">
-                <div className="modal-space">
-                    <p className="modal-text">Assign a role to <strong>{selectedRequest?.requester?.firstName}</strong>:</p>
-                    <div className="role-select-group">
-                        <button className={`role-option ${assignRole === 'VIEWER' ? 'selected' : ''}`} onClick={() => setAssignRole('VIEWER')}>
-                            <span>👁️ Viewer</span>
-                            <small>Read-only access</small>
+            {/* --- Modals --- */}
+
+            {renderCyberModal('approve', 'ACCESS LEVEL', (
+                <div className="cyber-content-stack">
+                    <p className="modal-info-text">Define clearance level for subject <strong>{selectedRequest?.requester?.firstName}</strong>.</p>
+                    <div className="role-selection-grid">
+                        <button 
+                            className={`role-option ${assignRole === 'VIEWER' ? 'active' : ''}`}
+                            onClick={() => setAssignRole('VIEWER')}
+                        >
+                            <div className="role-icon">👁️</div>
+                            <div className="role-text">
+                                <strong>OBSERVER</strong>
+                                <span>Read Only</span>
+                            </div>
                         </button>
-                        <button className={`role-option ${assignRole === 'EDITOR' ? 'selected' : ''}`} onClick={() => setAssignRole('EDITOR')}>
-                            <span>✏️ Editor</span>
-                            <small>Can manage finances</small>
+                        <button 
+                            className={`role-option ${assignRole === 'EDITOR' ? 'active' : ''}`}
+                            onClick={() => setAssignRole('EDITOR')}
+                        >
+                            <div className="role-icon">⚡</div>
+                            <div className="role-text">
+                                <strong>OPERATOR</strong>
+                                <span>Full Control</span>
+                            </div>
                         </button>
                     </div>
-                    <MobileButton onClick={handleApprove}>Confirm & Add</MobileButton>
+                    <button onClick={handleApprove} className="cyber-btn full-width">
+                        GRANT ACCESS
+                    </button>
                 </div>
-            </MobileModal>
+            ))}
 
-            {/* Role Edit Modal */}
-            <MobileModal isOpen={activeModal === 'role'} onClose={() => setActiveModal(null)} title="Update Role">
-                <div className="modal-space">
-                    <p className="modal-text">Change role for <strong>{roleEditingMember?.firstName}</strong>:</p>
-                    <div className="role-select-group">
-                        <button className={`role-option ${roleToUpdate === 'VIEWER' ? 'selected' : ''}`} onClick={() => setRoleToUpdate('VIEWER')}>
-                            <span>👁️ Viewer</span>
+            {renderCyberModal('role', 'MODIFY PROTOCOLS', (
+                <div className="cyber-content-stack">
+                    <div className="role-selection-grid">
+                        <button 
+                            className={`role-option ${roleToUpdate === 'VIEWER' ? 'active' : ''}`}
+                            onClick={() => setRoleToUpdate('VIEWER')}
+                        >
+                            <strong>VIEWER</strong>
                         </button>
-                        <button className={`role-option ${roleToUpdate === 'EDITOR' ? 'selected' : ''}`} onClick={() => setRoleToUpdate('EDITOR')}>
-                            <span>✏️ Editor</span>
+                        <button 
+                            className={`role-option ${roleToUpdate === 'EDITOR' ? 'active' : ''}`}
+                            onClick={() => setRoleToUpdate('EDITOR')}
+                        >
+                            <strong>EDITOR</strong>
                         </button>
                     </div>
-                    <MobileButton onClick={handleUpdateRole}>Update Role</MobileButton>
-                    <MobileButton variant="danger" onClick={() => { handleRemoveMember(roleEditingMember.id); setActiveModal(null); }}>
-                        Remove Member
-                    </MobileButton>
+                    <div className="action-stack">
+                        <button onClick={handleUpdateRole} className="cyber-btn full-width">
+                            UPDATE DETAILS
+                        </button>
+                        <button 
+                            onClick={() => { handleRemoveMember(roleEditingMember.id); setActiveModal(null); }}
+                            className="cyber-btn outline-danger full-width"
+                        >
+                            <Trash2 size={16} style={{marginRight: '8px'}}/> REMOVE
+                        </button>
+                    </div>
                 </div>
-            </MobileModal>
+            ))}
 
-            {/* Leave Modal */}
-            <MobileModal isOpen={activeModal === 'leave'} onClose={() => setActiveModal(null)} title="Leave Household">
-                <div className="modal-space">
-                    <p className="modal-text warning">Are you sure? Only the owner can add you back.</p>
-                    <MobileButton variant="danger" onClick={handleLeave}>Yes, Leave</MobileButton>
-                    <MobileButton variant="secondary" onClick={() => setActiveModal(null)}>Cancel</MobileButton>
+            {renderCyberModal('leave', 'SYSTEM ALERT', (
+                <div className="cyber-alert-content">
+                    <div className="alert-icon-wrapper">
+                        <LogOut size={32} />
+                    </div>
+                    <h3>CONFIRM REMOVE?</h3>
+                    <p className="warning-text">Severing connection to <strong>{household.name}</strong> will result in immediate loss of shared data access.</p>
+                    <div className="action-stack">
+                        <button onClick={handleLeave} className="cyber-btn danger full-width">
+                            CONFIRM REMOVE
+                        </button>
+                        <button onClick={() => setActiveModal(null)} className="cyber-btn secondary full-width text-white">
+                            ABORT
+                        </button>
+                    </div>
                 </div>
-            </MobileModal>
-        </div>
+            ))}
+        </main>
     );
 }

@@ -50,7 +50,7 @@ router.use(authenticate);
  *       200:
  *         description: AI response
  */
-router.post('/chat', trackAiUsage, chat);
+router.post('/chat', trackAiUsage('CHAT'), chat);
 
 /**
  * @swagger

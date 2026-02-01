@@ -1,0 +1,92 @@
+/* Stat Pills */
+.stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.stat-pill .icon {
+    font-size: 10px;
+    opacity: 0.7;
+}
+
+.stat-pill.total {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.stat-pill.chat {
+    color: #60a5fa;
+    /* Blue */
+    background: rgba(96, 165, 250, 0.1);
+    border-color: rgba(96, 165, 250, 0.2);
+}
+
+.stat-pill.smart {
+    color: #c084fc;
+    /* Purple */
+    background: rgba(192, 132, 252, 0.1);
+    border-color: rgba(192, 132, 252, 0.2);
+}
+
+.stat-pill.report {
+    color: #4ade80;
+    /* Green */
+    background: rgba(74, 222, 128, 0.1);
+    border-color: rgba(74, 222, 128, 0.2);
+}
+
+/* Badges */
+.badge-verified {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+}
+
+.badge-pending {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+}
+
+.badge-household {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+/* User Cell */
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.user-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: var(--neon-purple);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.user-text-name {
+    display: block;
+    color: #fff;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.user-text-email {
+    display: block;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+}

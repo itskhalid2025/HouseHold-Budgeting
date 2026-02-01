@@ -38,6 +38,6 @@ import { trackAiUsage } from '../middleware/trackAiUsage.js';
  * @desc Process a natural language entry (voice/text) and create appropriate records
  * @access Private
  */
-router.post('/entry', authenticate, trackAiUsage, upload.single('audio'), processSmartEntry);
+router.post('/entry', authenticate, trackAiUsage('SMART_ENTRY'), upload.single('audio'), processSmartEntry);
 
 export default router;

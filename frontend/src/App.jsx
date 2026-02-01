@@ -306,10 +306,61 @@ function JoinRequestNotification() {
   );
 }
 
+// AI Limit Notification
+function AiLimitNotification() {
+  const [notification, setNotification] = useState(null); // { type: 'warning' | 'error', message: string }
+
+  useEffect(() => {
+    const handleWarning = (e) => {
+      setNotification({ type: 'warning', message: e.detail });
+      setTimeout(() => setNotification(null), 8000);
+    };
+    const handleError = (e) => {
+      setNotification({ type: 'error', message: e.detail });
+      setTimeout(() => setNotification(null), 8000);
+    };
+
+    window.addEventListener('ai-warning', handleWarning);
+    window.addEventListener('ai-error', handleError);
+
+    return () => {
+      window.removeEventListener('ai-warning', handleWarning);
+      window.removeEventListener('ai-error', handleError);
+    };
+  }, []);
+
+  if (!notification) return null;
+
+  return (
+    <div style={{
+      position: 'fixed',
+      top: '80px',
+      right: '20px',
+      zIndex: 9999,
+      padding: '16px',
+      borderRadius: '8px',
+      backgroundColor: notification.type === 'error' ? '#ef4444' : '#f59e0b',
+      color: '#fff',
+      boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '12px',
+      maxWidth: '350px',
+      animation: 'slideIn 0.3s ease'
+    }}>
+      <span style={{ fontSize: '20px' }}>{notification.type === 'error' ? '🚫' : '⚠️'}</span>
+      <div>
+        <div style={{ fontWeight: 'bold', fontSize: '14px', marginBottom: '2px' }}>
+          {notification.type === 'error' ? 'Create Limit Reached' : 'Usage Warning'}
+        </div>
+        <div style={{ fontSize: '13px' }}>{notification.message}</div>
+      </div>
+    </div>
+  );
+}
+
 import { SmartEntryProvider } from './context/SmartEntryContext';
 import GlobalSmartEntry from './components/mobile/GlobalSmartEntry';
-
-
 
 function AppContent() {
   const isMobile = useIsMobile();
@@ -336,6 +387,7 @@ function AppContent() {
     <div className="app">
       <ServerStatus />
       <AINotification />
+      <AiLimitNotification />
       <JoinRequestNotification />
       {!isMobile && <Header />}
 

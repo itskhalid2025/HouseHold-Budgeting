@@ -59,9 +59,31 @@ async function trackedFetch(...args) {
 
 
 // Helper for handling responses
+// Helper for handling responses
 async function handleResponse(response) {
-    const data = await response.json();
+    // 1. Check for AI Warning Header
+    const warning = response.headers.get('X-AI-Warning');
+    if (warning) {
+        window.dispatchEvent(new CustomEvent('ai-warning', { detail: warning }));
+    }
+
+    // 2. Parse JSON safely
+    const contentType = response.headers.get("content-type");
+    let data = {};
+
+    if (contentType && contentType.indexOf("application/json") !== -1) {
+        data = await response.json();
+    } else {
+        // Fallback for non-JSON responses might be needed but usually our API is JSON.
+        // If 204 No Content, data stays empty.
+    }
+
     if (!response.ok) {
+        // Check for specific error codes for Events
+        if (data.code === 'LIMIT_REACHED' || data.code === 'FEATURE_DISABLED') {
+            window.dispatchEvent(new CustomEvent('ai-error', { detail: data.error }));
+        }
+
         // Log detailed error info for debugging
         console.error('❌ API Error:', {
             status: response.status,
@@ -699,6 +721,14 @@ export async function getAdminHouseholds() {
     return handleResponse(response);
 }
 
+export async function getAdminDashboardStats() {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/dashboard-stats`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    return handleResponse(response);
+}
+
 export async function toggleUserAiRestriction(userId, isRestricted) {
     const token = localStorage.getItem('adminToken');
     const response = await trackedFetch(`${API_BASE_URL}/admin/users/${userId}/restriction`, {
@@ -711,6 +741,54 @@ export async function toggleUserAiRestriction(userId, isRestricted) {
     });
     return handleResponse(response);
 }
+
+export const updateUserAdmin = async (userId, data) => {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/users/${userId}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+};
+
+export const deleteUserAdmin = async (userId) => {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return handleResponse(response);
+};
+
+export const updateHouseholdAdmin = async (householdId, data) => {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/households/${householdId}`, {
+        method: 'PUT',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+};
+
+export const deleteHouseholdAdmin = async (householdId) => {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/households/${householdId}`, {
+        method: 'DELETE',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return handleResponse(response);
+};
 
 export default {
     register,
@@ -770,5 +848,9 @@ export default {
     inviteAdmin,
     getAdminUsers,
     getAdminHouseholds,
-    toggleUserAiRestriction
+    toggleUserAiRestriction,
+    updateUserAdmin,
+    deleteUserAdmin,
+    updateHouseholdAdmin,
+    deleteHouseholdAdmin
 };

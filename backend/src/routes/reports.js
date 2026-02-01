@@ -17,6 +17,7 @@ import {
     getReportById
 } from '../controllers/reportsController.js';
 import { authenticate } from '../middleware/auth.js';
+import { trackAiUsage } from '../middleware/trackAiUsage.js';
 
 const router = express.Router();
 
@@ -86,7 +87,7 @@ router.get('/latest', getLatestReport);
  *       201:
  *         description: Report generated successfully
  */
-router.post('/generate', generateNewReport);
+router.post('/generate', trackAiUsage('REPORT'), generateNewReport);
 
 /**
  * @swagger

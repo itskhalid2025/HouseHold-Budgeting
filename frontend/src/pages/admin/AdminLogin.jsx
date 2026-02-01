@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { adminLogin } from '../../api/api';
-import './AdminLogin.css'; // We'll create this or use inline styles
+import './AdminTheme.css'; // Import Global Variables first
+import './AdminLogin.css';
 
 const AdminLogin = () => {
     const [email, setEmail] = useState('');
@@ -32,89 +33,51 @@ const AdminLogin = () => {
     };
 
     return (
-        <div className="admin-login-container" style={{
-            height: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: '#0f172a',
-            color: '#fff'
-        }}>
-            <div className="login-card" style={{
-                background: 'rgba(30, 41, 59, 0.5)',
-                padding: '40px',
-                borderRadius: '16px',
-                border: '1px solid rgba(255,255,255,0.1)',
-                width: '100%',
-                maxWidth: '400px'
-            }}>
-                <h2 style={{ textAlign: 'center', marginBottom: '24px', fontSize: '24px' }}>Admin Portal</h2>
+        <div className="admin-login-page">
+            {/* Ambient Background Elements */}
+            <div className="neon-orb orb-1"></div>
+            <div className="neon-orb orb-2"></div>
 
-                {error && <div style={{
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    color: '#fca5a5',
-                    padding: '12px',
-                    borderRadius: '8px',
-                    marginBottom: '16px',
-                    fontSize: '14px',
-                    textAlign: 'center'
-                }}>{error}</div>}
+            <div className="login-card neon-glass-panel">
+                <div className="login-header">
+                    <div className="admin-logo-mark">A</div>
+                    <h2 className="neon-title">Admin Portal</h2>
+                    <p className="neon-subtitle">Secure Access Terminal</p>
+                </div>
 
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {error && <div className="login-error-banner">{error}</div>}
+
+                <form onSubmit={handleSubmit} className="login-form">
                     <div className="form-group">
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px' }}>Email</label>
+                        <label>Email ID</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             required
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                background: 'rgba(0,0,0,0.2)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '8px',
-                                color: '#fff',
-                                outline: 'none'
-                            }}
+                            placeholder="admin@household.com"
+                            className="neon-input"
                         />
                     </div>
 
                     <div className="form-group">
-                        <label style={{ display: 'block', marginBottom: '8px', color: '#94a3b8', fontSize: '14px' }}>Password</label>
+                        <label>Password</label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             required
-                            style={{
-                                width: '100%',
-                                padding: '12px',
-                                background: 'rgba(0,0,0,0.2)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '8px',
-                                color: '#fff',
-                                outline: 'none'
-                            }}
+                            placeholder="••••••••"
+                            className="neon-input"
                         />
                     </div>
 
                     <button
                         type="submit"
                         disabled={loading}
-                        style={{
-                            marginTop: '8px',
-                            padding: '12px',
-                            background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontWeight: '600',
-                            cursor: loading ? 'not-allowed' : 'pointer',
-                            opacity: loading ? 0.7 : 1
-                        }}
+                        className="neon-button-primary"
                     >
-                        {loading ? 'Logging in...' : 'Login'}
+                        {loading ? 'Authenticating...' : 'Access Console'}
                     </button>
                 </form>
             </div>

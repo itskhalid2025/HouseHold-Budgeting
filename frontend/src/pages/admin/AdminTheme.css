@@ -1,0 +1,67 @@
+/* AdminTheme.css - Neon Fintech Design System */
+
+:root {
+    /* Colors: Neon Void Palette */
+    --neon-bg: #030305;
+    /* Deepest Void */
+    --neon-bg-card: rgba(20, 20, 30, 0.4);
+    /* Glass Panel Base */
+    --neon-bg-hover: rgba(255, 255, 255, 0.05);
+
+    /* Accents */
+    --neon-cyan: #00f2ff;
+    /* Primary Glow */
+    --neon-blue: #0066ff;
+    /* Secondary Deep Blue */
+    --neon-purple: #bc13fe;
+    /* Secondary Glow */
+    --neon-green: #00ff9d;
+    /* Success */
+    --neon-red: #ff0055;
+    /* Danger */
+
+    /* Glassmorphism */
+    --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+    --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+    --glass-blur: blur(12px);
+
+    /* Typography */
+    --text-main: #ffffff;
+    --text-muted: rgba(255, 255, 255, 0.6);
+
+    /* Transitions */
+    --ease-glow: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Utility Classes */
+.neon-text-gradient {
+    background: linear-gradient(135deg, #fff 0%, var(--neon-cyan) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.neon-glass-panel {
+    background: var(--neon-bg-card);
+    backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
+    box-shadow: var(--glass-shadow);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--neon-bg);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-cyan);
+}

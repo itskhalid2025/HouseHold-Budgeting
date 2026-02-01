@@ -54,6 +54,20 @@ export async function processSmartEntry(req, res) {
                 });
             }
 
+            // Log AI Usage
+            try {
+                await prisma.aiUsageLog.create({
+                    data: {
+                        userId,
+                        householdId,
+                        type: 'SMART_ENTRY',
+                        tokens: aiResponse.usage?.totalTokens || 0
+                    }
+                });
+            } catch (logErr) {
+                console.error('Failed to log AI usage:', logErr);
+            }
+
             const createdRecords = [];
             const errors = [];
 

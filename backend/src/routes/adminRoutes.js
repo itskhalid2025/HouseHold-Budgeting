@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginAdmin, getMe, createInvitation, getAllUsers, getAllHouseholds, updateUserRestriction, registerAdmin } from '../controllers/adminController.js';
+import { loginAdmin, getMe, createInvitation, getAllUsers, getAllHouseholds, updateUserRestriction, registerAdmin, getDashboardStats } from '../controllers/adminController.js';
 import { authenticateAdmin, requireSuperAdmin } from '../middleware/adminAuth.js';
 
 const router = express.Router();
@@ -11,6 +11,7 @@ router.post('/register', registerAdmin);
 // Protected
 router.get('/me', authenticateAdmin, getMe);
 router.post('/invite', authenticateAdmin, requireSuperAdmin, createInvitation);
+router.get('/dashboard-stats', authenticateAdmin, getDashboardStats);
 
 // Management
 router.get('/users', authenticateAdmin, getAllUsers);

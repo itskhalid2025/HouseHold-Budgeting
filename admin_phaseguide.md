@@ -131,19 +131,28 @@ The **Platform Admin Portal** is a restricted interface for super-admins to over
 
 # 6️⃣ ADVANCED ANALYTICS & CONTROL (Phase 6)
 
-### 📊 Enhanced AI Tracking
+### 📊 Enhanced AI Tracking (Phase 6)
 *   **Granular Types:** Track usage by category: `CHAT`, `SMART_ENTRY`, `REPORT`.
-*   **Geolocalization:** Track User Country & IP Address.
+*   **Geolocalization:** Track User Country.
 
-### 🚦 Granular Permissions
-Instead of a single "Block AI" toggle, Admins can now manage specific permissions via `aiSettings` JSON:
+### 🚦 Numeric Quotas & Limits
+Admins can set **numeric monthly limits** for each AI service via `aiSettings`:
 ```json
 {
-  "chat": true,
-  "smartEntry": false,
-  "reports": true
+  "chat": { "enabled": true, "limit": 50 },
+  "smartEntry": { "enabled": true, "limit": 100 },
+  "reports": { "enabled": false, "limit": 0 }
 }
 ```
+
+### 🔔 Warning System
+*   **Approaching Limit:** Warn user when ≤ 3 uses remain for a service.
+    *   *Notification:* "⚠️ 3 Advisor chats remaining this month."
+*   **Limit Reached:** Block access and notify.
+    *   *Notification:* "🚫 Monthly Chat limit reached. Contact Admin."
+*   **Admin Disabled:** Persistent banner if service is globally disabled for user.
+
+### 🛠 Extended Management
 
 ### 🛠 Extended Management
 #### User Operations

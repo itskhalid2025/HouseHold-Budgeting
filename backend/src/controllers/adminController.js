@@ -129,6 +129,9 @@ export const getAllUsers = async (req, res) => {
             include: {
                 household: {
                     select: { name: true }
+                },
+                aiLogs: {
+                    select: { type: true, createdAt: true }
                 }
             },
             orderBy: { createdAt: 'desc' }
@@ -137,18 +140,39 @@ export const getAllUsers = async (req, res) => {
         res.json({
             success: true,
             count: users.length,
-            users: users.map(u => ({
-                id: u.id,
-                email: u.email,
-                firstName: u.firstName,
-                lastName: u.lastName,
-                role: u.role,
-                householdName: u.household?.name || 'None',
-                aiRequestCount: u.aiRequestCount,
-                isAiRestricted: u.isAiRestricted,
-                createdAt: u.createdAt,
-                lastLoginAt: u.lastLoginAt
-            }))
+            users: users.map(u => {
+                // Calculate Monthly Usage
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const monthLogs = u.aiLogs.filter(l => new Date(l.createdAt) >= startOfMonth);
+
+                return {
+                    id: u.id,
+                    email: u.email,
+                    firstName: u.firstName,
+                    lastName: u.lastName,
+                    role: u.role,
+                    householdName: u.household?.name || 'None',
+                    aiRequestCount: u.aiRequestCount,
+                    isAiRestricted: u.isAiRestricted,
+                    emailVerified: u.emailVerified,
+                    country: u.country,
+                    aiSettings: u.aiSettings || {},
+                    aiUsage: { // Lifetime
+                        chat: u.aiLogs.filter(l => l.type === 'CHAT').length,
+                        smartEntry: u.aiLogs.filter(l => l.type === 'SMART_ENTRY').length,
+                        reports: u.aiLogs.filter(l => l.type === 'REPORT').length
+                    },
+                    aiUsageMonth: { // Current Month
+                        total: monthLogs.length,
+                        chat: monthLogs.filter(l => l.type === 'CHAT').length,
+                        smartEntry: monthLogs.filter(l => l.type === 'SMART_ENTRY').length,
+                        reports: monthLogs.filter(l => l.type === 'REPORT').length
+                    },
+                    createdAt: u.createdAt,
+                    lastLoginAt: u.lastLoginAt
+                };
+            })
         });
     } catch (error) {
         console.error('List Users Error:', error);
@@ -167,11 +191,15 @@ export const getAllHouseholds = async (req, res) => {
                         firstName: true,
                         lastName: true,
                         email: true,
-                        role: true
+                        role: true,
+                        country: true
                     }
                 },
                 _count: {
                     select: { members: true }
+                },
+                aiLogs: {
+                    select: { type: true, createdAt: true } // Added createdAt
                 }
             },
             orderBy: { createdAt: 'desc' }
@@ -180,14 +208,39 @@ export const getAllHouseholds = async (req, res) => {
         res.json({
             success: true,
             count: households.length,
-            households: households.map(h => ({
-                id: h.id,
-                name: h.name,
-                memberCount: h._count.members,
-                aiRequestCount: h.aiRequestCount,
-                createdAt: h.createdAt,
-                members: h.members
-            }))
+            households: households.map(h => {
+                // Calculate Granular Usage
+                const chatCount = h.aiLogs.filter(l => l.type === 'CHAT').length;
+                const smartEntryCount = h.aiLogs.filter(l => l.type === 'SMART_ENTRY').length;
+                const reportCount = h.aiLogs.filter(l => l.type === 'REPORT').length;
+
+                // Calculate Monthly Usage
+                const now = new Date();
+                const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+                const monthLogs = h.aiLogs.filter(l => new Date(l.createdAt) >= startOfMonth);
+
+                return {
+                    id: h.id,
+                    name: h.name,
+                    memberCount: h._count.members,
+                    aiRequestCount: h.aiRequestCount,
+                    country: h.country,
+                    aiSettings: h.aiSettings || {},
+                    aiUsage: {
+                        chat: chatCount,
+                        smartEntry: smartEntryCount,
+                        reports: reportCount
+                    },
+                    aiUsageMonth: { // Current Month
+                        total: monthLogs.length,
+                        chat: monthLogs.filter(l => l.type === 'CHAT').length,
+                        smartEntry: monthLogs.filter(l => l.type === 'SMART_ENTRY').length,
+                        reports: monthLogs.filter(l => l.type === 'REPORT').length
+                    },
+                    createdAt: h.createdAt,
+                    members: h.members
+                };
+            })
         });
     } catch (error) {
         console.error('List Households Error:', error);
@@ -209,6 +262,122 @@ export const updateUserRestriction = async (req, res) => {
         res.json({ success: true, message: `User AI access ${isAiRestricted ? 'restricted' : 'enabled'}` });
     } catch (error) {
         res.status(500).json({ success: false, error: 'Server error' });
+    }
+};
+
+// Update User (Profile & Settings)
+export const updateUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const { firstName, lastName, emailVerified, password, aiSettings, isAiRestricted } = req.body;
+
+        const updateData = {};
+        if (firstName !== undefined) updateData.firstName = firstName;
+        if (lastName !== undefined) updateData.lastName = lastName;
+        if (emailVerified !== undefined) updateData.emailVerified = emailVerified;
+        if (isAiRestricted !== undefined) updateData.isAiRestricted = isAiRestricted;
+
+        // Granular AI Settings
+        if (aiSettings !== undefined) {
+            updateData.aiSettings = aiSettings; // Prisma stores JSON directly
+        }
+
+        if (password) {
+            const bcrypt = await import('bcrypt');
+            updateData.passwordHash = await bcrypt.default.hash(password, 10);
+        }
+
+        const user = await prisma.user.update({
+            where: { id: userId },
+            data: updateData
+        });
+
+        res.json({ success: true, message: 'User updated successfully', user });
+    } catch (error) {
+        console.error('Update User Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to update user' });
+    }
+};
+
+// Delete User
+export const deleteUser = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Prevent deleting self (if admin is also a user? usually not linked, but good practice)
+        // Checks handled by middleware usually.
+
+        const user = await prisma.user.findUnique({ where: { id: userId } });
+        if (!user) return res.status(404).json({ success: false, error: 'User not found' });
+
+        // If user is Admin of a household, warn or block? 
+        // For now, we cascade delete. Prisma schema handles most relations.
+        // However, if they are the ONLY admin of a household, that household might be left orphan if not handled.
+        // The schema says `adminId` on Household is simple field. 
+        // Relation "HouseholdAdmin": User @relation("HouseholdAdmin")
+        // Household `admin User` relation.
+
+        // Let's delete.
+        await prisma.user.delete({ where: { id: userId } });
+
+        res.json({ success: true, message: 'User deleted successfully' });
+    } catch (error) {
+        console.error('Delete User Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to delete user' });
+    }
+};
+
+// Update Household
+export const updateHousehold = async (req, res) => {
+    try {
+        const { householdId } = req.params;
+        const { name, aiSettings, country } = req.body;
+
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (country !== undefined) updateData.country = country;
+        if (aiSettings !== undefined) updateData.aiSettings = aiSettings;
+
+        const household = await prisma.household.update({
+            where: { id: householdId },
+            data: updateData
+        });
+
+        res.json({ success: true, message: 'Household updated successfully', household });
+    } catch (error) {
+        console.error('Update Household Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to update household' });
+    }
+};
+
+// Delete Household
+export const deleteHousehold = async (req, res) => {
+    try {
+        const { householdId } = req.params;
+
+        // Prisma `onDelete: Cascade` on members/transactions typically handles relations
+        // But `User` model `householdId` is optional. 
+        // We probably want to free the members first or delete them? 
+        // User requirements said "control... remove member". 
+        // Usually, deleting a household implies disbanding it. Members become free agents.
+        // But usually transactions are tied to household. They get deleted.
+
+        // Let's manually set members householdId to null first to avoid deleting users?
+        // OR does schema say `User.household` onDelete?
+        // Schema: `household Household? @relation(fields: [householdId], references: [id])` - No Cascade.
+        // So we must unlink members.
+
+        await prisma.user.updateMany({
+            where: { householdId },
+            data: { householdId: null }
+        });
+
+        await prisma.household.delete({ where: { id: householdId } });
+
+        res.json({ success: true, message: 'Household deleted successfully' });
+    } catch (error) {
+        console.error('Delete Household Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to delete household' });
     }
 };
 
@@ -251,6 +420,66 @@ export const registerAdmin = async (req, res) => {
 
     } catch (error) {
         console.error('Admin Register Error:', error);
+        res.status(500).json({ success: false, error: 'Server error' });
+    }
+};
+
+// Get Dashboard Stats
+export const getDashboardStats = async (req, res) => {
+    try {
+        const [
+            userCount,
+            householdCount,
+            aiLogCount,
+            recentLogs
+        ] = await Promise.all([
+            prisma.user.count(),
+            prisma.household.count(),
+            prisma.aiUsageLog.count(),
+            prisma.aiUsageLog.findMany({
+                take: 10,
+                orderBy: { createdAt: 'desc' },
+                include: {
+                    user: { select: { firstName: true, lastName: true, email: true } }
+                }
+
+            })
+        ]);
+
+        // Calculate "New this week" for users (optional, simple approx for now)
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const newUsersCount = await prisma.user.count({ where: { createdAt: { gte: oneWeekAgo } } });
+        const newHouseholdsCount = await prisma.household.count({ where: { createdAt: { gte: oneWeekAgo } } });
+
+        // Calculate today's AI requests
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const todayAiCount = await prisma.aiUsageLog.count({ where: { createdAt: { gte: startOfDay } } });
+
+        res.json({
+            success: true,
+            stats: {
+                totalUsers: userCount,
+                newUsers: newUsersCount,
+                totalHouseholds: householdCount,
+                newHouseholds: newHouseholdsCount,
+                totalAiRequests: aiLogCount,
+                todayAiRequests: todayAiCount
+            },
+            recentActivity: recentLogs.map(log => ({
+                id: log.id,
+                user: `${log.user.firstName} ${log.user.lastName}`,
+                email: log.user.email,
+                type: log.type,
+                tokens: log.tokens,
+                country: log.country,
+                createdAt: log.createdAt
+            }))
+        });
+
+    } catch (error) {
+        console.error('Dashboard Stats Error:', error);
         res.status(500).json({ success: false, error: 'Server error' });
     }
 };

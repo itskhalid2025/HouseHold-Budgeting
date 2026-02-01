@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides a comprehensive explanation of the database schema for the HouseHold Budgeting application. The database uses **PostgreSQL** with **Prisma ORM** and consists of **12 tables** that manage users, households, financial transactions, incomes, invitations, savings goals, recurring expenses, loans, and bill splits.
+This document provides a comprehensive explanation of the database schema for the HouseHold Budgeting application. The database uses **PostgreSQL** with **Prisma ORM** and consists of **20 tables** that manage users, households, financial transactions, incomes, invitations, savings goals, recurring expenses, loans, bill splits, reports, admin/system features, and AI usage tracking.
 
 
 ---
@@ -346,6 +346,158 @@ The `split_repayments` table tracks when split expense participants pay back.
 - **Track Friend Repayments**: Know when friends pay their share
 - **Partial Payments**: Allow multiple repayments per person
 - **Auto-Settle**: Mark split as fully settled when all paid
+
+---
+
+### 13. **reports** Table
+
+The `reports` table stores generated financial reports (PDF/JSON) for households.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier for each report |
+| `household_id` | UUID | FOREIGN KEY, REQUIRED | Which household this report belongs to |
+| `type` | String | REQUIRED | Report type (e.g., "MONTHLY_SUMMARY", "TAX") |
+| `content` | JSON | REQUIRED | The report data structure or file link |
+| `date_start` | Date | REQUIRED | Start date of the report period |
+| `date_end` | Date | REQUIRED | End date of the report period |
+| `created_at` | DateTime | Default: now() | When the report was generated |
+
+#### Purpose:
+- **Historical Records**: Keep snapshots of financial health
+- **Downloadable Content**: Store generated report data
+
+---
+
+### 14. **platform_admins** Table
+
+The `platform_admins` table stores accounts for super-admins who manage the SaaS platform.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `email` | String | UNIQUE, REQUIRED | Admin email |
+| `username` | String | UNIQUE, REQUIRED | Key username |
+| `password_hash` | String | REQUIRED | Hashed password |
+| `first_name` | String | REQUIRED | First name |
+| `last_name` | String | REQUIRED | Last name |
+| `admin_level` | Enum | Default: STANDARD | Permissions level |
+| `is_super_admin` | Boolean | Default: false | Root access flag |
+| `is_active` | Boolean | Default: true | Account status |
+| `created_at` | DateTime | Default: now() | Account creation |
+
+#### Purpose:
+- **System Management**: Manage users, households, and system settings
+- **Customer Support**: Assist users with issues
+
+---
+
+### 15. **admin_invitations** Table
+
+Manage invitations for new platform administrators.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `email` | String | UNIQUE, REQUIRED | Invitee email |
+| `token` | String | UNIQUE, REQUIRED | Signup token |
+| `invited_by_id` | UUID | FOREIGN KEY | Who sent the invite |
+| `expires_at` | DateTime | REQUIRED | Expiration time |
+| `used_at` | DateTime | NULLABLE | When used |
+
+---
+
+### 16. **admin_activity_logs** Table
+
+Audit trail for all platform admin actions.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `admin_id` | UUID | FOREIGN KEY | Who performed the action |
+| `action` | String | REQUIRED | Action name (e.g., "BAN_USER") |
+| `target_type` | String | NULLABLE | "User", "Household" |
+| `target_id` | String | NULLABLE | affected ID |
+| `details` | JSON | NULLABLE | Changes made |
+| `ip_address` | String | NULLABLE | Origin IP |
+| `created_at` | DateTime | Default: now() | Timestamp |
+
+---
+
+### 17. **announcements** Table
+
+System-wide announcements shown to users.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `title` | String | REQUIRED | Headline |
+| `message` | String | REQUIRED | Content |
+| `type` | String | Default: "info" | Warning, Critical, Info |
+| `is_active` | Boolean | Default: true | Visibility |
+| `expires_at` | DateTime | NULLABLE | Auto-hide date |
+
+---
+
+### 18. **system_settings** Table
+
+Global configuration for the platform.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `key` | String | PRIMARY KEY | Setting key (e.g., "maintenance_mode") |
+| `value` | String | REQUIRED | Setting value |
+| `description` | String | NULLABLE | What this controls |
+
+---
+
+### 19. **feedback** Table
+
+User submitted feedback and bug reports.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `user_id` | UUID | FOREIGN KEY | Submitter |
+| `type` | String | Default: "general" | Bug, Feature, General |
+| `message` | String | REQUIRED | The feedback |
+| `status` | String | Default: "pending" | Reviewed, Resolved |
+
+---
+
+### 20. **ai_usage_logs** Table
+
+Tracks every AI interaction for quotas and reporting.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `user_id` | UUID | FOREIGN KEY | Who used the AI |
+| `household_id` | UUID | FOREIGN KEY, NULLABLE | Household context |
+| `type` | Enum (AiLogType) | REQUIRED | CHAT, SMART_ENTRY, REPORT |
+| `tokens` | Int | Default: 0 | Number of tokens consumed |
+| `created_at` | DateTime | Default: now() | Timestamp |
+
+#### Purpose:
+- **Usage Tracking**: Monitor API costs and limits
+- **Quotas**: Enforce daily/monthly limits per user/household
+- **Analytics**: Analyze feature popularity (Chat vs Smart Entry)
 
 ---
 
