@@ -2,11 +2,13 @@ import { BrowserRouter as Router, Routes, Route, NavLink, useNavigate, useLocati
 import { useState, useEffect, useRef } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider, useTheme } from './context/ThemeContext';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, HelpCircle, UploadCloud } from 'lucide-react';
 import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 import Logo from './assets/Logo.png';
 import useIsMobile from './hooks/useIsMobile';
 import Navbar from './components/mobile/Navbar';
+import UserGuideDesktop from './components/desktop/UserGuideDesktop';
+import { SmartEntryProvider, useSmartEntry } from './context/SmartEntryContext';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -39,6 +41,7 @@ function Header() {
   const { isAuthenticated, user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [showMenu, setShowMenu] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
   const navigate = useNavigate();
 
   const handleNavigate = (tab) => {
@@ -107,6 +110,15 @@ function Header() {
             >
               {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
+            <button
+              className="theme-toggle-btn"
+              onClick={() => setShowGuide(true)}
+              title="User Guide"
+              style={{ marginLeft: '10px' }}
+            >
+              <HelpCircle size={20} />
+            </button>
+            <UserGuideDesktop isOpen={showGuide} onClose={() => setShowGuide(false)} />
             <div className="user-menu-container">
               <div
                 className="user-menu-trigger"
@@ -390,13 +402,57 @@ function AiLimitNotification({ isMobile }) {
   );
 }
 
-import { SmartEntryProvider } from './context/SmartEntryContext';
 import GlobalSmartEntry from './components/mobile/GlobalSmartEntry';
 
 function AppContent() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const { openSmartEntry } = useSmartEntry();
+  const [isDragging, setIsDragging] = useState(false);
+  const dragCounter = useRef(0);
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current += 1;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDragging(true);
+    }
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+    dragCounter.current = 0;
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const files = e.dataTransfer.files;
+      // Basic validation for images/pdf
+      const validFiles = Array.from(files).filter(file =>
+        file.type.startsWith('image/') || file.type === 'application/pdf'
+      );
+
+      if (validFiles.length > 0) {
+        openSmartEntry({ mode: 'image', files: files });
+      }
+    }
+  };
 
   if (isAdminRoute) {
     return (
@@ -415,7 +471,25 @@ function AppContent() {
   }
 
   return (
-    <div className="app">
+    <div
+      className="app"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {isDragging && (
+        <div className="drag-overlay" style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(var(--primary-rgb, 99, 102, 241), 0.8)',
+          zIndex: 10000,
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          color: 'white', backdropFilter: 'blur(4px)', pointerEvents: 'none'
+        }}>
+          <UploadCloud size={64} style={{ marginBottom: '20px' }} />
+          <h2 style={{ fontSize: '2rem', fontWeight: 'bold' }}>Drop Receipt to Scan</h2>
+        </div>
+      )}
       <ServerStatus />
       <AINotification />
       <AiLimitNotification isMobile={isMobile} />

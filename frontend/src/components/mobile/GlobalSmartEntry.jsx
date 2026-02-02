@@ -9,9 +9,27 @@ import { Mic, Keyboard, Sparkles, Camera } from 'lucide-react';
 import './GlobalSmartEntry.css';
 
 export default function GlobalSmartEntry({ onEntryComplete }) {
-    const { isOpen, closeSmartEntry } = useSmartEntry();
+    const { isOpen, closeSmartEntry, smartEntryOptions } = useSmartEntry();
     const navigate = useNavigate();
     const [mode, setMode] = useState('menu'); // menu, voice, text, image
+    const processedRef = React.useRef(false); // Ref to prevent double-processing on mount
+
+    // Handle initial options (like Drag & Drop files)
+    React.useEffect(() => {
+        if (isOpen && smartEntryOptions) {
+            if (smartEntryOptions.mode) {
+                setMode(smartEntryOptions.mode);
+            }
+            if (smartEntryOptions.files && !processedRef.current) {
+                // If files are provided via Drag & Drop, trigger upload immediately
+                handleImageUpload({ target: { files: smartEntryOptions.files } });
+                processedRef.current = true;
+            }
+        }
+        if (!isOpen) {
+            processedRef.current = false; // Reset on close
+        }
+    }, [isOpen, smartEntryOptions]);
     const [textInput, setTextInput] = useState('');
     const [loading, setLoading] = useState(false);
 

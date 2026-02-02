@@ -13,7 +13,7 @@ import TrendLineChart from '../../components/charts/TrendLineChart';
 import { HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ChatbotButton from '../../components/mobile/ChatbotButton';
-import UserGuide from '../../components/UserGuide';
+import UserGuideMobile from '../../components/mobile/UserGuideMobile';
 
 // Mobile Components
 import MobileCard from '../../components/mobile/MobileCard';
@@ -181,8 +181,8 @@ export default function DashboardMobile() {
 
             <ChatbotButton />
 
-            {/* User Guide Modal */}
-            <UserGuide isOpen={showGuide} onClose={() => setShowGuide(false)} />
+            {/* User Guide Modal (Mobile) */}
+            <UserGuideMobile isOpen={showGuide} onClose={() => setShowGuide(false)} />
         </div>
     );
 }

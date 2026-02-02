@@ -33,6 +33,10 @@
     color: var(--info);
 }
 
+.smart-option-btn.camera {
+    color: var(--neon-cyan, #00f2ff);
+}
+
 .option-icon {
     background: var(--bg-card);
     width: 64px;
