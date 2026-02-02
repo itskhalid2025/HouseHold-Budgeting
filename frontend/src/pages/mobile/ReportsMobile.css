@@ -253,16 +253,27 @@
     }
 
     .neo-btn-primary {
-        background: linear-gradient(135deg, var(--neon-blue), var(--neon-purple));
-        border: none;
-        color: white;
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--neon-blue);
+        color: var(--neon-blue);
         padding: 12px 24px;
         border-radius: 12px;
         font-weight: 600;
         margin-top: 16px;
         width: 100%;
         min-height: var(--touch-target);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .neo-btn-primary:active {
+        background: rgba(79, 172, 254, 0.1);
+        transform: scale(0.98);
+        box-shadow: 0 0 15px rgba(79, 172, 254, 0.2);
     }
 
     /* --- Custom Filters --- */
@@ -412,7 +423,7 @@
     /* --- Stats Grid --- */
 
     .section-heading {
-        font-size: 1.2rem;
+        font-size: 1.1rem;
         font-weight: 700;
         margin-bottom: 16px;
         margin-top: 8px;
@@ -467,6 +478,18 @@
         box-shadow: 0 0 10px rgba(81, 207, 102, 0.2);
     }
 
+    .neo-btn-icon.primary {
+        background: rgba(255, 255, 255, 0.05);
+        /* Simple glass */
+        border-color: rgba(255, 255, 255, 0.2);
+        box-shadow: none;
+        /* Removed neon glow */
+    }
+
+    .neo-btn-icon:active {
+        transform: scale(0.95);
+    }
+
     .icon-blue {
         color: #339af0;
         box-shadow: 0 0 10px rgba(51, 154, 240, 0.2);
@@ -486,10 +509,14 @@
     }
 
     .stat-value {
-        font-size: 1.1rem;
+        font-size: 1.5rem;
+        /* Explicitly controlled size */
         font-weight: 700;
         margin: 4px 0 0 0;
-        word-break: break-all;
+        white-space: nowrap;
+        /* Prevent wrapping */
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .trend-badge {

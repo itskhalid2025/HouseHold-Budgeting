@@ -7,12 +7,12 @@
     --cyber-bg: #05050a;
     --cyber-panel: rgba(10, 10, 20, 0.6);
     --cyber-panel-border: rgba(0, 243, 255, 0.2);
-    
+
     --neon-cyan: #00f3ff;
     --neon-pink: #bc13fe;
     --neon-green: #0aff00;
     --neon-red: #ff2a2a;
-    
+
     --glass-blur: blur(20px);
     --font-display: 'Courier New', Courier, monospace;
     --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -38,8 +38,11 @@
 /* -- Background Effects -- */
 .cyber-grid-bg {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: 
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
         linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
         linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
     background-size: 30px 30px;
@@ -72,8 +75,15 @@
 }
 
 @keyframes orb-pulse {
-    0% { transform: scale(1); opacity: 0.2; }
-    100% { transform: scale(1.2); opacity: 0.3; }
+    0% {
+        transform: scale(1);
+        opacity: 0.2;
+    }
+
+    100% {
+        transform: scale(1.2);
+        opacity: 0.3;
+    }
 }
 
 /* -- Loading Screen -- */
@@ -158,13 +168,11 @@
     margin-top: 20px;
     margin-bottom: 24px;
     /* Angled Corners via clip-path */
-    clip-path: polygon(
-        15px 0, 100% 0, 
-        100% calc(100% - 15px), 
-        calc(100% - 15px) 100%, 
-        0 100%, 0 15px
-    );
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    clip-path: polygon(15px 0, 100% 0,
+            100% calc(100% - 15px),
+            calc(100% - 15px) 100%,
+            0 100%, 0 15px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .panel-decoration {
@@ -176,13 +184,15 @@
 }
 
 .panel-decoration.top-left {
-    top: 0; left: 0;
+    top: 0;
+    left: 0;
     border-right: none;
     border-bottom: none;
 }
 
 .panel-decoration.bottom-right {
-    bottom: 0; right: 0;
+    bottom: 0;
+    right: 0;
     border-top: none;
     border-left: none;
 }
@@ -237,8 +247,8 @@
 }
 
 .cyber-invite-terminal {
-    background: rgba(0,0,0,0.4);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
     padding: 10px;
     margin-bottom: 16px;
@@ -275,7 +285,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-top: 1px dashed rgba(255,255,255,0.1);
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
     padding-top: 16px;
 }
 
@@ -284,10 +294,10 @@
     align-items: center;
     gap: 6px;
     font-size: 12px;
-    background: rgba(255,255,255,0.05);
+    background: rgba(255, 255, 255, 0.05);
     padding: 6px 12px;
     border-radius: 20px;
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .cyber-icon-btn {
@@ -325,8 +335,13 @@
     clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
 }
 
-.cyber-btn.full-width { width: 100%; }
-.cyber-btn.mt-4 { margin-top: 24px; }
+.cyber-btn.full-width {
+    width: 100%;
+}
+
+.cyber-btn.mt-4 {
+    margin-top: 24px;
+}
 
 .cyber-btn.primary-neon {
     background: var(--neon-cyan);
@@ -340,8 +355,8 @@
 }
 
 .cyber-btn.secondary-glass {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(255,255,255,0.2);
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: var(--neon-cyan);
     backdrop-filter: blur(5px);
 }
@@ -368,7 +383,9 @@
 }
 
 /* -- Inputs -- */
-.cyber-form-group { margin-bottom: 20px; }
+.cyber-form-group {
+    margin-bottom: 20px;
+}
 
 .cyber-label {
     display: block;
@@ -385,7 +402,7 @@
 
 .cyber-input {
     width: 100%;
-    background: rgba(0,0,0,0.5);
+    background: rgba(0, 0, 0, 0.5);
     border: none;
     border-bottom: 2px solid #333;
     color: #fff;
@@ -400,7 +417,7 @@
     border-color: var(--neon-cyan);
 }
 
-.cyber-input:focus + .input-border-fx {
+.cyber-input:focus+.input-border-fx {
     width: 100%;
     opacity: 1;
 }
@@ -454,7 +471,7 @@
 /* -- Lists & Cards -- */
 .cyber-list-container {
     background: var(--cyber-panel);
-    border: 1px solid rgba(255,255,255,0.1);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 12px;
     backdrop-filter: blur(10px);
     overflow: hidden;
@@ -465,16 +482,18 @@
     display: flex;
     align-items: center;
     gap: 16px;
-    border-bottom: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
-.cyber-member-row:last-child { border-bottom: none; }
+.cyber-member-row:last-child {
+    border-bottom: none;
+}
 
 .member-avatar {
     width: 40px;
     height: 40px;
     background: linear-gradient(135deg, #222, #333);
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -483,7 +502,10 @@
     color: #fff;
 }
 
-.member-avatar-container { position: relative; }
+.member-avatar-container {
+    position: relative;
+}
+
 .admin-indicator {
     position: absolute;
     bottom: -4px;
@@ -499,16 +521,18 @@
     border: 2px solid #000;
 }
 
-.member-details { flex: 1; }
+.member-details {
+    flex: 1;
+}
 
-.member-name { 
-    font-weight: 600; 
-    color: #f0f0f0; 
+.member-name {
+    font-weight: 600;
+    color: #f0f0f0;
     font-size: 15px;
 }
 
 .you-tag {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.1);
     font-size: 9px;
     padding: 2px 4px;
     border-radius: 3px;
@@ -524,12 +548,18 @@
     font-family: var(--font-display);
 }
 
-.member-role.viewer { color: #64748b; }
-.member-role.editor { color: var(--neon-cyan); text-shadow: 0 0 5px rgba(0,243,255,0.3); }
+.member-role.viewer {
+    color: #64748b;
+}
+
+.member-role.editor {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+}
 
 .cyber-edit-btn {
     background: transparent;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     color: #aaa;
     padding: 8px;
     border-radius: 8px;
@@ -537,8 +567,8 @@
 }
 
 .cyber-request-card {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 12px;
     border-radius: 8px;
     margin-bottom: 10px;
@@ -547,11 +577,27 @@
     align-items: center;
 }
 
-.req-info { display: flex; flex-direction: column; }
-.req-name { font-weight: bold; font-size: 14px; color: #fff; }
-.req-email { font-size: 11px; color: #888; }
+.req-info {
+    display: flex;
+    flex-direction: column;
+}
 
-.req-actions { display: flex; gap: 8px; }
+.req-name {
+    font-weight: bold;
+    font-size: 14px;
+    color: #fff;
+}
+
+.req-email {
+    font-size: 11px;
+    color: #888;
+}
+
+.req-actions {
+    display: flex;
+    gap: 8px;
+}
+
 .cyber-mini-btn {
     width: 32px;
     height: 32px;
@@ -562,14 +608,25 @@
     border-radius: 6px;
     cursor: pointer;
 }
-.cyber-mini-btn.success { background: rgba(10, 255, 0, 0.2); color: var(--neon-green); }
-.cyber-mini-btn.danger { background: rgba(255, 42, 42, 0.2); color: var(--neon-red); }
+
+.cyber-mini-btn.success {
+    background: rgba(10, 255, 0, 0.2);
+    color: var(--neon-green);
+}
+
+.cyber-mini-btn.danger {
+    background: rgba(255, 42, 42, 0.2);
+    color: var(--neon-red);
+}
 
 /* -- Modals -- */
 .cyber-modal-overlay {
     position: fixed;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0,0,0,0.8);
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
     backdrop-filter: blur(5px);
     display: flex;
     align-items: center;
@@ -625,8 +682,8 @@
 }
 
 .role-option {
-    background: rgba(255,255,255,0.03);
-    border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 16px;
     display: flex;
     flex-direction: column;
@@ -634,6 +691,15 @@
     text-align: center;
     cursor: pointer;
     transition: all 0.2s ease;
+    color: #fff;
+    /* Ensure text is visible */
+}
+
+/* Default style for buttons without variant */
+.cyber-btn:not(.primary-neon):not(.danger):not(.secondary-glass):not(.outline-danger) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .role-option.active {
@@ -642,9 +708,22 @@
     box-shadow: inset 0 0 15px rgba(0, 243, 255, 0.1);
 }
 
-.role-icon { font-size: 24px; margin-bottom: 8px; }
-.role-text strong { display: block; color: #fff; font-size: 12px; margin-bottom: 4px; }
-.role-text span { font-size: 10px; color: #888; }
+.role-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.role-text strong {
+    display: block;
+    color: #fff;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.role-text span {
+    font-size: 10px;
+    color: #888;
+}
 
 .warning-text {
     color: #ffaaaa;
@@ -654,22 +733,44 @@
     margin: 16px 0 24px;
 }
 
-.cyber-alert-content { text-align: center; }
-.alert-icon-wrapper { color: var(--neon-red); margin-bottom: 16px; }
+.cyber-alert-content {
+    text-align: center;
+}
+
+.alert-icon-wrapper {
+    color: var(--neon-red);
+    margin-bottom: 16px;
+}
 
 /* -- Animations -- */
 @keyframes cyber-spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes modal-enter {
-    from { opacity: 0; transform: translateY(20px) scale(0.95); }
-    to { opacity: 1; transform: translateY(0) scale(1); }
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
 }
 
 @keyframes blink {
-    0%, 100% { opacity: 1; }
-    50% { opacity: 0.5; }
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
 }
 
 /* -- Empty State -- */
@@ -704,5 +805,14 @@
     gap: 16px;
 }
 
-.status-text { color: var(--neon-pink); font-size: 14px; margin: 0; }
-.status-detail { font-size: 12px; color: #aaa; margin: 4px 0 0; }
+.status-text {
+    color: var(--neon-pink);
+    font-size: 14px;
+    margin: 0;
+}
+
+.status-detail {
+    font-size: 12px;
+    color: #aaa;
+    margin: 4px 0 0;
+}

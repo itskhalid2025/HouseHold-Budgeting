@@ -362,6 +362,7 @@ export default function ReportsMobile() {
             disabled={generating || !customStart || !customEnd}
             className="neo-btn-primary full-width"
           >
+            <RefreshCw size={18} className={generating ? 'spin' : ''} style={{ marginRight: '8px' }} />
             {generating ? 'Processing...' : 'Generate Report'}
           </button>
         </section>
