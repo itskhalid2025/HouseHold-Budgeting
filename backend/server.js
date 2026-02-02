@@ -53,6 +53,7 @@ import joinRequestRoutes from './src/routes/joinRequests.js';
 import smartRoutes from './src/routes/smartRoutes.js';
 import reportsRoutes from './src/routes/reports.js';
 import advisorRoutes from './src/routes/advisor.js';
+import gamificationRoutes from './src/routes/gamificationRoutes.js';
 
 // Middleware imports
 import { authenticate } from './src/middleware/auth.js';
@@ -94,6 +95,7 @@ app.use('/api/join-requests', joinRequestRoutes);
 app.use('/api/smart', authenticate, smartRoutes);
 app.use('/api/reports', reportsRoutes); // Phase 6: AI Reports
 app.use('/api/advisor', advisorRoutes); // Phase 6: AI Advisor
+app.use('/api/gamification', authenticate, gamificationRoutes); // Phase 7: Gamification
 
 // Root endpoint
 app.get('/', (req, res) => {

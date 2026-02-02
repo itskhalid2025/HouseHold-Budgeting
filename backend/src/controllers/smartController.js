@@ -2,6 +2,7 @@ import prisma from '../services/db.js';
 import { traceOperation } from '../services/opikService.js';
 import { categorizeEntry } from '../agents/categorizationAgent.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
+import { updateUserGamification } from '../services/gamificationService.js';
 
 
 /**
@@ -206,6 +207,14 @@ export async function processSmartEntry(req, res) {
                     where: { id: householdId },
                     data: { lastModifiedAt: new Date() }
                 });
+
+                // 5. GAMIFICATION HOOK
+                try {
+                    await updateUserGamification(userId, 'SMART_ENTRY');
+                    console.log(`Gamification: Updated for Smart Entry (User: ${userId})`);
+                } catch (err) {
+                    console.error("Gamification Error (Smart Entry):", err);
+                }
             }
 
             logSuccess('smartController', 'processSmartEntry', { created: createdRecords.length, errors: errors.length });
@@ -385,6 +394,14 @@ export async function analyzeImage(req, res) {
             // Update Household Last Modified
             if (createdRecords.length > 0) {
                 await prisma.household.update({ where: { id: householdId }, data: { lastModifiedAt: new Date() } });
+
+                // GAMIFICATION HOOK
+                try {
+                    await updateUserGamification(userId, 'SMART_ENTRY');
+                    console.log(`Gamification: Updated for Image Analysis (User: ${userId})`);
+                } catch (err) {
+                    console.error("Gamification Error (Image Analysis):", err);
+                }
             }
 
             res.status(201).json({

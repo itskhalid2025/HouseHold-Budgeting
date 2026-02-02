@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import api from '../../api/api';
+import * as api from '../../api/api';
 // import { Home } from 'lucide-react'; // Removing explicit icon import if not used or replacing with SVG
 import './AdminTheme.css';
 import './AdminHouseholds.css';

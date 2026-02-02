@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Mic, MessageSquare, FileText, Zap, Image } from 'lucide-react';
+import { X, Mic, MessageSquare, FileText, Zap, Image, Trophy } from 'lucide-react';
 import './UserGuideMobile.css';
 
 const UserGuideMobile = ({ isOpen, onClose }) => {
@@ -46,6 +46,7 @@ const UserGuideMobile = ({ isOpen, onClose }) => {
                         </div>
                     </div>
 
+
                     <div className="guide-section-mobile">
                         <div className="section-icon-mobile advisor">
                             <MessageSquare size={20} />
@@ -53,6 +54,16 @@ const UserGuideMobile = ({ isOpen, onClose }) => {
                         <div className="section-text-mobile">
                             <h3>AI Chat</h3>
                             <p>Ask "How much did I spend on food?"</p>
+                        </div>
+                    </div>
+
+                    <div className="guide-section-mobile">
+                        <div className="section-icon-mobile reward">
+                            <Trophy size={20} />
+                        </div>
+                        <div className="section-text-mobile">
+                            <h3>Rewards</h3>
+                            <p>Earn XP, maintain streaks, and level up!</p>
                         </div>
                     </div>
 

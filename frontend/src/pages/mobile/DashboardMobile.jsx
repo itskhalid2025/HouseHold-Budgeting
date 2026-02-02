@@ -16,7 +16,10 @@ import ChatbotButton from '../../components/mobile/ChatbotButton';
 import UserGuideMobile from '../../components/mobile/UserGuideMobile';
 
 // Mobile Components
+// Mobile Components
 import MobileCard from '../../components/mobile/MobileCard';
+import RankBadge from '../../components/gamification/RankBadge';
+import GamificationHubMobile from '../../components/gamification/GamificationHubMobile';
 
 import './DashboardMobile.css';
 
@@ -25,6 +28,7 @@ export default function DashboardMobile() {
 
     // State
     const [showGuide, setShowGuide] = useState(false);
+    const [showGamification, setShowGamification] = useState(false);
     const [stats, setStats] = useState({
         income: 0,
         expenses: 0,
@@ -113,6 +117,7 @@ export default function DashboardMobile() {
                     <h2 className="username">{user?.firstName || 'User'}</h2>
                 </div>
                 <div className="header-actions">
+                    <RankBadge onClick={() => setShowGamification(true)} />
                     <button className="icon-btn" onClick={() => setShowGuide(true)} title="Platform Guide">
                         <HelpCircle size={24} />
                     </button>
@@ -121,6 +126,8 @@ export default function DashboardMobile() {
                     </Link>
                 </div>
             </header>
+
+            {/* ... rest of dashboard ... */}
 
             {/* 2. Summary Cards (Horizontal Scroll) */}
             <div className="summary-scroll">
@@ -183,6 +190,11 @@ export default function DashboardMobile() {
 
             {/* User Guide Modal (Mobile) */}
             <UserGuideMobile isOpen={showGuide} onClose={() => setShowGuide(false)} />
+
+            <GamificationHubMobile
+                isOpen={showGamification}
+                onClose={() => setShowGamification(false)}
+            />
         </div>
     );
 }

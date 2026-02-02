@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { X, Mic, MessageSquare, FileText, Zap, Image, Command } from 'lucide-react';
+import { X, Mic, MessageSquare, FileText, Zap, Image, Command, Trophy } from 'lucide-react';
 import './UserGuideDesktop.css';
 
 const UserGuideDesktop = ({ isOpen, onClose }) => {
@@ -74,6 +74,20 @@ const UserGuideDesktop = ({ isOpen, onClose }) => {
                             <p>
                                 Navigate to Reports page. <br />
                                 Select period to view detailed AI analysis & charts.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="guide-section-desktop">
+                        <div className="section-icon-desktop reward">
+                            <Trophy size={28} />
+                        </div>
+                        <div className="section-text-desktop">
+                            <h3>Gamification & Rewards</h3>
+                            <p>
+                                <strong>Earn XP:</strong> Add transactions, log daily to build streaks.<br />
+                                <strong>Level Up:</strong> Rise from Iron to Ascended by staying consistent.<br />
+                                <strong>Leaderboard:</strong> Compete with household members for top spot.
                             </p>
                         </div>
                     </div>

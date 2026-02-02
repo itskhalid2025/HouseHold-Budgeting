@@ -8,6 +8,7 @@
  * @requires @prisma/client
  * @requires ../agents/advisorAgent
  */
+import { updateUserGamification } from '../services/gamificationService.js';
 
 import { PrismaClient } from '@prisma/client';
 import { getFinancialAdvice, generateSavingsRecommendations } from '../agents/advisorAgent.js';
@@ -220,6 +221,9 @@ export async function chat(req, res) {
         if (conversationHistory.length > 50) {
             conversations.set(convId, conversationHistory.slice(-50));
         }
+
+        // GAMIFICATION: Award Advisor Chat XP (10 pts)
+        updateUserGamification(userId, 'ADVISOR_CHAT').catch(err => console.error("Gamification Advisor Error:", err));
 
         logSuccess('advisorController', 'chat', { conversationId: convId });
         res.json({

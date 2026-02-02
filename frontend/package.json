@@ -16,10 +16,12 @@
     "jspdf": "^4.0.0",
     "lucide-react": "^0.563.0",
     "react": "^19.2.0",
+    "react-confetti": "^6.4.0",
     "react-device-detect": "^2.2.3",
     "react-dom": "^19.2.0",
     "react-phone-input-2": "^2.15.1",
     "react-router-dom": "^6.30.3",
+    "react-use": "^17.6.0",
     "recharts": "^3.6.0"
   },
   "devDependencies": {

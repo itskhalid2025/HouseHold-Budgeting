@@ -1,0 +1,105 @@
+.app-sidebar {
+    width: 260px;
+    background: var(--bg-secondary);
+    border-right: 1px solid var(--border-light);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+    transition: width 0.3s ease;
+}
+
+.sidebar-header {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    gap: 12px;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.sidebar-logo {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+}
+
+.sidebar-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    white-space: nowrap;
+    margin: 0;
+}
+
+.sidebar-action {
+    padding: 24px 12px 0;
+}
+
+.new-entry-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+}
+
+.new-entry-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.4);
+}
+
+.sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+    overflow-y: auto;
+}
+
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+}
+
+.sidebar-link:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    transform: translateX(4px);
+}
+
+.sidebar-link.active {
+    background: linear-gradient(90deg, rgba(124, 58, 237, 0.1) 0%, transparent 100%);
+    color: var(--primary-light);
+    border-left: 3px solid var(--primary);
+    border-radius: 0 12px 12px 0;
+}
+
+.sidebar-link .icon {
+    font-size: 1.2rem;
+    min-width: 24px;
+    text-align: center;
+}

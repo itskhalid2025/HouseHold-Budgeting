@@ -7,8 +7,10 @@ import { ProtectedRoute, PublicRoute } from './components/ProtectedRoute';
 import Logo from './assets/Logo.png';
 import useIsMobile from './hooks/useIsMobile';
 import Navbar from './components/mobile/Navbar';
-import UserGuideDesktop from './components/desktop/UserGuideDesktop';
+import Sidebar from './components/desktop/Sidebar';
+import TopBar from './components/desktop/TopBar';
 import { SmartEntryProvider, useSmartEntry } from './context/SmartEntryContext';
+import './components/gamification/RewardAnimation.css';
 
 // Pages
 import Dashboard from './pages/Dashboard';
@@ -35,141 +37,6 @@ import AdminRegister from './pages/admin/AdminRegister';
 import AdminSettings from './pages/admin/AdminSettings';
 
 import './App.css';
-
-// Header component with auth state
-function Header() {
-  const { isAuthenticated, user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
-  const [showMenu, setShowMenu] = useState(false);
-  const [showGuide, setShowGuide] = useState(false);
-  const navigate = useNavigate();
-
-  const handleNavigate = (tab) => {
-    setShowMenu(false);
-    navigate('/settings', { state: { tab } });
-  };
-
-  // Click outside listener
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (!event.target.closest('.user-menu-container')) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  return (
-    <header className="app-header">
-      <div className="header-content">
-        <h1 className="app-title">
-          <img src={Logo} alt="Logo" className="app-logo" />
-          HouseHold Budgeting
-        </h1>
-        {isAuthenticated ? (
-          <>
-            <nav className="main-nav">
-              {user?.householdId && (
-                <>
-                  <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                    Dashboard
-                  </NavLink>
-                  <NavLink to="/transactions" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                    Transactions
-                  </NavLink>
-                  <NavLink to="/income" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                    Income
-                  </NavLink>
-                  <NavLink to="/savings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                    Savings
-                  </NavLink>
-                </>
-              )}
-              <NavLink to="/household" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                Household
-              </NavLink>
-              {user?.householdId && (
-                <>
-                  <NavLink to="/reports" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                    Reports
-                  </NavLink>
-                  <NavLink to="/advisor" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                    AI Advisor
-                  </NavLink>
-                  <NavLink to="/settings" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-                    Settings
-                  </NavLink>
-                </>
-              )}
-            </nav>
-            <button
-              className="theme-toggle-btn"
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-            >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <button
-              className="theme-toggle-btn"
-              onClick={() => setShowGuide(true)}
-              title="User Guide"
-              style={{ marginLeft: '10px' }}
-            >
-              <HelpCircle size={20} />
-            </button>
-            <UserGuideDesktop isOpen={showGuide} onClose={() => setShowGuide(false)} />
-            <div className="user-menu-container">
-              <div
-                className="user-menu-trigger"
-                onClick={() => setShowMenu(!showMenu)}
-              >
-                <div className="user-avatar-circle">
-                  {(user?.firstName?.[0] || 'U').toUpperCase()}
-                </div>
-              </div>
-
-              {showMenu && (
-                <div className="dropdown-menu">
-                  <div className="dropdown-header">
-                    <div className="dropdown-user-name">{user?.firstName} {user?.lastName}</div>
-                    <div className="dropdown-user-email">{user?.email}</div>
-                  </div>
-                  <div className="dropdown-divider"></div>
-                  <button onClick={() => handleNavigate('profile')} className="dropdown-item">
-                    Profile settings
-                  </button>
-                  <button onClick={() => handleNavigate('household')} className="dropdown-item">
-                    Household management
-                  </button>
-                  <button onClick={() => handleNavigate('notifications')} className="dropdown-item">
-                    Notification preferences
-                  </button>
-                  <button onClick={() => handleNavigate('household')} className="dropdown-item">
-                    Currency settings
-                  </button>
-                  <div className="dropdown-divider"></div>
-                  <button onClick={logout} className="dropdown-item danger">
-                    Logout
-                  </button>
-                </div>
-              )}
-            </div>
-          </>
-        ) : (
-          <nav className="main-nav">
-            <NavLink to="/login" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              Login
-            </NavLink>
-            <NavLink to="/register" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              Register
-            </NavLink>
-          </nav>
-        )}
-      </div>
-    </header >
-  );
-}
 
 // Server Status component to handle cold starts
 function ServerStatus() {
@@ -494,90 +361,108 @@ function AppContent() {
       <AINotification />
       <AiLimitNotification isMobile={isMobile} />
       <JoinRequestNotification />
-      {!isMobile && <Header />}
 
-      <main className="app-main">
-        <GlobalSmartEntry />
-        <Routes>
-          {/* ... existing routes ... */}
-          {/* Protected Routes */}
-          <Route path="/" element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } />
-          <Route path="/transactions" element={
-            <ProtectedRoute>
-              <Transactions />
-            </ProtectedRoute>
-          } />
-          <Route path="/income" element={
-            <ProtectedRoute>
-              <Income />
-            </ProtectedRoute>
-          } />
-          <Route path="/savings" element={
-            <ProtectedRoute>
-              <Savings />
-            </ProtectedRoute>
-          } />
-          <Route path="/household" element={
-            <ProtectedRoute>
-              <Household />
-            </ProtectedRoute>
-          } />
-          <Route path="/reports" element={
-            <ProtectedRoute>
-              <Reports />
-            </ProtectedRoute>
-          } />
-          <Route path="/advisor" element={
-            <ProtectedRoute>
-              <Advisor />
-            </ProtectedRoute>
-          } />
-          <Route path="/settings" element={
-            <ProtectedRoute>
-              <Settings />
-            </ProtectedRoute>
-          } />
-
-          {/* Public Routes (redirect if logged in) */}
-          <Route path="/login" element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
-          } />
-          <Route path="/register" element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          } />
-          <Route path="/forgot-password" element={
-            <PublicRoute>
-              <ForgotPassword />
-            </PublicRoute>
-          } />
-          <Route path="/verify-email" element={
-            <PublicRoute>
-              <VerifyEmail />
-            </PublicRoute>
-          } />
-          <Route path="/reset-password" element={
-            <PublicRoute>
-              <ResetPassword />
-            </PublicRoute>
-          } />
-        </Routes>
-      </main>
-
-      {!isMobile && (
-        <footer className="app-footer">
-          <p>&copy; 2026 HouseHold Budgeting.</p>
-        </footer>
+      {isMobile ? (
+        <>
+          <main className="app-main">
+            <GlobalSmartEntry />
+            <AppRoutes />
+          </main>
+          <Navbar />
+        </>
+      ) : (
+        <div className="app-desktop-layout">
+          <GlobalSmartEntry />
+          <Sidebar />
+          <div className="desktop-main-wrapper">
+            <TopBar />
+            <main className="app-main">
+              <AppRoutes />
+            </main>
+            <footer className="app-footer">
+              <p>&copy; 2026 HouseHold Budgeting.</p>
+            </footer>
+          </div>
+        </div>
       )}
-      {isMobile && <Navbar />}
     </div>
+  );
+}
+
+// Extracted Routes to avoid duplication in render
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* ... existing routes ... */}
+      {/* Protected Routes */}
+      <Route path="/" element={
+        <ProtectedRoute>
+          <Dashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/transactions" element={
+        <ProtectedRoute>
+          <Transactions />
+        </ProtectedRoute>
+      } />
+      <Route path="/income" element={
+        <ProtectedRoute>
+          <Income />
+        </ProtectedRoute>
+      } />
+      <Route path="/savings" element={
+        <ProtectedRoute>
+          <Savings />
+        </ProtectedRoute>
+      } />
+      <Route path="/household" element={
+        <ProtectedRoute>
+          <Household />
+        </ProtectedRoute>
+      } />
+      <Route path="/reports" element={
+        <ProtectedRoute>
+          <Reports />
+        </ProtectedRoute>
+      } />
+      <Route path="/advisor" element={
+        <ProtectedRoute>
+          <Advisor />
+        </ProtectedRoute>
+      } />
+      <Route path="/settings" element={
+        <ProtectedRoute>
+          <Settings />
+        </ProtectedRoute>
+      } />
+
+      {/* Public Routes (redirect if logged in) */}
+      <Route path="/login" element={
+        <PublicRoute>
+          <Login />
+        </PublicRoute>
+      } />
+      <Route path="/register" element={
+        <PublicRoute>
+          <Register />
+        </PublicRoute>
+      } />
+      <Route path="/forgot-password" element={
+        <PublicRoute>
+          <ForgotPassword />
+        </PublicRoute>
+      } />
+      <Route path="/verify-email" element={
+        <PublicRoute>
+          <VerifyEmail />
+        </PublicRoute>
+      } />
+      <Route path="/reset-password" element={
+        <PublicRoute>
+          <ResetPassword />
+        </PublicRoute>
+      } />
+    </Routes>
   );
 }
 

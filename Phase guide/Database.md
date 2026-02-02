@@ -19,7 +19,7 @@ The `users` table stores all user account information, authentication credential
 |------------|------|-------------|-------------|
 | `id` | UUID | PRIMARY KEY, Default: auto-generated | Unique identifier for each user |
 | `email` | String | UNIQUE, REQUIRED | User's email address for login and notifications |
-| `phone` | String | UNIQUE, REQUIRED | User's phone number for login and 2FA |
+| `phone` | String | REQUIRED | User's phone number for login and 2FA |
 | `password_hash` | String | REQUIRED | Bcrypt-hashed password (never stored in plain text) |
 | `first_name` | String | REQUIRED | User's first/given name |
 | `last_name` | String | REQUIRED | User's last/family name |
@@ -43,6 +43,14 @@ The `users` table stores all user account information, authentication credential
 | `country` | String | NULLABLE | User's country (e.g., 'India', 'USA') |
 | `last_ip` | String | NULLABLE | IP address of last login |
 | `ai_settings` | JSON | NULLABLE | Granular AI settings {chat, smartEntry} |
+| `current_streak` | Int | Default: 0 | Current daily streak count |
+| `longest_streak` | Int | Default: 0 | Best streak achieved |
+| `total_points` | Int | Default: 0 | Total gamification XP |
+| `last_log_date` | DateTime | NULLABLE | Last time user performed a streakable action |
+| `rank_tier` | String | Default: 'NOVICE' | Current rank (NOVICE, APPRENTICE, etc.) |
+| `rank_progress` | Int | Default: 0 | Progress towards next rank (0-100) |
+| `city` | String | NULLABLE | User's city for local leaderboards |
+| `state` | String | NULLABLE | User's state/region for local leaderboards |
 
 #### Purpose:
 - **Authentication**: Stores login credentials (email/phone + password)
@@ -516,6 +524,26 @@ Tracks every AI interaction for quotas and reporting.
 - **Usage Tracking**: Monitor API costs and limits
 - **Quotas**: Enforce daily/monthly limits per user/household
 - **Analytics**: Analyze feature popularity (Chat vs Smart Entry)
+
+---
+
+### 21. **achievements** Table (NEW)
+
+The `achievements` table stores earned badges and milestones for users.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `user_id` | UUID | FOREIGN KEY | Who earned the achievement |
+| `type` | String | REQUIRED | Badge type (e.g., "STREAK_7", "SAVER_MASTER") |
+| `created_at` | DateTime | Default: now() | When earned |
+
+#### Purpose:
+- **Gamification**: Reward user behavior
+- **History**: Permanent record of unlocked milestones
+- **Display**: Show off badges in profile/hub
 
 ---
 

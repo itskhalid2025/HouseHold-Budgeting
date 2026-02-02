@@ -38,6 +38,35 @@
         color: var(--success);
     }
 
+    /* Header Alignment & Button */
+    .header-top-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        width: 100%;
+        margin-bottom: 12px;
+    }
+
+    .filter-icon-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .filter-icon-btn.active {
+        background: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        border-color: rgba(59, 130, 246, 0.3);
+    }
+
     /* List */
     .income-list {
         padding: 16px;

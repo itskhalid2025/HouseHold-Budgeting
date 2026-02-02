@@ -808,6 +808,8 @@ export async function toggleUserAiRestriction(userId, isRestricted) {
     return handleResponse(response);
 }
 
+
+
 export const updateUserAdmin = async (userId, data) => {
     const token = localStorage.getItem('adminToken');
     const response = await trackedFetch(`${API_BASE_URL}/admin/users/${userId}`, {
@@ -880,70 +882,22 @@ export const getAdminAiStats = async (period = 'month') => {
     return handleResponse(response);
 };
 
-export default {
-    register,
-    login,
-    logout,
-    forgotPassword,
-    resetPassword,
-    getMe,
-    createHousehold,
-    getHousehold,
-    joinHousehold,
-    leaveHousehold,
-    removeMember,
-    updateMemberRole,
-    getMembers,
-    sendInvitation,
-    getInvitations,
-    acceptInvitation,
-    submitJoinRequest,
-    getJoinRequests,
-    getMyJoinRequestStatus,
-    approveJoinRequest,
-    rejectJoinRequest,
-    addTransaction,
-    getTransactions,
-    getTransactionSummary,
-    updateTransaction,
-    deleteTransaction,
-    addIncome,
-    getIncomes,
-    getMonthlyIncomeTotal,
-    updateIncome,
-    deleteIncome,
-    addGoal,
-    getGoals,
-    getGoalSummary,
-    updateGoal,
-    deleteGoal,
-    parseVoiceInput,
-    getToken,
-    getUser,
-    clearToken,
-    // Phase 6
-    getReports,
-    getLatestReport,
-    generateReport,
-    getReportById,
-    chatWithAdvisor,
-    getRecommendations,
-    generateChartConfig,
-    getConversationHistory,
-    clearConversation,
-    // Admin
-    adminLogin,
-    registerAdmin,
-    getAdminMe,
-    inviteAdmin,
-    getAdminUsers,
-    getAdminHouseholds,
-    toggleUserAiRestriction,
-    updateUserAdmin,
-    deleteUserAdmin,
-    updateAllUsersAiLimits,
-    updateHouseholdAdmin,
-    deleteHouseholdAdmin,
-    getAdminDashboardStats,
-    getAdminAiStats
-};
+// ================== GAMIFICATION API ==================
+
+export async function getGamificationStatus() {
+    console.log('🎮 Fetching gamification status');
+    const response = await trackedFetch(`${API_BASE_URL}/gamification/status`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+export async function getLeaderboard(type = 'global', scope = 'country') {
+    console.log('🏆 Fetching leaderboard:', type, scope);
+    const response = await trackedFetch(`${API_BASE_URL}/gamification/leaderboard?type=${type}&scope=${scope}`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+

@@ -17,9 +17,36 @@
         margin-bottom: 24px;
     }
 
-    .total-saved {
-        text-align: center;
+    .header-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
         margin-bottom: 20px;
+    }
+
+    .filter-icon-btn {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .filter-icon-btn.active {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        border-color: rgba(255, 255, 255, 0.4);
+    }
+
+    .total-saved {
+        text-align: left;
+        margin-bottom: 0;
     }
 
     .total-saved .label {

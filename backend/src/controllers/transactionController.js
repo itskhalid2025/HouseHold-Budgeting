@@ -18,6 +18,7 @@
 import prisma from '../services/db.js';
 import { traceOperation } from '../services/opikService.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
+import { updateUserGamification } from '../services/gamificationService.js';
 
 
 /**
@@ -144,10 +145,29 @@ async function addTransaction(req, res) {
                 data: { lastModifiedAt: new Date() }
             });
 
+            // ... (inside addTransaction, after success)
             logSuccess('transactionController', 'addTransaction', { id: transaction.id });
+
+            // GAMIFICATION HOOK: Update streak/XP
+            let gamificationResult = null;
+            try {
+                // Determine if this was Manual (15 XP) or Smart (10 XP)
+                // If aiCategorized is true, it came from Smart Entry.
+                const actionType = aiCategorized ? 'SMART_ENTRY' : 'MANUAL_ENTRY';
+
+                gamificationResult = await updateUserGamification(userId, actionType);
+
+                if (gamificationResult?.streakUpdated) {
+                    console.log(`Gamification: Streak updated for user ${userId} via ${actionType}`);
+                }
+            } catch (err) {
+                console.error("Gamification Error:", err);
+            }
+
             res.status(201).json({
                 success: true,
                 transaction,
+                gamification: gamificationResult, // Send back specific flags like streakUpdated, xpGained
                 householdLastModified: new Date().toISOString()
             });
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import api from '../../api/api';
+import * as api from '../../api/api';
 import './AdminTheme.css';
 import './AdminAiUsage.css';
 

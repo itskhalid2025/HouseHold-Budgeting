@@ -10,6 +10,7 @@
  */
 
 import prisma from '../services/db.js';
+import { updateUserGamification } from '../services/gamificationService.js';
 import { generateReport } from '../agents/reportAgent.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 import { getCurrencySymbol } from '../utils/currencySymbols.js';
@@ -490,6 +491,9 @@ export async function generateNewReport(req, res) {
 
         // Pass req.user.id as actorUserId
         const savedReport = await generateReportInternal(householdId, reportType, dateStart, dateEnd, userIds, req.user.id);
+
+        // GAMIFICATION: Award Report View XP (25 pts)
+        updateUserGamification(req.user.id, 'REPORT_VIEW').catch(err => console.error("Gamification Report Error:", err));
 
         logSuccess('reportsController', 'generateNewReport', { id: savedReport.id });
         res.status(201).json({

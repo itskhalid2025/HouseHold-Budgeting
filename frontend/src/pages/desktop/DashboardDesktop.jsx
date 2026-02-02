@@ -23,6 +23,9 @@ import useVoiceInput from '../../hooks/useVoiceInput';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency } from '../../utils/currencyUtils';
 import { formatDate, getUserColor } from '../../utils/formatting';
+import { triggerConfetti } from '../../utils/confetti';
+import GamificationHub from '../../components/gamification/GamificationHub';
+import RankBadge from '../../components/gamification/RankBadge';
 import './DashboardDesktop.css';
 
 export default function DashboardDesktop() {
@@ -110,6 +113,7 @@ export default function DashboardDesktop() {
 
     const [showVoiceModal, setShowVoiceModal] = useState(false);
     const [showTextModal, setShowTextModal] = useState(false);
+    const [showGamificationHub, setShowGamificationHub] = useState(false);
     const [textInput, setTextInput] = useState('');
 
     const {
@@ -138,6 +142,9 @@ export default function DashboardDesktop() {
                 resetTranscript();
                 setTextInput('');
                 fetchDashboardData(); // Refresh dashboard stats
+
+                // GAMIFICATION: Celebration!
+                triggerConfetti();
 
                 // Enhanced feedback for single vs multiple entries
                 const today = new Date().toLocaleDateString();
@@ -488,6 +495,12 @@ export default function DashboardDesktop() {
                     </div>
                 )
             }
+
+            {/* Gamification Hub Modal */}
+            <GamificationHub
+                isOpen={showGamificationHub}
+                onClose={() => setShowGamificationHub(false)}
+            />
         </div>
     );
 }

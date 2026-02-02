@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Receipt, BarChart2, Settings, Plus, Users } from 'lucide-react';
 import { useSmartEntry } from '../../context/SmartEntryContext'; // Import context
+import RankBadge from '../gamification/RankBadge';
 import './Navbar.css';
 
 export default function Navbar() {

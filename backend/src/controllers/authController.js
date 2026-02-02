@@ -21,6 +21,7 @@ import prisma from '../services/db.js';
 import config from '../utils/config.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../services/emailService.js';
+import { updateUserGamification } from '../services/gamificationService.js';
 
 
 /**
@@ -64,17 +65,7 @@ export const register = async (req, res) => {
             });
         }
 
-        // Check if phone already exists
-        const existingPhone = await prisma.user.findUnique({
-            where: { phone }
-        });
 
-        if (existingPhone) {
-            return res.status(400).json({
-                success: false,
-                error: 'Phone number already registered'
-            });
-        }
 
         // Hash password
         const passwordHash = await bcrypt.hash(password, 12);
@@ -199,6 +190,9 @@ export const login = async (req, res) => {
 
         // Generate JWT
         const token = generateToken(user);
+
+        // GAMIFICATION: Award Login XP (5 pts)
+        updateUserGamification(user.id, 'LOGIN').catch(err => console.error("Gamification Login Error:", err));
 
         logSuccess('authController', 'login', { userId: user.id });
         return res.status(200).json({

@@ -1,35 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSmartEntry } from '../../context/SmartEntryContext';
 import { parseVoiceInput, analyzeImage } from '../../api/api';
 import useVoiceInput from '../../hooks/useVoiceInput';
 import MobileModal from './MobileModal';
-import MobileButton from './MobileButton';
-import { Mic, Keyboard, Sparkles, Camera } from 'lucide-react';
+import { Mic, Keyboard, Sparkles, Camera, ArrowLeft } from 'lucide-react';
+import { triggerConfetti } from '../../utils/confetti';
 import './GlobalSmartEntry.css';
 
 export default function GlobalSmartEntry({ onEntryComplete }) {
     const { isOpen, closeSmartEntry, smartEntryOptions } = useSmartEntry();
-    const navigate = useNavigate();
     const [mode, setMode] = useState('menu'); // menu, voice, text, image
-    const processedRef = React.useRef(false); // Ref to prevent double-processing on mount
-
-    // Handle initial options (like Drag & Drop files)
-    React.useEffect(() => {
-        if (isOpen && smartEntryOptions) {
-            if (smartEntryOptions.mode) {
-                setMode(smartEntryOptions.mode);
-            }
-            if (smartEntryOptions.files && !processedRef.current) {
-                // If files are provided via Drag & Drop, trigger upload immediately
-                handleImageUpload({ target: { files: smartEntryOptions.files } });
-                processedRef.current = true;
-            }
-        }
-        if (!isOpen) {
-            processedRef.current = false; // Reset on close
-        }
-    }, [isOpen, smartEntryOptions]);
+    const processedRef = useRef(false);
     const [textInput, setTextInput] = useState('');
     const [loading, setLoading] = useState(false);
 
@@ -38,11 +20,37 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
         stopListening,
         resetTranscript,
         isListening,
-        audioBlob
+        audioBlob,
+        transcript
     } = useVoiceInput();
+
+    // Reset on open
+    useEffect(() => {
+        if (isOpen) {
+            if (smartEntryOptions?.mode) {
+                setMode(smartEntryOptions.mode);
+            } else {
+                setMode('menu');
+            }
+            if (smartEntryOptions?.files && !processedRef.current) {
+                handleImageUpload({ target: { files: smartEntryOptions.files } });
+                processedRef.current = true;
+            }
+        } else {
+            processedRef.current = false;
+            setTextInput('');
+            stopListening();
+        }
+    }, [isOpen, smartEntryOptions]);
 
     const handleClose = () => {
         closeSmartEntry();
+        setTimeout(() => setMode('menu'), 300); // Reset after close anim
+        setTextInput('');
+        stopListening();
+    };
+
+    const handleBack = () => {
         setMode('menu');
         setTextInput('');
         stopListening();
@@ -53,18 +61,19 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
         setLoading(true);
         try {
             const result = await parseVoiceInput(input);
-            console.log('Smart Entry Result:', result);
-
             if (result.success || result.isCreated) {
+                triggerConfetti();
+                if (result.gamification?.streakUpdated) {
+                    window.dispatchEvent(new CustomEvent('trigger-reward', { detail: { type: 'STREAK' } }));
+                }
                 if (onEntryComplete) onEntryComplete(result);
                 handleClose();
             } else {
-                console.warn("Smart entry processed but returned unsuccessful status", result);
                 alert("Could not process entry. Please try again.");
             }
         } catch (err) {
             console.error(err);
-            alert("Failed to process smart entry: " + err.message);
+            alert("Failed to process: " + err.message);
         } finally {
             setLoading(false);
         }
@@ -73,20 +82,18 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
     const handleImageUpload = async (e) => {
         const fileList = e.target.files;
         if (!fileList || fileList.length === 0) return;
-
-        // Convert FileList to Array
-        const files = Array.from(fileList);
-
         setLoading(true);
         try {
-            const result = await analyzeImage(files);
-            console.log('Image Analysis Result:', result);
+            const result = await analyzeImage(Array.from(fileList));
             if (result.success || result.isCreated) {
+                triggerConfetti();
+                if (result.gamification?.streakUpdated) {
+                    window.dispatchEvent(new CustomEvent('trigger-reward', { detail: { type: 'STREAK' } }));
+                }
                 if (onEntryComplete) onEntryComplete(result);
                 handleClose();
             } else {
-                console.warn("Image processed but returned unsuccessful status", result);
-                alert("Could not process image(s). Please try again or check the receipt clarity.");
+                alert("Could not process image. Please clear details.");
             }
         } catch (err) {
             console.error(err);
@@ -96,149 +103,125 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
         }
     };
 
+    // Current Modal Title based on mode
+    const getTitle = () => {
+        switch (mode) {
+            case 'voice': return 'Smart Voice Entry';
+            case 'image': return 'Scan Receipt';
+            case 'text': return 'Smart Text Entry';
+            default: return 'New Entry';
+        }
+    };
+
     return (
         <MobileModal
             isOpen={isOpen}
             onClose={handleClose}
-            title={mode === 'menu' ? 'Add Transaction' : (mode === 'voice' ? 'Smart Voice' : mode === 'image' ? 'Scan Receipt' : 'Smart Text')}
+            title={getTitle()}
         >
+            {/* Show Back button if not in menu */}
+            {mode !== 'menu' && (
+                <div style={{ marginBottom: '10px' }}>
+                    <button onClick={handleBack} style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '14px' }}>
+                        <ArrowLeft size={16} /> Back
+                    </button>
+                </div>
+            )}
+
             {mode === 'menu' && (
                 <div className="smart-menu-grid">
-                    <button className="smart-option-btn voice" onClick={() => { setMode('voice'); resetTranscript(); }}>
-                        <div className="option-icon"><Mic size={32} /></div>
-                        <span>Voice Entry</span>
-                        <span className="option-desc">Speak naturally</span>
-                    </button>
-                    <button className="smart-option-btn camera" onClick={() => setMode('image')}>
-                        <div className="option-icon"><Camera size={32} /></div>
-                        <span>Scan Receipt</span>
-                        <span className="option-desc">Upload or take photo</span>
-                    </button>
-                    <button className="smart-option-btn text" onClick={() => { setMode('text'); setTextInput(''); }}>
-                        <div className="option-icon"><Keyboard size={32} /></div>
-                        <span>Text Entry</span>
-                        <span className="option-desc">Type naturally</span>
-                    </button>
-                </div>
-            )}
-
-            {mode === 'image' && (
-                <div className="image-interface" style={{ textAlign: 'center', padding: '20px' }}>
-                    <div className="image-options-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
-                        {/* Option 1: Camera (Scan) */}
-                        <div className="upload-container" style={{
-                            border: '2px dashed rgba(0, 242, 255, 0.3)',
-                            borderRadius: '12px',
-                            padding: '20px',
-                            background: 'rgba(0, 242, 255, 0.05)'
-                        }}>
-                            <input
-                                type="file"
-                                accept="image/*"
-                                capture="environment"
-                                id="camera-upload"
-                                style={{ display: 'none' }}
-                                onChange={handleImageUpload}
-                                disabled={loading}
-                            />
-                            <label htmlFor="camera-upload" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                <div style={{
-                                    width: '50px', height: '50px',
-                                    background: 'rgba(0, 242, 255, 0.1)',
-                                    borderRadius: '50%',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: 'var(--neon-cyan)'
-                                }}>
-                                    <Camera size={24} />
-                                </div>
-                                <span style={{ fontWeight: '600' }}>Snap Photo</span>
-                            </label>
-                        </div>
-
-                        {/* Option 2: Gallery/Files (Upload) */}
-                        <div className="upload-container" style={{
-                            border: '2px dashed rgba(255, 255, 255, 0.2)',
-                            borderRadius: '12px',
-                            padding: '20px',
-                            background: 'rgba(255, 255, 255, 0.05)'
-                        }}>
-                            <input
-                                type="file"
-                                accept="image/*,application/pdf"
-                                multiple
-                                id="file-upload"
-                                style={{ display: 'none' }}
-                                onChange={handleImageUpload}
-                                disabled={loading}
-                            />
-                            <label htmlFor="file-upload" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
-                                <div style={{
-                                    width: '50px', height: '50px',
-                                    background: 'rgba(255, 255, 255, 0.1)',
-                                    borderRadius: '50%',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    color: '#fff'
-                                }}>
-                                    <Sparkles size={24} />
-                                </div>
-                                <span style={{ fontWeight: '600' }}>Upload File(s)</span>
-                            </label>
-                        </div>
+                    <div className="smart-option-btn voice" onClick={() => setMode('voice')}>
+                        <div className="option-icon"><Mic size={24} /></div>
+                        <span>Voice</span>
+                        <span className="option-desc">Natural Language</span>
                     </div>
-
-                    <div style={{ marginTop: '20px' }}>
-                        {loading && (
-                            <div className="loading-status">
-                                <div className="loading-spinner"></div>
-                                <p style={{ marginTop: '10px', color: 'var(--text-muted)' }}>Analyzing Receipt(s)...</p>
-                            </div>
-                        )}
-                        {!loading && (
-                            <p className="text-muted" style={{ fontSize: '0.85rem', marginTop: '10px' }}>
-                                Supports JPG, PNG, HEIC, PDF (Max 25MB)
-                            </p>
-                        )}
+                    <div className="smart-option-btn camera" onClick={() => setMode('image')}>
+                        <div className="option-icon"><Camera size={24} /></div>
+                        <span>Scan</span>
+                        <span className="option-desc">Receipt / Invoice</span>
+                    </div>
+                    <div className="smart-option-btn text" onClick={() => setMode('text')}>
+                        <div className="option-icon"><Keyboard size={24} /></div>
+                        <span>Text</span>
+                        <span className="option-desc">Type Manual</span>
                     </div>
                 </div>
             )}
-
-            {/* ... other modes ... */}
 
             {mode === 'voice' && (
                 <div className="voice-interface">
-                    <div className={`mic-circle ${isListening ? 'active' : ''}`} onClick={isListening ? stopListening : startListening}>
+                    <p className="smart-entry-desc">
+                        Tap the microphone and speak naturally.
+                    </p>
+                    <div
+                        className={`mic-circle ${isListening ? 'active' : ''}`}
+                        onClick={isListening ? stopListening : startListening}
+                    >
                         <Mic size={40} />
                     </div>
-                    <p className="mic-status">{isListening ? 'Listening...' : (audioBlob ? 'Recording captured' : 'Tap to speak')}</p>
+                    <p className="mic-status">
+                        {isListening ? 'Listening...' : (audioBlob ? 'Recording captured' : 'Tap to speak')}
+                    </p>
 
                     {audioBlob && (
                         <div className="voice-actions">
-                            <MobileButton variant="secondary" onClick={resetTranscript} size="sm">Retake</MobileButton>
-                            <MobileButton variant="primary" onClick={() => handleSmartSubmit(audioBlob)} disabled={loading}>
+                            <button className="smart-option-btn" style={{ padding: '10px 20px', height: 'auto' }} onClick={resetTranscript}>
+                                Retake
+                            </button>
+                            <button
+                                className="smart-option-btn voice"
+                                style={{ padding: '10px 20px', height: 'auto', background: 'var(--primary)', color: 'white', border: 'none' }}
+                                onClick={() => handleSmartSubmit(audioBlob)}
+                                disabled={loading}
+                            >
                                 {loading ? 'Processing...' : 'Process'}
-                            </MobileButton>
+                            </button>
                         </div>
                     )}
                 </div>
             )}
 
             {mode === 'text' && (
-                <div className="text-interface">
+                <div className="text-interface clean-input">
+                    <label className="input-label">Describe your expense or income</label>
                     <textarea
-                        className="mobile-textarea"
-                        rows={4}
-                        placeholder="e.g. Spent 50 on groceries at Walmart"
+                        className="mobile-textarea clean-textarea"
+                        rows={5}
+                        placeholder="e.g. 'Spent 500 at Walmart for weekly groceries', 'Got paid 3000 salary'"
                         value={textInput}
                         onChange={e => setTextInput(e.target.value)}
                         autoFocus
                     />
-                    <MobileButton
-                        variant="primary"
-                        disabled={!textInput.trim() || loading}
-                        onClick={() => handleSmartSubmit(textInput)}
-                    >
-                        {loading ? 'Processing...' : 'Process Entry'}
-                    </MobileButton>
+                    <div className="dialog-footer">
+                        <button
+                            className="process-btn-clean"
+                            disabled={!textInput.trim() || loading}
+                            onClick={() => handleSmartSubmit(textInput)}
+                        >
+                            {loading ? 'Processing...' : 'Process Entry'}
+                        </button>
+                    </div>
+                </div>
+            )}
+
+            {mode === 'image' && (
+                <div className="voice-layout">
+                    <p className="smart-entry-desc">
+                        Upload or snap a photo of your receipt. We'll extract the details.
+                    </p>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+                        <label className="smart-option-btn camera" style={{ height: '120px', justifyContent: 'center' }}>
+                            <input type="file" accept="image/*" capture="environment" hidden onChange={handleImageUpload} />
+                            <Camera size={28} />
+                            <span style={{ marginTop: '8px' }}>Snap Photo</span>
+                        </label>
+                        <label className="smart-option-btn text" style={{ height: '120px', justifyContent: 'center' }}>
+                            <input type="file" accept="image/*,application/pdf" multiple hidden onChange={handleImageUpload} />
+                            <Sparkles size={28} />
+                            <span style={{ marginTop: '8px' }}>Upload File</span>
+                        </label>
+                    </div>
+                    {loading && <p style={{ textAlign: 'center', marginTop: '10px', color: 'var(--primary)' }}>Analyzing...</p>}
                 </div>
             )}
         </MobileModal>
