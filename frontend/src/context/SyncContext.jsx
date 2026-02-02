@@ -64,17 +64,11 @@ export const SyncProvider = ({ children }) => {
         };
     }, []);
 
-    // Persistent Queue
-    useEffect(() => {
-        localStorage.setItem('budget_sync_queue', JSON.stringify(syncQueue));
+    const removeFromQueue = useCallback((id) => {
+        setSyncQueue(prev => prev.filter(req => req.id !== id));
+    }, []);
 
-        // If we just went online and have items, start syncing
-        if (isOnline && syncQueue.length > 0) {
-            processSyncQueue();
-        }
-    }, [syncQueue, isOnline]);
-
-    const processSyncQueue = async () => {
+    const processSyncQueue = useCallback(async () => {
         if (!isOnline || syncQueue.length === 0) return;
 
         console.log(`🔄 Processing sync queue: ${syncQueue.length} items`);
@@ -127,7 +121,17 @@ export const SyncProvider = ({ children }) => {
                 break; // Stop processing if we hit a network error
             }
         }
-    };
+    }, [isOnline, syncQueue, removeFromQueue]);
+
+    // Persistent Queue
+    useEffect(() => {
+        localStorage.setItem('budget_sync_queue', JSON.stringify(syncQueue));
+
+        // If we just went online and have items, start syncing
+        if (isOnline && syncQueue.length > 0) {
+            processSyncQueue();
+        }
+    }, [syncQueue, isOnline, processSyncQueue]);
 
     const queueRequest = useCallback((request) => {
         // request format: { id: Date.now(), type: 'ADD_TRANSACTION', data: {}, endpoint: '/api/transactions', method: 'POST' }
@@ -137,10 +141,6 @@ export const SyncProvider = ({ children }) => {
             timestamp: new Date().toISOString()
         };
         setSyncQueue(prev => [...prev, newRequest]);
-    }, []);
-
-    const removeFromQueue = useCallback((id) => {
-        setSyncQueue(prev => prev.filter(req => req.id !== id));
     }, []);
 
     const clearQueue = useCallback(() => {

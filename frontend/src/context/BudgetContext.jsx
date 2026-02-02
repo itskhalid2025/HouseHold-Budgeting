@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { toast } from 'react-hot-toast';
 
 const BudgetContext = createContext();
 
@@ -31,47 +32,21 @@ export const BudgetProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : { totalIncome: 0, totalExpenses: 0, balance: 0 };
     });
 
-    // Persist data when it changes
-    useEffect(() => {
-        localStorage.setItem('budget_transactions', JSON.stringify(transactions));
-    }, [transactions]);
+    // Optimistic Update Helpers (Moved up to avoid initialization errors)
+    const rollbackTransaction = useCallback((tempId) => {
+        setTransactions(prev => {
+            const transaction = prev.find(t => t.id === tempId);
+            if (transaction) {
+                setStats(prevStats => ({
+                    ...prevStats,
+                    totalExpenses: prevStats.totalExpenses - parseFloat(transaction.amount),
+                    balance: prevStats.balance + parseFloat(transaction.amount)
+                }));
+            }
+            return prev.filter(t => t.id !== tempId);
+        });
+    }, []);
 
-    useEffect(() => {
-        localStorage.setItem('budget_incomes', JSON.stringify(incomes));
-    }, [incomes]);
-
-    useEffect(() => {
-        localStorage.setItem('budget_goals', JSON.stringify(goals));
-    }, [goals]);
-
-    useEffect(() => {
-        localStorage.setItem('budget_stats', JSON.stringify(stats));
-    }, [stats]);
-
-    // Listener for Background Sync Events
-    useEffect(() => {
-        const handleSyncSuccess = (e) => {
-            const { tempId, realData } = e.detail;
-            setTransactions(prev => prev.map(t => t.id === tempId ? { ...realData, isPending: false } : t));
-            toast.success('Sync complete!', { icon: '✅', id: `sync-${tempId}` });
-        };
-
-        const handleSyncFailure = (e) => {
-            const { tempId } = e.detail;
-            rollbackTransaction(tempId);
-            toast.error('Sync failed. Please check your data.', { icon: '❌', id: `sync-${tempId}` });
-        };
-
-        window.addEventListener('sync-success', handleSyncSuccess);
-        window.addEventListener('sync-failure', handleSyncFailure);
-
-        return () => {
-            window.removeEventListener('sync-success', handleSyncSuccess);
-            window.removeEventListener('sync-failure', handleSyncFailure);
-        };
-    }, [rollbackTransaction]);
-
-    // Optimistic Update Helpers
     const addOptimisticTransaction = useCallback((transaction) => {
         const newTransaction = {
             ...transaction,
@@ -95,17 +70,45 @@ export const BudgetProvider = ({ children }) => {
         setTransactions(prev => prev.map(t => t.id === tempId ? { ...realData, isPending: false } : t));
     }, []);
 
-    const rollbackTransaction = useCallback((tempId) => {
-        const transaction = transactions.find(t => t.id === tempId);
-        if (transaction) {
-            setStats(prev => ({
-                ...prev,
-                totalExpenses: prev.totalExpenses - parseFloat(transaction.amount),
-                balance: prev.balance + parseFloat(transaction.amount)
-            }));
-        }
-        setTransactions(prev => prev.filter(t => t.id !== tempId));
+    // Persist data when it changes
+    useEffect(() => {
+        localStorage.setItem('budget_transactions', JSON.stringify(transactions));
     }, [transactions]);
+
+    useEffect(() => {
+        localStorage.setItem('budget_incomes', JSON.stringify(incomes));
+    }, [incomes]);
+
+    useEffect(() => {
+        localStorage.setItem('budget_goals', JSON.stringify(goals));
+    }, [goals]);
+
+    useEffect(() => {
+        localStorage.setItem('budget_stats', JSON.stringify(stats));
+    }, [stats]);
+
+    // Listener for Background Sync Events
+    useEffect(() => {
+        const handleSyncSuccess = (e) => {
+            const { tempId, realData } = e.detail;
+            confirmTransaction(tempId, realData);
+            toast.success('Sync complete!', { icon: '✅', id: `sync-${tempId}` });
+        };
+
+        const handleSyncFailure = (e) => {
+            const { tempId } = e.detail;
+            rollbackTransaction(tempId);
+            toast.error('Sync failed. Please check your data.', { icon: '❌', id: `sync-${tempId}` });
+        };
+
+        window.addEventListener('sync-success', handleSyncSuccess);
+        window.addEventListener('sync-failure', handleSyncFailure);
+
+        return () => {
+            window.removeEventListener('sync-success', handleSyncSuccess);
+            window.removeEventListener('sync-failure', handleSyncFailure);
+        };
+    }, [rollbackTransaction, confirmTransaction]);
 
     const value = {
         transactions,
