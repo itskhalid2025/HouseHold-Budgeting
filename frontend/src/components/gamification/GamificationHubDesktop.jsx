@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { X, Trophy, Flame, MapPin, Award, Users } from 'lucide-react';
-import './GamificationHubDesktop.css';
-import { getGamificationStatus, getLeaderboard } from '../../api/api';
+import { X, Trophy, Flame, MapPin, Award, Users, Shield, Star, Crown, Gem } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { Shield, Star, Crown } from 'lucide-react';
+import { getGamificationStatus, getLeaderboard } from '../../api/api';
+import './GamificationHubDesktop.css';
 
 const RANK_ICONS = {
     'NOVICE': Shield,
     'APPRENTICE': Star,
     'PRO': Shield,
     'MASTER': Crown,
-    'LEGEND': Trophy
+    'LEGEND': Gem
 };
 const RANK_COLORS = {
     'NOVICE': '#cd7f32',
@@ -19,6 +18,20 @@ const RANK_COLORS = {
     'MASTER': '#facc15',
     'LEGEND': '#06b6d4'
 };
+const RANK_COLORS_RGB = {
+    'NOVICE': '205, 127, 50',
+    'APPRENTICE': '251, 191, 36',
+    'PRO': '148, 163, 184',
+    'MASTER': '250, 204, 21',
+    'LEGEND': '6, 182, 212'
+};
+const RANK_GRADIENTS = {
+    'NOVICE': 'linear-gradient(135deg, #cd7f32 0%, #8b4513 100%)',
+    'APPRENTICE': 'linear-gradient(135deg, #fbbf24 0%, #d97706 100%)',
+    'PRO': 'linear-gradient(135deg, #94a3b8 0%, #475569 100%)',
+    'MASTER': 'linear-gradient(135deg, #facc15 0%, #ca8a04 100%)',
+    'LEGEND': 'linear-gradient(135deg, #06b6d4 0%, #0891b2 100%)'
+};
 
 export default function GamificationHubDesktop({ isOpen, onClose }) {
     const { user } = useAuth();
@@ -26,6 +39,7 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
     const [data, setData] = useState(null);
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [lbLoading, setLbLoading] = useState(false);
     const [lbScope, setLbScope] = useState('country'); // 'global', 'country', 'state', 'city'
 
     useEffect(() => {
@@ -34,15 +48,32 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
         }
     }, [isOpen]);
 
+    // Polling every 20 seconds when open
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const interval = setInterval(() => {
+            // Refresh main status (silent)
+            loadData(true);
+
+            // Refresh leaderboard if active
+            if (activeTab === 'leaderboard') {
+                loadLeaderboard();
+            }
+        }, 20000);
+
+        return () => clearInterval(interval);
+    }, [isOpen, activeTab, lbScope]);
+
     useEffect(() => {
         if (isOpen && activeTab === 'leaderboard') {
             loadLeaderboard();
         }
     }, [isOpen, activeTab, lbScope]);
 
-    const loadData = async () => {
+    const loadData = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const res = await getGamificationStatus();
             if (res.success) {
                 setData(res.data);
@@ -50,14 +81,14 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
         } catch (error) {
             console.error("Failed to load gamification status", error);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
     const loadLeaderboard = async () => {
+        if (lbLoading) return; // Prevent redundant calls
         try {
-            // Updated API call to use lbScope
-            // Assuming getLeaderboard(type, scope) where type='locality' or 'global'
+            setLbLoading(true);
             const type = lbScope === 'global' ? 'global' : 'locality';
             const res = await getLeaderboard(type, lbScope);
             if (res.success) {
@@ -68,6 +99,8 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
         } catch (error) {
             console.error("Failed to load leaderboard", error);
             setLeaderboard([]);
+        } finally {
+            setLbLoading(false);
         }
     };
 
@@ -82,6 +115,8 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
 
     const LargeIcon = RANK_ICONS[safeRank] || Shield;
     const rankColor = RANK_COLORS[safeRank] || '#94a3b8';
+    const rankColorRgb = RANK_COLORS_RGB[safeRank] || '148, 163, 184';
+    const rankGradient = RANK_GRADIENTS[safeRank] || RANK_GRADIENTS['NOVICE'];
 
     return (
         <div className="gamification-overlay-desktop">
@@ -93,50 +128,136 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
                         className={`tab-btn-desktop ${activeTab === 'progress' ? 'active' : ''}`}
                         onClick={() => setActiveTab('progress')}
                     >
-                        <Award size={18} /> My Progress
+                        <Award size={20} /> My Progress
                     </button>
                     <button
                         className={`tab-btn-desktop ${activeTab === 'leaderboard' ? 'active' : ''}`}
                         onClick={() => setActiveTab('leaderboard')}
                     >
-                        <Users size={18} /> Leaderboard
+                        <Users size={20} /> Leaderboard
                     </button>
                 </div>
 
                 <div className="hub-content-desktop">
-                    {loading && <div className="loading-spinner">Loading...</div>}
+                    {loading && (
+                        <div className="loading-container-desktop">
+                            <div className="pulse-loader"></div>
+                            <p>Loading your status...</p>
+                        </div>
+                    )}
 
                     {!loading && activeTab === 'progress' && (
                         <div className="view-progress-desktop">
-                            <div className="rank-shield-container" style={{ borderColor: rankColor, boxShadow: `0 0 30px ${rankColor}40` }}>
-                                <LargeIcon size={80} color={rankColor} fill={`${rankColor}20`} strokeWidth={1.5} />
-                                <div className="shield-shine"></div>
+                            {/* ---- Top Section: Rank Hero ---- */}
+                            <div className="rank-hero-section-desktop" style={{
+                                '--rank-color': rankColor,
+                                '--rank-color-rgb': rankColorRgb,
+                                '--rank-gradient': rankGradient
+                            }}>
+                                <div className="rank-hero-content">
+                                    <div className="rank-visual-box">
+                                        <div className="shield-glow"></div>
+                                        <div className="rank-shield-main">
+                                            <LargeIcon size={90} className="floating-icon" />
+                                        </div>
+                                    </div>
+                                    <div className="rank-text-box">
+                                        <span className="rank-label">CURRENT RANK</span>
+                                        <h1 className="rank-name">{safeRank}</h1>
+                                        <div className="xp-badge-desktop">
+                                            <Trophy size={16} />
+                                            <span>{safePoints.toLocaleString()} XP TOTAL</span>
+                                        </div>
+
+                                        <div className="rank-progress-block">
+                                            <div className="progress-info">
+                                                <span>TIER PROGRESS</span>
+                                                <span>{safeProgress}%</span>
+                                            </div>
+                                            <div className="progress-bar-base">
+                                                <div className="progress-bar-fill" style={{ width: `${safeProgress}%` }}>
+                                                    <div className="progress-shimmer"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <h2 className="rank-title" style={{ color: rankColor }}>{safeRank}</h2>
-                            <p className="xp-subtitle">{safePoints} XP Earned</p>
+                            {/* ---- Middle Section: Badge Journey ---- */}
+                            <div className="badge-journey-section-desktop">
+                                <div className="section-title">
+                                    <Award size={18} />
+                                    <span>RANKING JOURNEY</span>
+                                </div>
+                                <div className="journey-track-desktop">
+                                    <div className="track-line"></div>
+                                    <div className="track-nodes">
+                                        {['NOVICE', 'APPRENTICE', 'PRO', 'MASTER', 'LEGEND'].map((tier, i) => {
+                                            const tierKeys = ['NOVICE', 'APPRENTICE', 'PRO', 'MASTER', 'LEGEND'];
+                                            const tierIndex = tierKeys.indexOf(safeRank);
+                                            const isPassed = i <= tierIndex;
+                                            const isCurrent = i === tierIndex;
+                                            const Icon = RANK_ICONS[tier];
 
-                            <div className="progress-section-large">
-                                <div className="progress-labels">
-                                    <span>Level Progress</span>
-                                    <span>{safeProgress}%</span>
+                                            return (
+                                                <div key={tier} className={`journey-node-desktop ${isPassed ? 'passed' : ''} ${isCurrent ? 'current' : ''}`}>
+                                                    <div className="node-icon-wrapper" style={{ '--node-color': RANK_COLORS[tier] }}>
+                                                        <Icon size={24} />
+                                                        {isPassed && !isCurrent && <div className="node-check">✓</div>}
+                                                    </div>
+                                                    <span className="node-tier-name">{tier}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
                                 </div>
-                                <div className="progress-track">
-                                    <div className="progress-fill" style={{ width: `${safeProgress}%`, background: rankColor }}></div>
-                                </div>
-                                <p className="next-tier-hint">Keep earning XP to reach the next tier!</p>
                             </div>
 
-                            <div className="stats-grid">
-                                <div className="stat-card">
-                                    <Flame size={24} className="stat-icon flame" />
-                                    <span className="stat-value">{safeStreak}</span>
-                                    <span className="stat-label">Day Streak</span>
+                            {/* ---- Bottom Section: Stats Grid ---- */}
+                            <div className="stats-dashboard-desktop">
+                                <div className="stat-card-premium streak-card">
+                                    <div className="stat-card-header">
+                                        <Flame size={20} className="flame-icon-header" />
+                                        <span>7-DAY ACTIVITY</span>
+                                    </div>
+                                    <div className="streak-grid-desktop">
+                                        {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => {
+                                            const isActive = data?.weeklyActivityLog?.[idx] === true;
+                                            return (
+                                                <div key={idx} className={`streak-day-desktop ${isActive ? 'active' : ''}`}>
+                                                    <div className="day-flame-box">
+                                                        <Flame size={20} />
+                                                    </div>
+                                                    <span className="day-name">{day}</span>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                    <div className="streak-summary-bar">
+                                        <div className="streak-count">
+                                            <span className="count-num">{safeStreak}</span>
+                                            <span className="count-label">DAY STREAK</span>
+                                        </div>
+                                        <div className="streak-status-text">
+                                            {safeStreak >= 7 ? "ULTIMATE POWER! ⚡" : safeStreak > 0 ? "STAY HOT! 🔥" : "START TODAY!"}
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="stat-card">
-                                    <MapPin size={24} className="stat-icon" />
-                                    <span className="stat-value">{city || 'Local'}</span>
-                                    <span className="stat-label">{country || 'Region'}</span>
+
+                                <div className="stat-card-premium location-card">
+                                    <div className="stat-card-header">
+                                        <MapPin size={20} className="location-icon-header" />
+                                        <span>REGIONAL RANK</span>
+                                    </div>
+                                    <div className="location-info-desktop">
+                                        <h3 className="location-city">{city || 'Global'}</h3>
+                                        <p className="location-country">{country || 'World'}</p>
+                                    </div>
+                                    <button className="lb-cta-button" onClick={() => setActiveTab('leaderboard')}>
+                                        <span>VIEW LOCAL LEADERBOARD</span>
+                                        <Users size={16} />
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -172,7 +293,12 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
                             </div>
 
                             <div className="leaderboard-list-scroll">
-                                {(leaderboard && leaderboard.length > 0) ? (
+                                {lbLoading ? (
+                                    <div className="lb-loading-placeholder-desktop">
+                                        <div className="pulse-loader-small"></div>
+                                        <span>Syncing global rankings...</span>
+                                    </div>
+                                ) : (leaderboard && leaderboard.length > 0) ? (
                                     leaderboard.map((player, index) => (
                                         <div
                                             key={index}

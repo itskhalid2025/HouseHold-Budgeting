@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
+import { useSync } from '../../context/SyncContext';
 import { updateHousehold, forgotPassword, updateProfile } from '../../api/api';
 import { CURRENCIES } from '../../utils/currencyUtils';
 import MobileCard from '../../components/mobile/MobileCard';
@@ -20,7 +21,8 @@ import {
     DollarSign,
     Mail,
     Sparkles,
-    Zap
+    Zap,
+    Download
 } from 'lucide-react';
 import './SettingsMobile.css';
 
@@ -36,6 +38,7 @@ import './SettingsMobile.css';
 export default function SettingsMobile() {
     // -- Auth Context & Global State --
     const { user, logout, household, refreshHousehold, updateUser } = useAuth();
+    const { isInstallable, installApp } = useSync();
 
     // -- Local UI State --
     const [subPage, setSubPage] = useState(null); // 'profile' | 'household' | 'notifications'
@@ -545,6 +548,27 @@ export default function SettingsMobile() {
                         <ChevronRight size={20} className="menu-arrow" />
                     </div>
                 </MobileCard>
+
+                {isInstallable && (
+                    <MobileCard
+                        className="menu-card vibrant-card-interactive install-card"
+                        onClick={installApp}
+                        role="button"
+                        tabIndex={0}
+                        aria-label="Install App"
+                    >
+                        <div className="menu-item">
+                            <div className="icon-bg gradient-4">
+                                <Download size={22} className="menu-icon" />
+                            </div>
+                            <div className="menu-text-col">
+                                <span className="menu-text">Install App</span>
+                                <span className="menu-sub">Quick access from home screen</span>
+                            </div>
+                            <Sparkles size={20} className="sparkle-icon" />
+                        </div>
+                    </MobileCard>
+                )}
             </nav>
 
             <footer className="logout-section">
@@ -556,6 +580,6 @@ export default function SettingsMobile() {
                     <span>v1.2.0</span> • <span>Build 2024</span>
                 </div>
             </footer>
-        </main>
+        </main >
     );
 }

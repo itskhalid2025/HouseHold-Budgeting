@@ -36,6 +36,8 @@ import AdminAiUsage from './pages/admin/AdminAiUsage';
 import AdminRegister from './pages/admin/AdminRegister';
 import AdminSettings from './pages/admin/AdminSettings';
 import Onboarding from './pages/Onboarding';
+import { SyncProvider } from './context/SyncContext';
+import { BudgetProvider } from './context/BudgetContext';
 
 import './App.css';
 
@@ -477,9 +479,13 @@ function App() {
     <Router>
       <AuthProvider>
         <ThemeProvider>
-          <SmartEntryProvider>
-            <AppContent />
-          </SmartEntryProvider>
+          <SyncProvider>
+            <BudgetProvider>
+              <SmartEntryProvider>
+                <AppContent />
+              </SmartEntryProvider>
+            </BudgetProvider>
+          </SyncProvider>
         </ThemeProvider>
       </AuthProvider>
     </Router>

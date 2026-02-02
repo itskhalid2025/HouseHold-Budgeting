@@ -173,6 +173,10 @@
     background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
   }
 
+  .gradient-4 {
+    background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+  }
+
   .menu-icon {
     color: #fff;
     filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
@@ -197,6 +201,31 @@
 
   .menu-arrow {
     color: rgba(255, 255, 255, 0.3);
+  }
+
+  .install-card {
+    border: 1px solid rgba(246, 211, 101, 0.3) !important;
+    background: linear-gradient(135deg, rgba(246, 211, 101, 0.1) 0%, rgba(253, 160, 133, 0.05) 100%) !important;
+  }
+
+  .sparkle-icon {
+    color: #f6d365;
+    filter: drop-shadow(0 0 8px rgba(246, 211, 101, 0.5));
+    animation: pulseSparkle 2s infinite ease-in-out;
+  }
+
+  @keyframes pulseSparkle {
+
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 0.8;
+    }
+
+    50% {
+      transform: scale(1.2);
+      opacity: 1;
+    }
   }
 
   /* -- Sub Pages -- */

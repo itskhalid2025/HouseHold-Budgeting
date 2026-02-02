@@ -8,6 +8,8 @@ import {
     deleteTransaction
 } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
+import { useSync } from '../../context/SyncContext';
+import { useBudget } from '../../context/BudgetContext';
 import usePolling from '../../hooks/usePolling';
 import { formatDate, getUserColor } from '../../utils/formatting';
 import { formatCurrency } from '../../utils/currencyUtils';
@@ -108,22 +110,32 @@ export default function TransactionsMobile() {
 // -----------------------------------------------------------------------------
 function SpendingTab() {
     const { user, currency } = useAuth();
+    const { isOnline, queueRequest } = useSync();
+    const {
+        transactions,
+        setTransactions,
+        setTotalPages,
+        totalExpenses,
+        setTotalExpenses,
+        loading,
+        setLoading,
+        addOptimisticTransaction,
+        confirmTransaction,
+        rollbackTransaction
+    } = useBudget();
+
     const canEdit = user?.role === 'OWNER' || user?.role === 'EDITOR';
 
-    // State (Ported from Desktop)
-    const [transactions, setTransactions] = useState([]);
-    const [loading, setLoading] = useState(true);
+    // State (Local UI state only)
     const [error, setError] = useState('');
     const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalExpenses, setTotalExpenses] = useState(0);
     const [filters, setFilters] = useState({
         type: '',
         category: '',
         startDate: '',
         endDate: '',
         search: '',
-        userId: ''
+        userId: user?.id || ''
     });
     const [members, setMembers] = useState([]);
     const [showFilterModal, setShowFilterModal] = useState(false);
@@ -155,11 +167,13 @@ function SpendingTab() {
         }).catch(err => console.error('Failed to load members:', err));
     }, []);
 
-    const { refetch } = usePolling(fetchTransactions, 10000, true, [page, filters]);
+    const { refetch } = usePolling(fetchTransactions, 10000, isOnline, [page, filters]);
 
     useEffect(() => {
-        fetchTransactions({ isInitial: true });
-    }, [page, filters]);
+        if (isOnline) {
+            fetchTransactions({ isInitial: true });
+        }
+    }, [page, filters, isOnline]);
 
     async function fetchTransactions(options = {}) {
         try {
@@ -195,29 +209,47 @@ function SpendingTab() {
 
     const handleSubmit = async () => {
         setError('');
+
+        const payload = {
+            description: formData.description,
+            amount: parseFloat(formData.amount),
+            date: formData.date,
+            type: formData.type,
+            userId: formData.userId,
+            category: formData.category || undefined,
+            merchant: formData.merchant || undefined
+        };
+
+        // Optimistic Update
+        const tempId = addOptimisticTransaction(payload);
+        setShowAddModal(false);
+        resetForm();
+
+        if (!isOnline) {
+            // Offline: Queue the request
+            queueRequest({
+                type: editingTxn ? 'UPDATE_TRANSACTION' : 'ADD_TRANSACTION',
+                data: editingTxn ? { id: editingTxn.id, ...payload } : payload,
+                endpoint: editingTxn ? `/api/transactions/${editingTxn.id}` : '/api/transactions',
+                method: editingTxn ? 'PUT' : 'POST',
+                tempId
+            });
+            return;
+        }
+
         try {
-            const payload = {
-                description: formData.description,
-                amount: parseFloat(formData.amount),
-                date: formData.date,
-                type: formData.type,
-                userId: formData.userId,
-                category: formData.category || undefined,
-                merchant: formData.merchant || undefined
-            };
-
+            let result;
             if (editingTxn) {
-                await updateTransaction(editingTxn.id, payload);
+                result = await updateTransaction(editingTxn.id, payload);
             } else {
-                await addTransaction(payload);
+                result = await addTransaction(payload);
             }
-
-            setShowAddModal(false);
+            confirmTransaction(tempId, result.transaction || result);
             setEditingTxn(null);
-            resetForm();
-            fetchTransactions();
         } catch (err) {
+            rollbackTransaction(tempId);
             setError(err.message || 'Failed to save transaction');
+            setShowAddModal(true); // Re-open for corrections if it failed immediately while online
         }
     };
 
@@ -297,18 +329,19 @@ function SpendingTab() {
                     <p className="empty-text">No transactions found.</p>
                 ) : (
                     transactions.map(txn => (
-                        <div key={txn.id} className="mobile-txn-card" onClick={() => openEditModal(txn)}>
+                        <div key={txn.id} className={`mobile-txn-card ${txn.isPending ? 'pending' : ''}`} onClick={() => openEditModal(txn)}>
                             <div className="txn-left">
                                 <div className="txn-icon-circle-lg">
-                                    {txn.category?.icon || '💸'}
+                                    {txn.categoryIcon || txn.category?.icon || '💸'}
+                                    {txn.isPending && <div className="pending-indicator">⏳</div>}
                                 </div>
                                 <div className="txn-details">
                                     <p className="txn-desc">{txn.description}</p>
                                     <div className="txn-meta">
                                         <span className="txn-date">{formatDate(txn.date)}</span>
                                         <span className="bullet">•</span>
-                                        <span className="txn-user" style={{ color: getUserColor(txn.user?.id) }}>
-                                            {txn.user?.firstName}
+                                        <span className="txn-user" style={{ color: getUserColor(txn.userId) }}>
+                                            {txn.user?.firstName || (members.find(m => m.id === txn.userId)?.firstName) || 'You'}
                                         </span>
                                     </div>
                                 </div>

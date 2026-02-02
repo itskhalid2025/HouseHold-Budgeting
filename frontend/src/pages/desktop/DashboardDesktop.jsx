@@ -71,16 +71,20 @@ export default function DashboardDesktop() {
     const [knowledgeIndex, setKnowledgeIndex] = useState(0);
     const [newsIndex, setNewsIndex] = useState(0);
 
-    // Auto-slide News every 10 seconds
+    // Auto-slide News & Wisdom every 10 seconds
     useEffect(() => {
         const interval = setInterval(() => {
             setNewsIndex(prev => (prev + 1) % newsCards.length);
+            setKnowledgeIndex(prev => (prev + 1) % knowledgeCards.length);
         }, 10000);
         return () => clearInterval(interval);
-    }, [newsCards.length]);
+    }, [newsCards.length, knowledgeCards.length]);
 
     const nextKnowledge = () => setKnowledgeIndex(prev => (prev + 1) % knowledgeCards.length);
     const prevKnowledge = () => setKnowledgeIndex(prev => (prev - 1 + knowledgeCards.length) % knowledgeCards.length);
+
+    const nextNews = () => setNewsIndex(prev => (prev + 1) % newsCards.length);
+    const prevNews = () => setNewsIndex(prev => (prev - 1 + newsCards.length) % newsCards.length);
 
     async function fetchDashboardData() {
         try {
@@ -335,10 +339,13 @@ export default function DashboardDesktop() {
                         <div className="sliding-card-content knowledge-card">
                             <h4>{knowledgeCards[knowledgeIndex]?.title || knowledgeCards[knowledgeIndex]?.headline}</h4>
                             <p>{knowledgeCards[knowledgeIndex]?.text || knowledgeCards[knowledgeIndex]?.summary}</p>
-                            <div className="slide-dots">
-                                {knowledgeCards.map((_, i) => (
-                                    <span key={i} className={`dot ${i === knowledgeIndex ? 'active' : ''}`}></span>
-                                ))}
+
+                            <div className="card-footer-flex">
+                    
+                                {/* Progress Bar Animation */}
+                                <div className="progress-bar-container mini">
+                                    <div key={knowledgeIndex} className="progress-bar-fill"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -347,8 +354,14 @@ export default function DashboardDesktop() {
                     <div className="info-card-container">
                         <div className="card-header">
                             <h3><Newspaper size={18} className="icon-blue" /> Financial News</h3>
-                            <div className="live-badge-wrapper">
-                                <span className="live-badge">LIVE</span>
+                            <div className="card-controls-group">
+                                <div className="live-badge-wrapper">
+                                    <span className="live-badge">LIVE</span>
+                                </div>
+                                <div className="card-controls">
+                                    <button onClick={prevNews}><ChevronLeft size={16} /></button>
+                                    <button onClick={nextNews}><ChevronRight size={16} /></button>
+                                </div>
                             </div>
                         </div>
                         <div className="sliding-card-content news-card">

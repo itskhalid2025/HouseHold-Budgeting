@@ -541,3 +541,61 @@
     color: #facc15;
     font-size: 1rem;
 }
+
+/* Leaderboard Loading & Empty States */
+.lb-mini-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.pulse-loader-small {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(250, 204, 21, 0.2);
+    border-top-color: #facc15;
+    border-radius: 50%;
+    animation: spin-mini 0.8s linear infinite;
+}
+
+@keyframes spin-mini {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.lb-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 30px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    margin-top: 10px;
+}
+
+.lb-empty-state .empty-icon {
+    color: #475569;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.lb-empty-state p {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 0 0 4px 0;
+}
+
+.lb-empty-state span {
+    color: #64748b;
+    font-size: 0.8rem;
+}

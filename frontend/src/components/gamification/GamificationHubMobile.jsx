@@ -29,6 +29,7 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
     const [data, setData] = useState(null);
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [lbLoading, setLbLoading] = useState(false);
     const [lbScope, setLbScope] = useState('country'); // 'global', 'country', 'state', 'city'
 
     useEffect(() => {
@@ -37,40 +38,71 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
         }
     }, [isOpen]);
 
+    // Polling every 20 seconds when open
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const interval = setInterval(() => {
+            // Refresh main status (silent)
+            loadData(true);
+
+            // Refresh leaderboard if active
+            if (activeTab === 'leaderboard') {
+                loadLeaderboard();
+            }
+        }, 20000);
+
+        return () => clearInterval(interval);
+    }, [isOpen, activeTab, lbScope]);
+
     useEffect(() => {
         if (isOpen && activeTab === 'leaderboard') {
             loadLeaderboard();
         }
     }, [isOpen, activeTab, lbScope]);
 
-    const loadData = async () => {
+    const loadData = async (silent = false) => {
         try {
-            setLoading(true);
+            if (!silent) setLoading(true);
             const res = await getGamificationStatus();
             if (res.success) setData(res.data);
         } catch (error) {
             console.error("Failed to load gamification status", error);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
 
     const loadLeaderboard = async () => {
         try {
+            setLbLoading(true);
             const type = lbScope === 'global' ? 'global' : 'locality';
             const res = await getLeaderboard(type, lbScope);
-            if (res.success) setLeaderboard(res.leaderboard || []);
+            if (res.success) {
+                setLeaderboard(res.leaderboard || []);
+            } else {
+                setLeaderboard([]);
+            }
         } catch (error) {
             console.error("Failed to load leaderboard", error);
+            setLeaderboard([]);
+        } finally {
+            setLbLoading(false);
         }
     };
 
     if (!isOpen) return null;
 
-    const { rankTier, currentStreak = 0, totalPoints = 0, rankProgress = 0, city } = data || {};
+    const { rankTier, currentStreak, totalPoints, rankProgress, city, country } = data || {};
 
-    const LargeIcon = RANK_ICONS[rankTier] || Shield;
-    const rankColor = RANK_COLORS[rankTier] || '#94a3b8';
+    const safeRank = rankTier || 'NOVICE';
+    const safeProgress = rankProgress || 0;
+    const safePoints = totalPoints || 0;
+    const actualStreak = currentStreak || 0;
+    const safeStreak = actualStreak; // FIXED: should be streak, not points
+
+    const LargeIcon = RANK_ICONS[safeRank] || Shield;
+    const rankColor = RANK_COLORS[safeRank] || '#94a3b8';
 
     return (
         <div className="gamification-sheet-mobile slide-up-anim">
@@ -112,18 +144,18 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
                                 </div>
 
                                 <div className="hero-rank-info">
-                                    <h1 style={{ color: rankColor }}>{rankTier}</h1>
-                                    <p className="hero-xp-val">{totalPoints} XP Earned</p>
+                                    <h1 style={{ color: rankColor }}>{safeRank}</h1>
+                                    <p className="hero-xp-val">{safePoints.toLocaleString()} XP Earned</p>
                                 </div>
                             </div>
 
                             <div className="hero-progress-section">
                                 <div className="hero-prog-labels">
                                     <span>Level Progress</span>
-                                    <span>{rankProgress}%</span>
+                                    <span>{safeProgress}%</span>
                                 </div>
                                 <div className="hero-track">
-                                    <div className="hero-fill" style={{ width: `${rankProgress}%`, background: rankColor }}></div>
+                                    <div className="hero-fill" style={{ width: `${safeProgress}%`, background: rankColor }}></div>
                                 </div>
                                 <p className="hero-footer-text">Keep earning XP to reach the next tier!</p>
                             </div>
@@ -140,7 +172,8 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
                             <div className="journey-nodes-scroll">
                                 {['NOVICE', 'APPRENTICE', 'PRO', 'MASTER', 'LEGEND'].map((tier, i) => {
                                     const Icon = RANK_ICONS[tier];
-                                    const passed = i <= ['NOVICE', 'APPRENTICE', 'PRO', 'MASTER', 'LEGEND'].indexOf(rankTier);
+                                    const tierKeys = ['NOVICE', 'APPRENTICE', 'PRO', 'MASTER', 'LEGEND'];
+                                    const passed = i <= tierKeys.indexOf(safeRank);
 
                                     return (
                                         <div key={i} className={`h-node ${passed ? 'passed' : ''}`}>
@@ -189,8 +222,8 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
                             </div>
 
                             <div className="streak-footer-msg">
-                                {currentStreak > 0
-                                    ? `🔥 You're on a ${currentStreak}-day streak! Keep it up!`
+                                {actualStreak > 0
+                                    ? `🔥 You're on a ${actualStreak}-day streak! Keep it up!`
                                     : "Start your streak today by adding an entry!"}
                             </div>
                         </div>
@@ -212,36 +245,49 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
                         </div>
 
                         <div className="mobile-lb-list">
-                            {leaderboard.map((p, i) => (
-                                <div key={i} className={`m-lb-row ${p.id === user?.id ? 'me' : ''}`}>
-                                    <span className="m-lb-num">#{p.rank}</span>
-                                    <span className="m-lb-rank">
-                                        {p.rank <= 3 && (
-                                            <Trophy size={16} color={p.rank === 1 ? '#fbbf24' : p.rank === 2 ? '#94a3b8' : '#cd7f32'} />
-                                        )}
-                                    </span>
+                            {lbLoading ? (
+                                <div className="lb-mini-loading">
+                                    <div className="pulse-loader-small"></div>
+                                    <span>Syncing rankings...</span>
+                                </div>
+                            ) : leaderboard.length > 0 ? (
+                                leaderboard.map((p, i) => (
+                                    <div key={i} className={`m-lb-row ${p.id === user?.id ? 'me' : ''}`}>
+                                        <span className="m-lb-num">#{p.rank}</span>
+                                        <span className="m-lb-rank">
+                                            {p.rank <= 3 && (
+                                                <Trophy size={16} color={p.rank === 1 ? '#fbbf24' : p.rank === 2 ? '#94a3b8' : '#cd7f32'} />
+                                            )}
+                                        </span>
 
-                                    <div className="m-lb-user">
-                                        <div className="m-lb-avatar">{(p.firstName?.[0] || 'U').toUpperCase()}</div>
+                                        <div className="m-lb-user">
+                                            <div className="m-lb-avatar">{(p.firstName?.[0] || 'U').toUpperCase()}</div>
 
-                                        <div className="m-lb-info">
-                                            <div className="lb-name-row">
-                                                <span className="m-lb-name">{p.firstName} {p.lastName}</span>
-                                                <div className="lb-badge-right">
-                                                    {React.createElement(RANK_ICONS[p.rankTier] || Shield, {
-                                                        size: 12,
-                                                        color: RANK_COLORS[p.rankTier] || '#94a3b8',
-                                                        fill: `${RANK_COLORS[p.rankTier]}30`
-                                                    })}
-                                                    <span className="lb-tier-text-small">{p.rankTier}</span>
+                                            <div className="m-lb-info">
+                                                <div className="lb-name-row">
+                                                    <span className="m-lb-name">{p.firstName} {p.lastName}</span>
+                                                    <div className="lb-badge-right">
+                                                        {React.createElement(RANK_ICONS[p.rankTier] || Shield, {
+                                                            size: 12,
+                                                            color: RANK_COLORS[p.rankTier] || '#94a3b8',
+                                                            fill: `${RANK_COLORS[p.rankTier]}30`
+                                                        })}
+                                                        <span className="lb-tier-text-small">{p.rankTier}</span>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <span className="m-lb-pts">{p.totalPoints} XP</span>
+                                        <span className="m-lb-pts">{p.totalPoints.toLocaleString()} XP</span>
+                                    </div>
+                                ))
+                            ) : (
+                                <div className="lb-empty-state">
+                                    <Users size={40} className="empty-icon" />
+                                    <p>No active players in this area yet.</p>
+                                    <span>Be the first to climb the ranks!</span>
                                 </div>
-                            ))}
+                            )}
                         </div>
                     </div>
                 )}

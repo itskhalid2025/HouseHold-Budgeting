@@ -203,37 +203,54 @@
         color: #60a5fa;
     }
 
+    .card-controls-group {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+    }
+
     .card-controls {
         display: flex;
         gap: 8px;
     }
 
     .card-controls button {
-        background: rgba(255, 255, 255, 0.05);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 8px;
-        width: 28px;
-        height: 28px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: 10px;
+        width: 32px;
+        height: 32px;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: var(--text-secondary);
+        color: white;
+        /* Force white for visibility */
         cursor: pointer;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        padding: 0;
+        /* Reset global button padding */
     }
 
     .card-controls button:hover {
-        background: var(--bg-hover);
+        background: var(--primary);
+        border-color: var(--primary-light);
         color: white;
+        transform: scale(1.1);
+        box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
     }
 
     .live-badge {
         background: #ef4444;
         color: white;
         font-size: 10px;
-        font-weight: 800;
-        padding: 2px 6px;
+        font-weight: 900;
+        padding: 1px 8px;
         border-radius: 4px;
-        animation: pulse 2s infinite;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        animation: pulse 2.5s infinite;
+        letter-spacing: 0.5px;
     }
 
     .sliding-card-content h4 {
@@ -249,11 +266,24 @@
         margin: 0 0 16px 0;
     }
 
+    .card-footer-flex {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-top: 16px;
+        gap: 20px;
+    }
+
+    .progress-bar-container.mini {
+        flex: 1;
+        margin-top: 0;
+        max-width: 120px;
+    }
+
     /* Knowledge Dots */
     .slide-dots {
         display: flex;
         gap: 6px;
-        margin-top: 12px;
     }
 
     .dot {
