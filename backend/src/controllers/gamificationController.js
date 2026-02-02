@@ -1,5 +1,4 @@
-import * as gamificationService from '../services/gamificationService.js';
-import { calculateXP, updateRank, checkAchievements } from '../services/gamificationService.js';
+import { updateUserGamification, getLeaderboard as fetchLeaderboard } from '../services/gamificationService.js';
 import prisma from '../services/db.js';
 
 const getLeaderboard = async (req, res) => {
@@ -7,7 +6,7 @@ const getLeaderboard = async (req, res) => {
         const { type, scope } = req.query; // type=locality/global, scope=city/country
         const userId = req.user.id;
 
-        const data = await gamificationService.getLeaderboard(userId, type, scope);
+        const data = await fetchLeaderboard(userId, type, scope);
         res.json({ success: true, ...data });
     } catch (error) {
         console.error('Leaderboard Error:', error);
@@ -20,7 +19,7 @@ const getUserGamificationStatus = async (req, res) => {
         const userId = req.user.id;
 
         // Trigger 'LOGIN' action to handle daily resets and login XP
-        await gamificationService.updateUserGamification(userId, 'LOGIN');
+        await updateUserGamification(userId, 'LOGIN');
 
         const user = await prisma.user.findUnique({
             where: { id: userId },
