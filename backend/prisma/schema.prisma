@@ -474,3 +474,14 @@ model AiUsageLog {
   @@index([createdAt])
   @@map("ai_usage_logs")
 }
+
+model DailyInsight {
+  id        String   @id @default(uuid())
+  date      DateTime @unique @db.Date // Use unique date for single insight per day
+  news      Json     // Array of 4 news items { headline, summary, link }
+  quotes    Json     // Array of 4 motivational tips/quotes
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("daily_insights")
+}

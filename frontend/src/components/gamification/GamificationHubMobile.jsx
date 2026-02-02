@@ -29,13 +29,19 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
     const [data, setData] = useState(null);
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [lbScope, setLbScope] = useState('country'); // 'global', 'country', 'state', 'city'
 
     useEffect(() => {
         if (isOpen) {
             loadData();
-            loadLeaderboard();
         }
     }, [isOpen]);
+
+    useEffect(() => {
+        if (isOpen && activeTab === 'leaderboard') {
+            loadLeaderboard();
+        }
+    }, [isOpen, activeTab, lbScope]);
 
     const loadData = async () => {
         try {
@@ -51,8 +57,9 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
 
     const loadLeaderboard = async () => {
         try {
-            const res = await getLeaderboard('points', 'country');
-            if (res.success) setLeaderboard(res.data || []);
+            const type = lbScope === 'global' ? 'global' : 'locality';
+            const res = await getLeaderboard(type, lbScope);
+            if (res.success) setLeaderboard(res.leaderboard || []);
         } catch (error) {
             console.error("Failed to load leaderboard", error);
         }
@@ -194,20 +201,41 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
                 {activeTab === 'leaderboard' && (
                     <div className="mobile-leaderboard-view">
                         <div className="lb-header-text">
-                            Top Players in {city || 'Your Area'}
+                            Top Players in {lbScope === 'global' ? 'the World' : (data?.[lbScope] || (lbScope === 'country' ? data?.country : 'Your Area'))}
+                        </div>
+
+                        <div className="mobile-lb-filters">
+                            <button className={`m-lb-filter-btn ${lbScope === 'city' ? 'active' : ''}`} onClick={() => setLbScope('city')} disabled={!data?.city}>City</button>
+                            <button className={`m-lb-filter-btn ${lbScope === 'state' ? 'active' : ''}`} onClick={() => setLbScope('state')} disabled={!data?.state}>State</button>
+                            <button className={`m-lb-filter-btn ${lbScope === 'country' ? 'active' : ''}`} onClick={() => setLbScope('country')}>Country</button>
+                            <button className={`m-lb-filter-btn ${lbScope === 'global' ? 'active' : ''}`} onClick={() => setLbScope('global')}>Global</button>
                         </div>
 
                         <div className="mobile-lb-list">
                             {leaderboard.map((p, i) => (
                                 <div key={i} className={`m-lb-row ${p.id === user?.id ? 'me' : ''}`}>
-                                    <span className="m-lb-rank">#{i + 1}</span>
+                                    <span className="m-lb-num">#{p.rank}</span>
+                                    <span className="m-lb-rank">
+                                        {p.rank <= 3 && (
+                                            <Trophy size={16} color={p.rank === 1 ? '#fbbf24' : p.rank === 2 ? '#94a3b8' : '#cd7f32'} />
+                                        )}
+                                    </span>
 
                                     <div className="m-lb-user">
                                         <div className="m-lb-avatar">{(p.firstName?.[0] || 'U').toUpperCase()}</div>
 
                                         <div className="m-lb-info">
-                                            <span className="m-lb-name">{p.firstName} {p.lastName}</span>
-                                            <span className="m-lb-tier">{p.rankTier}</span>
+                                            <div className="lb-name-row">
+                                                <span className="m-lb-name">{p.firstName} {p.lastName}</span>
+                                                <div className="lb-badge-right">
+                                                    {React.createElement(RANK_ICONS[p.rankTier] || Shield, {
+                                                        size: 12,
+                                                        color: RANK_COLORS[p.rankTier] || '#94a3b8',
+                                                        fill: `${RANK_COLORS[p.rankTier]}30`
+                                                    })}
+                                                    <span className="lb-tier-text-small">{p.rankTier}</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
 

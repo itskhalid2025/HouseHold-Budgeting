@@ -14,7 +14,15 @@
  */
 
 import { useState, useEffect } from 'react';
-import { getTransactionSummary, getMonthlyIncomeTotal, getGoalSummary, parseVoiceInput, getTransactions, analyzeImage } from '../../api/api';
+import {
+    getTransactionSummary,
+    getMonthlyIncomeTotal,
+    getGoalSummary,
+    parseVoiceInput,
+    getTransactions,
+    analyzeImage,
+    getDailyInsight
+} from '../../api/api';
 
 import { Upload, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, TrendingUp, Newspaper, Lightbulb } from 'lucide-react';
 import TrendLineChart from '../../components/charts/TrendLineChart';
@@ -58,19 +66,21 @@ export default function DashboardDesktop() {
     const [trendData, setTrendData] = useState([]);
 
     // --- CAROUSEL STATES ---
+    const [knowledgeCards, setKnowledgeCards] = useState(KNOWLEDGE_CARDS);
+    const [newsCards, setNewsCards] = useState(NEWS_CARDS);
     const [knowledgeIndex, setKnowledgeIndex] = useState(0);
     const [newsIndex, setNewsIndex] = useState(0);
 
     // Auto-slide News every 10 seconds
     useEffect(() => {
         const interval = setInterval(() => {
-            setNewsIndex(prev => (prev + 1) % NEWS_CARDS.length);
+            setNewsIndex(prev => (prev + 1) % newsCards.length);
         }, 10000);
         return () => clearInterval(interval);
-    }, []);
+    }, [newsCards.length]);
 
-    const nextKnowledge = () => setKnowledgeIndex(prev => (prev + 1) % KNOWLEDGE_CARDS.length);
-    const prevKnowledge = () => setKnowledgeIndex(prev => (prev - 1 + KNOWLEDGE_CARDS.length) % KNOWLEDGE_CARDS.length);
+    const nextKnowledge = () => setKnowledgeIndex(prev => (prev + 1) % knowledgeCards.length);
+    const prevKnowledge = () => setKnowledgeIndex(prev => (prev - 1 + knowledgeCards.length) % knowledgeCards.length);
 
     async function fetchDashboardData() {
         try {
@@ -78,13 +88,19 @@ export default function DashboardDesktop() {
             if (stats.income === 0 && stats.expenses === 0 && loading) setLoading(true);
 
             // Fetch data in parallel
-            const [transactionSummary, incomeData, goalData, recentTxns, allTxns] = await Promise.all([
+            const [transactionSummary, incomeData, goalData, recentTxns, allTxns, dailyInsight] = await Promise.all([
                 getTransactionSummary(),
                 getMonthlyIncomeTotal(),
                 getGoalSummary(),
                 getTransactions({ limit: 5 }), // Recent 5
-                getTransactions({ limit: 100 }) // For trend
+                getTransactions({ limit: 100 }), // For trend
+                getDailyInsight().catch(() => null) // Fallback to null if fails
             ]);
+
+            if (dailyInsight && dailyInsight.success && dailyInsight.data) {
+                if (dailyInsight.data.news) setNewsCards(dailyInsight.data.news);
+                if (dailyInsight.data.quotes) setKnowledgeCards(dailyInsight.data.quotes);
+            }
 
             const totalExpenses = transactionSummary.summary?.totalSpent || 0;
             const totalIncome = incomeData.monthlyTotal || 0;
@@ -241,10 +257,10 @@ export default function DashboardDesktop() {
 
     usePolling(fetchDashboardData, 10000);
 
-    if (loading) return <div className="container loading-center">Loading Dashboard...</div>;
+    if (loading) return <div className="loading-center">Loading Dashboard...</div>;
 
     return (
-        <div className="container dashboard-container">
+        <div className="dashboard-container">
             {/* Header / Actions - Kept at top for ease of access */}
             <div className="dashboard-top-bar">
                 <div className="smart-actions-header">
@@ -317,10 +333,10 @@ export default function DashboardDesktop() {
                             </div>
                         </div>
                         <div className="sliding-card-content knowledge-card">
-                            <h4>{KNOWLEDGE_CARDS[knowledgeIndex].title}</h4>
-                            <p>{KNOWLEDGE_CARDS[knowledgeIndex].text}</p>
+                            <h4>{knowledgeCards[knowledgeIndex]?.title || knowledgeCards[knowledgeIndex]?.headline}</h4>
+                            <p>{knowledgeCards[knowledgeIndex]?.text || knowledgeCards[knowledgeIndex]?.summary}</p>
                             <div className="slide-dots">
-                                {KNOWLEDGE_CARDS.map((_, i) => (
+                                {knowledgeCards.map((_, i) => (
                                     <span key={i} className={`dot ${i === knowledgeIndex ? 'active' : ''}`}></span>
                                 ))}
                             </div>
@@ -337,11 +353,11 @@ export default function DashboardDesktop() {
                         </div>
                         <div className="sliding-card-content news-card">
                             <div className="news-meta">
-                                <span className="news-source">{NEWS_CARDS[newsIndex].source}</span>
-                                <span className="news-time">{NEWS_CARDS[newsIndex].time}</span>
+                                <span className="news-source">{newsCards[newsIndex]?.category || newsCards[newsIndex]?.source || 'News'}</span>
+                                <span className="news-time">{newsCards[newsIndex]?.link ? <a href={newsCards[newsIndex].link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-light)', textDecoration: 'underline' }}>Read More</a> : 'Today'}</span>
                             </div>
-                            <h4>{NEWS_CARDS[newsIndex].title}</h4>
-                            <p>{NEWS_CARDS[newsIndex].text}</p>
+                            <h4>{newsCards[newsIndex]?.headline || newsCards[newsIndex]?.title}</h4>
+                            <p>{newsCards[newsIndex]?.summary || newsCards[newsIndex]?.text}</p>
                             {/* Progress Bar Animation (Pure CSS or JS driven, simple JS reset here) */}
                             <div className="progress-bar-container">
                                 <div key={newsIndex} className="progress-bar-fill"></div>

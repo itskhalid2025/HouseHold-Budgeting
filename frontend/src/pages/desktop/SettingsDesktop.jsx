@@ -16,28 +16,123 @@
 import { useState, useEffect } from 'react';
 
 import { useAuth } from '../../context/AuthContext';
-import { updateHousehold, forgotPassword } from '../../api/api';
+import { updateHousehold, forgotPassword, updateProfile } from '../../api/api';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CURRENCIES, getCurrencySymbol } from '../../utils/currencyUtils';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { Country, State, City } from 'country-state-city';
 import './SettingsDesktop.css';
 
 export default function Settings() {
-    const { user, logout, refreshHousehold, household } = useAuth();
+    const { user, logout, refreshHousehold, household, updateUser } = useAuth();
     const location = useLocation();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('profile');
 
     // Profile State
+    const [profileData, setProfileData] = useState({
+        firstName: '',
+        lastName: '',
+        phone: '',
+        country: '',
+        state: '',
+        city: ''
+    });
+    const [locationCodes, setLocationCodes] = useState({
+        countryCode: '',
+        stateCode: ''
+    });
     const [profileMsg, setProfileMsg] = useState('');
+    const [profileError, setProfileError] = useState('');
+
+    const [countries] = useState(Country.getAllCountries());
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
 
     useEffect(() => {
-        if (location.state?.tab) {
-            setActiveTab(location.state.tab);
-        }
-    }, [location]);
+        if (user) {
+            setProfileData({
+                firstName: user.firstName || '',
+                lastName: user.lastName || '',
+                phone: user.phone || '',
+                country: user.country || '',
+                state: user.state || '',
+                city: user.city || ''
+            });
 
-    // Household State Logic handled by AuthContext (household) usually, but we might want local edit state
-    // We'll use local state for editing Name
+            // Try to resolve location codes from names
+            if (user.country) {
+                const country = countries.find(c => c.name === user.country);
+                if (country) {
+                    setLocationCodes(prev => ({ ...prev, countryCode: country.isoCode }));
+                    const statesList = State.getStatesOfCountry(country.isoCode);
+                    setStates(statesList);
+
+                    if (user.state) {
+                        const state = statesList.find(s => s.name === user.state);
+                        if (state) {
+                            setLocationCodes(prev => ({ ...prev, stateCode: state.isoCode }));
+                            setCities(City.getCitiesOfState(country.isoCode, state.isoCode));
+                        }
+                    }
+                }
+            }
+        }
+    }, [user, countries]);
+
+    const handleProfileChange = (e) => {
+        const { name, value } = e.target;
+        setProfileData(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'country') {
+            const country = countries.find(c => c.name === value);
+            if (country) {
+                setLocationCodes({ countryCode: country.isoCode, stateCode: '' });
+                const statesList = State.getStatesOfCountry(country.isoCode);
+                setStates(statesList);
+                setCities([]);
+                setProfileData(prev => ({ ...prev, state: '', city: '' }));
+            } else {
+                setLocationCodes({ countryCode: '', stateCode: '' });
+                setStates([]);
+                setCities([]);
+                setProfileData(prev => ({ ...prev, state: '', city: '' }));
+            }
+        }
+
+        if (name === 'state') {
+            const state = states.find(s => s.name === value);
+            if (state) {
+                setLocationCodes(prev => ({ ...prev, stateCode: state.isoCode }));
+                setCities(City.getCitiesOfState(locationCodes.countryCode, state.isoCode));
+                setProfileData(prev => ({ ...prev, city: '' }));
+            } else {
+                setLocationCodes(prev => ({ ...prev, stateCode: '' }));
+                setCities([]);
+                setProfileData(prev => ({ ...prev, city: '' }));
+            }
+        }
+    };
+
+    const handleProfileUpdate = async () => {
+        setLoading(true);
+        setProfileMsg('');
+        setProfileError('');
+        try {
+            const res = await updateProfile(profileData);
+            if (res.user) {
+                updateUser(res.user);
+            }
+            setProfileMsg('Profile updated successfully!');
+        } catch (err) {
+            setProfileError(err.message || 'Failed to update profile');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Household State Logic handled by AuthContext (household) usually
     const [householdName, setHouseholdName] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
@@ -134,13 +229,111 @@ export default function Settings() {
                                 </div>
                             </div>
 
+                            <div className="profile-edit-section">
+                                <div className="form-row">
+                                    <div className="setting-group">
+                                        <label>First Name</label>
+                                        <input
+                                            type="text"
+                                            name="firstName"
+                                            value={profileData.firstName}
+                                            onChange={handleProfileChange}
+                                            className="input-field"
+                                        />
+                                    </div>
+                                    <div className="setting-group">
+                                        <label>Last Name</label>
+                                        <input
+                                            type="text"
+                                            name="lastName"
+                                            value={profileData.lastName}
+                                            onChange={handleProfileChange}
+                                            className="input-field"
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="setting-group">
+                                    <label>Phone Number</label>
+                                    <PhoneInput
+                                        country={locationCodes.countryCode ? locationCodes.countryCode.toLowerCase() : 'in'}
+                                        value={profileData.phone}
+                                        onChange={phone => setProfileData(prev => ({ ...prev, phone: phone.startsWith('+') ? phone : `+${phone}` }))}
+                                        containerClass="phone-input-container"
+                                        inputClass="phone-input-field"
+                                        buttonClass="phone-input-button"
+                                        dropdownClass="phone-input-dropdown"
+                                    />
+                                </div>
+
+                                <div className="setting-group">
+                                    <label>Country</label>
+                                    <select
+                                        name="country"
+                                        value={profileData.country}
+                                        onChange={handleProfileChange}
+                                        className="select-field"
+                                    >
+                                        <option value="">Select Country</option>
+                                        {countries.map(c => (
+                                            <option key={c.isoCode} value={c.name}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="form-row">
+                                    <div className="setting-group">
+                                        <label>State / Province</label>
+                                        <select
+                                            name="state"
+                                            value={profileData.state}
+                                            onChange={handleProfileChange}
+                                            disabled={!profileData.country}
+                                            className="select-field"
+                                        >
+                                            <option value="">Select State</option>
+                                            {states.map(s => (
+                                                <option key={s.isoCode} value={s.name}>{s.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="setting-group">
+                                        <label>City</label>
+                                        <select
+                                            name="city"
+                                            value={profileData.city}
+                                            onChange={handleProfileChange}
+                                            disabled={!profileData.state}
+                                            className="select-field"
+                                        >
+                                            <option value="">Select City</option>
+                                            {cities.map(c => (
+                                                <option key={c.name} value={c.name}>{c.name}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <button
+                                    className="btn-primary"
+                                    onClick={handleProfileUpdate}
+                                    disabled={loading}
+                                    style={{ marginTop: '10px' }}
+                                >
+                                    {loading ? 'Saving...' : 'Save Profile Changes'}
+                                </button>
+                                {profileMsg && <div className="success-msg" style={{ marginTop: '10px' }}>{profileMsg}</div>}
+                                {profileError && <div className="error-msg" style={{ marginTop: '10px' }}>{profileError}</div>}
+                            </div>
+
+                            <div className="divider-line" style={{ margin: '30px 0' }}></div>
+
                             <div className="setting-group">
                                 <label>Password Management</label>
                                 <button className="btn-secondary" onClick={handleForgotPassword}>
                                     Send Reset Password Email
                                 </button>
                                 <p className="help-text">We'll send a link to {user?.email} to reset your password.</p>
-                                {profileMsg && <div className="success-msg">{profileMsg}</div>}
                             </div>
 
                             <button className="logout-btn-large" onClick={logout} style={{ marginTop: '2rem' }}>Sign Out</button>

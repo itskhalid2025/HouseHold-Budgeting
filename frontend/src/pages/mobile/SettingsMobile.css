@@ -637,4 +637,31 @@
     color: rgba(255, 255, 255, 0.3);
     font-family: monospace;
   }
+
+  /* -- Mobile Phone Input -- */
+  .m-phone-cont {
+    width: 100% !important;
+  }
+
+  .m-phone-input {
+    width: 100% !important;
+    height: 50px !important;
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: #fff !important;
+    font-size: 16px !important;
+    padding-left: 58px !important;
+  }
+
+  .m-phone-btn {
+    background: rgba(0, 0, 0, 0.3) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px 0 0 12px !important;
+    width: 45px !important;
+  }
+
+  .m-phone-cont .country:hover {
+    background: rgba(255, 255, 255, 0.1) !important;
+  }
 }

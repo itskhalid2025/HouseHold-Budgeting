@@ -11,7 +11,7 @@
  * @requires ./Auth.css
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register as registerApi } from '../api/api';
 import { useAuth } from '../context/AuthContext';
@@ -19,6 +19,7 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import './Auth.css';
 import Logo from '../assets/Logo.png';
+import { Country, State, City } from 'country-state-city';
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -28,18 +29,54 @@ export default function Register() {
         confirmPassword: '',
         firstName: '',
         lastName: '',
-        currency: 'USD'
+        currency: 'USD',
+        country: '',
+        state: '',
+        city: ''
+    });
+    const [locationCodes, setLocationCodes] = useState({
+        countryCode: '',
+        stateCode: ''
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
 
-    // We don't login anymore, just redirect logic or auth context if needed
-    // const { login } = useAuth(); 
-    // const navigate = useNavigate();
+    const [countries] = useState(Country.getAllCountries());
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'country') {
+            const country = countries.find(c => c.name === value);
+            if (country) {
+                setLocationCodes(prev => ({ ...prev, countryCode: country.isoCode, stateCode: '' }));
+                setStates(State.getStatesOfCountry(country.isoCode));
+                setCities([]);
+                setFormData(prev => ({ ...prev, state: '', city: '' }));
+            } else {
+                setLocationCodes({ countryCode: '', stateCode: '' });
+                setStates([]);
+                setCities([]);
+                setFormData(prev => ({ ...prev, state: '', city: '' }));
+            }
+        }
+
+        if (name === 'state') {
+            const state = states.find(s => s.name === value);
+            if (state) {
+                setLocationCodes(prev => ({ ...prev, stateCode: state.isoCode }));
+                setCities(City.getCitiesOfState(locationCodes.countryCode, state.isoCode));
+                setFormData(prev => ({ ...prev, city: '' }));
+            } else {
+                setLocationCodes(prev => ({ ...prev, stateCode: '' }));
+                setCities([]);
+                setFormData(prev => ({ ...prev, city: '' }));
+            }
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -205,6 +242,51 @@ export default function Register() {
                         </select>
                     </div>
 
+                    <div className="form-group">
+                        <label htmlFor="country">Country</label>
+                        <select id="country" name="country" value={formData.country} onChange={handleChange} required>
+                            <option value="">Select Country</option>
+                            {countries.map(c => (
+                                <option key={c.isoCode} value={c.name}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label htmlFor="state">State / Province</label>
+                            <select
+                                id="state"
+                                name="state"
+                                value={formData.state}
+                                onChange={handleChange}
+                                disabled={!formData.country}
+                                required
+                            >
+                                <option value="">Select State</option>
+                                {states.map(s => (
+                                    <option key={s.isoCode} value={s.name}>{s.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="city">City</label>
+                            <select
+                                id="city"
+                                name="city"
+                                value={formData.city}
+                                onChange={handleChange}
+                                disabled={!formData.state}
+                                required
+                            >
+                                <option value="">Select City</option>
+                                {cities.map(c => (
+                                    <option key={c.name} value={c.name}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
                     <button type="submit" className="auth-button" disabled={loading}>
                         {loading ? 'Creating account...' : 'Create Account'}
                     </button>
@@ -214,7 +296,7 @@ export default function Register() {
                     <span>Already have an account?</span>
                     <Link to="/login">Sign in</Link>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

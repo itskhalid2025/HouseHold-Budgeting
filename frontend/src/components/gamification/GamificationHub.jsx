@@ -57,10 +57,10 @@ export default function GamificationHub({ isOpen, onClose }) {
 
     const loadLeaderboard = async () => {
         try {
-            // Defaulting to country scope for now
-            const res = await getLeaderboard('points', 'country');
+            // Defaulting to locality/country scope for now
+            const res = await getLeaderboard('locality', 'country');
             if (res.success) {
-                setLeaderboard(res.data || []);
+                setLeaderboard(res.leaderboard || []);
             } else {
                 setLeaderboard([]);
             }
@@ -157,11 +157,10 @@ export default function GamificationHub({ isOpen, onClose }) {
                                             key={index}
                                             className={`lb-row ${player.id === user?.id ? 'current-user' : ''}`}
                                         >
+                                            <div className="lb-num-col">#{player.rank}</div>
                                             <div className="lb-rank-col">
-                                                {index < 3 ? (
-                                                    <Trophy size={20} color={index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : '#cd7f32'} />
-                                                ) : (
-                                                    <span className="rank-number">#{index + 1}</span>
+                                                {player.rank <= 3 && (
+                                                    <Trophy size={18} color={player.rank === 1 ? '#fbbf24' : player.rank === 2 ? '#94a3b8' : '#cd7f32'} />
                                                 )}
                                             </div>
                                             <div className="lb-user-info">
@@ -169,11 +168,20 @@ export default function GamificationHub({ isOpen, onClose }) {
                                                     {(player.firstName?.[0] || 'U').toUpperCase()}
                                                 </div>
                                                 <div className="lb-details">
-                                                    <span className="lb-name">
-                                                        {player.firstName} {player.lastName}
-                                                        {player.id === user?.id && <span className="you-badge">(You)</span>}
-                                                    </span>
-                                                    <span className="lb-tier-text">{player.rankTier}</span>
+                                                    <div className="lb-name-row">
+                                                        <span className="lb-name">
+                                                            {player.firstName} {player.lastName}
+                                                            {player.id === user?.id && <span className="you-badge">(You)</span>}
+                                                        </span>
+                                                        <div className="lb-badge-right">
+                                                            {React.createElement(RANK_ICONS[player.rankTier] || Shield, {
+                                                                size: 14,
+                                                                color: RANK_COLORS[player.rankTier] || '#94a3b8',
+                                                                fill: `${RANK_COLORS[player.rankTier]}30`
+                                                            })}
+                                                            <span className="lb-tier-text-small">{player.rankTier}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="lb-points-col">

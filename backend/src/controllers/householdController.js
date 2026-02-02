@@ -57,7 +57,8 @@ export const createHousehold = async (req, res) => {
                 data: {
                     name,
                     inviteCode,
-                    adminId: userId
+                    adminId: userId,
+                    country: existingUser.country // Inherit creator's country
                 }
             });
 

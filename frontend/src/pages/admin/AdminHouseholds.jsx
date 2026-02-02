@@ -17,7 +17,7 @@ const AdminHouseholds = () => {
     const [filterCountry, setFilterCountry] = useState('All');
     const [filterMembers, setFilterMembers] = useState('All');
 
-    const uniqueCountries = [...new Set(households.map(h => h.country || 'Global').filter(Boolean))].sort();
+    const uniqueCountries = [...new Set(households.map(h => h.country || 'Unknown').filter(Boolean))].sort();
 
     useEffect(() => {
         fetchHouseholds();
@@ -96,7 +96,7 @@ const AdminHouseholds = () => {
     };
 
     const filteredHouseholds = households.filter(h => {
-        const matchesCountry = filterCountry === 'All' || (h.country || 'Global') === filterCountry;
+        const matchesCountry = filterCountry === 'All' || (h.country || 'Unknown') === filterCountry;
 
         let matchesMembers = true;
         const count = h.members.length;
@@ -193,7 +193,7 @@ const AdminHouseholds = () => {
                                         {hh.country ? (
                                             <span style={{ color: '#fff' }}>{hh.country}</span>
                                         ) : (
-                                            <span style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>Global</span>
+                                            <span className="text-muted-italic">Unknown</span>
                                         )}
                                     </td>
                                     <td>
@@ -346,7 +346,7 @@ const AdminHouseholds = () => {
                                         <input type="text" className="neon-input"
                                             value={editFormData.country}
                                             onChange={e => setEditFormData({ ...editFormData, country: e.target.value })}
-                                            placeholder="Global"
+                                            placeholder="Unknown"
                                         />
                                     </div>
                                 </div>

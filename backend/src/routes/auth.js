@@ -21,13 +21,15 @@ import {
     forgotPassword,
     resetPassword,
     verifyEmail,
+    updateProfile
 } from '../controllers/authController.js';
 import {
     validate,
     registerSchema,
     loginSchema,
     forgotPasswordSchema,
-    resetPasswordSchema
+    resetPasswordSchema,
+    updateUserSchema
 } from '../middleware/validate.js';
 import { authenticate } from '../middleware/auth.js';
 
@@ -197,6 +199,9 @@ router.post('/reset-password', validate(resetPasswordSchema), resetPassword);
  */
 // Get current user profile
 router.get('/me', authenticate, me);
+
+// Update user profile
+router.put('/profile', authenticate, validate(updateUserSchema), updateProfile);
 
 /**
  * @swagger

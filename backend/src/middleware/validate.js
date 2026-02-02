@@ -38,7 +38,11 @@ export const registerSchema = z.object({
   currency: z.string()
     .length(3, { message: 'Currency must be a valid ISO 4217 code (e.g., USD, EUR)' })
     .toUpperCase()
-    .default('USD')
+    .default('USD'),
+
+  country: z.string().max(100, { message: 'Country name too long' }).optional(),
+  state: z.string().max(100, { message: 'State name too long' }).optional(),
+  city: z.string().max(100, { message: 'City name too long' }).optional()
 });
 
 /**
@@ -67,9 +71,17 @@ export const updateUserSchema = z.object({
     .max(50, { message: 'Last name must be at most 50 characters' })
     .optional(),
 
+  phone: z.string()
+    .regex(phoneRegex, { message: 'Phone must be in E.164 format (e.g., +1234567890)' })
+    .optional(),
+
   timezone: z.string().optional(),
 
-  avatarUrl: z.string().url({ message: 'Avatar URL must be a valid URL' }).optional()
+  avatarUrl: z.string().url({ message: 'Avatar URL must be a valid URL' }).optional(),
+
+  country: z.string().max(100).optional(),
+  state: z.string().max(100).optional(),
+  city: z.string().max(100).optional()
 });
 
 /**

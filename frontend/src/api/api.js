@@ -199,6 +199,19 @@ export async function getMe() {
     return handleResponse(response);
 }
 
+export async function updateProfile(userData) {
+    const response = await trackedFetch(`${API_BASE_URL}/auth/profile`, {
+        method: 'PUT',
+        headers: authHeaders(),
+        body: JSON.stringify(userData)
+    });
+    const data = await handleResponse(response);
+    if (data.user) {
+        setUser(data.user);
+    }
+    return data;
+}
+
 // ================== HOUSEHOLD API ==================
 
 export async function createHousehold(name) {
@@ -885,8 +898,20 @@ export const getAdminAiStats = async (period = 'month') => {
 // ================== GAMIFICATION API ==================
 
 export async function getGamificationStatus() {
-    console.log('🎮 Fetching gamification status');
     const response = await trackedFetch(`${API_BASE_URL}/gamification/status`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
+// ================== DYNAMIC INSIGHTS API ==================
+
+/**
+ * Get daily AI-generated financial news and motivation
+ * @returns {Promise<Object>}
+ */
+export async function getDailyInsight() {
+    const response = await trackedFetch(`${API_BASE_URL}/insights/daily`, {
         headers: authHeaders()
     });
     return handleResponse(response);

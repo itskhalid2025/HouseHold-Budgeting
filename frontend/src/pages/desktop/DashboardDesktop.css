@@ -2,11 +2,12 @@
 
     /* --- Main Container & Layout --- */
     .dashboard-container {
-        padding: 24px;
+        padding: 24px 60px 48px 40px;
         width: 100%;
         color: var(--text-primary);
         min-height: 100vh;
-        max-width: 100%; /* Override global container max-width */
+        max-width: none;
+        /* Truly full width available */
     }
 
     .dashboard-top-bar {
@@ -91,6 +92,7 @@
     .highlight-name {
         background: linear-gradient(90deg, #60a5fa, #c084fc);
         -webkit-background-clip: text;
+        background-clip: text;
         -webkit-text-fill-color: transparent;
     }
 

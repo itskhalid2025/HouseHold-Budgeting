@@ -70,6 +70,9 @@ export const authenticate = async (req, res, next) => {
         role: true,
         emailVerified: true,
         phoneVerified: true,
+        country: true,
+        state: true,
+        city: true,
         createdAt: true
       }
     });
@@ -132,6 +135,9 @@ export const optionalAuth = async (req, res, next) => {
           role: true,
           emailVerified: true,
           phoneVerified: true,
+          country: true,
+          state: true,
+          city: true,
           createdAt: true
         }
       });

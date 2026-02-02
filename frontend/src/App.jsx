@@ -35,6 +35,7 @@ import AdminHouseholds from './pages/admin/AdminHouseholds';
 import AdminAiUsage from './pages/admin/AdminAiUsage';
 import AdminRegister from './pages/admin/AdminRegister';
 import AdminSettings from './pages/admin/AdminSettings';
+import Onboarding from './pages/Onboarding';
 
 import './App.css';
 
@@ -433,6 +434,11 @@ function AppRoutes() {
       <Route path="/settings" element={
         <ProtectedRoute>
           <Settings />
+        </ProtectedRoute>
+      } />
+      <Route path="/onboarding" element={
+        <ProtectedRoute>
+          <Onboarding />
         </ProtectedRoute>
       } />
 

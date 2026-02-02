@@ -1,5 +1,7 @@
 import prisma from '../services/db.js';
 import { getCountryFromIp } from '../services/geoService.js';
+import { Country } from 'country-state-city';
+import { logDB } from '../utils/controllerLogger.js';
 
 // Default Limits
 const DEFAULT_LIMITS = {
@@ -114,22 +116,36 @@ export const trackAiUsage = (requestType) => async (req, res, next) => {
 
         // --- 6. Log Location & Sync ---
         const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-        const country = getCountryFromIp(ip);
+        const resolvedCountryCode = getCountryFromIp(ip);
 
-        if (country) {
+        // Convert code to Full Name for consistency with registration
+        let resolvedCountry = resolvedCountryCode;
+        if (resolvedCountryCode && resolvedCountryCode.length === 2) {
+            const countryObj = Country.getCountryByCode(resolvedCountryCode);
+            if (countryObj) resolvedCountry = countryObj.name;
+        }
+
+        // Always update last IP
+        if (user.lastIp !== ip) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { lastIp: ip }
+            }).catch(err => console.error('IP Update Error:', err));
+        }
+
+        // Only update Country if NOT already set by user (Respect User Choice)
+        if (resolvedCountry && !user.country) {
             // Update User
-            if (user.country !== country) {
-                await prisma.user.update({
-                    where: { id: user.id },
-                    data: { country, lastIp: ip }
-                }).catch(err => console.error('Loc Update Error:', err));
-            }
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { country: resolvedCountry }
+            }).catch(err => console.error('Loc Update Error:', err));
 
             // Sync to Household
             if (user.householdId) {
                 await prisma.household.update({
                     where: { id: user.householdId },
-                    data: { country }
+                    data: { country: resolvedCountry }
                 }).catch(err => console.error('Household Loc Update Error:', err));
             }
         }

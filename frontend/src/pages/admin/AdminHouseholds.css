@@ -565,14 +565,22 @@
     border-color: rgba(0, 242, 255, 0.3);
 }
 
-.setting-limit-input {
-    width: 60px;
-    padding: 4px 8px;
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 0;
-    color: #fff;
-    text-align: center;
+
+/* Utility Classes */
+.text-muted-italic {
+    color: var(--text-muted);
     font-size: 0.9rem;
-    font-family: monospace;
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.text-muted-small-italic {
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-style: italic;
+    opacity: 0.6;
+}
+
+.text-center {
+    text-align: center;
 }

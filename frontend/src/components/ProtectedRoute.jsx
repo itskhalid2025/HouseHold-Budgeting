@@ -34,9 +34,9 @@ export function ProtectedRoute({ children }) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    // NEW: Force new users to join/create a household
-    if (!user?.householdId && location.pathname !== '/household') {
-        return <Navigate to="/household" replace />;
+    // NEW: Force new users to join/create a household via Onboarding
+    if (!user?.householdId && location.pathname !== '/onboarding') {
+        return <Navigate to="/onboarding" replace />;
     }
 
     return children;

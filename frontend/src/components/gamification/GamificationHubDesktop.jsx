@@ -26,6 +26,7 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
     const [data, setData] = useState(null);
     const [leaderboard, setLeaderboard] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [lbScope, setLbScope] = useState('country'); // 'global', 'country', 'state', 'city'
 
     useEffect(() => {
         if (isOpen) {
@@ -37,7 +38,7 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
         if (isOpen && activeTab === 'leaderboard') {
             loadLeaderboard();
         }
-    }, [isOpen, activeTab]);
+    }, [isOpen, activeTab, lbScope]);
 
     const loadData = async () => {
         try {
@@ -55,9 +56,12 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
 
     const loadLeaderboard = async () => {
         try {
-            const res = await getLeaderboard('points', 'country');
+            // Updated API call to use lbScope
+            // Assuming getLeaderboard(type, scope) where type='locality' or 'global'
+            const type = lbScope === 'global' ? 'global' : 'locality';
+            const res = await getLeaderboard(type, lbScope);
             if (res.success) {
-                setLeaderboard(res.data || []);
+                setLeaderboard(res.leaderboard || []);
             } else {
                 setLeaderboard([]);
             }
@@ -141,8 +145,30 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
                     {!loading && activeTab === 'leaderboard' && (
                         <div className="view-leaderboard-desktop">
                             <div className="leaderboard-header">
-                                <h3>Top in {city || country || 'Region'}</h3>
-                                <p>Ranked by Total XP</p>
+                                <div className="lb-title-section">
+                                    <h3>Top in {lbScope === 'global' ? 'the World' : (data?.[lbScope] || (lbScope === 'country' ? data?.country : 'Your Area'))}</h3>
+                                    <p>Ranked by Total XP</p>
+                                </div>
+                                <div className="lb-scope-selector">
+                                    <button
+                                        className={`scope-btn ${lbScope === 'city' ? 'active' : ''}`}
+                                        onClick={() => setLbScope('city')}
+                                        disabled={!data?.city}
+                                    >City</button>
+                                    <button
+                                        className={`scope-btn ${lbScope === 'state' ? 'active' : ''}`}
+                                        onClick={() => setLbScope('state')}
+                                        disabled={!data?.state}
+                                    >State</button>
+                                    <button
+                                        className={`scope-btn ${lbScope === 'country' ? 'active' : ''}`}
+                                        onClick={() => setLbScope('country')}
+                                    >Country</button>
+                                    <button
+                                        className={`scope-btn ${lbScope === 'global' ? 'active' : ''}`}
+                                        onClick={() => setLbScope('global')}
+                                    >Global</button>
+                                </div>
                             </div>
 
                             <div className="leaderboard-list-scroll">
@@ -152,11 +178,10 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
                                             key={index}
                                             className={`lb-row ${player.id === user?.id ? 'current-user' : ''}`}
                                         >
+                                            <div className="lb-num-col">#{player.rank}</div>
                                             <div className="lb-rank-col">
-                                                {index < 3 ? (
-                                                    <Trophy size={20} color={index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : '#cd7f32'} />
-                                                ) : (
-                                                    <span className="rank-number">#{index + 1}</span>
+                                                {player.rank <= 3 && (
+                                                    <Trophy size={18} color={player.rank === 1 ? '#fbbf24' : player.rank === 2 ? '#94a3b8' : '#cd7f32'} />
                                                 )}
                                             </div>
                                             <div className="lb-user-info">
@@ -164,11 +189,20 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
                                                     {(player.firstName?.[0] || 'U').toUpperCase()}
                                                 </div>
                                                 <div className="lb-details">
-                                                    <span className="lb-name">
-                                                        {player.firstName} {player.lastName}
-                                                        {player.id === user?.id && <span className="you-badge">(You)</span>}
-                                                    </span>
-                                                    <span className="lb-tier-text">{player.rankTier}</span>
+                                                    <div className="lb-name-row">
+                                                        <span className="lb-name">
+                                                            {player.firstName} {player.lastName}
+                                                            {player.id === user?.id && <span className="you-badge">(You)</span>}
+                                                        </span>
+                                                        <div className="lb-badge-right" title={player.rankTier}>
+                                                            {React.createElement(RANK_ICONS[player.rankTier] || Shield, {
+                                                                size: 14,
+                                                                color: RANK_COLORS[player.rankTier] || '#94a3b8',
+                                                                fill: `${RANK_COLORS[player.rankTier]}30`
+                                                            })}
+                                                            <span className="lb-tier-text-small">{player.rankTier}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                             <div className="lb-points-col">

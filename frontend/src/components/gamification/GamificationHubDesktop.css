@@ -269,6 +269,42 @@
     font-size: 0.85rem;
 }
 
+.lb-scope-selector {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 15px;
+}
+
+.scope-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.scope-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+}
+
+.scope-btn.active {
+    background: #6366f1;
+    color: white;
+    border-color: #6366f1;
+    box-shadow: 0 0 15px rgba(99, 102, 241, 0.3);
+}
+
+.scope-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
 .leaderboard-list-scroll {
     flex: 1;
     overflow-y: auto;
@@ -305,12 +341,19 @@
     border: 1px solid rgba(99, 102, 241, 0.3);
 }
 
-.lb-rank-col {
-    width: 30px;
-    display: flex;
-    justify-content: center;
+.lb-num-col {
+    width: 32px;
     font-weight: 700;
     color: #94a3b8;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: center;
+}
+
+.lb-rank-col {
+    width: 24px;
+    display: flex;
+    justify-content: center;
 }
 
 .lb-user-info {
@@ -352,10 +395,28 @@
     font-weight: normal;
 }
 
-.lb-tier-text {
-    font-size: 0.75rem;
+.lb-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.lb-badge-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lb-tier-text-small {
+    font-size: 0.65rem;
     color: #64748b;
     text-transform: uppercase;
+    font-weight: 700;
 }
 
 .lb-points-col {

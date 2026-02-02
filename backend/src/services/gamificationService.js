@@ -207,14 +207,18 @@ const updateUserGamification = async (userId, actionType = 'MANUAL_ENTRY') => {
  * Get Leaderboard
  */
 const getLeaderboard = async (userId, type = 'global', scope = 'country') => {
+    console.log(`🏆 Service [getLeaderboard] called for user: ${userId} | type: ${type} | scope: ${scope}`);
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new Error('User not found');
 
     let where = {};
     if (type === 'locality') {
         if (scope === 'city' && user.city) where.city = user.city;
+        else if (scope === 'state' && user.state) where.state = user.state;
         else if (scope === 'country' && user.country) where.country = user.country;
     }
+
+    console.log(`🏆 Leaderboard query where:`, JSON.stringify(where));
 
     const leaderboard = await prisma.user.findMany({
         where,
@@ -223,13 +227,26 @@ const getLeaderboard = async (userId, type = 'global', scope = 'country') => {
         select: {
             id: true,
             firstName: true,
+            lastName: true,
             avatarUrl: true,
             totalPoints: true,
             currentStreak: true,
             rankTier: true,
             country: true,
+            state: true,
             city: true
         }
+    });
+
+    console.log(`🏆 Found ${leaderboard.length} users for leaderboard`);
+
+    // Assign ranks handling ties (1, 1, 3... approach)
+    let currentRank = 1;
+    const rankedLeaderboard = leaderboard.map((player, index) => {
+        if (index > 0 && player.totalPoints < leaderboard[index - 1].totalPoints) {
+            currentRank = index + 1;
+        }
+        return { ...player, rank: currentRank };
     });
 
     // Find user specific rank
@@ -241,7 +258,7 @@ const getLeaderboard = async (userId, type = 'global', scope = 'country') => {
     }) + 1;
 
     return {
-        leaderboard,
+        leaderboard: rankedLeaderboard,
         userRank,
         currentUser: {
             id: user.id,

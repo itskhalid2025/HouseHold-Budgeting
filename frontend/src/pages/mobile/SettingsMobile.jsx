@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { updateHousehold, forgotPassword } from '../../api/api';
+import { updateHousehold, forgotPassword, updateProfile } from '../../api/api';
 import { CURRENCIES } from '../../utils/currencyUtils';
 import MobileCard from '../../components/mobile/MobileCard';
 import MobileButton from '../../components/mobile/MobileButton';
 import MobileModal from '../../components/mobile/MobileModal';
 import MobileInput from '../../components/mobile/MobileInput';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
+import { Country, State, City } from 'country-state-city';
 import {
     User,
     Home,
@@ -32,7 +35,7 @@ import './SettingsMobile.css';
  */
 export default function SettingsMobile() {
     // -- Auth Context & Global State --
-    const { user, logout, household, refreshHousehold } = useAuth();
+    const { user, logout, household, refreshHousehold, updateUser } = useAuth();
 
     // -- Local UI State --
     const [subPage, setSubPage] = useState(null); // 'profile' | 'household' | 'notifications'
@@ -42,6 +45,25 @@ export default function SettingsMobile() {
     const [hhName, setHhName] = useState('');
     const [hhCurrency, setHhCurrency] = useState('');
 
+    // -- Profile Edit State --
+    const [profileData, setProfileData] = useState({
+        firstName: '',
+        lastName: '',
+        phone: '',
+        country: '',
+        state: '',
+        city: ''
+    });
+    const [locationCodes, setLocationCodes] = useState({
+        countryCode: '',
+        stateCode: ''
+    });
+    const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+
+    const [countries] = useState(Country.getAllCountries());
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
+
     // -- Effects --
     // Sync household data when loaded
     useEffect(() => {
@@ -50,6 +72,37 @@ export default function SettingsMobile() {
             setHhCurrency(household.currency || 'USD');
         }
     }, [household]);
+
+    // Sync profile data
+    useEffect(() => {
+        if (user) {
+            setProfileData({
+                firstName: user.firstName || '',
+                lastName: user.lastName || '',
+                phone: user.phone || '',
+                country: user.country || '',
+                state: user.state || '',
+                city: user.city || ''
+            });
+
+            if (user.country) {
+                const country = Country.getAllCountries().find(c => c.name === user.country);
+                if (country) {
+                    setLocationCodes(prev => ({ ...prev, countryCode: country.isoCode }));
+                    const statesList = State.getStatesOfCountry(country.isoCode);
+                    setStates(statesList);
+
+                    if (user.state) {
+                        const state = statesList.find(s => s.name === user.state);
+                        if (state) {
+                            setLocationCodes(prev => ({ ...prev, stateCode: state.isoCode }));
+                            setCities(City.getCitiesOfState(country.isoCode, state.isoCode));
+                        }
+                    }
+                }
+            }
+        }
+    }, [user]);
 
     // Clear messages when switching pages
     useEffect(() => {
@@ -78,6 +131,58 @@ export default function SettingsMobile() {
     };
 
     /**
+     * Updates profile settings.
+     */
+    const handleUpdateProfile = async () => {
+        setIsUpdatingProfile(true);
+        setMsg({ type: '', text: '' });
+        try {
+            const res = await updateProfile(profileData);
+            if (res.user) {
+                updateUser(res.user);
+            }
+            setMsg({ type: 'success', text: 'Profile updated!' });
+        } catch (err) {
+            setMsg({ type: 'error', text: 'Failed to update profile.' });
+        } finally {
+            setIsUpdatingProfile(false);
+        }
+    };
+
+    const handleProfileChange = (name, value) => {
+        setProfileData(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'country') {
+            const country = countries.find(c => c.name === value);
+            if (country) {
+                setLocationCodes(prev => ({ ...prev, countryCode: country.isoCode, stateCode: '' }));
+                const statesList = State.getStatesOfCountry(country.isoCode);
+                setStates(statesList);
+                setCities([]);
+                setProfileData(prev => ({ ...prev, state: '', city: '' }));
+            } else {
+                setLocationCodes({ countryCode: '', stateCode: '' });
+                setStates([]);
+                setCities([]);
+                setProfileData(prev => ({ ...prev, state: '', city: '' }));
+            }
+        }
+
+        if (name === 'state') {
+            const state = states.find(s => s.name === value);
+            if (state) {
+                setLocationCodes(prev => ({ ...prev, stateCode: state.isoCode }));
+                setCities(City.getCitiesOfState(locationCodes.countryCode, state.isoCode));
+                setProfileData(prev => ({ ...prev, city: '' }));
+            } else {
+                setLocationCodes(prev => ({ ...prev, stateCode: '' }));
+                setCities([]);
+                setProfileData(prev => ({ ...prev, city: '' }));
+            }
+        }
+    };
+
+    /**
      * Updates household settings.
      */
     const handleUpdateHousehold = async () => {
@@ -98,8 +203,8 @@ export default function SettingsMobile() {
     const renderProfile = () => (
         <section className="sub-page-container profile-page" aria-label="Profile Settings">
             <header className="sub-header">
-                <button 
-                    onClick={() => setSubPage(null)} 
+                <button
+                    onClick={() => setSubPage(null)}
                     className="back-btn glass-btn"
                     aria-label="Go back to settings menu"
                 >
@@ -124,20 +229,98 @@ export default function SettingsMobile() {
                 </div>
 
                 <MobileCard className="vibrant-card">
-                    <div className="info-group">
-                        <div className="info-row" role="group" aria-label="Email Address">
-                            <div className="icon-box">
-                                <Mail size={18} />
-                            </div>
-                            <div className="info-content">
-                                <label>Email Address</label>
-                                <span className="value-text">{user?.email}</span>
+                    <div className="form-stack">
+                        <MobileInput
+                            label="First Name"
+                            value={profileData.firstName}
+                            onChange={e => handleProfileChange('firstName', e.target.value)}
+                            className="vibrant-input"
+                        />
+                        <MobileInput
+                            label="Last Name"
+                            value={profileData.lastName}
+                            onChange={e => handleProfileChange('lastName', e.target.value)}
+                            className="vibrant-input"
+                        />
+
+                        <div className="setting-group" style={{ marginBottom: '20px' }}>
+                            <label className="field-label">Phone Number</label>
+                            <PhoneInput
+                                country={locationCodes.countryCode ? locationCodes.countryCode.toLowerCase() : 'in'}
+                                value={profileData.phone}
+                                onChange={phone => setProfileData(prev => ({ ...prev, phone: phone.startsWith('+') ? phone : `+${phone}` }))}
+                                containerClass="m-phone-cont"
+                                inputClass="m-phone-input"
+                                buttonClass="m-phone-btn"
+                            />
+                        </div>
+
+                        <div className="select-group">
+                            <label className="field-label">Country</label>
+                            <div className="select-wrapper">
+                                <select
+                                    value={profileData.country}
+                                    onChange={e => handleProfileChange('country', e.target.value)}
+                                    className="mobile-select glass-input"
+                                >
+                                    <option value="">Select Country</option>
+                                    {countries.map(c => (
+                                        <option key={c.isoCode} value={c.name}>{c.name}</option>
+                                    ))}
+                                </select>
+                                <ChevronRight className="select-arrow" size={16} />
                             </div>
                         </div>
 
-                        <div className="divider-gradient" />
+                        <div className="select-group">
+                            <label className="field-label">State</label>
+                            <div className="select-wrapper">
+                                <select
+                                    value={profileData.state}
+                                    onChange={e => handleProfileChange('state', e.target.value)}
+                                    disabled={!profileData.country}
+                                    className="mobile-select glass-input"
+                                >
+                                    <option value="">Select State</option>
+                                    {states.map(s => (
+                                        <option key={s.isoCode} value={s.name}>{s.name}</option>
+                                    ))}
+                                </select>
+                                <ChevronRight className="select-arrow" size={16} />
+                            </div>
+                        </div>
 
-                        <button 
+                        <div className="select-group">
+                            <label className="field-label">City</label>
+                            <div className="select-wrapper">
+                                <select
+                                    value={profileData.city}
+                                    onChange={e => handleProfileChange('city', e.target.value)}
+                                    disabled={!profileData.state}
+                                    className="mobile-select glass-input"
+                                >
+                                    <option value="">Select City</option>
+                                    {cities.map(c => (
+                                        <option key={c.name} value={c.name}>{c.name}</option>
+                                    ))}
+                                </select>
+                                <ChevronRight className="select-arrow" size={16} />
+                            </div>
+                        </div>
+
+                        <MobileButton
+                            onClick={handleUpdateProfile}
+                            disabled={isUpdatingProfile}
+                            className="btn-gradient-primary"
+                        >
+                            {isUpdatingProfile ? 'Saving...' : 'Save Profile'}
+                        </MobileButton>
+                    </div>
+                </MobileCard>
+
+                <MobileCard className="vibrant-card" style={{ marginTop: '20px' }}>
+                    <div className="info-group">
+                        <button
                             className="action-row clickable"
                             onClick={handlePasswordReset}
                             aria-label="Reset Password"
@@ -154,7 +337,7 @@ export default function SettingsMobile() {
                 </MobileCard>
 
                 {msg.text && (
-                    <div className={`msg-banner ${msg.type} animate-pop`} role="alert">
+                    <div className={`msg-banner ${msg.type} animate-pop`} role="alert" style={{ marginTop: '20px' }}>
                         {msg.type === 'success' ? <Sparkles size={16} /> : <Zap size={16} />}
                         {msg.text}
                     </div>
@@ -169,8 +352,8 @@ export default function SettingsMobile() {
     const renderHousehold = () => (
         <section className="sub-page-container household-page" aria-label="Household Settings">
             <header className="sub-header">
-                <button 
-                    onClick={() => setSubPage(null)} 
+                <button
+                    onClick={() => setSubPage(null)}
                     className="back-btn glass-btn"
                     aria-label="Go back to settings menu"
                 >
@@ -222,8 +405,8 @@ export default function SettingsMobile() {
 
                         {isOwner && (
                             <div className="action-footer">
-                                <MobileButton 
-                                    onClick={handleUpdateHousehold} 
+                                <MobileButton
+                                    onClick={handleUpdateHousehold}
                                     disabled={!hhName}
                                     className="btn-gradient-primary"
                                 >
@@ -236,7 +419,7 @@ export default function SettingsMobile() {
 
                 {msg.text && (
                     <div className={`msg-banner ${msg.type} animate-pop`} role="alert">
-                         {msg.type === 'success' ? <Sparkles size={16} /> : <Zap size={16} />}
+                        {msg.type === 'success' ? <Sparkles size={16} /> : <Zap size={16} />}
                         {msg.text}
                     </div>
                 )}
@@ -250,8 +433,8 @@ export default function SettingsMobile() {
     const renderNotifications = () => (
         <section className="sub-page-container notifications-page" aria-label="Notifications">
             <header className="sub-header">
-                <button 
-                    onClick={() => setSubPage(null)} 
+                <button
+                    onClick={() => setSubPage(null)}
                     className="back-btn glass-btn"
                     aria-label="Go back to settings menu"
                 >
@@ -274,9 +457,9 @@ export default function SettingsMobile() {
                                 <span className="toggle-slider"></span>
                             </div>
                         </label>
-                        
+
                         <div className="divider-gradient" />
-                        
+
                         <label className="toggle-row">
                             <div className="row-info">
                                 <span>Push Notifications</span>
@@ -312,8 +495,8 @@ export default function SettingsMobile() {
             </header>
 
             <nav className="menu-list" role="navigation" aria-label="Settings Menu">
-                <MobileCard 
-                    className="menu-card vibrant-card-interactive" 
+                <MobileCard
+                    className="menu-card vibrant-card-interactive"
                     onClick={() => setSubPage('profile')}
                     role="button"
                     tabIndex={0}
@@ -328,8 +511,8 @@ export default function SettingsMobile() {
                     </div>
                 </MobileCard>
 
-                <MobileCard 
-                    className="menu-card vibrant-card-interactive" 
+                <MobileCard
+                    className="menu-card vibrant-card-interactive"
                     onClick={() => setSubPage('household')}
                     role="button"
                     tabIndex={0}
@@ -347,8 +530,8 @@ export default function SettingsMobile() {
                     </div>
                 </MobileCard>
 
-                <MobileCard 
-                    className="menu-card vibrant-card-interactive" 
+                <MobileCard
+                    className="menu-card vibrant-card-interactive"
                     onClick={() => setSubPage('notifications')}
                     role="button"
                     tabIndex={0}

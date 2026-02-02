@@ -185,6 +185,15 @@ export const getAllHouseholds = async (req, res) => {
     try {
         const households = await prisma.household.findMany({
             include: {
+                admin: {
+                    select: {
+                        id: true,
+                        firstName: true,
+                        lastName: true,
+                        email: true,
+                        country: true
+                    }
+                },
                 members: {
                     select: {
                         id: true,
@@ -224,7 +233,8 @@ export const getAllHouseholds = async (req, res) => {
                     name: h.name,
                     memberCount: h._count.members,
                     aiRequestCount: h.aiRequestCount,
-                    country: h.country,
+                    country: h.country || h.admin?.country || null, // Fallback to owner's country
+                    isCalculatedCountry: !h.country && !!h.admin?.country, // Flag for UI if needed
                     aiSettings: h.aiSettings || {},
                     aiUsage: {
                         chat: chatCount,
@@ -238,7 +248,8 @@ export const getAllHouseholds = async (req, res) => {
                         reports: monthLogs.filter(l => l.type === 'REPORT').length
                     },
                     createdAt: h.createdAt,
-                    members: h.members
+                    members: h.members,
+                    admin: h.admin
                 };
             })
         });

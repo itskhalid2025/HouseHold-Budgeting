@@ -305,12 +305,19 @@
     border-color: rgba(6, 182, 212, 0.3);
 }
 
-.lb-rank-col {
-    width: 40px;
-    display: flex;
-    justify-content: center;
+.lb-num-col {
+    width: 36px;
     font-weight: 700;
     color: #94a3b8;
+    font-size: 0.9rem;
+    display: flex;
+    justify-content: center;
+}
+
+.lb-rank-col {
+    width: 28px;
+    display: flex;
+    justify-content: center;
 }
 
 .rank-number {
@@ -356,9 +363,28 @@
     font-weight: 400;
 }
 
-.lb-tier-text {
-    font-size: 0.75rem;
+.lb-name-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.lb-badge-right {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 8px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lb-tier-text-small {
+    font-size: 0.65rem;
     color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 700;
 }
 
 .lb-points-col {

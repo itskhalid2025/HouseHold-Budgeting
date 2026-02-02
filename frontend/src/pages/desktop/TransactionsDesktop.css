@@ -40,10 +40,9 @@
     }
 
     .transactions-page {
-        padding: 2rem;
+        padding: 24px 60px 80px 40px;
         width: 100%;
         max-width: 100%;
-        padding-bottom: 80px;
     }
 
     .filters-bar {

@@ -22,6 +22,8 @@ import config from '../utils/config.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 import { sendVerificationEmail, sendPasswordResetEmail } from '../services/emailService.js';
 import { updateUserGamification } from '../services/gamificationService.js';
+import { getCountryFromIp } from '../services/geoService.js';
+import { Country } from 'country-state-city';
 
 
 /**
@@ -51,7 +53,7 @@ const generateToken = (user) => {
 export const register = async (req, res) => {
     logEntry('authController', 'register', { email: req.body.email, phone: req.body.phone });
     try {
-        const { email, phone, password, firstName, lastName, currency } = req.body;
+        const { email, phone, password, firstName, lastName, currency, country, state, city } = req.body;
 
         // Check if email already exists
         const existingEmail = await prisma.user.findUnique({
@@ -87,7 +89,10 @@ export const register = async (req, res) => {
                 role: 'VIEWER', // Default role
                 verificationToken,
                 verificationTokenExpiry,
-                emailVerified: false
+                emailVerified: false,
+                country,
+                state,
+                city
             },
             select: {
                 id: true,
@@ -218,11 +223,45 @@ export const login = async (req, res) => {
 export const me = async (req, res) => {
     logEntry('authController', 'me', { userId: req.user?.id });
     try {
-        // User is already attached by authenticate middleware
-        logSuccess('authController', 'me', { userId: req.user?.id });
+        let user = req.user;
+
+        // Auto-detect country if missing (satisfies "show his country first")
+        if (!user.country) {
+            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            const countryCode = getCountryFromIp(ip);
+
+            if (countryCode && countryCode !== 'Local') {
+                const countryObj = Country.getCountryByCode(countryCode);
+                if (countryObj) {
+                    logDB('update (auto-detect)', 'User', { id: user.id, country: countryObj.name });
+                    user = await prisma.user.update({
+                        where: { id: user.id },
+                        data: { country: countryObj.name },
+                        select: {
+                            id: true,
+                            email: true,
+                            phone: true,
+                            firstName: true,
+                            lastName: true,
+                            currency: true,
+                            avatarUrl: true,
+                            timezone: true,
+                            householdId: true,
+                            role: true,
+                            country: true,
+                            state: true,
+                            city: true,
+                            createdAt: true
+                        }
+                    });
+                }
+            }
+        }
+
+        logSuccess('authController', 'me', { userId: user.id });
         return res.status(200).json({
             success: true,
-            user: req.user
+            user
         });
     } catch (error) {
         logError('authController', 'me', error);
@@ -368,6 +407,55 @@ export const resetPassword = async (req, res) => {
         return res.status(500).json({
             success: false,
             error: 'Failed to reset password'
+        });
+    }
+};
+
+/**
+ * Update user profile
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+export const updateProfile = async (req, res) => {
+    logEntry('authController', 'updateProfile', { userId: req.user.id });
+    try {
+        const userId = req.user.id;
+        const updateData = req.body;
+
+        logDB('update', 'User', { id: userId, ...updateData });
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: updateData,
+            select: {
+                id: true,
+                email: true,
+                phone: true,
+                firstName: true,
+                lastName: true,
+                currency: true,
+                avatarUrl: true,
+                timezone: true,
+                householdId: true,
+                role: true,
+                country: true,
+                state: true,
+                city: true,
+                createdAt: true
+            }
+        });
+
+        logSuccess('authController', 'updateProfile', { userId });
+        return res.status(200).json({
+            success: true,
+            user: updatedUser,
+            message: 'Profile updated successfully'
+        });
+
+    } catch (error) {
+        logError('authController', 'updateProfile', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to update profile'
         });
     }
 };

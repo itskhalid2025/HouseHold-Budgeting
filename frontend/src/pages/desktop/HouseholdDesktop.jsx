@@ -96,6 +96,13 @@ export default function Household() {
 
     useEffect(() => {
         fetchHouseholdData();
+
+        // Check if we should auto-open a modal from onboarding redirect
+        if (window.history.state?.usr?.openModal === 'create') {
+            setShowCreateModal(true);
+        } else if (window.history.state?.usr?.openModal === 'join') {
+            setShowJoinModal(true);
+        }
     }, [fetchHouseholdData]);
 
     // Poll for updates (e.g., membership changes, role updates)

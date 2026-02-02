@@ -100,6 +100,13 @@ export default function HouseholdMobile() { // Default Export Compliance
 
     useEffect(() => {
         fetchHouseholdData();
+
+        // Check if we should auto-open a modal from onboarding redirect
+        if (window.history.state?.usr?.openModal === 'create') {
+            setActiveModal('create');
+        } else if (window.history.state?.usr?.openModal === 'join') {
+            setActiveModal('join');
+        }
     }, [fetchHouseholdData]);
 
     // Automated polling to keep data fresh every 10 seconds
@@ -186,8 +193,8 @@ export default function HouseholdMobile() { // Default Export Compliance
                 <div className="cyber-modal-container">
                     <div className="cyber-modal-header">
                         <h2 id="modal-title" className="glitch-text" data-text={title}>{title}</h2>
-                        <button 
-                            onClick={() => setActiveModal(null)} 
+                        <button
+                            onClick={() => setActiveModal(null)}
                             className="cyber-close-btn"
                             aria-label="Close Modal"
                         >
@@ -223,7 +230,7 @@ export default function HouseholdMobile() { // Default Export Compliance
         return (
             <main className="cyber-root empty-state-cyber">
                 <div className="cyber-grid-bg"></div>
-                
+
                 <div className="cyber-content-wrapper">
                     <section className="cyber-hero-section">
                         <div className="hero-hologram">
@@ -247,7 +254,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                         </article>
                     ) : (
                         <div className="cyber-actions-grid">
-                            <button 
+                            <button
                                 onClick={() => setActiveModal('create')}
                                 className="cyber-btn primary-neon"
                                 aria-label="Create New Household"
@@ -255,7 +262,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                                 <span className="btn-content"><Plus size={18} /> INITIALIZE NODE</span>
                                 <div className="btn-glitch"></div>
                             </button>
-                            <button 
+                            <button
                                 onClick={() => setActiveModal('join')}
                                 className="cyber-btn secondary-glass"
                                 aria-label="Join with Code"
@@ -271,11 +278,11 @@ export default function HouseholdMobile() { // Default Export Compliance
                     <div className="cyber-form-group">
                         <label className="cyber-label">NODE DESIGNATION</label>
                         <div className="cyber-input-wrapper">
-                            <input 
+                            <input
                                 type="text"
                                 className="cyber-input"
-                                value={createName} 
-                                onChange={e => setCreateName(e.target.value)} 
+                                value={createName}
+                                onChange={e => setCreateName(e.target.value)}
                                 placeholder="e.g. SECTOR 7 HAVEN"
                                 autoFocus
                             />
@@ -292,11 +299,11 @@ export default function HouseholdMobile() { // Default Export Compliance
                     <div className="cyber-form-group">
                         <label className="cyber-label">ENCRYPTION KEY</label>
                         <div className="cyber-input-wrapper">
-                            <input 
+                            <input
                                 type="text"
                                 className="cyber-input"
-                                value={inviteCode} 
-                                onChange={e => setInviteCode(e.target.value.toUpperCase())} 
+                                value={inviteCode}
+                                onChange={e => setInviteCode(e.target.value.toUpperCase())}
                                 placeholder="XYZ-000"
                             />
                             <div className="input-border-fx"></div>
@@ -321,7 +328,7 @@ export default function HouseholdMobile() { // Default Export Compliance
             <header className="cyber-glass-panel header-panel">
                 <div className="panel-decoration top-left"></div>
                 <div className="panel-decoration bottom-right"></div>
-                
+
                 <div className="header-core">
                     <div className="avatar-hex">
                         <div className="hex-inner">
@@ -337,9 +344,9 @@ export default function HouseholdMobile() { // Default Export Compliance
                     </div>
                 </div>
 
-                <div 
-                    className="cyber-invite-terminal" 
-                    role="button" 
+                <div
+                    className="cyber-invite-terminal"
+                    role="button"
                     aria-label="Copy Invite Code"
                     onClick={copyCode}
                 >
@@ -355,7 +362,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                         <Shield size={12} />
                         <span>{user?.role}</span>
                     </div>
-                    <button 
+                    <button
                         className="cyber-icon-btn danger"
                         onClick={() => setActiveModal('leave')}
                         aria-label="Disconnect from Household"
@@ -380,15 +387,15 @@ export default function HouseholdMobile() { // Default Export Compliance
                                     <span className="req-email">{req.requester?.email}</span>
                                 </div>
                                 <div className="req-actions">
-                                    <button 
-                                        className="cyber-mini-btn success" 
+                                    <button
+                                        className="cyber-mini-btn success"
                                         onClick={() => { setSelectedRequest(req); setActiveModal('approve'); }}
                                         aria-label="Approve User"
                                     >
                                         <Check size={16} />
                                     </button>
-                                    <button 
-                                        className="cyber-mini-btn danger" 
+                                    <button
+                                        className="cyber-mini-btn danger"
                                         onClick={() => rejectJoinRequest(req.id)}
                                         aria-label="Reject User"
                                     >
@@ -423,7 +430,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                                 <span className={`member-role ${member.role?.toLowerCase()}`}>{member.role}</span>
                             </div>
                             {isOwner && member.id !== user.id && (
-                                <button 
+                                <button
                                     className="cyber-edit-btn"
                                     onClick={() => { setRoleEditingMember(member); setRoleToUpdate(member.role); setActiveModal('role'); }}
                                     aria-label="Configure Permissions"
@@ -442,7 +449,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                 <div className="cyber-content-stack">
                     <p className="modal-info-text">Define clearance level for subject <strong>{selectedRequest?.requester?.firstName}</strong>.</p>
                     <div className="role-selection-grid">
-                        <button 
+                        <button
                             className={`role-option ${assignRole === 'VIEWER' ? 'active' : ''}`}
                             onClick={() => setAssignRole('VIEWER')}
                         >
@@ -452,7 +459,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                                 <span>Read Only</span>
                             </div>
                         </button>
-                        <button 
+                        <button
                             className={`role-option ${assignRole === 'EDITOR' ? 'active' : ''}`}
                             onClick={() => setAssignRole('EDITOR')}
                         >
@@ -472,13 +479,13 @@ export default function HouseholdMobile() { // Default Export Compliance
             {renderCyberModal('role', 'MODIFY PROTOCOLS', (
                 <div className="cyber-content-stack">
                     <div className="role-selection-grid">
-                        <button 
+                        <button
                             className={`role-option ${roleToUpdate === 'VIEWER' ? 'active' : ''}`}
                             onClick={() => setRoleToUpdate('VIEWER')}
                         >
                             <strong>VIEWER</strong>
                         </button>
-                        <button 
+                        <button
                             className={`role-option ${roleToUpdate === 'EDITOR' ? 'active' : ''}`}
                             onClick={() => setRoleToUpdate('EDITOR')}
                         >
@@ -489,11 +496,11 @@ export default function HouseholdMobile() { // Default Export Compliance
                         <button onClick={handleUpdateRole} className="cyber-btn full-width">
                             UPDATE DETAILS
                         </button>
-                        <button 
+                        <button
                             onClick={() => { handleRemoveMember(roleEditingMember.id); setActiveModal(null); }}
                             className="cyber-btn outline-danger full-width"
                         >
-                            <Trash2 size={16} style={{marginRight: '8px'}}/> REMOVE
+                            <Trash2 size={16} style={{ marginRight: '8px' }} /> REMOVE
                         </button>
                     </div>
                 </div>
