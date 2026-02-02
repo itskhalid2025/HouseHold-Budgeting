@@ -230,7 +230,7 @@ export default function TransactionsDesktop() {
     };
 
     return (
-        <div className="transactions-page">
+        <div className="container transactions-page">
             <div className="page-header">
                 <h1>Transactions</h1>
                 <div className="header-actions">

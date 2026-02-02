@@ -190,7 +190,7 @@ export default function Income() {
     });
 
     return (
-        <div className="income-page">
+        <div className="container income-page">
             <div className="page-header">
                 <h1>Income & Earnings</h1>
                 {canEdit ? (

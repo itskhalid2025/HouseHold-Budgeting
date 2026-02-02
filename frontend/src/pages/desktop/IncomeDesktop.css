@@ -7,6 +7,12 @@
      */
 
 
+    .income-page {
+        padding: 2rem;
+        width: 100%;
+        max-width: 100%;
+    }
+
     .income-summary-card {
         background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(16, 185, 129, 0.1));
         border: 1px solid rgba(34, 197, 94, 0.3);

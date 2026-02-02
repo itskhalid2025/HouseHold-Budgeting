@@ -214,7 +214,7 @@ export default function Savings() {
     };
 
     return (
-        <div className="savings-page">
+        <div className="container savings-page">
             <div className="page-header">
                 <h1>Savings & Goals</h1>
                 {canAdd && (

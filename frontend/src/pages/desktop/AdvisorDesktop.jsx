@@ -151,22 +151,32 @@ export default function Advisor() {
                     setConversationId(data.conversationId);
                 }
 
-                // Add AI response
-                // Parse AI response (it might be JSON string now)
+                // Parse AI response (it might be JSON string now, possibly wrapped in markdown)
                 let content = data.response;
                 let chartData = null;
 
                 try {
-                    // unexpected JSON token check or simple heuristics
-                    if (content.trim().startsWith('{')) {
-                        const parsed = JSON.parse(content);
+                    let jsonString = content.trim();
+                    // Handle markdown blocks if present
+                    if (jsonString.includes('```')) {
+                        const match = jsonString.match(/```(?:json)?([\s\S]*?)```/);
+                        if (match) {
+                            jsonString = match[1].trim();
+                        }
+                    }
+
+                    if (jsonString.startsWith('{')) {
+                        const parsed = JSON.parse(jsonString);
                         if (parsed.text) {
                             content = parsed.text;
+                            chartData = parsed.chartData;
+                        } else if (parsed.content) {
+                            content = parsed.content;
                             chartData = parsed.chartData;
                         }
                     }
                 } catch (e) {
-                    console.log('Response is not JSON, displaying as text');
+                    console.log('Response parsing failed, displaying as raw text');
                 }
 
                 const aiMessageObj = {
@@ -218,7 +228,7 @@ export default function Advisor() {
     };
 
     return (
-        <div className="advisor-container">
+        <div className="container advisor-container">
             {/* Header */}
             <div className="advisor-header">
                 <div className="advisor-icon-wrapper">

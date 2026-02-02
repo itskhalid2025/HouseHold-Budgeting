@@ -16,7 +16,7 @@
 import { useState, useEffect } from 'react';
 import { getTransactionSummary, getMonthlyIncomeTotal, getGoalSummary, parseVoiceInput, getTransactions, analyzeImage } from '../../api/api';
 
-import { Upload, FileText, Image as ImageIcon } from 'lucide-react'; // Assuming we have lucide-react
+import { Upload, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, TrendingUp, Newspaper, Lightbulb } from 'lucide-react';
 import TrendLineChart from '../../components/charts/TrendLineChart';
 import usePolling from '../../hooks/usePolling';
 import useVoiceInput from '../../hooks/useVoiceInput';
@@ -25,16 +25,31 @@ import { formatCurrency } from '../../utils/currencyUtils';
 import { formatDate, getUserColor } from '../../utils/formatting';
 import { triggerConfetti } from '../../utils/confetti';
 import GamificationHub from '../../components/gamification/GamificationHub';
-import RankBadge from '../../components/gamification/RankBadge';
 import './DashboardDesktop.css';
 
+// --- MOCK DATA FOR CARDS ---
+const KNOWLEDGE_CARDS = [
+    { id: 1, title: "The 50/30/20 Rule", text: "Allocate 50% of income to needs, 30% to wants, and 20% to savings for a balanced budget." },
+    { id: 2, title: "Emergency Fund", text: "Aim to save 3-6 months of living expenses to protect yourself from unexpected financial setbacks." },
+    { id: 3, title: "Compound Interest", text: "Start investing early. Compound interest allows your money to grow exponentially over time." },
+    { id: 4, title: "Debt Snowball", text: "Pay off your smallest debts first to build momentum while making minimum payments on larger ones." }
+];
+
+const NEWS_CARDS = [
+    { id: 1, title: "Market Update", text: "Global markets show resilience as tech sector rallies.", source: "FinDaily", time: "2h ago" },
+    { id: 2, title: "Crypto Trends", text: "Major cryptocurrencies see a slight correction after monthly highs.", source: "CryptoWatch", time: "4h ago" },
+    { id: 3, title: "Housing Market", text: "Interest rates stabilize, leading to increased activity in the housing sector.", source: "RealtyNews", time: "6h ago" },
+    { id: 4, title: "Savings Rates", text: "High-yield savings accounts are offering competitive rates this quarter.", source: "BankRate", time: "8h ago" }
+];
+
 export default function DashboardDesktop() {
-    const { currency } = useAuth();
+    const { user, currency } = useAuth(); // Got user for welcome message
     const [stats, setStats] = useState({
         income: 0,
         expenses: 0,
         savings: 0,
-        totalSaved: 0
+        totalSaved: 0,
+        monthlySaved: 0
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -42,10 +57,25 @@ export default function DashboardDesktop() {
     const [recentTransactions, setRecentTransactions] = useState([]);
     const [trendData, setTrendData] = useState([]);
 
+    // --- CAROUSEL STATES ---
+    const [knowledgeIndex, setKnowledgeIndex] = useState(0);
+    const [newsIndex, setNewsIndex] = useState(0);
+
+    // Auto-slide News every 10 seconds
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setNewsIndex(prev => (prev + 1) % NEWS_CARDS.length);
+        }, 10000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const nextKnowledge = () => setKnowledgeIndex(prev => (prev + 1) % KNOWLEDGE_CARDS.length);
+    const prevKnowledge = () => setKnowledgeIndex(prev => (prev - 1 + KNOWLEDGE_CARDS.length) % KNOWLEDGE_CARDS.length);
+
     async function fetchDashboardData() {
         try {
-            // Only set loading on initial fetch
-            if (stats.income === 0 && stats.expenses === 0) setLoading(true);
+            // Only set loading on initial fetch if empty
+            if (stats.income === 0 && stats.expenses === 0 && loading) setLoading(true);
 
             // Fetch data in parallel
             const [transactionSummary, incomeData, goalData, recentTxns, allTxns] = await Promise.all([
@@ -53,7 +83,7 @@ export default function DashboardDesktop() {
                 getMonthlyIncomeTotal(),
                 getGoalSummary(),
                 getTransactions({ limit: 5 }), // Recent 5
-                getTransactions({ limit: 100 }) // For trend (approx last 100 txns to calc trend)
+                getTransactions({ limit: 100 }) // For trend
             ]);
 
             const totalExpenses = transactionSummary.summary?.totalSpent || 0;
@@ -72,7 +102,7 @@ export default function DashboardDesktop() {
 
             setRecentTransactions(recentTxns.transactions || []);
 
-            // Calculate daily spending for trend (last 7 days active)
+            // Calculate daily spending for trend
             const dailyMap = {};
             const today = new Date();
             for (let i = 6; i >= 0; i--) {
@@ -87,11 +117,8 @@ export default function DashboardDesktop() {
                     if (!t.date || t.amount === undefined || t.amount === null) return;
                     const d = t.date.split('T')[0];
                     if (dailyMap[d] !== undefined) {
-                        // Use absolute value for spending chart if amounts are negative
                         const amount = Math.abs(parseFloat(t.amount));
-                        if (!isNaN(amount)) {
-                            dailyMap[d] += amount;
-                        }
+                        if (!isNaN(amount)) dailyMap[d] += amount;
                     }
                 });
             }
@@ -118,8 +145,6 @@ export default function DashboardDesktop() {
 
     const {
         isListening,
-        transcript,
-        interimTranscript,
         audioBlob,
         startListening,
         stopListening,
@@ -141,12 +166,9 @@ export default function DashboardDesktop() {
                 setShowTextModal(false);
                 resetTranscript();
                 setTextInput('');
-                fetchDashboardData(); // Refresh dashboard stats
-
-                // GAMIFICATION: Celebration!
+                fetchDashboardData();
                 triggerConfetti();
 
-                // Enhanced feedback for single vs multiple entries
                 const today = new Date().toLocaleDateString();
                 if (parsed.count && parsed.count > 1) {
                     const entryList = parsed.entries.map((e, i) =>
@@ -165,40 +187,25 @@ export default function DashboardDesktop() {
         }
     };
 
-    // ================== DRAG & DROP HANDLERS ==================
+    // DRAG & DROP
     const [isDragging, setIsDragging] = useState(false);
     const [analyzingImage, setAnalyzingImage] = useState(false);
 
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        setIsDragging(false);
-    };
-
+    const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
+    const handleDragLeave = (e) => { e.preventDefault(); setIsDragging(false); };
     const handleDrop = async (e) => {
         e.preventDefault();
         setIsDragging(false);
         const files = Array.from(e.dataTransfer.files);
-        if (files.length > 0) {
-            handleImageAnalysis(files);
-        }
+        if (files.length > 0) handleImageAnalysis(files);
     };
-
     const handleFileSelect = (e) => {
         const files = Array.from(e.target.files);
-        if (files.length > 0) {
-            handleImageAnalysis(files);
-        }
+        if (files.length > 0) handleImageAnalysis(files);
     };
 
     const handleImageAnalysis = async (files) => {
         if (!files || files.length === 0) return;
-
-        // Validate types
         const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
         const validFiles = files.filter(f => validTypes.includes(f.type) || f.type.startsWith('image/'));
 
@@ -210,16 +217,13 @@ export default function DashboardDesktop() {
         setAnalyzingImage(true);
         try {
             const result = await analyzeImage(validFiles);
-            console.log("Analysis Result:", result);
-
             if (result.success || result.isCreated) {
-                // Success feedback
                 const count = result.count || 1;
                 const total = result.amount || result.record?.amount || 0;
                 alert(`✅ Successfully analyzed ${validFiles.length} file(s)!\nMatched ${count} transaction(s) totaling ${formatCurrency(total, currency)}.`);
                 fetchDashboardData();
             } else {
-                alert("Analysis complete but no transactions were confidently extracted. Please check the receipt clarity.");
+                alert("Analysis complete but no transactions were confidently extracted.");
             }
         } catch (err) {
             console.error("Image analysis failed:", err);
@@ -229,278 +233,200 @@ export default function DashboardDesktop() {
         }
     };
 
-    const handleVoiceSubmit = () => {
-        stopListening();
-        // Wait a small moment to ensure Blob is finalized if "Stop" wasn't pressed before "Process",
-        // but typically user presses Stop first or we handle it in hook.
-        // In our hook, onstop sets the audioBlob.
-        // We need to wait for the blob to be available or pass it directly.
-        // For safety, let's assume if they click submit, we want to start processing whatever we have.
-        // Given React batching, it might be safer to trigger this differently, but let's try passing the blob state.
-
-        // CRITICAL FIX: If user clicks "Process" while listening, `audioBlob` might not be set yet.
-        // Ideally, 'Stop' should be pressed first.
-        // Our hook sets audioBlob on 'onstop'.
-
-        if (audioBlob) {
-            processSmartEntry(audioBlob);
-        } else {
-            console.warn("No audio blob captured yet. Ensure recording is stopped.");
-            // If they click "Process" immediately after Stop, state might lag. Use transcript as fallback? 
-            // NO, user wants audio. But if audioBlob is null, we can't send audio.
-
-            // Workaround: We'll modify the UI to force "Stop" before "Process". 
-            // Looking at UI: Stop button replaces Start. Process button shows if Transcript exists.
-            // We should change the condition to show Process button ONLY if we have stopped / have blob?
-            // Or we just try to use transcript for now if blob fails, BUT user insisted on audio.
-        }
-    };
-
     const handleTextSubmit = (e) => {
         e.preventDefault();
         if (!textInput.trim()) return;
         processSmartEntry(textInput);
     };
 
-    // Poll for updates every 10 seconds
     usePolling(fetchDashboardData, 10000);
 
-    if (loading) {
-        return (
-            <div className="container">
-                <h1>Dashboard</h1>
-                <div className="loading-spinner">Loading...</div>
-            </div>
-        );
-    }
+    if (loading) return <div className="container loading-center">Loading Dashboard...</div>;
 
     return (
-        <div className="container">
-            <div className="dashboard-header">
-                <div>
-                    <h1>Dashboard</h1>
-                    <p>Welcome to HouseHold Budgeting! Your financial overview.</p>
-                </div>
-
-                <div className="smart-actions">
-                    {/* Drop Zone / Smart Scan Button */}
+        <div className="container dashboard-container">
+            {/* Header / Actions - Kept at top for ease of access */}
+            <div className="dashboard-top-bar">
+                <div className="smart-actions-header">
+                    {/* Reuse existing Smart Buttons Logic */}
                     <button
                         className={`btn-smart-scan ${isDragging ? 'dragging' : ''} ${analyzingImage ? 'analyzing' : ''}`}
                         onDragOver={handleDragOver}
                         onDragLeave={handleDragLeave}
                         onDrop={handleDrop}
                         onClick={() => document.getElementById('desktop-file-input').click()}
-                        title="Click to Scan or Drag Receipts here"
                         disabled={analyzingImage}
                     >
-                        <input
-                            type="file"
-                            id="desktop-file-input"
-                            multiple
-                            accept="image/*,application/pdf"
-                            style={{ display: 'none' }}
-                            onChange={handleFileSelect}
-                        />
-                        {analyzingImage ? (
-                            <>
-                                <div className="spinner-small-btn"></div>
-                                <span>Analyzing...</span>
-                            </>
-                        ) : (
-                            <>
-                                <div className="icon-row">
-                                    <ImageIcon size={20} />
-                                </div>
-                                <span>{isDragging ? 'Drop Here!' : 'Smart Scan'}</span>
-                            </>
-                        )}
+                        <input type="file" id="desktop-file-input" multiple accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFileSelect} />
+                        {analyzingImage ? <span>Analyzing...</span> : <> <ImageIcon size={18} /> <span>Smart Scan</span> </>}
                     </button>
-
                     {isSupported && (
-                        <button
-                            className="btn-smart-voice"
-                            onClick={() => { setShowVoiceModal(true); resetTranscript(); }}
-                        >
+                        <button className="btn-smart-voice" onClick={() => { setShowVoiceModal(true); resetTranscript(); }}>
                             🎤 Smart Voice
                         </button>
                     )}
-                    <button
-                        className="btn-smart-text"
-                        onClick={() => { setShowTextModal(true); setTextInput(''); }}
-                    >
+                    <button className="btn-smart-text" onClick={() => { setShowTextModal(true); setTextInput(''); }}>
                         ⌨️ Smart Text
                     </button>
                 </div>
             </div>
 
-            {error && <div className="error-message">{error}</div>}
-
-            {/* Summary Cards */}
-            <div className="stats-grid">
-                <div className="stat-card">
-                    <h3>Monthly Income</h3>
-                    <p className="amount income">{formatCurrency(stats.income, currency)}</p>
-                </div>
-                <div className="stat-card">
-                    <h3>Monthly Expenses</h3>
-                    <p className="amount expense">{formatCurrency(stats.expenses, currency)}</p>
-                </div>
-
-                <div className="stat-card">
-                    <h3>Monthly Savings</h3>
-                    <p className="amount savings-positive">
-                        {formatCurrency(stats.monthlySaved, currency)}
-                    </p>
-                </div>
-            </div>
-
-            {/* Main Content Grid */}
-            <div className="dashboard-grid">
-                {/* Trend Chart */}
-                <div className="dashboard-card chart-section">
-                    <h3>Weekly Spending Trend</h3>
-                    <div className="chart-wrapper">
-                        <TrendLineChart data={trendData} />
+            <div className="dashboard-grid-layout">
+                {/* --- LEFT COLUMN --- */}
+                <div className="left-column">
+                    {/* 1. Welcome Message */}
+                    <div className="welcome-card">
+                        <h1>
+                            Welcome back, <span className="highlight-name">{user?.firstName || 'User'}</span>! 👋
+                        </h1>
+                        <p>Here's your financial overview for today.</p>
                     </div>
-                </div>
 
-                {/* Recent Transactions */}
-                <div className="dashboard-card recent-transactions">
-                    <h3>Recent Transactions</h3>
-                    <div className="transaction-list-compact">
-                        {recentTransactions.length > 0 ? (
-                            recentTransactions.map(txn => (
-                                <div key={txn.id} className="txn-item-compact">
-                                    <div className="txn-icon">{txn.category?.icon || '💸'}</div>
-                                    <div className="txn-details">
-                                        <span className="txn-desc">{txn.description}</span>
-                                        <div className="txn-meta">
-                                            <span className="txn-date">{formatDate(txn.date)}</span>
-                                            {txn.user && (
-                                                <span
-                                                    className="txn-user-pill"
-                                                    style={{
-                                                        backgroundColor: getUserColor(txn.user.firstName),
-                                                        color: '#fff',
-                                                        padding: '2px 8px',
-                                                        borderRadius: '10px',
-                                                        fontSize: '11px',
-                                                        fontWeight: '700',
-                                                        textTransform: 'uppercase',
-                                                        marginLeft: '8px'
-                                                    }}
-                                                >
-                                                    {txn.user.firstName}
-                                                </span>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <span className="txn-amount">{formatCurrency(-parseFloat(txn.amount), currency)}</span>
-                                </div>
-                            ))
-                        ) : (
-                            <p className="empty-text">No recent transactions</p>
-                        )}
-                    </div>
-                    <button className="view-all-btn" onClick={() => (window.location.href = '/transactions')}>
-                        View All
-                    </button>
-                </div>
-            </div>
-
-            {/* Voice Input Modal */}
-            {
-                showVoiceModal && (
-                    <div className="modal-overlay" onClick={() => { stopListening(); setShowVoiceModal(false); }}>
-                        <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
-                            <div className="modal-header-row">
-                                <h3>Smart Voice Entry</h3>
-                                {/* Top right close button if needed, or user can click cancel below */}
+                    {/* 2. Stat Cards */}
+                    <div className="stats-row">
+                        <div className="stat-card-mini">
+                            <div className="stat-icon income">💰</div>
+                            <div className="stat-info">
+                                <span className="label">Income</span>
+                                <span className="value">{formatCurrency(stats.income, currency)}</span>
                             </div>
-                            <p className="modal-subtitle">Speak natural language (e.g., "Spent 50 on food", "Got 2000 salary")</p>
+                        </div>
+                        <div className="stat-card-mini">
+                            <div className="stat-icon expense">💸</div>
+                            <div className="stat-info">
+                                <span className="label">Expenses</span>
+                                <span className="value">{formatCurrency(stats.expenses, currency)}</span>
+                            </div>
+                        </div>
+                        <div className="stat-card-mini">
+                            <div className="stat-icon savings">🐷</div>
+                            <div className="stat-info">
+                                <span className="label">Savings</span>
+                                <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
+                            </div>
+                        </div>
+                    </div>
 
-                            {!audioBlob ? (
-                                // Recording State
-                                <>
-                                    <div className={`mic-container ${isListening ? 'listening' : ''}`}>
-                                        <div className="mic-icon">🎤</div>
-                                        {isListening && <div className="ripple"></div>}
-                                    </div>
+                    {/* 3. Knowledge Cards (Manual Slide) */}
+                    <div className="info-card-container">
+                        <div className="card-header">
+                            <h3><Lightbulb size={18} className="icon-yellow" /> Financial Wisdom</h3>
+                            <div className="card-controls">
+                                <button onClick={prevKnowledge}><ChevronLeft size={16} /></button>
+                                <button onClick={nextKnowledge}><ChevronRight size={16} /></button>
+                            </div>
+                        </div>
+                        <div className="sliding-card-content knowledge-card">
+                            <h4>{KNOWLEDGE_CARDS[knowledgeIndex].title}</h4>
+                            <p>{KNOWLEDGE_CARDS[knowledgeIndex].text}</p>
+                            <div className="slide-dots">
+                                {KNOWLEDGE_CARDS.map((_, i) => (
+                                    <span key={i} className={`dot ${i === knowledgeIndex ? 'active' : ''}`}></span>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
 
-                                    <div className="transcript-box">
-                                        {isListening ? "Listening..." : "Tap start and speak..."}
-                                    </div>
+                    {/* 4. Financial News (Auto 10s) */}
+                    <div className="info-card-container">
+                        <div className="card-header">
+                            <h3><Newspaper size={18} className="icon-blue" /> Financial News</h3>
+                            <div className="live-badge-wrapper">
+                                <span className="live-badge">LIVE</span>
+                            </div>
+                        </div>
+                        <div className="sliding-card-content news-card">
+                            <div className="news-meta">
+                                <span className="news-source">{NEWS_CARDS[newsIndex].source}</span>
+                                <span className="news-time">{NEWS_CARDS[newsIndex].time}</span>
+                            </div>
+                            <h4>{NEWS_CARDS[newsIndex].title}</h4>
+                            <p>{NEWS_CARDS[newsIndex].text}</p>
+                            {/* Progress Bar Animation (Pure CSS or JS driven, simple JS reset here) */}
+                            <div className="progress-bar-container">
+                                <div key={newsIndex} className="progress-bar-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                                    <div className="voice-controls">
-                                        {!isListening ? (
-                                            <button className="btn-primary" onClick={startListening}>Start Listening</button>
-                                        ) : (
-                                            <button className="btn-danger" onClick={stopListening}>Stop</button>
-                                        )}
+                {/* --- RIGHT COLUMN --- */}
+                <div className="right-column">
+                    {/* 1. Chart */}
+                    <div className="dashboard-card chart-section">
+                        <div className="card-header">
+                            <h3>Weekly Spending Trend</h3>
+                        </div>
+                        <div className="chart-wrapper">
+                            <TrendLineChart data={trendData} />
+                        </div>
+                    </div>
+
+                    {/* 2. Recent Transactions */}
+                    <div className="dashboard-card recent-transactions">
+                        <div className="card-header">
+                            <h3>Recent Transactions</h3>
+                            <button className="view-all-link" onClick={() => window.location.href = '/transactions'}>View All</button>
+                        </div>
+                        <div className="transaction-list-compact">
+                            {recentTransactions.length > 0 ? (
+                                recentTransactions.map(txn => (
+                                    <div key={txn.id} className="txn-item-compact">
+                                        <div className="txn-icon">{txn.category?.icon || '💸'}</div>
+                                        <div className="txn-details">
+                                            <span className="txn-desc">{txn.description}</span>
+                                            <div className="txn-meta">
+                                                <span className="txn-date">{formatDate(txn.date)}</span>
+                                                {txn.user && (
+                                                    <span className="txn-user-pill" style={{ backgroundColor: getUserColor(txn.user.firstName) }}>
+                                                        {txn.user.firstName}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className={`txn-amount ${txn.amount > 0 ? 'pos' : 'neg'}`}>
+                                            {formatCurrency(Math.abs(txn.amount), currency)}
+                                        </span>
                                     </div>
-                                </>
+                                ))
                             ) : (
-                                // Review State (Audio Captured)
-                                <div className="audio-review-container">
-                                    <div className="audio-player-wrapper">
-                                        <audio controls src={URL.createObjectURL(audioBlob)} className="mini-player" />
-                                    </div>
-
-                                    <div className="voice-controls review-controls">
-                                        {/* Cross Button to Cancel/Retake */}
-                                        <button
-                                            className="btn-icon-cancel"
-                                            onClick={() => { resetTranscript(); }}
-                                            title="Cancel Recording"
-                                        >
-                                            ❌
-                                        </button>
-
-                                        {/* Process Button */}
-                                        <button className="btn-success" onClick={() => processSmartEntry(audioBlob)}>
-                                            Process Entry
-                                        </button>
-                                    </div>
-                                </div>
+                                <p className="empty-text">No recent transactions</p>
                             )}
                         </div>
                     </div>
-                )
-            }
+                </div>
+            </div>
 
-            {/* Text Input Modal */}
-            {
-                showTextModal && (
-                    <div className="modal-overlay" onClick={() => setShowTextModal(false)}>
-                        <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
-                            <h3>Smart Text Entry</h3>
-                            <p className="modal-subtitle">Type natural language (e.g., "Paid 100 for internet")</p>
-
-                            <form onSubmit={handleTextSubmit}>
-                                <textarea
-                                    className="smart-text-input"
-                                    value={textInput}
-                                    onChange={(e) => setTextInput(e.target.value)}
-                                    placeholder="Describe your transaction..."
-                                    autoFocus
-                                    rows={3}
-                                />
-
-                                <div className="voice-controls" style={{ marginTop: '16px' }}>
-                                    <button type="button" className="btn-secondary" onClick={() => setShowTextModal(false)}>Cancel</button>
-                                    <button type="submit" className="btn-success">Process Entry</button>
+            {/* MODALS REUSED */}
+            {showVoiceModal && (
+                <div className="modal-overlay" onClick={() => { stopListening(); setShowVoiceModal(false); }}>
+                    <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
+                        <h3>Smart Voice Entry</h3>
+                        {!audioBlob ? (
+                            <>
+                                <div className={`mic-container ${isListening ? 'listening' : ''}`}>
+                                    <div className="mic-icon">🎤</div>
                                 </div>
-                            </form>
-                        </div>
+                                <p>{isListening ? 'Listening...' : 'Tap start...'}</p>
+                                <div className="voice-controls"><button className="btn-primary" onClick={startListening}>{isListening ? 'Stop' : 'Start'}</button></div>
+                            </>
+                        ) : (
+                            <div className="voice-controls"><button className="btn-success" onClick={() => processSmartEntry(audioBlob)}>Process</button></div>
+                        )}
                     </div>
-                )
-            }
+                </div>
+            )}
 
-            {/* Gamification Hub Modal */}
-            <GamificationHub
-                isOpen={showGamificationHub}
-                onClose={() => setShowGamificationHub(false)}
-            />
+            {showTextModal && (
+                <div className="modal-overlay" onClick={() => setShowTextModal(false)}>
+                    <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
+                        <form onSubmit={handleTextSubmit}>
+                            <textarea className="smart-text-input" value={textInput} onChange={e => setTextInput(e.target.value)} placeholder="Type transaction..." autoFocus />
+                            <div className="voice-controls"><button type="submit" className="btn-success">Process</button></div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

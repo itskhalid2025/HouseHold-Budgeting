@@ -2,9 +2,10 @@
     /* Advisor.css */
 
     .advisor-container {
-        max-width: 900px;
+        width: 100%;
+        max-width: 1400px;
         margin: 0 auto;
-        height: calc(100vh - 80px);
+        height: calc(100vh - 100px);
         /* Adjust based on your header height */
         display: flex;
         flex-direction: column;

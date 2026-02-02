@@ -183,7 +183,7 @@ export default function Reports() {
     );
 
     return (
-        <div className="reports-container">
+        <div className="container reports-container">
             {/* Header */}
             <div className="reports-header">
                 <div>
