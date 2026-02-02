@@ -1,0 +1,53 @@
+# Implementation Plan - Phase 5: Offline-First & Sync
+
+This plan implements Phase 5 of the mobile PWA guide, focusing on ensuring the app remains functional without an internet connection and synchronizes data once reconnected.
+
+## Proposed Changes
+
+### [NEW] [SyncContext.jsx](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/context/SyncContext.jsx)
+- Monitor `navigator.onLine` status.
+- Manage a `syncQueue` in `localStorage`.
+- Provide a `queueRequest` function to save failed mutations.
+- Automatically attempt to sync the queue when the browser returns online.
+
+### [NEW] [BudgetContext.jsx](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/context/BudgetContext.jsx)
+- Centralize state for transactions, income, and goals.
+- Persist state to `localStorage` for offline viewing.
+- Support "Optimistic Updates" where local state is updated immediately with a `isPending` flag.
+
+### [MODIFY] [api.js](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/api/api.js)
+- Update mutation functions ([addTransaction](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/api/api.js#340-348), [updateTransaction](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/api/api.js#367-375), [deleteTransaction](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/api/api.js#376-383), etc.) to optionally bypass standard error handling if offline, allowing the caller to queue the request.
+
+### [MODIFY] [App.jsx](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/App.jsx)
+- Wrap the application in `SyncProvider` and `BudgetProvider`.
+
+### [MODIFY] [TransactionsMobile.jsx](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/pages/mobile/TransactionsMobile.jsx)
+- Switch from local `useState` for transactions to `useBudget`.
+- Update [handleSubmit](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/pages/mobile/TransactionsMobile.jsx#196-223) to handle offline state by adding to the sync queue and updating UI optimistically.
+- Display a "Pending" icon for transactions that haven't been synced yet.
+
+### [MODIFY] [Navbar.jsx](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/frontend/src/components/mobile/Navbar.jsx)
+- Add a subtle offline indicator (e.g., a "Cloud-Off" icon or color shift) when the device is offline.
+
+---
+
+## Verification Plan
+
+### Automated Tests
+- I will search for a testing framework (e.g. Vitest/Jest). Since none were found, I'll recommend adding a basic test setup if out of scope, or verify via manual browser testing.
+
+### Manual Verification
+1. **Offline Mode Detection**:
+   - Open the app in the browser.
+   - Use DevTools "Network" tab to set mode to "Offline".
+   - Verify `Navbar` shows the offline indicator.
+2. **Offline Data Creation**:
+   - In "Offline" mode, add a new transaction.
+   - Verify the transaction appears in the list immediately with a "Pending" icon.
+   - Refresh the page and verify the transaction is still there (persisted in `localStorage`).
+3. **Synchronization**:
+   - Switch back to "Online" mode.
+   - Verify the "Pending" icon disappears after a few seconds.
+   - Verify the transaction exists in the backend (check console logs or refresh again).
+4. **Data Consistency**:
+   - Ensure that fetching new data while online doesn't overwrite pending offline changes in an inconsistent way.
