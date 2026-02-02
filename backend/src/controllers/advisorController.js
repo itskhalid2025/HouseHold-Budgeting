@@ -10,13 +10,12 @@
  */
 import { updateUserGamification } from '../services/gamificationService.js';
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import { getFinancialAdvice, generateSavingsRecommendations } from '../agents/advisorAgent.js';
 import { generateChartConfig } from '../agents/chartAgent.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 import { getCurrencySymbol } from '../utils/currencySymbols.js';
 
-const prisma = new PrismaClient();
 
 // In-memory conversation storage (use Redis in production)
 const conversations = new Map();

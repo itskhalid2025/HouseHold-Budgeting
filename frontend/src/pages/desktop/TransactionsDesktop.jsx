@@ -222,8 +222,6 @@ export default function TransactionsDesktop() {
             date: new Date().toISOString().split('T')[0],
             category: '',
             type: 'NEED',
-            category: '',
-            type: 'NEED',
             merchant: '',
             userId: user?.id || ''
         });

@@ -1,6 +1,6 @@
 import * as gamificationService from '../services/gamificationService.js';
-import { PrismaClient } from '@prisma/client';
-const prisma = new PrismaClient();
+import { calculateXP, updateRank, checkAchievements } from '../services/gamificationService.js';
+import prisma from '../services/db.js';
 
 const getLeaderboard = async (req, res) => {
     try {

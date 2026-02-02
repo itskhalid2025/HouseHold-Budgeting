@@ -53,7 +53,6 @@ export default function Savings() {
         targetAmount: '',
         currentAmount: '',
         type: 'LONG_TERM',
-        type: 'LONG_TERM',
         deadline: '',
         userId: user?.id || ''
     });
@@ -108,8 +107,6 @@ export default function Savings() {
                 targetAmount: parseFloat(formData.targetAmount),
                 currentAmount: parseFloat(formData.currentAmount || 0),
                 type: formData.type,
-                currentAmount: parseFloat(formData.currentAmount || 0),
-                type: formData.type,
                 deadline: formData.deadline || null,
                 userId: formData.userId
             };
@@ -155,7 +152,6 @@ export default function Savings() {
             name: goal.name,
             targetAmount: goal.targetAmount,
             currentAmount: goal.currentAmount,
-            type: goal.type,
             type: goal.type,
             deadline: goal.deadline ? goal.deadline.split('T')[0] : '',
             userId: goal.createdById // Assume creator editing
