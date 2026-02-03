@@ -18,10 +18,10 @@ import {
 } from 'recharts';
 import {
     FileText, TrendingUp, TrendingDown,
-    DollarSign, Users, RefreshCw, AlertCircle, ChevronDown
+    DollarSign, Users, RefreshCw, AlertCircle, ChevronDown, Clock, X, Calendar
 } from 'lucide-react';
 
-import { getLatestReport, generateReport, getHousehold } from '../../api/api';
+import { getLatestReport, generateReport, getHousehold, getReports } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/currencyUtils';
@@ -45,6 +45,16 @@ export default function Reports() {
     const [customUsers, setCustomUsers] = useState([]);
     const [members, setMembers] = useState([]);
     const [memberDropdownOpen, setMemberDropdownOpen] = useState(false);
+
+    // History State
+    const [historyOpen, setHistoryOpen] = useState(false);
+    const [pastReports, setPastReports] = useState([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+
+    // History Filters State
+    const [histFilterType, setHistFilterType] = useState('all');
+    const [histFilterFrom, setHistFilterFrom] = useState('');
+    const [histFilterTo, setHistFilterTo] = useState('');
 
     const toggleUserSelection = (userId) => {
         if (userId === 'all') {
@@ -165,6 +175,50 @@ export default function Reports() {
         }
     }, [activeTab]);
 
+    const fetchHistory = async () => {
+        setHistoryLoading(true);
+        try {
+            const data = await getReports();
+            if (data.success) {
+                setPastReports(data.reports || []);
+            }
+        } catch (err) {
+            console.error('Failed to fetch history:', err);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    const handleSelectPastReport = (pastReport) => {
+        const content = pastReport.content;
+        setReport({
+            ...content.report,
+            metadata: content.metadata
+        });
+        setHistoryOpen(false);
+    };
+
+    const clearHistoryFilters = () => {
+        setHistFilterType('all');
+        setHistFilterFrom('');
+        setHistFilterTo('');
+    };
+
+    const formatDateRange = (start, end) => {
+        const s = new Date(start);
+        const e = new Date(end);
+        const options = { day: '2-digit', month: 'short', year: 'numeric' };
+        return `${s.toLocaleDateString('default', options)} - ${e.toLocaleDateString('default', options)}`;
+    };
+
+    const filteredHistory = pastReports.filter(r => {
+        const typeMatch = histFilterType === 'all' || r.type === histFilterType;
+        const reportDate = new Date(r.dateStart);
+        const fromMatch = !histFilterFrom || reportDate >= new Date(histFilterFrom);
+        const pathMatch = !histFilterTo || reportDate <= new Date(histFilterTo);
+        return typeMatch && fromMatch && pathMatch;
+    });
+
     const StatCard = ({ icon: Icon, label, value, trend, color }) => (
         <div className="stat-card">
             <div className="stat-header">
@@ -206,6 +260,16 @@ export default function Reports() {
                             {generating ? 'Analyzing...' : 'Refresh Analysis'}
                         </button>
                     )}
+                    <button
+                        onClick={() => {
+                            setHistoryOpen(true);
+                            fetchHistory();
+                        }}
+                        className="btn-history"
+                    >
+                        <Clock className="w-5 h-5" />
+                        History
+                    </button>
                 </div>
             </div>
 
@@ -694,6 +758,114 @@ export default function Reports() {
                         <p>"{report.encouragement}"</p>
                     </div>
                 </>
+            )}
+
+            {/* History Right Side Panel */}
+            {historyOpen && (
+                <div className="history-drawer-overlay">
+                    <div className="drawer-overlay-blur" onClick={() => setHistoryOpen(false)} />
+                    <div className="history-drawer-content">
+                        <div className="history-drawer-header">
+                            <div className="header-titles">
+                                <h3>Report History</h3>
+                                <p>Past financial analyses</p>
+                            </div>
+                            <button onClick={() => setHistoryOpen(false)} className="close-drawer-btn">
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div className="history-drawer-body">
+                            <div className="history-filters-container">
+                                <div className="filters-header">
+                                    <h4>Filters</h4>
+                                    <button className="clear-filters-btn" onClick={clearHistoryFilters}>
+                                        <X size={14} />
+                                        Clear
+                                    </button>
+                                </div>
+
+                                <div className="filters-vertical">
+                                    <div className="filter-field">
+                                        <label>Report Type</label>
+                                        <div className="type-toggle-pills">
+                                            {['all', 'weekly', 'monthly'].map(t => (
+                                                <button
+                                                    key={t}
+                                                    className={histFilterType === t ? 'active' : ''}
+                                                    onClick={() => setHistFilterType(t)}
+                                                >
+                                                    {t.charAt(0).toUpperCase() + t.slice(1)}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                    <div className="filter-field">
+                                        <label>Starting From</label>
+                                        <div className="icon-input-wrap">
+                                            <Calendar size={18} />
+                                            <input
+                                                type="date"
+                                                value={histFilterFrom}
+                                                onChange={(e) => setHistFilterFrom(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="filter-field">
+                                        <label>Until To</label>
+                                        <div className="icon-input-wrap">
+                                            <Calendar size={18} />
+                                            <input
+                                                type="date"
+                                                value={histFilterTo}
+                                                onChange={(e) => setHistFilterTo(e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="history-results-list">
+                                {historyLoading ? (
+                                    <div className="drawer-loading-state">
+                                        <RefreshCw className="spin" size={32} />
+                                        <p>Fetching history...</p>
+                                    </div>
+                                ) : filteredHistory.length > 0 ? (
+                                    <div className="history-items-stack">
+                                        {filteredHistory.map((r) => (
+                                            <div
+                                                key={r.id}
+                                                className="history-result-card"
+                                                onClick={() => handleSelectPastReport(r)}
+                                            >
+                                                <div className="card-result-icon">
+                                                    <FileText size={20} />
+                                                </div>
+                                                <div className="card-result-info">
+                                                    <span className="result-dates">
+                                                        {formatDateRange(r.dateStart, r.dateEnd)}
+                                                    </span>
+                                                    <span className="result-type">
+                                                        {r.type.charAt(0).toUpperCase() + r.type.slice(1)} Report
+                                                    </span>
+                                                </div>
+                                                <X className="result-arrow-icon" size={16} style={{ transform: 'rotate(135deg)' }} />
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="drawer-empty-state">
+                                        <Clock size={40} />
+                                        <p>No reports found</p>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     );

@@ -15,11 +15,11 @@ import {
 } from 'recharts';
 import {
   FileText, TrendingUp, TrendingDown,
-  DollarSign, Users, RefreshCw, AlertCircle, ChevronDown, Calendar, Filter
+  DollarSign, Users, RefreshCw, AlertCircle, ChevronDown, Calendar, Filter, Clock, X
 } from 'lucide-react';
 
 // API & Context Imports (Preserved)
-import { getLatestReport, generateReport, getHousehold } from '../../api/api';
+import { getLatestReport, generateReport, getHousehold, getReports } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/currencyUtils';
@@ -63,6 +63,16 @@ export default function ReportsMobile() {
   const [pieView, setPieView] = useState('all'); // 'all' or userId
   const [pieViewOpen, setPieViewOpen] = useState(false);
   const [viewMode, setViewMode] = useState('scrolling'); // 'scrolling' or 'swipe'
+
+  // History State
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [pastReports, setPastReports] = useState([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+
+  // History Filters State
+  const [histFilterType, setHistFilterType] = useState('all');
+  const [histFilterFrom, setHistFilterFrom] = useState('');
+  const [histFilterTo, setHistFilterTo] = useState('');
 
   // Check if we are on mobile
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -208,6 +218,50 @@ export default function ReportsMobile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
 
+  const fetchHistory = async () => {
+    setHistoryLoading(true);
+    try {
+      const data = await getReports();
+      if (data.success) {
+        setPastReports(data.reports || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch history:', err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  const handleSelectPastReport = (pastReport) => {
+    const content = pastReport.content;
+    setReport({
+      ...content.report,
+      metadata: content.metadata
+    });
+    setHistoryOpen(false);
+  };
+
+  const clearHistoryFilters = () => {
+    setHistFilterType('all');
+    setHistFilterFrom('');
+    setHistFilterTo('');
+  };
+
+  const formatDateRange = (start, end) => {
+    const s = new Date(start);
+    const e = new Date(end);
+    const options = { day: '2-digit', month: 'short', year: 'numeric' };
+    return `${s.toLocaleDateString('default', options)} - ${e.toLocaleDateString('default', options)}`;
+  };
+
+  const filteredHistory = pastReports.filter(r => {
+    const typeMatch = histFilterType === 'all' || r.type === histFilterType;
+    const reportDate = new Date(r.dateStart);
+    const fromMatch = !histFilterFrom || reportDate >= new Date(histFilterFrom);
+    const pathMatch = !histFilterTo || reportDate <= new Date(histFilterTo);
+    return typeMatch && fromMatch && pathMatch;
+  });
+
   // --- Helper Component: Stat Card ---
   const StatCard = ({ icon: Icon, label, value, trend, color }) => (
     <div className="neo-stat-card" role="group" aria-label={`${label} Statistic`}>
@@ -246,7 +300,16 @@ export default function ReportsMobile() {
             <span>Analytics</span>
           </h1>
           <div className="header-actions">
-
+            <button
+              onClick={() => {
+                setHistoryOpen(true);
+                fetchHistory();
+              }}
+              className="neo-btn-icon history-btn"
+              title="View History"
+            >
+              <FileText size={20} />
+            </button>
             {(activeTab !== 'custom') && (
               <button
                 onClick={() => handleGenerateReport(activeTab)}
@@ -719,6 +782,101 @@ export default function ReportsMobile() {
       }
 
       <ChatbotButton />
+
+      {/* --- History Bottom Drawer --- */}
+      {historyOpen && (
+        <div className={`neo-history-drawer ${historyOpen ? 'open' : ''}`}>
+          <div className="drawer-overlay" onClick={() => setHistoryOpen(false)} />
+          <div className="drawer-content">
+            <div className="drawer-handle"></div>
+            <div className="drawer-header">
+              <h3>Report History</h3>
+              <button onClick={() => setHistoryOpen(false)} className="close-btn">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="mobile-history-filters">
+              <div className="filters-header-mobile">
+                <span className="filter-title">Refine Results</span>
+                <button className="clear-link" onClick={clearHistoryFilters}>Clear All</button>
+              </div>
+
+              <div className="mobile-type-pills">
+                {['all', 'weekly', 'monthly'].map(t => (
+                  <button
+                    key={t}
+                    className={`pill ${histFilterType === t ? 'active' : ''}`}
+                    onClick={() => setHistFilterType(t)}
+                  >
+                    {t === 'all' ? 'All' : t.charAt(0).toUpperCase() + t.slice(1)}
+                  </button>
+                ))}
+              </div>
+
+              <div className="mobile-date-filters">
+                <div className="date-input-group">
+                  <label>From</label>
+                  <div className="date-input-wrap">
+                    <Calendar size={14} />
+                    <input
+                      type="date"
+                      value={histFilterFrom}
+                      onChange={(e) => setHistFilterFrom(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="date-input-group">
+                  <label>To</label>
+                  <div className="date-input-wrap">
+                    <Calendar size={14} />
+                    <input
+                      type="date"
+                      value={histFilterTo}
+                      onChange={(e) => setHistFilterTo(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="history-list-mobile">
+              {historyLoading ? (
+                <div className="drawer-loading">
+                  <RefreshCw className="spin" />
+                  <p>Fetching history...</p>
+                </div>
+              ) : filteredHistory.length > 0 ? (
+                filteredHistory.map((r) => (
+                  <div
+                    key={r.id}
+                    className="history-item-mobile"
+                    onClick={() => handleSelectPastReport(r)}
+                  >
+                    <div className="item-icon">
+                      <FileText size={18} />
+                    </div>
+                    <div className="item-info">
+                      <span className="item-dates">
+                        {formatDateRange(r.dateStart, r.dateEnd)}
+                      </span>
+                      <span className="item-type">
+                        {r.type.charAt(0).toUpperCase() + r.type.slice(1)} Report
+                      </span>
+                    </div>
+                    <ChevronDown className="item-arrow" size={16} />
+                  </div>
+                ))
+              ) : (
+                <div className="empty-history-mobile">
+                  <Clock size={40} />
+                  <p>No reports generated yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </main >
   );
 }

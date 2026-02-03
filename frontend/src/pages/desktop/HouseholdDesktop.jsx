@@ -222,7 +222,7 @@ export default function Household() {
 
     if (loading) {
         return (
-            <div className="household-container">
+            <div className="container household-page">
                 <div className="loading-state">
                     <div className="loading-spinner"></div>
                     <p>Loading household...</p>
@@ -234,7 +234,7 @@ export default function Household() {
     // No household state
     if (!household) {
         return (
-            <div className="household-container">
+            <div className="container household-page">
                 <div className="no-household">
                     <div className="no-household-icon">🏠</div>
                     <h2>No Household Yet</h2>
@@ -374,7 +374,7 @@ export default function Household() {
     const isEditor = user?.role === 'EDITOR';
 
     return (
-        <div className="household-container">
+        <div className="container household-page">
             {error && <div className="error-message">{error}</div>}
             {successMessage && <div className="success-message">{successMessage}</div>}
 

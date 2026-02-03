@@ -7,11 +7,9 @@
      * and specific administrative UI components in the household view.
      */
 
-    .household-container {
-
-        max-width: 1000px;
+    .household-page {
+        max-width: 1200px;
         margin: 0 auto;
-        padding: 24px;
     }
 
     /* Loading State */
