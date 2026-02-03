@@ -17,6 +17,11 @@ export const SyncProvider = ({ children }) => {
     const [isInstalled, setIsInstalled] = useState(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
 
     useEffect(() => {
+        console.log('PWA: Initial State - isInstalled:', isInstalled);
+        console.log('PWA: Browser Supports beforeinstallprompt:', 'onbeforeinstallprompt' in window);
+    }, []);
+
+    useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
             toast.success('You are back online!');
@@ -27,12 +32,14 @@ export const SyncProvider = ({ children }) => {
         };
 
         const handleBeforeInstallPrompt = (e) => {
+            console.log('PWA: beforeinstallprompt event fired');
             e.preventDefault();
             setDeferredPrompt(e);
             setIsInstallable(true);
         };
 
         const handleAppInstalled = () => {
+            console.log('PWA: appinstalled event fired');
             setDeferredPrompt(null);
             setIsInstallable(false);
             setIsInstalled(true);
@@ -52,11 +59,12 @@ export const SyncProvider = ({ children }) => {
     }, []);
 
     const installApp = async () => {
+        console.log('PWA: installApp called, deferredPrompt exists:', !!deferredPrompt);
         if (!deferredPrompt) {
             if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-                toast.error('On iOS, tap the share icon and select "Add to Home Screen"');
+                toast('To install: Tap the "Share" icon (square with arrow) and then "Add to Home Screen".', { icon: '📲' });
             } else {
-                toast.error('Use Chrome/Edge browser and look for the install icon in the address bar.');
+                toast('To install: Look for the "Install" icon in your browser address bar or menu.', { icon: '📲' });
             }
             return false;
         }
