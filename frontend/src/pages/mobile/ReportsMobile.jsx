@@ -402,7 +402,7 @@ export default function ReportsMobile() {
             className="neo-btn-primary full-width"
           >
             <RefreshCw size={18} className={generating ? 'spin' : ''} style={{ marginRight: '8px' }} />
-            {generating           ? 'Processing...' : 'Generate Report'}
+            {generating ? 'Processing...' : 'Generate Report'}
           </button>
         </section>
       )}

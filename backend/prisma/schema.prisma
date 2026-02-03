@@ -26,6 +26,7 @@ model User {
   resetTokenExpiry        DateTime?     @map("reset_token_expiry")
   createdAt               DateTime      @default(now()) @map("created_at")
   updatedAt               DateTime      @updatedAt @map("updated_at")
+  lastReportsViewedAt     DateTime?     @map("last_reports_viewed_at")
   verificationToken       String?       @map("verification_token")
   verificationTokenExpiry DateTime?     @map("verification_token_expiry")
   aiRequestCount          Int           @default(0) @map("ai_request_count")

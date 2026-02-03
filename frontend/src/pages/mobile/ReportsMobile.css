@@ -477,56 +477,62 @@
         color: #51cf66;
         box-shadow: 0 0 10px rgba(81, 207, 102, 0.2);
     }
-.neo-refresh-btn {
-    width: 44px;
-    height: 44px;
 
-    border-radius: 14px;
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    .neo-refresh-btn {
+        height: 40px;
+        padding: 0 16px;
+        border-radius: 20px;
+        border: none;
 
-    /* Brighter glass so icon is visible */
-    background: rgba(255, 255, 255, 0.12);
-    backdrop-filter: blur(18px);
-    -webkit-backdrop-filter: blur(18px);
+        /* Primary Gradient Background */
+        background: linear-gradient(135deg, var(--neon-blue), #2563eb);
+        box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        /* Vivid Gradient for Maximum Visibility */
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        /* Space between icon and text */
 
-    cursor: pointer;
-    transition: all 0.25s ease;
+        cursor: pointer;
+        transition: all 0.2s ease;
 
-    /* IMPORTANT: ensure icon inherits visible color */
-    color: #ffffff !important;
-}
+        /* Text Styling */
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 0.85rem;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+    }
 
-/* FORCE ICON TO BE PURE WHITE AND THICK */
-.neo-refresh-btn svg {
-    stroke: #ffffff !important;
-    stroke-width: 2.4 !important;
-    fill: none !important;
-    opacity: 1 !important;
+    /* Icon styling within the button */
+    .neo-refresh-btn svg {
+        stroke: #ffffff !important;
+        stroke-width: 2.5 !important;
+        width: 16px !important;
+        height: 16px !important;
+        opacity: 1 !important;
+    }
 
-    width: 22px !important;
-    height: 22px !important;
-}
+    /* Hover State */
+    .neo-refresh-btn:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+    }
 
-/* Hover glow */
-.neo-refresh-btn:hover {
-    border-color: rgba(255, 255, 255, 0.45);
-    background: rgba(255, 255, 255, 0.18);
-    box-shadow: 0 0 12px rgba(255,255,255,0.2);
-}
+    /* Active State */
+    .neo-refresh-btn:active {
+        transform: scale(0.96);
+    }
 
-/* Active click scale */
-.neo-refresh-btn:active {
-    transform: scale(0.92);
-}
+    /* Spinner animation */
+    .spin {
+        animation: spin 1s linear infinite;
+    }
 
-/* Spinner animation */
-.spin {
-    animation: spin 1s linear infinite;
-}
 
     .icon-blue {
         color: #339af0;
@@ -879,32 +885,34 @@
     .l-item.savings {
         color: #b2f2bb;
     }
+
     /* Circle outline icon like the refresh icon */
-.reports-filter-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    margin: 0;
-    width: 32px;
-    height: 32px;
+    .reports-filter-btn {
+        background: none;
+        border: none;
+        padding: 0;
+        margin: 0;
+        width: 32px;
+        height: 32px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
 
-    cursor: pointer;
-}
+        cursor: pointer;
+    }
 
-/* Blue neon stroke (same as your screenshot) */
-.reports-filter-btn svg {
-    stroke: #3b82f6 !important; /* neon blue */
-    stroke-width: 1.8;
-}
+    /* Blue neon stroke (same as your screenshot) */
+    .reports-filter-btn svg {
+        stroke: #3b82f6 !important;
+        /* neon blue */
+        stroke-width: 1.8;
+    }
 
-/* Slight glow when active */
-.reports-filter-btn:active svg {
-    filter: drop-shadow(0 0 4px rgba(59,130,246,0.7));
-}
+    /* Slight glow when active */
+    .reports-filter-btn:active svg {
+        filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.7));
+    }
 
     .neo-footer {
         text-align: center;
