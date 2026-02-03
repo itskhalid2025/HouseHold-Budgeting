@@ -12,6 +12,7 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
 import { formatCurrency } from '../../utils/currencyUtils';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 import MobileCard from '../../components/mobile/MobileCard';
 import MobileButton from '../../components/mobile/MobileButton';
 import MobileModal from '../../components/mobile/MobileModal';
@@ -248,7 +249,7 @@ export default function SavingsMobile() {
                             <MobileCard key={goal.id} className={`goal-card ${isComplete ? 'complete' : ''}`}>
                                 <div className="goal-header">
                                     <div className="goal-title">
-                                        <h3>{goal.name}</h3>
+                                        <h3>{getCategoryEmoji(goal.type, goal.name)} {goal.name}</h3>
                                         <span className={`goal-type-badge ${goal.type.toLowerCase()}`}>
                                             {goal.type.replace('_', ' ')}
                                         </span>
@@ -315,10 +316,10 @@ export default function SavingsMobile() {
                     <div className="form-group">
                         <label>Type</label>
                         <select className="mobile-select" value={goalForm.type} onChange={e => setGoalForm({ ...goalForm, type: e.target.value })}>
-                            <option value="LONG_TERM">Long Term</option>
-                            <option value="EMERGENCY_FUND">Emergency Fund</option>
-                            <option value="SINKING_FUND">Sinking Fund</option>
-                            <option value="DEBT_PAYOFF">Debt Payoff</option>
+                            <option value="LONG_TERM">🏦 Long Term</option>
+                            <option value="EMERGENCY_FUND">🚨 Emergency Fund</option>
+                            <option value="SINKING_FUND">🚢 Sinking Fund</option>
+                            <option value="DEBT_PAYOFF">📉 Debt Payoff</option>
                         </select>
                     </div>
                     <MobileButton onClick={handleSaveGoal}>Save Goal</MobileButton>
@@ -392,10 +393,10 @@ export default function SavingsMobile() {
                             className="mobile-native-select"
                         >
                             <option value="">All Types</option>
-                            <option value="LONG_TERM">Long Term</option>
-                            <option value="EMERGENCY_FUND">Emergency Fund</option>
-                            <option value="SINKING_FUND">Sinking Fund</option>
-                            <option value="DEBT_PAYOFF">Debt Payoff</option>
+                            <option value="LONG_TERM">🏦 Long Term</option>
+                            <option value="EMERGENCY_FUND">🚨 Emergency Fund</option>
+                            <option value="SINKING_FUND">🚢 Sinking Fund</option>
+                            <option value="DEBT_PAYOFF">📉 Debt Payoff</option>
                         </select>
                     </div>
                     <div className="filter-group">

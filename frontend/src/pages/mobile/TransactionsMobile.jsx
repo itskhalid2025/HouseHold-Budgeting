@@ -13,6 +13,7 @@ import { useBudget } from '../../context/BudgetContext';
 import usePolling from '../../hooks/usePolling';
 import { formatDate, getUserColor } from '../../utils/formatting';
 import { formatCurrency } from '../../utils/currencyUtils';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 import MobileCard from '../../components/mobile/MobileCard';
 import MobileModal from '../../components/mobile/MobileModal';
 import MobileButton from '../../components/mobile/MobileButton';
@@ -332,7 +333,7 @@ function SpendingTab() {
                         <div key={txn.id} className={`mobile-txn-card ${txn.isPending ? 'pending' : ''}`} onClick={() => openEditModal(txn)}>
                             <div className="txn-left">
                                 <div className="txn-icon-circle-lg">
-                                    {txn.categoryIcon || txn.category?.icon || '💸'}
+                                    {getCategoryEmoji(txn.category, txn.subcategory)}
                                     {txn.isPending && <div className="pending-indicator">⏳</div>}
                                 </div>
                                 <div className="txn-details">
@@ -409,10 +410,18 @@ function SpendingTab() {
                         <label>Category</label>
                         <select name="category" value={filters.category} onChange={handleFilterChange}>
                             <option value="">All Categories</option>
-                            <option value="Food">Food</option>
-                            <option value="Transport">Transport</option>
-                            <option value="Housing">Housing</option>
-                            <option value="Entertainment">Entertainment</option>
+                            <option value="Food">🍕 Food</option>
+                            <option value="Transport">🚗 Transport</option>
+                            <option value="Housing">🏠 Housing</option>
+                            <option value="Entertainment">🎭 Entertainment</option>
+                            <option value="Healthcare">🏥 Healthcare</option>
+                            <option value="Childcare">Childcare</option>
+                            <option value="Debt">📉 Debt</option>
+                            <option value="Household Services">👨‍🍳 Household Services</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Travel">✈️ Travel</option>
+                            <option value="Health">🧘 Health</option>
+                            <option value="Gifts">🎁 Gifts</option>
                         </select>
                     </div>
                     <div className="filter-group">
@@ -488,10 +497,18 @@ function SpendingTab() {
                         <label>Category</label>
                         <select name="category" className="mobile-native-select" value={formData.category} onChange={handleInputChange}>
                             <option value="">Select Category</option>
-                            <option value="Food">Food</option>
-                            <option value="Transport">Transport</option>
-                            <option value="Housing">Housing</option>
-                            <option value="Entertainment">Entertainment</option>
+                            <option value="Food">🍕 Food</option>
+                            <option value="Transport">🚗 Transport</option>
+                            <option value="Housing">🏠 Housing</option>
+                            <option value="Entertainment">🎭 Entertainment</option>
+                            <option value="Healthcare">🏥 Healthcare</option>
+                            <option value="Childcare">Childcare</option>
+                            <option value="Debt">📉 Debt</option>
+                            <option value="Household Services">👨‍🍳 Household Services</option>
+                            <option value="Shopping">🛍️ Shopping</option>
+                            <option value="Travel">✈️ Travel</option>
+                            <option value="Health">🧘 Health</option>
+                            <option value="Gifts">🎁 Gifts</option>
                         </select>
                     </div>
 

@@ -38,6 +38,7 @@ import AdminSettings from './pages/admin/AdminSettings';
 import Onboarding from './pages/Onboarding';
 import { SyncProvider } from './context/SyncContext';
 import { BudgetProvider } from './context/BudgetContext';
+import PreWarmer from './components/PreWarmer';
 
 import './App.css';
 
@@ -477,6 +478,7 @@ function AppRoutes() {
 function App() {
   return (
     <Router>
+      <PreWarmer />
       <AuthProvider>
         <ThemeProvider>
           <SyncProvider>

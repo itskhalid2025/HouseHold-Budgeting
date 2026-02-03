@@ -402,20 +402,47 @@
     border: 2px solid #1a1a20;
 }
 
+.node-label-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-weight: bold;
+}
+
 .node-tier-name {
     font-size: 0.7rem;
     font-weight: 900;
     color: #475569;
     text-transform: uppercase;
+    font-weight: bold;
+}
+
+.node-xp-req {
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #64748b;
+    opacity: 0.6;
+    font-weight: bold;
 }
 
 .passed .node-tier-name {
     color: #94a3b8;
 }
 
+.passed .node-xp-req {
+    color: #94a3b8;
+    opacity: 0.8;
+}
+
 .current .node-tier-name {
     color: #fff;
     text-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
+}
+
+.current .node-xp-req {
+    color: #fff;
+    opacity: 1;
 }
 
 /* Stats Dashboard Grid */

@@ -48,6 +48,9 @@ function stopAIRequest() {
 
 // Wrapper for fetch to track loading state
 async function trackedFetch(...args) {
+    if (!navigator.onLine) {
+        throw new Error('Offline');
+    }
     startRequest();
     try {
         const response = await window.fetch(...args);

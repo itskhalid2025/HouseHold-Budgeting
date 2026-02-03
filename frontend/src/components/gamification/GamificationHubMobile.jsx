@@ -23,6 +23,14 @@ const RANK_COLORS = {
     'LEGEND': '#06b6d4'
 };
 
+const RANK_THRESHOLDS = {
+    'NOVICE': 0,
+    'APPRENTICE': 500,
+    'PRO': 2000,
+    'MASTER': 5000,
+    'LEGEND': 10000
+};
+
 export default function GamificationHubMobile({ isOpen, onClose }) {
     const { user } = useAuth();
     const [activeTab, setActiveTab] = useState('progress');
@@ -93,7 +101,7 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
 
     if (!isOpen) return null;
 
-    const { rankTier, currentStreak, totalPoints, rankProgress, city, country } = data || {};
+    const { rankTier, currentStreak, totalPoints, rankProgress, city, state, country } = data || {};
 
     const safeRank = rankTier || 'NOVICE';
     const safeProgress = rankProgress || 0;
@@ -163,7 +171,7 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
 
                         {/* ---- Badge Journey ---- */}
                         <div className="section-header-line">
-                            <span>Your Badge Journey</span>
+                            <span style={{ color: rankColor }}>Your Badge Journey</span>
                         </div>
 
                         <div className="horizontal-journey-container">
@@ -183,7 +191,10 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
                                             </div>
 
                                             <div className="h-node-dot"></div>
-                                            <span className="h-node-label">{tier}</span>
+                                            <div className="h-node-label-stack">
+                                                <span className="h-node-label">{tier}</span>
+                                                <span className="h-node-xp">{RANK_THRESHOLDS[tier].toLocaleString()} XP</span>
+                                            </div>
                                         </div>
                                     );
                                 })}
@@ -192,7 +203,7 @@ export default function GamificationHubMobile({ isOpen, onClose }) {
 
                         {/* ---- Daily Login Streak (7 days) ---- */}
                         <div className="section-header-line">
-                            <span>Daily Login Streak</span>
+                            <span style={{ color: '#bab412ff' }}>Daily Login Streak</span>
                         </div>
 
                         <div className="streak-section">

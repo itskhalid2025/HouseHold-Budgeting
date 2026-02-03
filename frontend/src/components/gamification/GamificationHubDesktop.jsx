@@ -11,6 +11,13 @@ const RANK_ICONS = {
     'MASTER': Crown,
     'LEGEND': Gem
 };
+const RANK_THRESHOLDS = {
+    'NOVICE': 0,
+    'APPRENTICE': 500,
+    'PRO': 2000,
+    'MASTER': 5000,
+    'LEGEND': 10000
+};
 const RANK_COLORS = {
     'NOVICE': '#cd7f32',
     'APPRENTICE': '#fbbf24',
@@ -106,7 +113,7 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
 
     if (!isOpen) return null;
 
-    const { rankTier, currentStreak, totalPoints, rankProgress, city, country } = data || {};
+    const { rankTier, currentStreak, totalPoints, rankProgress, city, state, country } = data || {};
 
     const safeRank = rankTier || 'NOVICE';
     const safeProgress = rankProgress || 0;
@@ -206,7 +213,10 @@ export default function GamificationHubDesktop({ isOpen, onClose }) {
                                                         <Icon size={24} />
                                                         {isPassed && !isCurrent && <div className="node-check">✓</div>}
                                                     </div>
-                                                    <span className="node-tier-name">{tier}</span>
+                                                    <div className="node-label-stack">
+                                                        <span className="node-tier-name">{tier}</span>
+                                                        <span className="node-xp-req">{RANK_THRESHOLDS[tier].toLocaleString()} XP</span>
+                                                    </div>
                                                 </div>
                                             );
                                         })}

@@ -24,7 +24,9 @@ import {
 } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
+import { formatDate } from '../../utils/formatting.js';
 import { formatCurrency } from '../../utils/currencyUtils';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 import './IncomeDesktop.css';
 
 export default function Income() {
@@ -233,11 +235,11 @@ export default function Income() {
                 />
                 <select name="type" value={filters.type} onChange={handleFilterChange} className="filter-select">
                     <option value="">All Types</option>
-                    <option value="PRIMARY">Primary Job</option>
-                    <option value="FREELANCE">Freelance</option>
-                    <option value="INVESTMENT">Investment</option>
-                    <option value="GIFT">Gift</option>
-                    <option value="OTHER">Other</option>
+                    <option value="PRIMARY">💼 Primary Job</option>
+                    <option value="FREELANCE">💻 Freelance</option>
+                    <option value="INVESTMENT">📉 Investment</option>
+                    <option value="GIFT">🎁 Gift</option>
+                    <option value="OTHER">💰 Other</option>
                 </select>
                 <select name="userId" value={filters.userId} onChange={handleFilterChange} className="filter-select">
                     <option value="">All Users</option>
@@ -269,10 +271,11 @@ export default function Income() {
                                         </div>
                                     )}
                                 </div>
-                                <h3>{inc.source}</h3>
+                                <h3>{getCategoryEmoji(inc.type, inc.source)} {inc.source}</h3>
                                 <div className="income-details">
                                     <span className="income-amount">{formatCurrency(inc.amount, currency)}</span>
                                     <span className="income-freq">per {inc.frequency.toLowerCase().replace('_', ' ')}</span>
+                                    <span className="income-date">{formatDate(inc.startDate)}</span>
                                     {inc.user && (
                                         <span className="user-badge" style={{ marginTop: '8px', display: 'inline-block' }}>
                                             👤 {inc.user.firstName}
@@ -341,9 +344,9 @@ export default function Income() {
                                 <div className="form-group">
                                     <label>Type</label>
                                     <select name="type" value={formData.type} onChange={handleInputChange}>
-                                        <option value="PRIMARY">Primary (Salary)</option>
-                                        <option value="VARIABLE">Variable (Freelance)</option>
-                                        <option value="PASSIVE">Passive (Investments)</option>
+                                        <option value="PRIMARY">💼 Primary (Salary)</option>
+                                        <option value="VARIABLE">🎨 Variable (Freelance)</option>
+                                        <option value="PASSIVE">📈 Passive (Investments)</option>
                                     </select>
                                 </div>
                                 <div className="form-group">

@@ -13,7 +13,7 @@
  * @requires ./Dashboard.css
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     getTransactionSummary,
     getMonthlyIncomeTotal,
@@ -21,18 +21,35 @@ import {
     parseVoiceInput,
     getTransactions,
     analyzeImage,
-    getDailyInsight
+    getDailyInsight,
+    getGamificationStatus
 } from '../../api/api';
 
-import { Upload, FileText, Image as ImageIcon, ChevronLeft, ChevronRight, TrendingUp, Newspaper, Lightbulb } from 'lucide-react';
+import {
+    Upload,
+    FileText,
+    Image as ImageIcon,
+    ChevronLeft,
+    ChevronRight,
+    TrendingUp,
+    Newspaper,
+    Lightbulb,
+    Flame,
+    Award,
+    Shield,
+    Star,
+    Crown,
+    Trophy
+} from 'lucide-react';
 import TrendLineChart from '../../components/charts/TrendLineChart';
 import usePolling from '../../hooks/usePolling';
 import useVoiceInput from '../../hooks/useVoiceInput';
 import { useAuth } from '../../context/AuthContext';
 import { formatCurrency } from '../../utils/currencyUtils';
 import { formatDate, getUserColor } from '../../utils/formatting';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 import { triggerConfetti } from '../../utils/confetti';
-import GamificationHub from '../../components/gamification/GamificationHub';
+import GamificationHubDesktop from '../../components/gamification/GamificationHubDesktop';
 import './DashboardDesktop.css';
 
 // --- MOCK DATA FOR CARDS ---
@@ -50,6 +67,22 @@ const NEWS_CARDS = [
     { id: 4, title: "Savings Rates", text: "High-yield savings accounts are offering competitive rates this quarter.", source: "BankRate", time: "8h ago" }
 ];
 
+const RANK_ICONS = {
+    'NOVICE': Shield,
+    'APPRENTICE': Star,
+    'PRO': Shield,
+    'MASTER': Crown,
+    'LEGEND': Trophy
+};
+
+const RANK_COLORS = {
+    'NOVICE': '#cd7f32',
+    'APPRENTICE': '#fbbf24',
+    'PRO': '#94a3b8',
+    'MASTER': '#facc15',
+    'LEGEND': '#06b6d4'
+};
+
 export default function DashboardDesktop() {
     const { user, currency } = useAuth(); // Got user for welcome message
     const [stats, setStats] = useState({
@@ -61,6 +94,7 @@ export default function DashboardDesktop() {
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [gamificationData, setGamificationData] = useState(null);
 
     const [recentTransactions, setRecentTransactions] = useState([]);
     const [trendData, setTrendData] = useState([]);
@@ -73,9 +107,15 @@ export default function DashboardDesktop() {
 
     // Auto-slide News & Wisdom every 10 seconds
     useEffect(() => {
+        if (newsCards.length <= 1 && knowledgeCards.length <= 1) return;
+
         const interval = setInterval(() => {
-            setNewsIndex(prev => (prev + 1) % newsCards.length);
-            setKnowledgeIndex(prev => (prev + 1) % knowledgeCards.length);
+            if (newsCards.length > 1) {
+                setNewsIndex(prev => (prev + 1) % newsCards.length);
+            }
+            if (knowledgeCards.length > 1) {
+                setKnowledgeIndex(prev => (prev + 1) % knowledgeCards.length);
+            }
         }, 10000);
         return () => clearInterval(interval);
     }, [newsCards.length, knowledgeCards.length]);
@@ -92,18 +132,23 @@ export default function DashboardDesktop() {
             if (stats.income === 0 && stats.expenses === 0 && loading) setLoading(true);
 
             // Fetch data in parallel
-            const [transactionSummary, incomeData, goalData, recentTxns, allTxns, dailyInsight] = await Promise.all([
+            const [transactionSummary, incomeData, goalData, recentTxns, allTxns, dailyInsight, gamificationStatus] = await Promise.all([
                 getTransactionSummary(),
                 getMonthlyIncomeTotal(),
                 getGoalSummary(),
                 getTransactions({ limit: 5 }), // Recent 5
                 getTransactions({ limit: 100 }), // For trend
-                getDailyInsight().catch(() => null) // Fallback to null if fails
+                getDailyInsight().catch(() => null), // Fallback to null if fails
+                getGamificationStatus().catch(() => null)
             ]);
 
             if (dailyInsight && dailyInsight.success && dailyInsight.data) {
                 if (dailyInsight.data.news) setNewsCards(dailyInsight.data.news);
                 if (dailyInsight.data.quotes) setKnowledgeCards(dailyInsight.data.quotes);
+            }
+
+            if (gamificationStatus && gamificationStatus.success) {
+                setGamificationData(gamificationStatus.data);
             }
 
             const totalExpenses = transactionSummary.summary?.totalSpent || 0;
@@ -265,30 +310,32 @@ export default function DashboardDesktop() {
 
     return (
         <div className="dashboard-container">
-            {/* Header / Actions - Kept at top for ease of access */}
+            {/* Header / Gamification Stats - Clickable to open hub */}
             <div className="dashboard-top-bar">
-                <div className="smart-actions-header">
-                    {/* Reuse existing Smart Buttons Logic */}
-                    <button
-                        className={`btn-smart-scan ${isDragging ? 'dragging' : ''} ${analyzingImage ? 'analyzing' : ''}`}
-                        onDragOver={handleDragOver}
-                        onDragLeave={handleDragLeave}
-                        onDrop={handleDrop}
-                        onClick={() => document.getElementById('desktop-file-input').click()}
-                        disabled={analyzingImage}
-                    >
-                        <input type="file" id="desktop-file-input" multiple accept="image/*,application/pdf" style={{ display: 'none' }} onChange={handleFileSelect} />
-                        {analyzingImage ? <span>Analyzing...</span> : <> <ImageIcon size={18} /> <span>Smart Scan</span> </>}
-                    </button>
-                    {isSupported && (
-                        <button className="btn-smart-voice" onClick={() => { setShowVoiceModal(true); resetTranscript(); }}>
-                            🎤 Smart Voice
-                        </button>
-                    )}
-                    <button className="btn-smart-text" onClick={() => { setShowTextModal(true); setTextInput(''); }}>
-                        ⌨️ Smart Text
-                    </button>
-                </div>
+                {gamificationData ? (
+                    <div className="header-gamification-stats" onClick={() => setShowGamificationHub(true)}>
+                        <div className="streak-badge-mini">
+                            <Flame size={20} className="flame-icon-mini" />
+                            <span className="streak-count-mini">{gamificationData.currentStreak || 0}</span>
+                        </div>
+                        <div className="exp-badge-mini">
+                            <Star size={16} className="exp-icon-mini" />
+                            <span>{gamificationData.totalPoints?.toLocaleString() || 0} XP</span>
+                        </div>
+                        <div className="rank-badge-mini" style={{ color: RANK_COLORS[gamificationData.rankTier] || '#94a3b8' }}>
+                            {(() => {
+                                const Icon = RANK_ICONS[gamificationData.rankTier] || Shield;
+                                return <Icon size={16} fill={`${RANK_COLORS[gamificationData.rankTier]}20`} />;
+                            })()}
+                            <span>{gamificationData.rankTier || 'NOVICE'}</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="header-gamification-stats loading">
+                        <Award size={20} className="pulse" />
+                        <span>Loading Status...</span>
+                    </div>
+                )}
             </div>
 
             <div className="dashboard-grid-layout">
@@ -336,12 +383,12 @@ export default function DashboardDesktop() {
                                 <button onClick={nextKnowledge}><ChevronRight size={16} /></button>
                             </div>
                         </div>
-                        <div className="sliding-card-content knowledge-card">
+                        <div key={knowledgeIndex} className="sliding-card-content knowledge-card animate-fade-in">
                             <h4>{knowledgeCards[knowledgeIndex]?.title || knowledgeCards[knowledgeIndex]?.headline}</h4>
                             <p>{knowledgeCards[knowledgeIndex]?.text || knowledgeCards[knowledgeIndex]?.summary}</p>
 
                             <div className="card-footer-flex">
-                    
+
                                 {/* Progress Bar Animation */}
                                 <div className="progress-bar-container mini">
                                     <div key={knowledgeIndex} className="progress-bar-fill"></div>
@@ -364,7 +411,7 @@ export default function DashboardDesktop() {
                                 </div>
                             </div>
                         </div>
-                        <div className="sliding-card-content news-card">
+                        <div key={newsIndex} className="sliding-card-content news-card animate-fade-in">
                             <div className="news-meta">
                                 <span className="news-source">{newsCards[newsIndex]?.category || newsCards[newsIndex]?.source || 'News'}</span>
                                 <span className="news-time">{newsCards[newsIndex]?.link ? <a href={newsCards[newsIndex].link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-light)', textDecoration: 'underline' }}>Read More</a> : 'Today'}</span>
@@ -401,7 +448,7 @@ export default function DashboardDesktop() {
                             {recentTransactions.length > 0 ? (
                                 recentTransactions.map(txn => (
                                     <div key={txn.id} className="txn-item-compact">
-                                        <div className="txn-icon">{txn.category?.icon || '💸'}</div>
+                                        <div className="txn-icon">{getCategoryEmoji(txn.category, txn.subcategory)}</div>
                                         <div className="txn-details">
                                             <span className="txn-desc">{txn.description}</span>
                                             <div className="txn-meta">
@@ -456,6 +503,11 @@ export default function DashboardDesktop() {
                     </div>
                 </div>
             )}
+
+            <GamificationHubDesktop
+                isOpen={showGamificationHub}
+                onClose={() => setShowGamificationHub(false)}
+            />
         </div>
     );
 }

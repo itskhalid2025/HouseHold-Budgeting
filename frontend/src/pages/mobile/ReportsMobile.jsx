@@ -23,6 +23,7 @@ import { getLatestReport, generateReport, getHousehold } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/currencyUtils';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 
 // Import standalone CSS
 import './ReportsMobile.css';
@@ -134,10 +135,13 @@ export default function ReportsMobile() {
 
       if (data.success) {
         const content = data.report.content;
-        setReport({
+        const newReport = {
           ...content.report,
           metadata: content.metadata
-        });
+        };
+        setReport(newReport);
+        // Cache it for offline access
+        localStorage.setItem(`cached_report_${type}`, JSON.stringify(newReport));
       } else {
         setError(data.error || 'Failed to generate report');
       }
@@ -153,21 +157,33 @@ export default function ReportsMobile() {
   // --- Logic: Fetch Report (Preserved) ---
   const fetchReport = async (type = 'weekly') => {
     if (type === 'custom') return;
-    setLoading(true);
+
+    // Try loading from cache first for immediate UI
+    const cached = localStorage.getItem(`cached_report_${type}`);
+    if (cached) {
+      setReport(JSON.parse(cached));
+      setLoading(false);
+    } else {
+      setLoading(true);
+    }
+
     setError('');
     try {
       const data = await getLatestReport(type);
       if (data.success) {
         const content = data.report.content;
-        setReport({
+        const newReport = {
           ...content.report,
           metadata: content.metadata
-        });
+        };
+        setReport(newReport);
+        localStorage.setItem(`cached_report_${type}`, JSON.stringify(newReport));
       } else {
         if (data.message && data.message.includes('No reports found')) {
           handleGenerateReport(type);
         } else {
-          setReport(null);
+          // If we have cached data, don't clear it on failure
+          if (!cached) setReport(null);
         }
       }
     } catch (err) {
@@ -175,7 +191,7 @@ export default function ReportsMobile() {
       if (err.message && err.message.includes('404')) {
         handleGenerateReport(type);
       } else {
-        setError('Failed to load reports. Please try again.');
+        if (!cached) setError('Failed to load reports. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -235,13 +251,36 @@ export default function ReportsMobile() {
               <button
                 onClick={() => handleGenerateReport(activeTab)}
                 disabled={generating}
-                className="neo-btn-icon primary"
+                className="neo-refresh-btn"
                 title="Refresh Data"
                 aria-label="Refresh Analysis"
               >
-                <RefreshCw className={generating ? 'spin' : ''} size={20} />
+                <svg
+                  className={generating ? 'spin' : ''}
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="1.8" />
+                  <path
+                    d="M13.5 8a4.5 4.5 0 1 0 4 6"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M17.5 8v3h-3"
+                    stroke="currentColor"
+                    strokeWidth="1.7"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </button>
             )}
+
           </div>
         </div>
         <p className="page-subtitle">AI-Powered Financial Insights</p>
@@ -363,7 +402,7 @@ export default function ReportsMobile() {
             className="neo-btn-primary full-width"
           >
             <RefreshCw size={18} className={generating ? 'spin' : ''} style={{ marginRight: '8px' }} />
-            {generating ? 'Processing...' : 'Generate Report'}
+            {generating           ? 'Processing...' : 'Generate Report'}
           </button>
         </section>
       )}
@@ -516,9 +555,13 @@ export default function ReportsMobile() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={pieView === 'all'
+                      data={(pieView === 'all'
                         ? report.charts.find(c => c.title === 'Top Categories')?.data
-                        : (report.byUser?.find(u => u.id === pieView)?.categories || [])}
+                        : (report.byUser?.find(u => u.id === pieView)?.categories || [])
+                      ).map(item => ({
+                        ...item,
+                        name: `${getCategoryEmoji(item.name)} ${item.name}`
+                      }))}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
@@ -531,7 +574,7 @@ export default function ReportsMobile() {
                       {(pieView === 'all'
                         ? report.charts.find(c => c.title === 'Top Categories')?.data
                         : (report.byUser?.find(u => u.id === pieView)?.categories || [])
-                      )?.map(
+                      ).map(
                         (entry, index) => (
                           <Cell key={`cell-${index}`} fill={entry.color} />
                         )
@@ -671,10 +714,11 @@ export default function ReportsMobile() {
           </section>
 
           <footer>"{report.encouragement}"</footer>
-        </div>
-      )}
+        </div >
+      )
+      }
 
       <ChatbotButton />
-    </main>
+    </main >
   );
 }

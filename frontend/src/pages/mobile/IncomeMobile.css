@@ -111,9 +111,15 @@
     .inc-meta {
         display: flex;
         align-items: center;
+        flex-wrap: wrap;
         gap: 6px;
-        font-size: 12px;
+        font-size: 11px;
         color: var(--text-secondary);
+    }
+
+    .inc-date {
+        font-weight: 700;
+        color: var(--text-primary);
     }
 
     .inc-amount-col {

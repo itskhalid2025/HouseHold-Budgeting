@@ -31,6 +31,8 @@ const getUserGamificationStatus = async (req, res) => {
                 rankProgress: true,
                 weeklyActivityLog: true,
                 city: true,
+                state: true,
+                country: true,
                 achievements: true
             }
         });

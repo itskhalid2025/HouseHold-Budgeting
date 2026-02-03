@@ -9,7 +9,9 @@ import {
 } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
+import { formatDate } from '../../utils/formatting.js';
 import { formatCurrency } from '../../utils/currencyUtils';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 import MobileCard from '../../components/mobile/MobileCard';
 import MobileModal from '../../components/mobile/MobileModal';
 import MobileButton from '../../components/mobile/MobileButton';
@@ -199,7 +201,7 @@ export default function IncomeMobile() {
                         <div key={inc.id} className="mobile-income-card" onClick={() => openEditModal(inc)}>
                             <div className="inc-main">
                                 <div className="inc-icon-wrapper">
-                                    <span className="inc-emoji">💰</span>
+                                    <span className="inc-emoji">{getCategoryEmoji(inc.type, inc.source)}</span>
                                 </div>
                                 <div className="inc-info">
                                     <h3>{inc.source}</h3>
@@ -207,6 +209,8 @@ export default function IncomeMobile() {
                                         <span className={`inc-type type-${inc.type?.toLowerCase()}`}>{inc.type}</span>
                                         <span className="bullet">•</span>
                                         <span className="inc-freq">{inc.frequency?.toLowerCase().replace('_', ' ')}</span>
+                                        <span className="bullet">•</span>
+                                        <span className="inc-date">{formatDate(inc.startDate)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -277,9 +281,9 @@ export default function IncomeMobile() {
                         <div className="form-col">
                             <label>Type</label>
                             <select name="type" className="mobile-native-select" value={formData.type} onChange={handleInputChange}>
-                                <option value="PRIMARY">Primary</option>
-                                <option value="VARIABLE">Variable</option>
-                                <option value="PASSIVE">Passive</option>
+                                <option value="PRIMARY">💼 Primary</option>
+                                <option value="VARIABLE">🎨 Variable</option>
+                                <option value="PASSIVE">📈 Passive</option>
                             </select>
                         </div>
                     </div>
@@ -331,9 +335,9 @@ export default function IncomeMobile() {
                             className="mobile-native-select"
                         >
                             <option value="">All Types</option>
-                            <option value="PRIMARY">Primary</option>
-                            <option value="VARIABLE">Variable</option>
-                            <option value="PASSIVE">Passive</option>
+                            <option value="PRIMARY">💼 Primary</option>
+                            <option value="VARIABLE">🎨 Variable</option>
+                            <option value="PASSIVE">📈 Passive</option>
                         </select>
                     </div>
                     <div className="filter-group">

@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
 import { formatCurrency } from '../../utils/currencyUtils';
 import { formatDate } from '../../utils/formatting';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 import TrendLineChart from '../../components/charts/TrendLineChart';
 import { HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -171,7 +172,7 @@ export default function DashboardMobile() {
                         recentTransactions.map(txn => (
                             <div key={txn.id} className="mobile-txn-item">
                                 <div className="txn-icon-circle">
-                                    {txn.category?.icon || '💸'}
+                                    {getCategoryEmoji(txn.category, txn.subcategory)}
                                 </div>
                                 <div className="txn-info">
                                     <p className="txn-desc">{txn.description}</p>

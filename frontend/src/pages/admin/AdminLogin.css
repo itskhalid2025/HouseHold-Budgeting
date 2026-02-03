@@ -112,6 +112,13 @@
     font-weight: 500;
 }
 
+.password-input-wrapper {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+}
+
 .neon-input {
     width: 100%;
     padding: 1rem;

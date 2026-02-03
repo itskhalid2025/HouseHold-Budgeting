@@ -184,14 +184,6 @@
     color: #e2e8f0;
 }
 
-.section-header-line::before {
-    content: "";
-    width: 80%;
-    height: 1px;
-    background: rgba(255, 255, 255, 0.2);
-    position: absolute;
-    top: 50%;
-}
 
 /* =========================== */
 /* BADGE JOURNEY */
@@ -270,13 +262,31 @@
     box-shadow: 0 0 8px #facc15;
 }
 
+.h-node-label-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
 .h-node-label {
     font-size: 0.65rem;
     color: #64748b;
+    font-weight: bold;
+}
+
+.h-node-xp {
+    font-size: 0.55rem;
+    color: #475569;
+    font-weight: bold;
 }
 
 .h-node.passed .h-node-label {
     color: #facc15;
+}
+
+.h-node.passed .h-node-xp {
+    color: #94a3b8;
 }
 
 /* =========================== */

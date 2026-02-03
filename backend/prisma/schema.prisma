@@ -24,39 +24,34 @@ model User {
   phoneVerified           Boolean       @default(false) @map("phone_verified")
   resetToken              String?       @map("reset_token")
   resetTokenExpiry        DateTime?     @map("reset_token_expiry")
-  verificationToken       String?       @map("verification_token")
-  verificationTokenExpiry DateTime?     @map("verification_token_expiry")
   createdAt               DateTime      @default(now()) @map("created_at")
   updatedAt               DateTime      @updatedAt @map("updated_at")
-  isAiRestricted          Boolean       @default(false) @map("is_ai_restricted")
+  verificationToken       String?       @map("verification_token")
+  verificationTokenExpiry DateTime?     @map("verification_token_expiry")
   aiRequestCount          Int           @default(0) @map("ai_request_count")
   aiTokenCount            Int           @default(0) @map("ai_token_count")
+  isAiRestricted          Boolean       @default(false) @map("is_ai_restricted")
+  aiSettings              Json?         @map("ai_settings")
   country                 String?
   lastIp                  String?       @map("last_ip")
-  aiSettings              Json?         @map("ai_settings") // { chat: {limit: 50, enabled: true}, ... }
-  
-  // Gamification Fields
-  currentStreak           Int           @default(0) @map("current_streak")
-  longestStreak           Int           @default(0) @map("longest_streak")
-  totalPoints             Int           @default(0) @map("total_points")
-  lastLogDate             DateTime?     @map("last_log_date")
-  rankTier                String        @default("NOVICE") @map("rank_tier")
-  rankProgress            Int           @default(0) @map("rank_progress")
-  weeklyActivityLog       Json          @default("[]") @map("weekly_activity_log")
-  
-  // Locality
   city                    String?
+  currentStreak           Int           @default(0) @map("current_streak")
+  lastLogDate             DateTime?     @map("last_log_date")
+  longestStreak           Int           @default(0) @map("longest_streak")
+  rankProgress            Int           @default(0) @map("rank_progress")
+  rankTier                String        @default("NOVICE") @map("rank_tier")
   state                   String?
-  
-  aiLogs                  AiUsageLog[]
+  totalPoints             Int           @default(0) @map("total_points")
+  weeklyActivityLog       Json          @default("[]") @map("weekly_activity_log")
   achievements            Achievement[]
+  aiLogs                  AiUsageLog[]
+  feedback                Feedback[]
   goals                   Goal[]
   adminHouseholds         Household[]   @relation("HouseholdAdmin")
   incomes                 Income[]
   sentInvitations         Invitation[]
   loans                   Loan[]
   transactions            Transaction[]
-  feedback                Feedback[]
   household               Household?    @relation(fields: [householdId], references: [id])
 
   @@map("users")
@@ -65,7 +60,7 @@ model User {
 model Achievement {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  type      String   // STREAK_30, MASTER_RANK, etc.
+  type      String
   createdAt DateTime @default(now()) @map("created_at")
   user      User     @relation(fields: [userId], references: [id])
 
@@ -81,13 +76,13 @@ model Household {
   lastModifiedAt    DateTime           @default(now()) @map("last_modified_at")
   createdAt         DateTime           @default(now()) @map("created_at")
   currency          String             @default("USD")
-  isAiRestricted    Boolean            @default(false) @map("is_ai_restricted")
   aiRequestCount    Int                @default(0) @map("ai_request_count")
-  aiSettings        Json?              @map("ai_settings")
+  isAiRestricted    Boolean            @default(false) @map("is_ai_restricted")
   country           String?
+  aiSettings        Json?              @map("ai_settings")
+  aiLogs            AiUsageLog[]
   customCategories  CustomCategory[]
   goals             Goal[]
-  aiLogs            AiUsageLog[]
   admin             User               @relation("HouseholdAdmin", fields: [adminId], references: [id])
   incomes           Income[]
   invitations       Invitation[]
@@ -119,11 +114,11 @@ model Transaction {
   deletedAt     DateTime?       @map("deleted_at")
   createdAt     DateTime        @default(now()) @map("created_at")
   updatedAt     DateTime        @updatedAt @map("updated_at")
+  goalId        String?         @map("goal_id")
   splits        SplitExpense[]
+  goal          Goal?           @relation(fields: [goalId], references: [id])
   household     Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
   user          User            @relation(fields: [userId], references: [id])
-  goalId        String?         @map("goal_id")
-  goal          Goal?           @relation(fields: [goalId], references: [id])
 
   @@index([householdId, date])
   @@index([category, type])
@@ -172,18 +167,18 @@ model Invitation {
 }
 
 model Goal {
-  id            String    @id @default(uuid())
-  householdId   String    @map("household_id")
+  id            String        @id @default(uuid())
+  householdId   String        @map("household_id")
   name          String
   type          GoalType
-  targetAmount  Decimal?  @map("target_amount") @db.Decimal(10, 2)
-  currentAmount Decimal   @default(0) @map("current_amount") @db.Decimal(10, 2)
-  deadline      DateTime? @db.Date
-  isActive      Boolean   @default(true) @map("is_active")
-  createdAt     DateTime  @default(now()) @map("created_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
-  createdById   String?   @map("created_by_id")
-  createdBy     User?     @relation(fields: [createdById], references: [id])
+  targetAmount  Decimal?      @map("target_amount") @db.Decimal(10, 2)
+  currentAmount Decimal       @default(0) @map("current_amount") @db.Decimal(10, 2)
+  deadline      DateTime?     @db.Date
+  isActive      Boolean       @default(true) @map("is_active")
+  createdAt     DateTime      @default(now()) @map("created_at")
+  updatedAt     DateTime      @updatedAt @map("updated_at")
+  createdById   String?       @map("created_by_id")
+  createdBy     User?         @relation(fields: [createdById], references: [id])
   household     Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
   transactions  Transaction[]
 
@@ -327,13 +322,13 @@ model PlatformAdmin {
 }
 
 model AdminInvitation {
-  id          String   @id @default(uuid())
-  email       String   @unique
-  token       String   @unique
-  invitedById String   @map("invited_by_id")
-  expiresAt   DateTime @map("expires_at")
-  usedAt      DateTime? @map("used_at")
-  createdAt   DateTime @default(now()) @map("created_at")
+  id          String        @id @default(uuid())
+  email       String        @unique
+  token       String        @unique
+  invitedById String        @map("invited_by_id")
+  expiresAt   DateTime      @map("expires_at")
+  usedAt      DateTime?     @map("used_at")
+  createdAt   DateTime      @default(now()) @map("created_at")
   invitedBy   PlatformAdmin @relation("AdminInvites", fields: [invitedById], references: [id])
 
   @@map("admin_invitations")
@@ -355,12 +350,12 @@ model AdminActivityLog {
 }
 
 model Announcement {
-  id        String   @id @default(uuid())
+  id        String    @id @default(uuid())
   title     String
   message   String
-  type      String   @default("info") // info, warning, critical
-  isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
+  type      String    @default("info")
+  isActive  Boolean   @default(true) @map("is_active")
+  createdAt DateTime  @default(now()) @map("created_at")
   expiresAt DateTime? @map("expires_at")
 
   @@map("announcements")
@@ -378,13 +373,41 @@ model SystemSetting {
 model Feedback {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
-  type      String   @default("general") // bug, feature, general
+  type      String   @default("general")
   message   String
-  status    String   @default("pending") // pending, reviewed, resolved
+  status    String   @default("pending")
   createdAt DateTime @default(now()) @map("created_at")
   user      User     @relation(fields: [userId], references: [id])
 
   @@map("feedback")
+}
+
+model AiUsageLog {
+  id          String     @id @default(uuid())
+  userId      String     @map("user_id")
+  householdId String?    @map("household_id")
+  type        AiLogType
+  tokens      Int        @default(0)
+  country     String?
+  createdAt   DateTime   @default(now()) @map("created_at")
+  household   Household? @relation(fields: [householdId], references: [id])
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+  @@index([householdId, type])
+  @@index([createdAt])
+  @@map("ai_usage_logs")
+}
+
+model DailyInsight {
+  id        String   @id @default(uuid())
+  date      DateTime @unique @db.Date
+  news      Json
+  quotes    Json
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("daily_insights")
 }
 
 enum Role {
@@ -456,32 +479,4 @@ enum AiLogType {
   CHAT
   SMART_ENTRY
   REPORT
-}
-
-model AiUsageLog {
-  id          String    @id @default(uuid())
-  userId      String    @map("user_id")
-  householdId String?   @map("household_id")
-  type        AiLogType
-  tokens      Int       @default(0)
-  country     String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  household   Household? @relation(fields: [householdId], references: [id])
-
-  @@index([userId, type])
-  @@index([householdId, type])
-  @@index([createdAt])
-  @@map("ai_usage_logs")
-}
-
-model DailyInsight {
-  id        String   @id @default(uuid())
-  date      DateTime @unique @db.Date // Use unique date for single insight per day
-  news      Json     // Array of 4 news items { headline, summary, link }
-  quotes    Json     // Array of 4 motivational tips/quotes
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("daily_insights")
 }

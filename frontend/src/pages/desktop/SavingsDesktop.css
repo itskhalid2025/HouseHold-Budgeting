@@ -271,7 +271,9 @@
         height: 100%;
         background: #10b981;
         border-radius: 4px;
-        transition: width 0.5s ease-out;
+        /* FORCE stop any animation */
+        transition: none !important;
+        animation: none !important
     }
 
     .savings-footer {

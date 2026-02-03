@@ -30,6 +30,7 @@ import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
 import { formatDate, getUserColor } from '../../utils/formatting';
 import { formatCurrency } from '../../utils/currencyUtils';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 import { useTheme } from '../../context/ThemeContext';
 import './TransactionsDesktop.css';
 
@@ -270,16 +271,23 @@ export default function TransactionsDesktop() {
                 />
                 <select name="type" value={filters.type} onChange={handleFilterChange} className="filter-select">
                     <option value="">All Types</option>
-                    <option value="NEED">Needs</option>
-                    <option value="WANT">Wants</option>
+                    <option value="NEED">Essential Needs (🍕🏠🚗)</option>
+                    <option value="WANT">Wants (🎭🛍️✈️)</option>
                 </select>
                 <select name="category" value={filters.category} onChange={handleFilterChange} className="filter-select">
                     <option value="">All Categories</option>
-                    <option value="Food">Food</option>
-                    <option value="Transport">Transport</option>
-                    <option value="Housing">Housing</option>
-                    <option value="Entertainment">Entertainment</option>
-                    {/* Add more categories dynamically if needed */}
+                    <option value="Food">🍕 Food</option>
+                    <option value="Transport">🚗 Transport</option>
+                    <option value="Housing">🏠 Housing</option>
+                    <option value="Entertainment">🎭 Entertainment</option>
+                    <option value="Healthcare">🏥 Healthcare</option>
+                    <option value="Childcare">Childcare</option>
+                    <option value="Debt">📉 Debt</option>
+                    <option value="Household Services">👨‍🍳 Household Services</option>
+                    <option value="Shopping">🛍️ Shopping</option>
+                    <option value="Travel">✈️ Travel</option>
+                    <option value="Health">🧘 Health</option>
+                    <option value="Gifts">🎁 Gifts</option>
                 </select>
                 <select name="userId" value={filters.userId || ''} onChange={handleFilterChange} className="filter-select">
                     <option value="">All Users</option>
@@ -349,7 +357,9 @@ export default function TransactionsDesktop() {
                                                 {formatDate(txn.date)}
                                             </div>
                                             <div className="txn-details">
-                                                <div className="txn-desc">{txn.description}</div>
+                                                <div className="txn-desc">
+                                                    {getCategoryEmoji(txn.category, txn.subcategory)} {txn.description}
+                                                </div>
                                                 <div className="txn-meta">
                                                     <span className="txn-category">{txn.category || 'Uncategorized'}</span>
                                                     {txn.user && (
@@ -483,8 +493,8 @@ export default function TransactionsDesktop() {
                                 <div className="form-group">
                                     <label>Type</label>
                                     <select name="type" value={formData.type} onChange={handleInputChange}>
-                                        <option value="NEED">Need (Essential)</option>
-                                        <option value="WANT">Want (Discretionary)</option>
+                                        <option value="NEED">🍕 Need (Essential)</option>
+                                        <option value="WANT">🎭 Want (Discretionary)</option>
                                     </select>
                                 </div>
                                 <div className="form-group">

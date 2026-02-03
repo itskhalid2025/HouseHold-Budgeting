@@ -1,130 +1,132 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { toast } from 'react-hot-toast';
+import * as api from '../api/api';
+import { useSync } from './SyncContext';
+import toast from 'react-hot-toast';
 
 const BudgetContext = createContext();
 
-export const useBudget = () => {
-    const context = useContext(BudgetContext);
-    if (!context) {
-        throw new Error('useBudget must be used within a BudgetProvider');
-    }
-    return context;
-};
+export const useBudget = () => useContext(BudgetContext);
 
 export const BudgetProvider = ({ children }) => {
-    // Initial state from localStorage for immediate offline availability
+    const { isOnline, queueRequest } = useSync();
     const [transactions, setTransactions] = useState(() => {
-        const saved = localStorage.getItem('budget_transactions');
-        return saved ? JSON.parse(saved) : [];
+        try {
+            const saved = localStorage.getItem('transactions');
+            return (saved ? JSON.parse(saved) : null) || [];
+        } catch (e) { return []; }
     });
-    const [incomes, setIncomes] = useState(() => {
-        const saved = localStorage.getItem('budget_incomes');
-        return saved ? JSON.parse(saved) : [];
+    const [income, setIncome] = useState(() => {
+        try {
+            const saved = localStorage.getItem('income');
+            return (saved ? JSON.parse(saved) : null) || [];
+        } catch (e) { return []; }
     });
     const [goals, setGoals] = useState(() => {
-        const saved = localStorage.getItem('budget_goals');
-        return saved ? JSON.parse(saved) : [];
+        try {
+            const saved = localStorage.getItem('goals');
+            return (saved ? JSON.parse(saved) : null) || [];
+        } catch (e) { return []; }
     });
-
-    const [loading, setLoading] = useState(false);
     const [stats, setStats] = useState(() => {
-        const saved = localStorage.getItem('budget_stats');
-        return saved ? JSON.parse(saved) : { totalIncome: 0, totalExpenses: 0, balance: 0 };
+        try {
+            const saved = localStorage.getItem('budgetStats');
+            const parsed = saved ? JSON.parse(saved) : null;
+            return parsed || { totalExpenses: 0, totalIncome: 0 };
+        } catch (e) {
+            return { totalExpenses: 0, totalIncome: 0 };
+        }
     });
+    const [loading, setLoading] = useState(false);
 
-    // Optimistic Update Helpers (Moved up to avoid initialization errors)
-    const rollbackTransaction = useCallback((tempId) => {
-        setTransactions(prev => {
-            const transaction = prev.find(t => t.id === tempId);
-            if (transaction) {
-                setStats(prevStats => ({
-                    ...prevStats,
-                    totalExpenses: prevStats.totalExpenses - parseFloat(transaction.amount),
-                    balance: prevStats.balance + parseFloat(transaction.amount)
+    // Persist to localStorage whenever state changes
+    useEffect(() => localStorage.setItem('transactions', JSON.stringify(transactions)), [transactions]);
+    useEffect(() => localStorage.setItem('income', JSON.stringify(income)), [income]);
+    useEffect(() => localStorage.setItem('goals', JSON.stringify(goals)), [goals]);
+    useEffect(() => localStorage.setItem('budgetStats', JSON.stringify(stats)), [stats]);
+
+    const fetchData = useCallback(async () => {
+        if (!isOnline) return;
+        // Optional: don't set loading on poll
+        try {
+            const [tRes, summaryRes] = await Promise.all([
+                api.getTransactions({ page: 1, limit: 20 }),
+                api.getTransactionSummary()
+            ]);
+
+            if (tRes.transactions) setTransactions(tRes.transactions);
+            if (summaryRes.summary) {
+                setStats(prev => ({
+                    ...prev,
+                    totalExpenses: summaryRes.summary.totalSpent || 0
                 }));
             }
-            return prev.filter(t => t.id !== tempId);
-        });
-    }, []);
+        } catch (error) {
+            console.error('Failed to fetch data:', error);
+        }
+    }, [isOnline]);
 
-    const addOptimisticTransaction = useCallback((transaction) => {
-        const newTransaction = {
-            ...transaction,
-            id: `temp-${Date.now()}`,
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
+
+    // Optimistic Helpers for TransactionsMobile compatibility
+    const addOptimisticTransaction = (data) => {
+        const tempId = `temp-${Date.now()}`;
+        const optimistic = {
+            ...data,
+            id: tempId,
             isPending: true,
-            createdAt: new Date().toISOString()
+            date: data.date || new Date().toISOString()
         };
-        setTransactions(prev => [newTransaction, ...prev]);
-
-        // Update stats optimistically
-        setStats(prev => ({
-            ...prev,
-            totalExpenses: prev.totalExpenses + parseFloat(transaction.amount),
-            balance: prev.balance - parseFloat(transaction.amount)
-        }));
-
-        return newTransaction.id;
-    }, []);
-
-    const confirmTransaction = useCallback((tempId, realData) => {
-        setTransactions(prev => prev.map(t => t.id === tempId ? { ...realData, isPending: false } : t));
-    }, []);
-
-    // Persist data when it changes
-    useEffect(() => {
-        localStorage.setItem('budget_transactions', JSON.stringify(transactions));
-    }, [transactions]);
-
-    useEffect(() => {
-        localStorage.setItem('budget_incomes', JSON.stringify(incomes));
-    }, [incomes]);
-
-    useEffect(() => {
-        localStorage.setItem('budget_goals', JSON.stringify(goals));
-    }, [goals]);
-
-    useEffect(() => {
-        localStorage.setItem('budget_stats', JSON.stringify(stats));
-    }, [stats]);
-
-    // Listener for Background Sync Events
-    useEffect(() => {
-        const handleSyncSuccess = (e) => {
-            const { tempId, realData } = e.detail;
-            confirmTransaction(tempId, realData);
-            toast.success('Sync complete!', { icon: '✅', id: `sync-${tempId}` });
-        };
-
-        const handleSyncFailure = (e) => {
-            const { tempId } = e.detail;
-            rollbackTransaction(tempId);
-            toast.error('Sync failed. Please check your data.', { icon: '❌', id: `sync-${tempId}` });
-        };
-
-        window.addEventListener('sync-success', handleSyncSuccess);
-        window.addEventListener('sync-failure', handleSyncFailure);
-
-        return () => {
-            window.removeEventListener('sync-success', handleSyncSuccess);
-            window.removeEventListener('sync-failure', handleSyncFailure);
-        };
-    }, [rollbackTransaction, confirmTransaction]);
-
-    const value = {
-        transactions,
-        setTransactions,
-        incomes,
-        setIncomes,
-        goals,
-        setGoals,
-        stats,
-        setStats,
-        loading,
-        setLoading,
-        addOptimisticTransaction,
-        confirmTransaction,
-        rollbackTransaction
+        setTransactions(prev => [optimistic, ...prev]);
+        return tempId;
     };
 
-    return <BudgetContext.Provider value={value}>{children}</BudgetContext.Provider>;
+    const confirmTransaction = (tempId, realData) => {
+        setTransactions(prev => prev.map(t => t.id === tempId ? { ...realData, isPending: false } : t));
+    };
+
+    const rollbackTransaction = (tempId) => {
+        setTransactions(prev => prev.filter(t => t.id !== tempId));
+    };
+
+    // Unified actions
+    const addTransactionAction = async (data) => {
+        const tempId = addOptimisticTransaction(data);
+        if (!isOnline) {
+            queueRequest({
+                type: 'ADD_TRANSACTION',
+                data,
+                tempId,
+                endpoint: '/api/transactions',
+                method: 'POST'
+            });
+            toast.success('Saved locally');
+            return tempId;
+        }
+        try {
+            const res = await api.addTransaction(data);
+            confirmTransaction(tempId, res.transaction || res);
+            return tempId;
+        } catch (error) {
+            rollbackTransaction(tempId);
+            toast.error('Failed to save');
+            throw error;
+        }
+    };
+
+    return (
+        <BudgetContext.Provider value={{
+            transactions, setTransactions,
+            income, setIncome,
+            goals, setGoals,
+            stats, setStats,
+            loading, setLoading,
+            fetchData, refresh: fetchData,
+            addOptimisticTransaction, confirmTransaction, rollbackTransaction,
+            addTransaction: addTransactionAction
+        }}>
+            {children}
+        </BudgetContext.Provider>
+    );
 };

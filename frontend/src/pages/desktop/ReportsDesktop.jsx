@@ -25,6 +25,7 @@ import { getLatestReport, generateReport, getHousehold } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { formatCurrency } from '../../utils/currencyUtils';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 import './ReportsDesktop.css';
 
 export default function Reports() {
@@ -503,9 +504,13 @@ export default function Reports() {
                                 <ResponsiveContainer width="100%" height="100%">
                                     <PieChart>
                                         <Pie
-                                            data={pieView === 'all'
+                                            data={(pieView === 'all'
                                                 ? report.charts.find(c => c.title === 'Top Categories')?.data
-                                                : (report.byUser?.find(u => u.id === pieView)?.categories || [])}
+                                                : (report.byUser?.find(u => u.id === pieView)?.categories || [])
+                                            ).map(item => ({
+                                                ...item,
+                                                name: `${getCategoryEmoji(item.name)} ${item.name}`
+                                            }))}
                                             dataKey="value"
                                             nameKey="name"
                                             cx="50%"
@@ -517,7 +522,7 @@ export default function Reports() {
                                             {(pieView === 'all'
                                                 ? report.charts.find(c => c.title === 'Top Categories')?.data
                                                 : (report.byUser?.find(u => u.id === pieView)?.categories || [])
-                                            )?.map(
+                                            ).map(
                                                 (entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={entry.color} />
                                                 )

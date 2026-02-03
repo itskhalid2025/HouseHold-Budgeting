@@ -33,6 +33,7 @@ import usePolling from '../../hooks/usePolling';
 import './SavingsDesktop.css';
 
 import { formatCurrency } from '../../utils/currencyUtils';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
 
 export default function Savings() {
     const { user, currency } = useAuth();
@@ -259,10 +260,10 @@ export default function Savings() {
                     className="filter-select"
                 >
                     <option value="">All Types</option>
-                    <option value="EMERGENCY_FUND">Emergency Fund</option>
-                    <option value="SINKING_FUND">Sinking Fund</option>
-                    <option value="DEBT_PAYOFF">Debt Payoff</option>
-                    <option value="LONG_TERM">Long Term</option>
+                    <option value="EMERGENCY_FUND">🚨 Emergency Fund</option>
+                    <option value="SINKING_FUND">🚢 Sinking Fund</option>
+                    <option value="DEBT_PAYOFF">📉 Debt Payoff</option>
+                    <option value="LONG_TERM">🏦 Long Term</option>
                 </select>
 
                 <select
@@ -326,7 +327,7 @@ export default function Savings() {
                                             </div>
                                         )}
                                     </div>
-                                    <h3>{goal.name}</h3>
+                                    <h3>{getCategoryEmoji(goal.type, goal.name)} {goal.name}</h3>
 
                                     {isExceeded && (
                                         <div className="excess-message">
@@ -473,10 +474,10 @@ export default function Savings() {
                                     <div className="form-group">
                                         <label>Type</label>
                                         <select name="type" value={formData.type} onChange={handleInputChange}>
-                                            <option value="EMERGENCY_FUND">Emergency Fund</option>
-                                            <option value="SINKING_FUND">Sinking Fund</option>
-                                            <option value="DEBT_PAYOFF">Debt Payoff</option>
-                                            <option value="LONG_TERM">Long Term</option>
+                                            <option value="EMERGENCY_FUND">🚨 Emergency Fund</option>
+                                            <option value="SINKING_FUND">🚢 Sinking Fund</option>
+                                            <option value="DEBT_PAYOFF">📉 Debt Payoff</option>
+                                            <option value="LONG_TERM">🏦 Long Term</option>
                                         </select>
                                     </div>
                                     <div className="form-group">

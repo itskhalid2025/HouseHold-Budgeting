@@ -248,7 +248,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                                 <Activity className="cyber-pulse-icon" size={24} />
                                 <div>
                                     <h3 className="status-text">CONNECTION PENDING</h3>
-                                    <p className="status-detail">Awaiting handshake from <strong>{myPendingRequest.householdName}</strong></p>
+                                    <p className="status-detail">Awaiting Acceptance from <strong>{myPendingRequest.householdName}</strong></p>
                                 </div>
                             </div>
                         </article>
@@ -259,7 +259,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                                 className="cyber-btn primary-neon"
                                 aria-label="Create New Household"
                             >
-                                <span className="btn-content"><Plus size={18} /> INITIALIZE NODE</span>
+                                <span className="btn-content"><Plus size={18} /> NEW HOUSEHOLD</span>
                                 <div className="btn-glitch"></div>
                             </button>
                             <button
@@ -267,7 +267,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                                 className="cyber-btn secondary-glass"
                                 aria-label="Join with Code"
                             >
-                                <span className="btn-content"><UserPlus size={18} /> ENTER ACCESS CODE</span>
+                                <span className="btn-content"><UserPlus size={18} /> JOIN HOUSEHOLD</span>
                             </button>
                         </div>
                     )}
@@ -276,7 +276,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                 {/* Create Modal */}
                 {renderCyberModal('create', 'SYSTEM CONFIG', (
                     <div className="cyber-form-group">
-                        <label className="cyber-label">NODE DESIGNATION</label>
+                        <label className="cyber-label">HOUSE HOLD NAME</label>
                         <div className="cyber-input-wrapper">
                             <input
                                 type="text"
@@ -297,7 +297,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                 {/* Join Modal */}
                 {renderCyberModal('join', 'SECURITY GATEWAY', (
                     <div className="cyber-form-group">
-                        <label className="cyber-label">ENCRYPTION KEY</label>
+                        <label className="cyber-label">HOUSEHOLD CODE</label>
                         <div className="cyber-input-wrapper">
                             <input
                                 type="text"
@@ -309,7 +309,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                             <div className="input-border-fx"></div>
                         </div>
                         <button onClick={handleJoin} disabled={!inviteCode} className="cyber-btn full-width mt-4">
-                            TRANSMIT REQUEST
+                            JOIN HOUSEHOLD
                         </button>
                     </div>
                 ))}
@@ -447,7 +447,7 @@ export default function HouseholdMobile() { // Default Export Compliance
 
             {renderCyberModal('approve', 'ACCESS LEVEL', (
                 <div className="cyber-content-stack">
-                    <p className="modal-info-text">Define clearance level for subject <strong>{selectedRequest?.requester?.firstName}</strong>.</p>
+                    <p className="modal-info-text">ASSIGN ROLE  <strong>{selectedRequest?.requester?.firstName}</strong>.</p>
                     <div className="role-selection-grid">
                         <button
                             className={`role-option ${assignRole === 'VIEWER' ? 'active' : ''}`}
@@ -465,7 +465,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                         >
                             <div className="role-icon">⚡</div>
                             <div className="role-text">
-                                <strong>OPERATOR</strong>
+                                <strong>EDITOR</strong>
                                 <span>Full Control</span>
                             </div>
                         </button>
@@ -518,7 +518,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                             CONFIRM REMOVE
                         </button>
                         <button onClick={() => setActiveModal(null)} className="cyber-btn secondary full-width text-white">
-                            ABORT
+                            CANCEL
                         </button>
                     </div>
                 </div>

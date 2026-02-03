@@ -20,6 +20,7 @@ import 'react-phone-input-2/lib/style.css';
 import './Auth.css';
 import Logo from '../assets/Logo.png';
 import { Country, State, City } from 'country-state-city';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -41,6 +42,7 @@ export default function Register() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
 
     const [countries] = useState(Country.getAllCountries());
     const [states, setStates] = useState([]);
@@ -208,27 +210,38 @@ export default function Register() {
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="password">Password</label>
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Min 8 chars, 1 upper, 1 number"
-                                required
-                            />
+                            <div className="password-input-wrapper">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Min 8 chars, 1 upper, 1 number"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle-btn"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
                         <div className="form-group">
                             <label htmlFor="confirmPassword">Confirm Password</label>
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                placeholder="••••••••"
-                                required
-                            />
+                            <div className="password-input-wrapper">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
                         </div>
                     </div>
 
