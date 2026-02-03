@@ -12,6 +12,10 @@ export const SyncProvider = ({ children }) => {
         return saved ? JSON.parse(saved) : [];
     });
 
+    const [deferredPrompt, setDeferredPrompt] = useState(null);
+    const [isInstallable, setIsInstallable] = useState(false);
+    const [isInstalled, setIsInstalled] = useState(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
+
     useEffect(() => {
         const handleOnline = () => {
             setIsOnline(true);
@@ -22,14 +26,42 @@ export const SyncProvider = ({ children }) => {
             toast.error('Working offline. Changes will be saved locally.');
         };
 
+        const handleBeforeInstallPrompt = (e) => {
+            e.preventDefault();
+            setDeferredPrompt(e);
+            setIsInstallable(true);
+        };
+
+        const handleAppInstalled = () => {
+            setDeferredPrompt(null);
+            setIsInstallable(false);
+            setIsInstalled(true);
+        };
+
         window.addEventListener('online', handleOnline);
         window.addEventListener('offline', handleOffline);
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        window.addEventListener('appinstalled', handleAppInstalled);
 
         return () => {
             window.removeEventListener('online', handleOnline);
             window.removeEventListener('offline', handleOffline);
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', handleAppInstalled);
         };
     }, []);
+
+    const installApp = async () => {
+        if (!deferredPrompt) return false;
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            setDeferredPrompt(null);
+            setIsInstallable(false);
+            return true;
+        }
+        return false;
+    };
 
     useEffect(() => {
         localStorage.setItem('syncQueue', JSON.stringify(syncQueue));
@@ -49,7 +81,16 @@ export const SyncProvider = ({ children }) => {
     };
 
     return (
-        <SyncContext.Provider value={{ isOnline, syncQueue, queueRequest, removeFromQueue, clearQueue }}>
+        <SyncContext.Provider value={{
+            isOnline,
+            syncQueue,
+            queueRequest,
+            removeFromQueue,
+            clearQueue,
+            isInstallable,
+            isInstalled,
+            installApp
+        }}>
             {children}
         </SyncContext.Provider>
     );

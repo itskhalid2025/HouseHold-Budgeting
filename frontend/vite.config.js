@@ -14,6 +14,9 @@ export default defineConfig({
         short_name: 'HH Budget',
         description: 'Smart Household Budgeting & Financial Insights',
         theme_color: '#6366f1',
+        background_color: '#ffffff',
+        display: 'standalone',
+        start_url: '/',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -36,6 +39,10 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         maximumFileSizeToCacheInBytes: 12000000
+      },
+      devOptions: {
+        enabled: true,
+        type: 'module'
       }
     })
   ],

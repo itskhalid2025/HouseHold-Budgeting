@@ -15,6 +15,7 @@ import { HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ChatbotButton from '../../components/mobile/ChatbotButton';
 import UserGuideMobile from '../../components/mobile/UserGuideMobile';
+import { useSync } from '../../context/SyncContext';
 
 // Mobile Components
 // Mobile Components
@@ -26,6 +27,7 @@ import './DashboardMobile.css';
 
 export default function DashboardMobile() {
     const { user, currency } = useAuth();
+    const { isInstalled } = useSync();
 
     // State
     const [showGuide, setShowGuide] = useState(false);
@@ -124,6 +126,7 @@ export default function DashboardMobile() {
                     </button>
                     <Link to="/settings" className="avatar-small">
                         {(user?.firstName?.[0] || 'U').toUpperCase()}
+                        {!isInstalled && <span className="notification-dot"></span>}
                     </Link>
                 </div>
             </header>

@@ -22,10 +22,12 @@ import { CURRENCIES, getCurrencySymbol } from '../../utils/currencyUtils';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { Country, State, City } from 'country-state-city';
+import { useSync } from '../../context/SyncContext';
 import './SettingsDesktop.css';
 
 export default function Settings() {
     const { user, logout, refreshHousehold, household, updateUser } = useAuth();
+    const { isInstallable, installApp } = useSync();
     const location = useLocation();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('profile');
@@ -335,6 +337,16 @@ export default function Settings() {
                                 </button>
                                 <p className="help-text">We'll send a link to {user?.email} to reset your password.</p>
                             </div>
+
+                            {isInstallable && (
+                                <div className="setting-group pwa-install-section" style={{ marginTop: '20px' }}>
+                                    <label>App Installation</label>
+                                    <button className="btn-primary" onClick={installApp}>
+                                        Install HouseHold Budgeting
+                                    </button>
+                                    <p className="help-text">Install as a desktop app for quick access and a better experience.</p>
+                                </div>
+                            )}
 
                             <button className="logout-btn-large" onClick={logout} style={{ marginTop: '2rem' }}>Sign Out</button>
                         </div>
