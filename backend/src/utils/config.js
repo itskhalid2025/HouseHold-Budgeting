@@ -25,7 +25,7 @@ const config = {
 
     // JWT
     jwt: {
-        secret: process.env.JWT_SECRET || 'default-secret-change-in-production',
+        secret: process.env.JWT_SECRET || 'default-secret.change-in-production-noone@canHack$$',
         expiresIn: process.env.JWT_EXPIRES_IN || '7d'
     },
 
@@ -50,7 +50,7 @@ const config = {
     // CORS
     cors: {
         origin: (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [])
-            .concat(['http://localhost:5173', 'http://localhost:5174', 'https://householdbudgeting.netlify.app', 'https://devserver-mobile-ui--householdbudgeting.netlify.app'])
+            .concat(['http://localhost:5173', 'http://localhost:4173', 'http://localhost:5174', 'https://householdbudgeting.netlify.app', 'https://devserver-mobile-ui--householdbudgeting.netlify.app'])
             .map(url => url.trim())
             .filter(Boolean)
     }

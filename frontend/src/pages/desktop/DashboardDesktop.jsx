@@ -341,7 +341,13 @@ export default function DashboardDesktop() {
             <div className="dashboard-grid-layout">
                 {/* --- LEFT COLUMN --- */}
                 <div className="left-column">
-                    {/* 1. Welcome Message */}
+                    {/* 1. Brand Header */}
+                    <div className="brand-header">
+                        <h2 className="brand-title">HouseHold Budgeting</h2>
+                        <span className="brand-subtitle">Smart Financial Management</span>
+                    </div>
+
+                    {/* 2. Welcome Message */}
                     <div className="welcome-card">
                         <h1>
                             Welcome back, <span className="highlight-name">{user?.firstName || 'User'}</span>! 👋

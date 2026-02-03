@@ -8,7 +8,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'screenshot-wide.png', 'screenshot-narrow.png'],
       manifest: {
         name: 'HouseHold Budgeting',
         short_name: 'HH Budget',
@@ -20,19 +20,34 @@ export default defineConfig({
         icons: [
           {
             src: 'pwa-192x192.png',
-            sizes: '192x192',
+            sizes: '192x192 1024x1024',
             type: 'image/png'
           },
           {
             src: 'pwa-512x512.png',
-            sizes: '512x512',
+            sizes: '512x512 1024x1024',
             type: 'image/png'
           },
           {
             src: 'pwa-512x512.png',
-            sizes: '512x512',
+            sizes: '512x512 1024x1024',
             type: 'image/png',
-            purpose: 'any maskable'
+            purpose: 'maskable'
+          }
+        ],
+        screenshots: [
+          {
+            src: 'screenshot-wide.png',
+            sizes: '1280x720',
+            type: 'image/png',
+            form_factor: 'wide',
+            label: 'HouseHold Budgeting Desktop Dashboard'
+          },
+          {
+            src: 'screenshot-narrow.png',
+            sizes: '360x640',
+            type: 'image/png',
+            label: 'HouseHold Budgeting Mobile View'
           }
         ]
       },
