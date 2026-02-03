@@ -136,7 +136,7 @@ function SpendingTab() {
         startDate: '',
         endDate: '',
         search: '',
-        userId: user?.id || ''
+        userId: ''
     });
     const [members, setMembers] = useState([]);
     const [showFilterModal, setShowFilterModal] = useState(false);
