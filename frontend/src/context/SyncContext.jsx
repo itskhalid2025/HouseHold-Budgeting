@@ -52,7 +52,14 @@ export const SyncProvider = ({ children }) => {
     }, []);
 
     const installApp = async () => {
-        if (!deferredPrompt) return false;
+        if (!deferredPrompt) {
+            if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+                toast.error('On iOS, tap the share icon and select "Add to Home Screen"');
+            } else {
+                toast.error('Use Chrome/Edge browser and look for the install icon in the address bar.');
+            }
+            return false;
+        }
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
         if (outcome === 'accepted') {

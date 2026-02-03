@@ -27,7 +27,7 @@ import './SettingsDesktop.css';
 
 export default function Settings() {
     const { user, logout, refreshHousehold, household, updateUser } = useAuth();
-    const { isInstallable, installApp } = useSync();
+    const { isInstallable, installApp, isInstalled } = useSync();
     const location = useLocation();
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState('profile');
@@ -338,7 +338,7 @@ export default function Settings() {
                                 <p className="help-text">We'll send a link to {user?.email} to reset your password.</p>
                             </div>
 
-                            {isInstallable && (
+                            {!isInstalled && (
                                 <div className="setting-group pwa-install-section" style={{ marginTop: '20px' }}>
                                     <label>App Installation</label>
                                     <button className="btn-primary" onClick={installApp}>

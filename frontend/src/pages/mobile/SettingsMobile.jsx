@@ -38,7 +38,7 @@ import './SettingsMobile.css';
 export default function SettingsMobile() {
     // -- Auth Context & Global State --
     const { user, logout, household, refreshHousehold, updateUser } = useAuth();
-    const { isInstallable, installApp } = useSync();
+    const { isInstallable, installApp, isInstalled } = useSync();
 
     // -- Local UI State --
     const [subPage, setSubPage] = useState(null); // 'profile' | 'household' | 'notifications'
@@ -549,7 +549,7 @@ export default function SettingsMobile() {
                     </div>
                 </MobileCard>
 
-                {isInstallable && (
+                {!isInstalled && (
                     <MobileCard
                         className="menu-card vibrant-card-interactive install-card"
                         onClick={installApp}
