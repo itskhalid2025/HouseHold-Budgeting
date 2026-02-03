@@ -59,6 +59,13 @@ export default function Income() {
 
     const [members, setMembers] = useState([]);
 
+    // Filter Logic
+    const [filters, setFilters] = useState({
+        search: '',
+        type: '',
+        userId: ''
+    });
+
     useEffect(() => {
         fetchData();
         // Load members
@@ -67,7 +74,7 @@ export default function Income() {
                 setMembers(data.members);
             }
         }).catch(err => console.error('Failed to load members:', err));
-    }, []);
+    }, [filters.userId]);
 
     // Poll for updates every 10 seconds
     usePolling(fetchData, 10000);
@@ -79,12 +86,12 @@ export default function Income() {
 
             const [incomeList, stats] = await Promise.all([
                 getIncomes(),
-                getMonthlyIncomeTotal()
+                getMonthlyIncomeTotal({ userId: filters.userId })
             ]);
             setIncomes(incomeList.incomes);
             setMonthlyStats({
                 total: stats.monthlyTotal,
-                breakdown: stats.breakdown
+                breakdown: stats.items
             });
             setLoading(false);
         } catch (err) {
@@ -172,12 +179,6 @@ export default function Income() {
         });
     };
 
-    // Filter Logic
-    const [filters, setFilters] = useState({
-        search: '',
-        type: '',
-        userId: ''
-    });
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -212,8 +213,16 @@ export default function Income() {
             {/* Summary Stats */}
             <div className="income-summary-card">
                 <div className="summary-left">
-                    <h3>Total Monthly Income</h3>
-                    <p className="summary-subtitle">Estimated based on active sources</p>
+                    <h3>{filters.userId === user?.id ? 'My Monthly Income' : 'Total Monthly Income'}</h3>
+                    <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal earnings' : 'Estimated based on active sources'}</p>
+                </div>
+                <div className="summary-center">
+                    <button
+                        className={`mine-toggle-btn ${filters.userId === user?.id ? 'active' : ''}`}
+                        onClick={() => handleFilterChange({ target: { name: 'userId', value: filters.userId === user?.id ? '' : user?.id } })}
+                    >
+                        {filters.userId === user?.id ? '👤 All Household' : '👤 Just Mine'}
+                    </button>
                 </div>
                 <div className="summary-right">
                     <span className="total-amount">{formatCurrency(monthlyStats.total, currency)}</span>

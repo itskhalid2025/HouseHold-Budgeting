@@ -239,6 +239,12 @@
         align-items: center;
         gap: 16px;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card-mini.clickable {
+        cursor: pointer;
     }
 
     [data-theme='light'] .stat-card-mini {
@@ -247,9 +253,34 @@
     }
 
     .stat-card-mini:hover {
-        transform: translateY(-2px);
+        transform: translateY(-4px);
         background: var(--bg-hover);
-        box-shadow: var(--shadow-md);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .stat-card-mini.clickable:hover .stat-hover-hint {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    .stat-hover-hint {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: rgba(99, 102, 241, 0.1);
+        color: #818cf8;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: center;
+        padding: 2px 0;
+        opacity: 0;
+        transform: translateY(100%);
+        transition: all 0.2s ease;
+        backdrop-filter: blur(4px);
     }
 
     .stat-icon {

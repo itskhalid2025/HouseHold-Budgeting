@@ -64,12 +64,17 @@ export default function Savings() {
     const [contributeUserId, setContributeUserId] = useState('');
     const [selectedGoalId, setSelectedGoalId] = useState(null);
 
+    // Filter Logic
+    const [filterType, setFilterType] = useState('');
+    const [filterStatus, setFilterStatus] = useState(''); // NEW: Status filter
+    const [filterCreator, setCreatorFilter] = useState(''); // Kept for API summary if needed, but UI dropdown removed
+
     useEffect(() => {
         fetchData();
         getMembers().then(data => {
             if (data.members) setMembers(data.members);
         }).catch(err => console.error('Failed to load members', err));
-    }, []);
+    }, [filterCreator]);
 
     usePolling(fetchData, 10000);
 
@@ -80,7 +85,7 @@ export default function Savings() {
             // Fetch Goals + Summary
             const [goalsList, stats] = await Promise.all([
                 getGoals(),
-                getGoalSummary()
+                getGoalSummary({ userId: filterCreator })
             ]);
 
             setGoals(goalsList.goals);
@@ -188,16 +193,22 @@ export default function Savings() {
         });
     };
 
-    // Filter Logic
-    const [filterType, setFilterType] = useState('');
-    const [filterCreator, setCreatorFilter] = useState('');
 
     const creators = [...new Set(goals.map(g => g.createdBy ? JSON.stringify({ id: g.createdBy.id, name: g.createdBy.firstName }) : null).filter(Boolean))].map(s => JSON.parse(s));
 
     const filteredGoals = goals.filter(goal => {
         const typeMatch = filterType ? goal.type === filterType : true;
-        const creatorMatch = filterCreator ? (goal.createdBy?.id === filterCreator) : true;
-        return typeMatch && creatorMatch;
+
+        // Status logic
+        const current = parseFloat(goal.currentAmount || 0);
+        const target = parseFloat(goal.targetAmount || 0);
+        const isComplete = target > 0 && current >= target;
+
+        const statusMatch = filterStatus
+            ? (filterStatus === 'completed' ? isComplete : !isComplete)
+            : true;
+
+        return typeMatch && statusMatch;
     });
 
     const canAdd = user?.role === 'OWNER' || user?.role === 'EDITOR';
@@ -229,7 +240,9 @@ export default function Savings() {
             {/* Summary Stats */}
             <div className="savings-summary-card">
                 <div className="summary-item">
-                    <h3>Monthly Saved</h3>
+                    <div className="item-with-toggle">
+                        <h3>Monthly Saved</h3>
+                    </div>
                     <span className="summary-value highlight-green">
                         {summary.monthlySaved ? formatCurrency(summary.monthlySaved, currency) : formatCurrency(0, currency)}
                     </span>
@@ -267,14 +280,13 @@ export default function Savings() {
                 </select>
 
                 <select
-                    value={filterCreator}
-                    onChange={(e) => setCreatorFilter(e.target.value)}
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
                     className="filter-select"
                 >
-                    <option value="">All Creators</option>
-                    {creators.map(c => (
-                        <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
+                    <option value="">All Statuses</option>
+                    <option value="in_progress">🔄 In Progress</option>
+                    <option value="completed">✅ Completed</option>
                 </select>
             </div>
 

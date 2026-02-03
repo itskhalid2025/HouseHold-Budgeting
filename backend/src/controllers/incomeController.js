@@ -434,9 +434,26 @@ async function getMonthlyTotal(req, res) {
             }
         });
 
+        // Create a user breakdown map
+        const userBreakdownMap = {};
+
+        // Get all members to ensure they are represented in breakdown
+        const members = await prisma.user.findMany({
+            where: { householdId },
+            select: { id: true, firstName: true, lastName: true }
+        });
+
+        members.forEach(m => {
+            userBreakdownMap[m.id] = {
+                userId: m.id,
+                name: `${m.firstName} ${m.lastName}`.trim(),
+                total: 0
+            };
+        });
+
         // Calculate monthly equivalent for each income
         let monthlyTotal = 0;
-        const breakdown = [];
+        const items = [];
 
         for (const income of incomes) {
             let monthlyAmount = 0;
@@ -444,14 +461,13 @@ async function getMonthlyTotal(req, res) {
 
             switch (income.frequency) {
                 case 'ONE_TIME':
-                    // One-time doesn't contribute to monthly recurring
                     monthlyAmount = 0;
                     break;
                 case 'WEEKLY':
-                    monthlyAmount = amount * 4.33; // Average weeks per month
+                    monthlyAmount = amount * 4.33;
                     break;
                 case 'BIWEEKLY':
-                    monthlyAmount = amount * 2.17; // Average bi-weekly occurrences per month
+                    monthlyAmount = amount * 2.17;
                     break;
                 case 'MONTHLY':
                     monthlyAmount = amount;
@@ -466,9 +482,19 @@ async function getMonthlyTotal(req, res) {
                     monthlyAmount = amount;
             }
 
-            monthlyTotal += monthlyAmount;
-            breakdown.push({
+            // Only add to main total if it matches the userId filter (if any)
+            if (!req.query.userId || req.query.userId === income.userId) {
+                monthlyTotal += monthlyAmount;
+            }
+
+            // Add to user breakdown
+            if (userBreakdownMap[income.userId]) {
+                userBreakdownMap[income.userId].total += monthlyAmount;
+            }
+
+            items.push({
                 id: income.id,
+                userId: income.userId,
                 source: income.source,
                 type: income.type,
                 frequency: income.frequency,
@@ -477,11 +503,14 @@ async function getMonthlyTotal(req, res) {
             });
         }
 
+        const byUser = Object.values(userBreakdownMap).sort((a, b) => b.total - a.total);
+
         logSuccess('incomeController', 'getMonthlyTotal', { monthlyTotal, incomeCount: incomes.length });
         res.json({
             success: true,
             monthlyTotal: Math.round(monthlyTotal * 100) / 100,
-            breakdown,
+            items, // renamed from breakdown to avoid confusion with byUser
+            byUser,
             incomeCount: incomes.length
         });
 

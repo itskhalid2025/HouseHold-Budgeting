@@ -416,8 +416,10 @@ export async function getIncomes(active = true) {
     return handleResponse(response);
 }
 
-export async function getMonthlyIncomeTotal() {
-    const response = await trackedFetch(`${API_BASE_URL}/incomes/monthly-total?_t=${Date.now()}`, {
+export async function getMonthlyIncomeTotal(params = {}) {
+    const queryParams = new URLSearchParams(params);
+    queryParams.append('_t', Date.now());
+    const response = await trackedFetch(`${API_BASE_URL}/incomes/monthly-total?${queryParams.toString()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);
@@ -458,8 +460,10 @@ export async function getGoals(active = true) {
     return handleResponse(response);
 }
 
-export async function getGoalSummary() {
-    const response = await trackedFetch(`${API_BASE_URL}/goals/summary?_t=${Date.now()}`, {
+export async function getGoalSummary(params = {}) {
+    const queryParams = new URLSearchParams(params);
+    queryParams.append('_t', Date.now());
+    const response = await trackedFetch(`${API_BASE_URL}/goals/summary?${queryParams.toString()}`, {
         headers: authHeaders()
     });
     return handleResponse(response);

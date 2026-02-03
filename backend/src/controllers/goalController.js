@@ -333,26 +333,50 @@ export const getGoalSummary = async (req, res) => {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
-        const monthlySavingsAgg = await prisma.transaction.aggregate({
-            where: {
-                householdId,
-                type: 'SAVINGS',
-                deletedAt: null,
-                date: {
-                    gte: startOfMonth,
-                    lte: endOfMonth
-                }
-            },
-            _sum: { amount: true }
-        });
+        const monthlySavingsWhere = {
+            householdId,
+            type: 'SAVINGS',
+            deletedAt: null,
+            date: {
+                gte: startOfMonth,
+                lte: endOfMonth
+            }
+        };
 
-        const monthlySaved = monthlySavingsAgg._sum.amount || 0;
+        const [monthlyBreakdownRaw, members] = await Promise.all([
+            prisma.transaction.groupBy({
+                by: ['userId'],
+                where: monthlySavingsWhere,
+                _sum: { amount: true }
+            }),
+            prisma.user.findMany({
+                where: { householdId },
+                select: { id: true, firstName: true, lastName: true }
+            })
+        ]);
 
-        logSuccess('goalController', 'getGoalSummary', { totalSaved, totalTarget, monthlySaved });
+        // Map names to breakdown
+        const byUser = members.map(m => {
+            const stats = monthlyBreakdownRaw.find(u => u.userId === m.id);
+            return {
+                userId: m.id,
+                name: `${m.firstName} ${m.lastName}`.trim(),
+                total: stats?._sum.amount || 0
+            };
+        }).sort((a, b) => b.total - a.total);
+
+        // Calculate filtered monthly total if userId is provided
+        let monthlySavedTotal = byUser.reduce((sum, u) => sum + u.total, 0);
+        if (req.query.userId) {
+            monthlySavedTotal = byUser.find(u => u.userId === req.query.userId)?.total || 0;
+        }
+
+        logSuccess('goalController', 'getGoalSummary', { totalSaved, totalTarget, monthlySaved: monthlySavedTotal });
         res.json({
             totalSaved,
             totalTarget,
-            monthlySaved,
+            monthlySaved: monthlySavedTotal,
+            byUser,
             count: goals.length
         });
     } catch (error) {

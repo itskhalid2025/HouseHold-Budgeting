@@ -22,6 +22,7 @@ import { useSync } from '../../context/SyncContext';
 import MobileCard from '../../components/mobile/MobileCard';
 import RankBadge from '../../components/gamification/RankBadge';
 import GamificationHubMobile from '../../components/gamification/GamificationHubMobile';
+import BreakdownModal from '../../components/common/BreakdownModal';
 
 import './DashboardMobile.css';
 
@@ -36,7 +37,16 @@ export default function DashboardMobile() {
         income: 0,
         expenses: 0,
         savings: 0,
-        monthlySaved: 0
+        monthlySaved: 0,
+        incomeBreakdown: [],
+        expensesBreakdown: [],
+        savingsBreakdown: []
+    });
+    const [breakdownModal, setBreakdownModal] = useState({
+        isOpen: false,
+        title: '',
+        type: '',
+        data: []
     });
     const [trendData, setTrendData] = useState([]);
     const [recentTransactions, setRecentTransactions] = useState([]);
@@ -63,7 +73,10 @@ export default function DashboardMobile() {
                 income: totalIncome,
                 expenses: totalExpenses,
                 savings: savings,
-                monthlySaved: goalData.monthlySaved || 0
+                monthlySaved: goalData.monthlySaved || 0,
+                incomeBreakdown: incomeData.byUser || [],
+                expensesBreakdown: transactionSummary.summary?.byUser || [],
+                savingsBreakdown: goalData.byUser || []
             });
 
             setRecentTransactions(recentTxns.transactions || []);
@@ -135,17 +148,17 @@ export default function DashboardMobile() {
 
             {/* 2. Summary Cards (Horizontal Scroll) */}
             <div className="summary-scroll">
-                <div className="summary-card income">
+                <div className="summary-card income" onClick={() => setBreakdownModal({ isOpen: true, title: 'Income', type: 'income', data: stats.incomeBreakdown })}>
                     <span className="label">Income</span>
                     <span className="value">{formatCurrency(stats.income, currency)}</span>
                 </div>
-                <div className="summary-card expense">
+                <div className="summary-card expense" onClick={() => setBreakdownModal({ isOpen: true, title: 'Expenses', type: 'expenses', data: stats.expensesBreakdown })}>
                     <span className="label">Expenses</span>
                     <span className="value">{formatCurrency(stats.expenses, currency)}</span>
                 </div>
-                <div className="summary-card savings">
+                <div className="summary-card savings" onClick={() => setBreakdownModal({ isOpen: true, title: 'Savings', type: 'savings', data: stats.savingsBreakdown })}>
                     <span className="label">Savings</span>
-                    <span className="value">{formatCurrency(stats.savings, currency)}</span>
+                    <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
                 </div>
             </div>
 
@@ -194,6 +207,15 @@ export default function DashboardMobile() {
 
             {/* User Guide Modal (Mobile) */}
             <UserGuideMobile isOpen={showGuide} onClose={() => setShowGuide(false)} />
+
+            <BreakdownModal
+                isOpen={breakdownModal.isOpen}
+                onClose={() => setBreakdownModal({ ...breakdownModal, isOpen: false })}
+                title={breakdownModal.title}
+                type={breakdownModal.type}
+                data={breakdownModal.data}
+                currency={currency}
+            />
 
             <GamificationHubMobile
                 isOpen={showGamification}

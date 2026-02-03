@@ -183,7 +183,7 @@ function SpendingTab() {
 
             const [data, summary] = await Promise.all([
                 getTransactions({ page, limit: 20, ...filters }),
-                getTransactionSummary()
+                getTransactionSummary({ userId: filters.userId })
             ]);
 
             setTransactions(data.transactions);
@@ -306,8 +306,16 @@ function SpendingTab() {
 
                 {/* Expense Tracker Card */}
                 <div className="spending-summary-card">
-                    <div className="summary-label">Total Spent This Month</div>
-                    <div className="summary-amount">{formatCurrency(stats.totalExpenses, currency)}</div>
+                    <div className="summary-left">
+                        <div className="summary-label">{filters.userId === user?.id ? 'My Spending' : 'Household Spent'}</div>
+                        <div className="summary-amount">{formatCurrency(stats.totalExpenses, currency)}</div>
+                    </div>
+                    <button
+                        className={`mine-toggle-btn ${filters.userId === user?.id ? 'active' : ''}`}
+                        onClick={() => handleFilterChange({ target: { name: 'userId', value: filters.userId === user?.id ? '' : user?.id } })}
+                    >
+                        {filters.userId === user?.id ? 'All' : 'Mine'}
+                    </button>
                 </div>
 
                 <div className="search-bar">

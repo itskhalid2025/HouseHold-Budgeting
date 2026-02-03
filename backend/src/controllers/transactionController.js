@@ -550,16 +550,23 @@ async function getTransactionSummary(req, res) {
         const endDate = req.query.endDate ? new Date(req.query.endDate) : endOfMonth;
 
         // Aggregate transactions
-        logDB('aggregate', 'Transaction', { householdId, range: { startDate, endDate } });
-        const [totalSpent, byCategory, byType] = await Promise.all([
+        const filterWhere = {
+            householdId,
+            deletedAt: null,
+            date: { gte: startDate, lte: endDate },
+            type: { not: 'SAVINGS' }
+        };
+
+        // Apply userId filter if provided
+        if (req.query.userId) {
+            filterWhere.userId = req.query.userId;
+        }
+
+        logDB('aggregate', 'Transaction', { householdId, range: { startDate, endDate }, userId: req.query.userId });
+        const [totalSpent, byCategory, byType, byUserRaw, members] = await Promise.all([
             // Total spent
             prisma.transaction.aggregate({
-                where: {
-                    householdId,
-                    deletedAt: null,
-                    date: { gte: startDate, lte: endDate },
-                    type: { not: 'SAVINGS' } // Exclude savings
-                },
+                where: filterWhere,
                 _sum: { amount: true },
                 _count: true
             }),
@@ -567,12 +574,7 @@ async function getTransactionSummary(req, res) {
             // By category
             prisma.transaction.groupBy({
                 by: ['category'],
-                where: {
-                    householdId,
-                    deletedAt: null,
-                    date: { gte: startDate, lte: endDate },
-                    type: { not: 'SAVINGS' } // Exclude savings
-                },
+                where: filterWhere,
                 _sum: { amount: true },
                 _count: true
             }),
@@ -580,16 +582,39 @@ async function getTransactionSummary(req, res) {
             // By type (NEED/WANT)
             prisma.transaction.groupBy({
                 by: ['type'],
+                where: filterWhere,
+                _sum: { amount: true },
+                _count: true
+            }),
+
+            // By User Breakdown (Always for the whole household)
+            prisma.transaction.groupBy({
+                by: ['userId'],
                 where: {
                     householdId,
                     deletedAt: null,
                     date: { gte: startDate, lte: endDate },
-                    type: { not: 'SAVINGS' } // Exclude savings
+                    type: { not: 'SAVINGS' }
                 },
-                _sum: { amount: true },
-                _count: true
+                _sum: { amount: true }
+            }),
+
+            // Get member names
+            prisma.user.findMany({
+                where: { householdId },
+                select: { id: true, firstName: true, lastName: true }
             })
         ]);
+
+        // Map user names to the breakdown
+        const byUser = members.map(m => {
+            const userStats = byUserRaw.find(u => u.userId === m.id);
+            return {
+                userId: m.id,
+                name: `${m.firstName} ${m.lastName}`.trim(),
+                total: userStats?._sum.amount || 0
+            };
+        }).sort((a, b) => b.total - a.total);
 
         logSuccess('transactionController', 'getTransactionSummary', { totalSpent: totalSpent._sum.amount });
         res.json({
@@ -607,7 +632,8 @@ async function getTransactionSummary(req, res) {
                     type: t.type,
                     total: t._sum.amount,
                     count: t._count
-                }))
+                })),
+                byUser: byUser
             }
         });
 

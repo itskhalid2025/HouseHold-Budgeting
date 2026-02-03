@@ -424,24 +424,51 @@
         border-radius: 16px;
         padding: 20px;
         margin-bottom: 20px;
-        text-align: center;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .summary-left {
+        text-align: left;
     }
 
     .summary-label {
         font-size: 14px;
         color: #94a3b8;
-        margin-bottom: 8px;
+        margin-bottom: 4px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         font-weight: 600;
     }
 
     .summary-amount {
-        font-size: 32px;
+        font-size: 28px;
         font-weight: 700;
         color: #fff;
         text-shadow: 0 2px 10px rgba(59, 130, 246, 0.3);
+    }
+
+    .mine-toggle-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #94a3b8;
+        padding: 8px 16px;
+        border-radius: 100px;
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+    }
+
+    .mine-toggle-btn.active {
+        background: #3b82f6;
+        color: #fff;
+        border-color: #3b82f6;
+        box-shadow: 0 0 15px rgba(59, 130, 246, 0.4);
     }
 
     /* Adjust search bar since filter button moved */

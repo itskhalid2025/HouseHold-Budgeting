@@ -76,6 +76,13 @@
         align-items: center;
     }
 
+    .val-with-toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 2px;
+    }
+
     .stat-col .val {
         font-weight: 700;
         font-size: 16px;
@@ -84,6 +91,28 @@
     .stat-col .lbl {
         font-size: 11px;
         opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .mine-toggle-btn.small {
+        padding: 2px 8px;
+        font-size: 10px;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        border-radius: 6px;
+        font-weight: 700;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .mine-toggle-btn.small.active {
+        background: white;
+        color: #059669;
+        border-color: white;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
     }
 
     .goals-list {
@@ -271,19 +300,20 @@
     }
 
     /* FORCE FILTER ICON BUTTON TO KEEP ITS OWN COLORS */
-.filter-icon-btn,
-.filter-icon-btn svg {
-    all: unset !important;            /* Reset everything */
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    width: 30px !important;
-    height: 30px !important;
-    border-radius: 12px !important;
-    border: 1px solid rgba(0, 0, 0, 0.25) !important;
-    color: #d10808 !important;
-    stroke: #fdfdfd !important;
-}
+    .filter-icon-btn,
+    .filter-icon-btn svg {
+        all: unset !important;
+        /* Reset everything */
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        width: 30px !important;
+        height: 30px !important;
+        border-radius: 12px !important;
+        border: 1px solid rgba(0, 0, 0, 0.25) !important;
+        color: #d10808 !important;
+        stroke: #fdfdfd !important;
+    }
 
 
     /* --- Global Dropdown Overrides for Mobile --- */

@@ -75,7 +75,7 @@ export default function IncomeMobile() {
     // Initial Load
     useEffect(() => {
         fetchData();
-    }, []);
+    }, [filters.userId]);
 
     async function fetchData() {
         try {
@@ -83,12 +83,12 @@ export default function IncomeMobile() {
 
             const [incomeList, stats] = await Promise.all([
                 getIncomes(),
-                getMonthlyIncomeTotal()
+                getMonthlyIncomeTotal({ userId: filters.userId })
             ]);
             setIncomes(incomeList.incomes);
             setMonthlyStats({
                 total: stats.monthlyTotal,
-                breakdown: stats.breakdown
+                breakdown: stats.items
             });
             setLoading(false);
         } catch (err) {
@@ -181,8 +181,16 @@ export default function IncomeMobile() {
                     </button>
                 </div>
                 <div className="total-badge">
-                    <span>Total Monthly:</span>
-                    <strong>{formatCurrency(monthlyStats.total, currency)}</strong>
+                    <div className="summary-left">
+                        <span>{filters.userId === user?.id ? 'My Monthly:' : 'Household Monthly:'}</span>
+                        <strong>{formatCurrency(monthlyStats.total, currency)}</strong>
+                    </div>
+                    <button
+                        className={`mine-toggle-btn ${filters.userId === user?.id ? 'active' : ''}`}
+                        onClick={() => setFilters({ ...filters, userId: filters.userId === user?.id ? '' : user?.id })}
+                    >
+                        {filters.userId === user?.id ? 'All' : 'Mine'}
+                    </button>
                 </div>
             </header>
 

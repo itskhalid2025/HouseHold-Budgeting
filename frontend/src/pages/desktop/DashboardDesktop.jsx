@@ -50,6 +50,7 @@ import { formatDate, getUserColor } from '../../utils/formatting';
 import { getCategoryEmoji } from '../../utils/categoryIcons';
 import { triggerConfetti } from '../../utils/confetti';
 import GamificationHubDesktop from '../../components/gamification/GamificationHubDesktop';
+import BreakdownModal from '../../components/common/BreakdownModal';
 import './DashboardDesktop.css';
 
 // --- MOCK DATA FOR CARDS ---
@@ -90,7 +91,16 @@ export default function DashboardDesktop() {
         expenses: 0,
         savings: 0,
         totalSaved: 0,
-        monthlySaved: 0
+        monthlySaved: 0,
+        incomeBreakdown: [],
+        expensesBreakdown: [],
+        savingsBreakdown: []
+    });
+    const [breakdownModal, setBreakdownModal] = useState({
+        isOpen: false,
+        title: '',
+        type: '',
+        data: []
     });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -162,7 +172,10 @@ export default function DashboardDesktop() {
                 expenses: totalExpenses,
                 savings: savings,
                 totalSaved: totalSaved,
-                monthlySaved: monthlySaved
+                monthlySaved: monthlySaved,
+                incomeBreakdown: incomeData.byUser || [],
+                expensesBreakdown: transactionSummary.summary?.byUser || [],
+                savingsBreakdown: goalData.byUser || []
             });
 
             setRecentTransactions(recentTxns.transactions || []);
@@ -357,26 +370,29 @@ export default function DashboardDesktop() {
 
                     {/* 2. Stat Cards */}
                     <div className="stats-row">
-                        <div className="stat-card-mini">
+                        <div className="stat-card-mini clickable" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Income', type: 'income', data: stats.incomeBreakdown })}>
                             <div className="stat-icon income">💰</div>
                             <div className="stat-info">
                                 <span className="label">Income</span>
                                 <span className="value">{formatCurrency(stats.income, currency)}</span>
                             </div>
+                            <div className="stat-hover-hint">View Breakdown</div>
                         </div>
-                        <div className="stat-card-mini">
+                        <div className="stat-card-mini clickable" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Expenses', type: 'expenses', data: stats.expensesBreakdown })}>
                             <div className="stat-icon expense">💸</div>
                             <div className="stat-info">
                                 <span className="label">Expenses</span>
                                 <span className="value">{formatCurrency(stats.expenses, currency)}</span>
                             </div>
+                            <div className="stat-hover-hint">View Breakdown</div>
                         </div>
-                        <div className="stat-card-mini">
+                        <div className="stat-card-mini clickable" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Savings', type: 'savings', data: stats.savingsBreakdown })}>
                             <div className="stat-icon savings">🐷</div>
                             <div className="stat-info">
                                 <span className="label">Savings</span>
                                 <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
                             </div>
+                            <div className="stat-hover-hint">View Breakdown</div>
                         </div>
                     </div>
 
@@ -509,6 +525,15 @@ export default function DashboardDesktop() {
                     </div>
                 </div>
             )}
+
+            <BreakdownModal
+                isOpen={breakdownModal.isOpen}
+                onClose={() => setBreakdownModal({ ...breakdownModal, isOpen: false })}
+                title={breakdownModal.title}
+                type={breakdownModal.type}
+                data={breakdownModal.data}
+                currency={currency}
+            />
 
             <GamificationHubDesktop
                 isOpen={showGamificationHub}

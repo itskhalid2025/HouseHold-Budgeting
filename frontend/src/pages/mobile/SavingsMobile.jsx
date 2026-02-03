@@ -33,11 +33,13 @@ export default function SavingsMobile() {
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [filters, setFilters] = useState({
         type: '',
-        status: '' // 'completed', 'in_progress'
+        status: '', // 'completed', 'in_progress'
+        userId: ''
     });
 
     const filteredGoals = goals.filter(goal => {
         if (filters.type && goal.type !== filters.type) return false;
+        if (filters.userId && goal.createdById !== filters.userId) return false;
         if (filters.status) {
             const progress = (parseFloat(goal.currentAmount || 0) / parseFloat(goal.targetAmount || 1)) * 100;
             const isComplete = progress >= 100;
@@ -62,7 +64,10 @@ export default function SavingsMobile() {
     // Fetch
     const fetchData = async () => {
         try {
-            const [goalsRes, summaryRes] = await Promise.all([getGoals(), getGoalSummary()]);
+            const [goalsRes, summaryRes] = await Promise.all([
+                getGoals(),
+                getGoalSummary({ userId: filters.userId })
+            ]);
             setGoals(goalsRes.goals || []);
             setSummary(summaryRes);
 
@@ -78,7 +83,7 @@ export default function SavingsMobile() {
         }
     };
 
-    useEffect(() => { fetchData(); }, []);
+    useEffect(() => { fetchData(); }, [filters.userId]);
     usePolling(fetchData, 15000);
 
     // Handlers
@@ -212,7 +217,9 @@ export default function SavingsMobile() {
                 </div>
                 <div className="summary-row">
                     <div className="stat-col">
-                        <span className="val">{formatCurrency(summary.monthlySaved || 0, currency)}</span>
+                        <div className="val-with-toggle">
+                            <span className="val">{formatCurrency(summary.monthlySaved || 0, currency)}</span>
+                        </div>
                         <span className="lbl">This Month</span>
                     </div>
                     <div className="stat-col">

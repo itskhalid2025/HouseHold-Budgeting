@@ -43,6 +43,41 @@
         flex-direction: column;
         align-items: center;
         text-align: center;
+        gap: 4px;
+    }
+
+    .item-with-toggle {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 4px;
+    }
+
+    .mine-toggle-btn-small {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.6);
+        padding: 4px 12px;
+        border-radius: 100px;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .mine-toggle-btn-small:hover {
+        background: rgba(255, 255, 255, 0.12);
+        color: #fff;
+    }
+
+    .mine-toggle-btn-small.active {
+        background: #10b981;
+        color: #fff;
+        border-color: #10b981;
+        box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
     }
 
     .summary-item h3 {

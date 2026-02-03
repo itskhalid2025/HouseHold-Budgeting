@@ -22,6 +22,52 @@
         justify-content: space-between;
         align-items: center;
         margin-bottom: 32px;
+        backdrop-filter: blur(10px);
+    }
+
+    .summary-center {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+    }
+
+    .mine-toggle-btn {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: rgba(255, 255, 255, 0.7);
+        padding: 10px 20px;
+        border-radius: 100px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .mine-toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .mine-toggle-btn.active {
+        background: #10b981;
+        color: #fff;
+        border-color: #10b981;
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+    }
+
+    /* Light Theme Overrides */
+    [data-theme='light'] .mine-toggle-btn {
+        background: rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        color: var(--text-secondary);
+    }
+
+    [data-theme='light'] .mine-toggle-btn.active {
+        background: #10b981;
+        color: #fff;
     }
 
     .summary-left h3 {

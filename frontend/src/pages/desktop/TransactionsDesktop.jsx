@@ -114,7 +114,7 @@ export default function TransactionsDesktop() {
                     limit: 20,
                     ...filters
                 }),
-                getTransactionSummary() // Fetches current month total
+                getTransactionSummary({ userId: filters.userId }) // Fetches current month total
             ]);
 
             // Smart Polling Logic
@@ -251,8 +251,16 @@ export default function TransactionsDesktop() {
             {/* Summary Card */}
             <div className="transaction-summary-card">
                 <div className="summary-left">
-                    <h3>Total Monthly Expenses</h3>
-                    <p className="summary-subtitle">Includes all household spending</p>
+                    <h3>{filters.userId === user?.id ? 'My Monthly Expenses' : 'Total Monthly Expenses'}</h3>
+                    <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal spending' : 'Includes all household spending'}</p>
+                </div>
+                <div className="summary-center">
+                    <button
+                        className={`mine-toggle-btn ${filters.userId === user?.id ? 'active' : ''}`}
+                        onClick={() => handleFilterChange({ target: { name: 'userId', value: filters.userId === user?.id ? '' : user?.id } })}
+                    >
+                        {filters.userId === user?.id ? '👤 All Household' : '👤 Just Mine'}
+                    </button>
                 </div>
                 <div className="summary-right">
                     <span className="total-amount-expense">{loading ? '...' : formatCurrency(totalExpenses, currency)}</span>
