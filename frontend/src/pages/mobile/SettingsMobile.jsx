@@ -533,22 +533,6 @@ export default function SettingsMobile() {
                     </div>
                 </MobileCard>
 
-                <MobileCard
-                    className="menu-card vibrant-card-interactive"
-                    onClick={() => setSubPage('notifications')}
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Open Notifications"
-                >
-                    <div className="menu-item">
-                        <div className="icon-bg gradient-3">
-                            <Bell size={22} className="menu-icon" />
-                        </div>
-                        <span className="menu-text">Notifications</span>
-                        <ChevronRight size={20} className="menu-arrow" />
-                    </div>
-                </MobileCard>
-
                 {!isInstalled && (
                     <MobileCard
                         className="menu-card vibrant-card-interactive install-card"

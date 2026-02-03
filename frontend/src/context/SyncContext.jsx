@@ -32,11 +32,18 @@ export const SyncProvider = ({ children }) => {
         };
 
         const handleBeforeInstallPrompt = (e) => {
-            console.log('PWA: beforeinstallprompt event fired');
+            console.log('PWA: beforeinstallprompt event fired! Browser is ready.');
             e.preventDefault();
             setDeferredPrompt(e);
             setIsInstallable(true);
         };
+
+        // Check if service worker is actually running
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.ready.then(() => {
+                console.log('PWA: Service Worker is READY and ACTIVE.');
+            });
+        }
 
         const handleAppInstalled = () => {
             console.log('PWA: appinstalled event fired');

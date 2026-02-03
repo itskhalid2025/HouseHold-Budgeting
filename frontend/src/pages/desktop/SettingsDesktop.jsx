@@ -208,12 +208,6 @@ export default function Settings() {
                     >
                         Household
                     </button>
-                    <button
-                        className={`tab-btn ${activeTab === 'notifications' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('notifications')}
-                    >
-                        Notifications
-                    </button>
                 </div>
 
                 <div className="settings-content">
