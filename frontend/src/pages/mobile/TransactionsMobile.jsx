@@ -114,9 +114,8 @@ function SpendingTab() {
     const {
         transactions,
         setTransactions,
-        setTotalPages,
-        totalExpenses,
-        setTotalExpenses,
+        stats,
+        setStats,
         loading,
         setLoading,
         addOptimisticTransaction,
@@ -129,6 +128,7 @@ function SpendingTab() {
     // State (Local UI state only)
     const [error, setError] = useState('');
     const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
     const [filters, setFilters] = useState({
         type: '',
         category: '',
@@ -187,7 +187,7 @@ function SpendingTab() {
 
             setTransactions(data.transactions);
             setTotalPages(data.pagination.pages);
-            setTotalExpenses(summary.summary?.totalSpent || 0);
+            setStats(prev => ({ ...prev, totalExpenses: summary.summary?.totalSpent || 0 }));
             setLoading(false);
         } catch (err) {
             if (!options.isPoll) setError(err.message);
@@ -306,7 +306,7 @@ function SpendingTab() {
                 {/* Expense Tracker Card */}
                 <div className="spending-summary-card">
                     <div className="summary-label">Total Spent This Month</div>
-                    <div className="summary-amount">{formatCurrency(totalExpenses, currency)}</div>
+                    <div className="summary-amount">{formatCurrency(stats.totalExpenses, currency)}</div>
                 </div>
 
                 <div className="search-bar">
