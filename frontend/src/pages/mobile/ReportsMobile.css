@@ -551,7 +551,7 @@
         letter-spacing: 0.5px;
         margin: 0;
     }
-
+      
     .mobile-layout .stat-value {
         font-size: 0.85rem !important;
         /* Forced reduction to prevent hidden text on small screens */
