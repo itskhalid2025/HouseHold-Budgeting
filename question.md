@@ -1,3 +1,25 @@
+# AI Advisor Test Questions
+
+Use these questions to verify the new capabilities of the AI Advisor.
+
+| # | Question | Expected Outcome | Key Feature Tested |
+|---|---|---|---|
+| 1 | "I live in India. What are some SIP or local investment options for my extra savings?" | **2-3-1 Structure.** AI should search Google for "SIP India" and suggest specific local schemes in the advice paragraph. | Localized Grounding |
+| 2 | "Show me a breakdown of my spending last month." | **Monthly Bar Chart.** AI should use RAG to group data into "Week 1", "Week 2", etc. | Dynamic RAG (Monthly) |
+| 3 | "Analyze my spending for the last 7 days." | **Weekly Bar Chart.** AI should group data by day (Mon, Tue, etc.) using the last 7 days of transactions. | Dynamic RAG (Weekly) |
+| 4 | "How has my Netflix subscription price changed over the last 3 years?" | **Yearly Analysis.** AI should fetch ~100 records and use Google Search to identify when and why prices increased. | Multi-Year RAG + Grounding |
+| 5 | "I'm in the UK. What is an ISA and should I open one?" | **Localized Advice.** AI should explain ISAs and provide 3 bullets comparing your savings to UK-specific limits. | Localized Grounding (UK) |
+| 6 | "Give me a pie chart of my expenses for this month." | **Pie Chart.** AI must obey the explicit command for a pie chart even if it's a "when" query. | Explicit Chart Logic |
+| 7 | "Compare my 'Needs' spending between last week and this week." | **Comparison Bar Chart.** AI should use household data snapshot to compare the two periods in 3 bullets. | Household Snapshot Data |
+| 8 | "I want to save $500/mo for a new car. How can I optimize my current spending?" | **Goal-Oriented Advice.** 2-3-1 structure focused on the "Goal" progress with specific cuts to "Wants". | Goal Priority |
+| 9 | "Is there a cheaper tier for my current Disney+ or Netflix subscription?" | **Subscription Optimization.** AI should search Google for current tiers (Standard vs Premium) and suggest a downgrade path. | Market Price Grounding |
+| 10 | "Analyze my grocery spending for the last month and give some tips." | **Full 2-3-1 Analysis.** Two overview paragraphs, 3+ bulleted grocery transactions, and 1 advice paragraph with localized tips. | Full Structure Merge |
+
+### How to Verify the 2-3-1 Structure:
+- **Part 1**: Exactly 2 short paragraphs at the top.
+- **Part 2**: A list with `<ul><li>` containing at least 3 items.
+- **Part 3**: Exactly 1 short paragraph at the bottom (Advice).
+
 # Opik Integration: Purpose, Strategy, and Implementation
 
 ## 1. What is Opik?

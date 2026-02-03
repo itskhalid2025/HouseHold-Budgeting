@@ -3,6 +3,7 @@ import { traceOperation } from '../services/opikService.js';
 import { categorizeEntry } from '../agents/categorizationAgent.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 import { updateUserGamification } from '../services/gamificationService.js';
+import { updateTransactionEmbedding, updateReportEmbedding } from '../utils/embeddingUtils.js';
 
 
 /**
@@ -164,6 +165,9 @@ export async function processSmartEntry(req, res) {
                         });
                         tableName = 'Transaction (Savings)';
 
+                        // RAG: Generate embedding
+                        updateTransactionEmbedding(createdRecord.id, { description: description || `Saved for ${goalName}`, category: 'Savings', merchant: null });
+
                     } else {
                         logDB('create', 'Transaction', { description });
                         createdRecord = await prisma.transaction.create({
@@ -182,6 +186,9 @@ export async function processSmartEntry(req, res) {
                             }
                         });
                         tableName = 'Transaction';
+
+                        // RAG: Generate embedding
+                        updateTransactionEmbedding(createdRecord.id, { description: description || 'Expense', category, merchant: null });
                     }
 
                     createdRecords.push({
@@ -367,6 +374,10 @@ export async function analyzeImage(req, res) {
                             }
                         });
                         table = 'Transaction (Savings)';
+
+                        // RAG: Generate embedding
+                        updateTransactionEmbedding(record.id, { description: description || `Saved: ${goalName}`, category: 'Savings', merchant: null });
+
                     } else {
                         // Expense
                         record = await prisma.transaction.create({
@@ -383,6 +394,9 @@ export async function analyzeImage(req, res) {
                             }
                         });
                         table = 'Transaction';
+
+                        // RAG: Generate embedding
+                        updateTransactionEmbedding(record.id, { description: description || 'Item', category: category || 'Uncategorized', merchant: null });
                     }
                     createdRecords.push({ table, record, classification: item });
 

@@ -19,6 +19,7 @@ import prisma from '../services/db.js';
 import { traceOperation } from '../services/opikService.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 import { updateUserGamification } from '../services/gamificationService.js';
+import { updateTransactionEmbedding } from '../utils/embeddingUtils.js';
 
 
 /**
@@ -144,6 +145,9 @@ async function addTransaction(req, res) {
                 where: { id: householdId },
                 data: { lastModifiedAt: new Date() }
             });
+
+            // RAG: Generate embedding in background
+            updateTransactionEmbedding(transaction.id, { description, category: finalCategory, merchant });
 
             // ... (inside addTransaction, after success)
             logSuccess('transactionController', 'addTransaction', { id: transaction.id });
@@ -408,6 +412,9 @@ async function updateTransaction(req, res) {
                 userOverride: userOverride || existingTransaction.userOverride
             }
         });
+
+        // RAG: Update embedding in background
+        updateTransactionEmbedding(id, { description, category, merchant });
 
         // Update household lastModifiedAt
         logDB('update', 'Household', { id: householdId });

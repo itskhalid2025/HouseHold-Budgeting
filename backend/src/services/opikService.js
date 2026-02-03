@@ -12,6 +12,7 @@
  */
 
 import { Opik } from 'opik';
+import config from '../utils/config.js';
 
 // Initialize Opik client
 const opik = new Opik({
@@ -22,7 +23,7 @@ const opik = new Opik({
 /**
  * Trace an AI operation
  * @param {string} name - Operation name
- * @param {function} fn - Function to execute
+ * @param {function} fn - Function to execute (receives current span/trace)
  * @param {object} metadata - Additional metadata
  * @returns {Promise<any>} - Function result
  */
@@ -31,6 +32,7 @@ export async function traceOperation(name, fn, metadata = {}) {
         name,
         metadata: {
             ...metadata,
+            project: 'household-budgeting',
             timestamp: new Date().toISOString()
         }
     });
@@ -38,10 +40,11 @@ export async function traceOperation(name, fn, metadata = {}) {
     const startTime = Date.now();
 
     try {
-        const result = await fn();
+        // Pass the trace object to the function so it can create spans
+        const result = await fn(trace);
 
         trace.update({
-            output: typeof result === 'string' ? result.substring(0, 500) : JSON.stringify(result).substring(0, 500),
+            output: typeof result === 'string' ? result.substring(0, 2000) : JSON.stringify(result).substring(0, 2000),
             metadata: {
                 latency: Date.now() - startTime,
                 success: true
@@ -66,20 +69,72 @@ export async function traceOperation(name, fn, metadata = {}) {
 }
 
 /**
+ * Create a sub-span for an operation
+ * @param {object} parent - Parent trace or span
+ * @param {string} name - Span name
+ * @param {function} fn - Function to execute
+ * @param {object} metadata - Additional metadata
+ * @returns {Promise<any>}
+ */
+export async function traceSpan(parent, name, fn, metadata = {}) {
+    if (!parent || typeof parent.span !== 'function') {
+        return fn();
+    }
+
+    const span = parent.span({
+        name,
+        metadata: {
+            ...metadata,
+            timestamp: new Date().toISOString()
+        }
+    });
+
+    const startTime = Date.now();
+
+    try {
+        const result = await fn(span);
+
+        span.update({
+            output: typeof result === 'string' ? result.substring(0, 1000) : JSON.stringify(result).substring(0, 1000),
+            metadata: {
+                latency: Date.now() - startTime,
+                success: true
+            }
+        });
+
+        return result;
+    } catch (error) {
+        span.update({
+            output: `Error: ${error.message}`,
+            metadata: {
+                error: error.message,
+                latency: Date.now() - startTime,
+                success: false
+            }
+        });
+        throw error;
+    } finally {
+        span.end();
+    }
+}
+
+/**
  * Log a categorization result for evaluation
  * @param {object} params - Categorization parameters
  */
 export async function logCategorization({ input, output, confidence }) {
-    opik.log({
+    const trace = opik.trace({
         name: 'transaction_categorization',
         input,
         output,
         metadata: {
             confidence,
-            model: 'gemini-2.5-flash',
-            feature: 'categorization'
+            model: config.gemini.model,
+            feature: 'categorization',
+            timestamp: new Date().toISOString()
         }
     });
+    trace.end();
 }
 
 /**
@@ -87,16 +142,18 @@ export async function logCategorization({ input, output, confidence }) {
  * @param {object} params - Report parameters
  */
 export async function logReport({ type, input, output }) {
-    opik.log({
+    const trace = opik.trace({
         name: 'report_generation',
         input: { type, ...input },
         output,
         metadata: {
             reportType: type,
-            model: 'gemini-2.5-flash',
-            feature: 'reporting'
+            model: config.gemini.model,
+            feature: 'reporting',
+            timestamp: new Date().toISOString()
         }
     });
+    trace.end();
 }
 
 /**
@@ -105,13 +162,14 @@ export async function logReport({ type, input, output }) {
  */
 export async function testConnection() {
     try {
-        // Simple test log
-        opik.log({
+        // Simple test trace
+        const trace = opik.trace({
             name: 'connection_test',
             input: 'test',
             output: 'success',
             metadata: { test: true }
         });
+        trace.end();
 
         return {
             success: true,

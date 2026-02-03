@@ -25,6 +25,7 @@ export async function generateReport(aggregatedData) {
         try {
             const {
                 totalSpent,
+                // ... (rest of function body)
                 totalIncome,
                 totalSaved,
                 byCategory,

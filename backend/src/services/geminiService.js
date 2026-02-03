@@ -1,31 +1,29 @@
-// Gemini API Service for HouseHold Budgeting
-// Handles all interactions with Google's Gemini AI
-
-/**
- * @fileoverview Gemini Service
- *
- * Provides integration with the Gemini AI platform for advanced features.
- * Utilises GoogleGenerativeAI for API calls and configuration from utils.
- *
- * @module services/geminiService
- * @requires @google/generative-ai
- */
-
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, TaskType } from '@google/generative-ai';
+export { TaskType };
 import config from '../utils/config.js';
 
 let currentKeyIndex = 0;
 const apiKeys = config.gemini.apiKeys;
 
 /**
- * Get instance of Gemini model with current API key
+ * Get instance of Gemini model with current API key and optional tools
+ * @param {Array} tools - Optional tools (like Google Search)
+ * @param {boolean} useBackup - Whether to use the backup model
  */
-function getGenerativeModel() {
+function getGenerativeModel(tools = [], useBackup = false) {
     if (apiKeys.length === 0) {
         throw new Error('No Gemini API keys configured');
     }
     const genAI = new GoogleGenerativeAI(apiKeys[currentKeyIndex]);
-    return genAI.getGenerativeModel({ model: config.gemini.model });
+
+    const modelName = useBackup ? config.gemini.modelBackup : config.gemini.model;
+    const configObj = { model: modelName };
+
+    if (tools && tools.length > 0) {
+        configObj.tools = tools;
+    }
+
+    return genAI.getGenerativeModel(configObj);
 }
 
 // Initialize first model instance
@@ -51,7 +49,7 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
  * Generate content from a text prompt
- * @param {string} prompt - The text prompt
+ * @param {string} promptOrParts - The text prompt or array of parts
  * @param {object} options - Configuration options
  * @returns {Promise<string>} - Generated text
  */
@@ -59,12 +57,26 @@ export async function generateContent(promptOrParts, options = {}) {
     const {
         temperature = 0.7,
         maxTokens = 1024,
-        retries = 3
+        retries = 3,
+        useGrounding = false
     } = options;
+    const tools = useGrounding ? [{ googleSearch: {} }] : [];
 
-    for (let attempt = 1; attempt <= retries; attempt++) {
+    let isUsingBackup = false;
+    let keysTriedForCurrentModel = 0;
+
+    for (let attempt = 1; attempt <= (retries * 2); attempt++) {
+        // Switch to backup if all keys exhausted for primary, or on very last attempts
+        if (!isUsingBackup && keysTriedForCurrentModel >= apiKeys.length && config.gemini.modelBackup) {
+            isUsingBackup = true;
+            keysTriedForCurrentModel = 0; // Reset for backup model
+            console.log(`📡 [Gemini] All primary keys likely exhausted. Falling back to backup model: ${config.gemini.modelBackup}`);
+        }
+
+        const activeModel = getGenerativeModel(tools, isUsingBackup);
+
         try {
-            console.log(`🤖 [Gemini] Request using Key #${currentKeyIndex + 1}`);
+            console.log(`🤖 [Gemini] Request using Key #${currentKeyIndex + 1} (${isUsingBackup ? 'BACKUP' : 'PRIMARY'}) - Attempt ${attempt}`);
 
             let parts;
             if (Array.isArray(promptOrParts)) {
@@ -75,7 +87,7 @@ export async function generateContent(promptOrParts, options = {}) {
                 console.log(`📝 [Input]: ${promptOrParts.substring(0, 100)}${promptOrParts.length > 100 ? '...' : ''}`);
             }
 
-            const result = await model.generateContent({
+            const result = await activeModel.generateContent({
                 contents: [{ role: 'user', parts: parts }],
                 generationConfig: {
                     temperature,
@@ -91,8 +103,9 @@ export async function generateContent(promptOrParts, options = {}) {
 
         } catch (error) {
             console.error(`Gemini API error (attempt ${attempt}):`, error.message);
+            keysTriedForCurrentModel++;
 
-            // Handle rate limits and quota exhaustion by rotating key if possible
+            // Handle rate limits and quota exhaustion by rotating key
             const isRateLimitOrQuota = error.message?.includes('RATE_LIMIT') ||
                 error.message?.includes('429') ||
                 error.message?.includes('quota') ||
@@ -102,13 +115,21 @@ export async function generateContent(promptOrParts, options = {}) {
                 console.log(`⚠️ Rate limit/quota hit on key #${currentKeyIndex + 1}`);
 
                 if (rotateKey()) {
-                    console.log('🔄 Retrying with new API key...');
+                    console.log('🔄 Retrying with next API key...');
+                    continue; // Try next key
+                }
+
+                // If only one key exists or we've somehow failed to rotate, try switching model or waiting
+                if (!isUsingBackup && config.gemini.modelBackup) {
+                    isUsingBackup = true;
+                    keysTriedForCurrentModel = 0;
+                    console.log(`📡 [Gemini] Falling back to backup model: ${config.gemini.modelBackup}`);
                     continue;
                 }
 
-                // If no more keys to rotate to, use exponential backoff
-                const waitTime = Math.pow(2, attempt) * 1000;
-                console.log(`All keys likely limited. Waiting ${waitTime}ms before retry...`);
+                // Last resort: Exponential backoff
+                const waitTime = Math.min(Math.pow(2, attempt) * 1000, 10000);
+                console.log(`Waiting ${waitTime}ms before retry...`);
                 await sleep(waitTime);
                 continue;
             }
@@ -117,7 +138,7 @@ export async function generateContent(promptOrParts, options = {}) {
                 throw new Error('Invalid input provided to Gemini API');
             }
 
-            if (attempt === retries) {
+            if (attempt >= (retries * 2)) {
                 throw error;
             }
         }
@@ -126,34 +147,30 @@ export async function generateContent(promptOrParts, options = {}) {
 
 /**
  * Generate JSON from a prompt
- * @param {string} prompt - The text prompt
+ * @param {string} promptOrParts - The text prompt or array of parts
  * @param {object} schema - Optional JSON schema for validation
+ * @param {object} options - Generation options
  * @returns {Promise<object>} - Parsed JSON object
  */
 export async function generateJSON(promptOrParts, schema = null, options = {}) {
-    // Construct the JSON instruction
     const jsonInstruction = "\n\nReturn ONLY valid JSON, no markdown formatting or explanations.";
 
     let fullInput;
     if (Array.isArray(promptOrParts)) {
-        // If it's an array of parts, find the text part and append instruction, or add a new text part
         fullInput = [...promptOrParts];
         const lastTextIndex = fullInput.map(p => !!p.text).lastIndexOf(true);
-
         if (lastTextIndex >= 0) {
             fullInput[lastTextIndex] = { text: fullInput[lastTextIndex].text + jsonInstruction };
         } else {
             fullInput.push({ text: jsonInstruction });
         }
     } else {
-        // String input
         fullInput = `${promptOrParts}${jsonInstruction}`;
     }
 
     const response = await generateContent(fullInput, options);
 
     try {
-        // Remove markdown code blocks if present
         let jsonStr = response.trim();
         if (jsonStr.startsWith('```json')) {
             jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
@@ -162,21 +179,63 @@ export async function generateJSON(promptOrParts, schema = null, options = {}) {
         }
 
         const parsed = JSON.parse(jsonStr);
-
-        // Basic schema validation if provided
         if (schema && schema.required) {
             for (const field of schema.required) {
-                if (!(field in parsed)) {
-                    throw new Error(`Missing required field: ${field}`);
-                }
+                if (!(field in parsed)) throw new Error(`Missing required field: ${field}`);
             }
         }
-
         return parsed;
     } catch (error) {
         console.error('Failed to parse JSON from Gemini:', error.message);
-        console.error('Raw response:', response);
         throw new Error('Failed to parse JSON response from Gemini');
+    }
+}
+
+/**
+ * Generate embedding for a given text
+ * @param {string} text - The text to embed
+ * @param {string} taskType - Purpose of embedding (RETRIEVAL_DOCUMENT or RETRIEVAL_QUERY)
+ * @param {string} title - Optional title for document embeddings
+ * @returns {Promise<Array<number>>} - The embedding vector
+ */
+export async function generateEmbedding(text, taskType = TaskType.RETRIEVAL_DOCUMENT, title = 'Household Budgeting Record') {
+    if (!text) return null;
+
+    const tryGenerate = async (useBackup = false) => {
+        const modelName = useBackup ? config.gemini.embeddingModelBackup : config.gemini.embeddingModel;
+        console.log(`🤖 [Gemini] Generating embedding using Key #${currentKeyIndex + 1} (${useBackup ? 'BACKUP' : 'PRIMARY'}: ${modelName})`);
+
+        const genAI = new GoogleGenerativeAI(apiKeys[currentKeyIndex]);
+        const embeddingModel = genAI.getGenerativeModel({ model: modelName });
+
+        const result = await embeddingModel.embedContent({
+            content: { parts: [{ text }] },
+            taskType,
+            title
+        });
+
+        return result.embedding.values;
+    };
+
+    try {
+        return await tryGenerate(false);
+    } catch (error) {
+        console.error('Primary embedding failed, trying backup...', error.message);
+
+        try {
+            if (config.gemini.embeddingModelBackup) {
+                return await tryGenerate(true);
+            }
+            throw error;
+        } catch (backupError) {
+            console.error('Backup embedding failed:', backupError.message);
+            const isRateLimit = backupError.message?.includes('429') || backupError.message?.includes('quota');
+            if (isRateLimit && rotateKey()) {
+                console.log('🔄 Retrying primary embedding with new API key...');
+                return generateEmbedding(text, taskType, title);
+            }
+            throw backupError;
+        }
     }
 }
 
@@ -186,15 +245,12 @@ export async function generateJSON(promptOrParts, schema = null, options = {}) {
  */
 export async function testConnection() {
     const startTime = Date.now();
-
     try {
         await generateContent('Hello');
-        const latency = Date.now() - startTime;
-
         return {
             success: true,
-            latency,
-            model: 'gemini-2.5-flash'
+            latency: Date.now() - startTime,
+            model: config.gemini.model
         };
     } catch (error) {
         return {
@@ -204,3 +260,10 @@ export async function testConnection() {
         };
     }
 }
+
+export default {
+    generateContent,
+    generateJSON,
+    testConnection,
+    generateEmbedding
+};

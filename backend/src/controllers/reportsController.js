@@ -14,6 +14,7 @@ import { updateUserGamification } from '../services/gamificationService.js';
 import { generateReport } from '../agents/reportAgent.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 import { getCurrencySymbol } from '../utils/currencySymbols.js';
+import { updateReportEmbedding } from '../utils/embeddingUtils.js';
 
 
 /**
@@ -418,10 +419,8 @@ async function generateReportInternal(householdId, reportType, dateStart, dateEn
     }
 
     // Save to database
-    // Note: 'userId' field on Report model might be singular or non-existent.
-    // We are just saving the JSON content which has the specifics.
     logDB('create', 'Report', { householdId, type: reportType, userIds });
-    return await prisma.report.create({
+    const savedReport = await prisma.report.create({
         data: {
             householdId,
             type: reportType,
@@ -430,6 +429,16 @@ async function generateReportInternal(householdId, reportType, dateStart, dateEn
             content: reportResult
         }
     });
+
+    // RAG: Generate embedding for report
+    updateReportEmbedding(savedReport.id, {
+        type: reportType,
+        dateStart: start.toISOString(),
+        dateEnd: end.toISOString(),
+        content: reportResult.report
+    });
+
+    return savedReport;
 }
 
 /**

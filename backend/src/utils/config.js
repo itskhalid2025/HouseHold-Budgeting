@@ -38,7 +38,10 @@ const config = {
             process.env.GEMINI_API_KEY4,
             process.env.GEMINI_API_KEY5
         ].filter(Boolean),
-        model: 'gemini-2.5-flash'
+        model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+        modelBackup: process.env.GEMINI_MODEL_BACKUP || 'gemini-2.0-flash-lite',
+        embeddingModel: process.env.GEMINI_EMBEDDING_MODEL || 'models/gemini-embedding-001',
+        embeddingModelBackup: process.env.GEMINI_EMBEDDING_MODEL_BACKUP || 'text-embedding-004'
     },
 
     // Opik Observability

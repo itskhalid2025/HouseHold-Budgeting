@@ -19,19 +19,19 @@ import { logEntry, logSuccess, logError } from '../utils/controllerLogger.js';
  * @returns {Object} Chart configuration for Recharts
  */
 export async function generateChartConfig(params) {
-    return traceOperation('chartAgent.generateChartConfig', async () => {
-        logEntry('chartAgent', 'generateChartConfig', { query: params.query });
+  return traceOperation('chartAgent.generateChartConfig', async () => {
+    logEntry('chartAgent', 'generateChartConfig', { query: params.query });
 
-        try {
-            const {
-                query,
-                availableCategories,
-                dateRange
-            } = params;
+    try {
+      const {
+        query,
+        availableCategories,
+        dateRange
+      } = params;
 
-            const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toISOString().split('T')[0];
 
-            const prompt = `You are a data visualization expert. Convert the user's natural language query into a chart configuration.
+      const prompt = `You are a data visualization expert. Convert the user's natural language query into a chart configuration.
 
 **USER QUERY**: "${query}"
 
@@ -117,31 +117,31 @@ Response:
 - Default to last 30 days if no timeframe specified
 - Today's date is ${today}`;
 
-            const chartConfig = await generateJSON(prompt);
+      const chartConfig = await generateJSON(prompt);
 
-            logSuccess('chartAgent', 'generateChartConfig', {
-                chartType: chartConfig.chartType,
-                title: chartConfig.title
-            });
+      logSuccess('chartAgent', 'generateChartConfig', {
+        chartType: chartConfig.chartType,
+        title: chartConfig.title
+      });
 
-            return {
-                success: true,
-                config: chartConfig
-            };
+      return {
+        success: true,
+        config: chartConfig
+      };
 
-        } catch (error) {
-            logError('chartAgent', 'generateChartConfig', error);
-            return {
-                success: false,
-                error: error.message,
-                fallback: {
-                    chartType: 'bar',
-                    title: 'Recent Spending',
-                    message: 'Could not parse your query. Showing default view.'
-                }
-            };
+    } catch (error) {
+      logError('chartAgent', 'generateChartConfig', error);
+      return {
+        success: false,
+        error: error.message,
+        fallback: {
+          chartType: 'bar',
+          title: 'Recent Spending',
+          message: 'Could not parse your query. Showing default view.'
         }
-    }, { query: params.query });
+      };
+    }
+  }, { query: params.query });
 }
 
 export default { generateChartConfig };
