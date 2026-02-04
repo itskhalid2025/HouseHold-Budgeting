@@ -156,28 +156,8 @@ export default function AdvisorMobile() {
             if (data.success) {
                 if (!conversationId && data.conversationId) setConversationId(data.conversationId);
 
-                let content = data.response;
-                let chartData = null;
-
-                try {
-                    // Check for JSON response (often used for charts)
-                    const jsonStart = content.indexOf('{');
-                    const jsonEnd = content.lastIndexOf('}');
-
-                    if (jsonStart !== -1 && jsonEnd !== -1) {
-                        const potentialJson = content.substring(jsonStart, jsonEnd + 1);
-                        const parsed = JSON.parse(potentialJson);
-
-                        // If the JSON contains 'text' or 'chartData' properties, extract them
-                        if (parsed.text || parsed.chartData) {
-                            if (parsed.text) content = parsed.text;
-                            if (parsed.chartData) chartData = parsed.chartData;
-                        }
-                    }
-                } catch (e) {
-                    // Fallback: Use standard Markdown parsing if JSON fails
-                    console.log("Not a strictly valid JSON response, rendering as text.");
-                }
+                const content = data.response;
+                const chartData = data.chartData || null; // Fix: Get from API directly
 
                 setMessages(prev => [...prev, {
                     role: 'assistant',

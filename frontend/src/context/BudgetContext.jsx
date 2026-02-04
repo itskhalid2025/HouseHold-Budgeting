@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import * as api from '../api/api';
 import { useSync } from './SyncContext';
 import toast from 'react-hot-toast';
+import { useAuth } from './AuthContext';
 
 const BudgetContext = createContext();
 
@@ -9,6 +10,8 @@ export const useBudget = () => useContext(BudgetContext);
 
 export const BudgetProvider = ({ children }) => {
     const { isOnline, queueRequest } = useSync();
+    const { user } = useAuth();
+
     const [transactions, setTransactions] = useState(() => {
         try {
             const saved = localStorage.getItem('transactions');
@@ -46,7 +49,8 @@ export const BudgetProvider = ({ children }) => {
 
     const fetchData = useCallback(async () => {
         if (!isOnline) return;
-        // Optional: don't set loading on poll
+        if (!user?.householdId) return; // Don't fetch if not in household
+
         try {
             const [tRes, summaryRes] = await Promise.all([
                 api.getTransactions({ page: 1, limit: 20 }),
@@ -63,7 +67,7 @@ export const BudgetProvider = ({ children }) => {
         } catch (error) {
             console.error('Failed to fetch data:', error);
         }
-    }, [isOnline]);
+    }, [isOnline, user?.householdId]);
 
     useEffect(() => {
         fetchData();

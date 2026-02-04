@@ -3,6 +3,7 @@ import { NavLink, useLocation } from 'react-router-dom';
 import { LayoutDashboard, Receipt, BarChart2, Settings, Plus, Users, CloudOff } from 'lucide-react';
 import { useSmartEntry } from '../../context/SmartEntryContext'; // Import context
 import { useSync } from '../../context/SyncContext';
+import { useNotification } from '../../context/NotificationContext';
 import RankBadge from '../gamification/RankBadge';
 import './Navbar.css';
 
@@ -10,6 +11,7 @@ export default function Navbar() {
     const location = useLocation();
     const { openSmartEntry } = useSmartEntry();
     const { isOnline } = useSync();
+    const { requestCount } = useNotification();
 
     // Hide navbar on login/register pages
     if (['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'].includes(location.pathname)) {
@@ -50,6 +52,9 @@ export default function Navbar() {
                 >
                     <div className={item.isPrimary ? "icon-container" : ""}>
                         <item.icon className="nav-icon" size={item.isPrimary ? 28 : 24} />
+                        {item.label === 'Household' && requestCount > 0 && (
+                            <span className="nav-badge">{requestCount}</span>
+                        )}
                     </div>
                     <span className="nav-label">{item.label}</span>
                 </NavLink>

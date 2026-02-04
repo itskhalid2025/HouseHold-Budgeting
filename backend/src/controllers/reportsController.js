@@ -358,87 +358,96 @@ export async function listReports(req, res) {
 /**
  * Internal helper to generate a report
  */
+import { traceOperation } from '../services/opikService.js';
+
 async function generateReportInternal(householdId, reportType, dateStart, dateEnd, userIds = [], actorUserId = null) {
-    // Calculate date range if not provided
-    let start = dateStart ? new Date(dateStart) : new Date();
-    let end = dateEnd ? new Date(dateEnd) : new Date();
+    return traceOperation('reportsController.generateReportInternal', async (span) => {
 
-    if (!dateStart || !dateEnd) {
-        if (reportType === 'weekly') {
-            start.setDate(end.getDate() - 7);
-        } else if (reportType === 'monthly') {
-            start.setMonth(end.getMonth() - 1);
+        // Calculate date range if not provided
+        let start = dateStart ? new Date(dateStart) : new Date();
+        let end = dateEnd ? new Date(dateEnd) : new Date();
+
+        if (!dateStart || !dateEnd) {
+            if (reportType === 'weekly') {
+                start.setDate(end.getDate() - 7);
+            } else if (reportType === 'monthly') {
+                start.setMonth(end.getMonth() - 1);
+            }
         }
-    }
 
-    // Force comparison OFF for custom reports by ensuring userIds (or a flag) inhibits it in aggregation, 
-    // or we just trust the aggregation logic we updated.
+        // Force comparison OFF for custom reports by ensuring userIds (or a flag) inhibits it in aggregation, 
+        // or we just trust the aggregation logic we updated.
 
-    // Aggregate data
-    const aggregatedData = await aggregateTransactionData(householdId, start, end, userIds);
-    aggregatedData.reportType = reportType;
+        // Aggregate data
+        const aggregatedData = await aggregateTransactionData(householdId, start, end, userIds);
+        aggregatedData.reportType = reportType;
 
-    // If specific users, add context for AI
-    if (userIds && userIds.length > 0) {
-        const users = await prisma.user.findMany({
-            where: { id: { in: userIds } },
-            select: { firstName: true, lastName: true }
-        });
-        if (users.length > 0) {
-            aggregatedData.targetUser = users.map(u => `${u.firstName} ${u.lastName}`).join(', ');
-        }
-    }
-
-    // Generate AI report
-    const reportResult = await generateReport(aggregatedData);
-
-    if (!reportResult.success) {
-        throw new Error('AI generation failed');
-    }
-
-    // INJECT HISTORY into the report content so frontend can use it
-    if (aggregatedData.history) {
-        if (!reportResult.report) reportResult.report = {}; // Safety
-        reportResult.report.history = aggregatedData.history;
-    }
-
-    // Log AI Usage
-    if (actorUserId) {
-        try {
-            await prisma.aiUsageLog.create({
-                data: {
-                    userId: actorUserId,
-                    householdId,
-                    type: 'REPORT',
-                    tokens: reportResult.usage?.totalTokens || 0
-                }
+        // If specific users, add context for AI
+        if (userIds && userIds.length > 0) {
+            const users = await prisma.user.findMany({
+                where: { id: { in: userIds } },
+                select: { firstName: true, lastName: true }
             });
-        } catch (logErr) {
-            console.error('Failed to log AI usage:', logErr);
+            if (users.length > 0) {
+                aggregatedData.targetUser = users.map(u => `${u.firstName} ${u.lastName}`).join(', ');
+            }
         }
-    }
 
-    // Save to database
-    logDB('create', 'Report', { householdId, type: reportType, userIds });
-    const savedReport = await prisma.report.create({
-        data: {
-            householdId,
+        // Generate AI report
+        const reportResult = await generateReport(aggregatedData);
+
+        if (!reportResult.success) {
+            throw new Error(reportResult.error || 'AI generation failed');
+        }
+
+        // INJECT HISTORY into the report content so frontend can use it
+        if (aggregatedData.history) {
+            if (!reportResult.report) reportResult.report = {}; // Safety
+            reportResult.report.history = aggregatedData.history;
+        }
+
+        // Log AI Usage
+        if (actorUserId) {
+            try {
+                await prisma.aiUsageLog.create({
+                    data: {
+                        userId: actorUserId,
+                        householdId,
+                        type: 'REPORT',
+                        tokens: reportResult.usage?.totalTokens || 0
+                    }
+                });
+            } catch (logErr) {
+                console.error('Failed to log AI usage:', logErr);
+            }
+        }
+
+        // Save to database
+        logDB('create', 'Report', { householdId, type: reportType, userIds });
+        const savedReport = await prisma.report.create({
+            data: {
+                householdId,
+                type: reportType,
+                dateStart: start,
+                dateEnd: end,
+                content: reportResult
+            }
+        });
+
+        // RAG: Generate embedding for report
+        updateReportEmbedding(savedReport.id, {
             type: reportType,
-            dateStart: start,
-            dateEnd: end,
-            content: reportResult
-        }
-    });
+            dateStart: start.toISOString(),
+            dateEnd: end.toISOString(),
+            content: reportResult.report
+        });
 
-    // RAG: Generate embedding for report
-    updateReportEmbedding(savedReport.id, {
-        type: reportType,
-        dateStart: start.toISOString(),
-        dateEnd: end.toISOString(),
-        content: reportResult.report
+        return savedReport;
+    }, {
+        userId: actorUserId,
+        householdId,
+        type: reportType
     });
-
-    return savedReport;
 }
 
 /**
@@ -471,7 +480,7 @@ export async function getLatestReport(req, res) {
                 return res.json({ success: true, report: newReport });
             } catch (genError) {
                 logError('reportsController', 'getLatestReport', genError);
-                return res.status(500).json({ success: false, error: 'Failed to generate report' });
+                return res.status(500).json({ success: false, error: genError.message || 'Failed to generate report' });
             }
         }
 
@@ -513,7 +522,7 @@ export async function generateNewReport(req, res) {
 
     } catch (error) {
         logError('reportsController', 'generateNewReport', error);
-        res.status(500).json({ success: false, error: 'Failed to generate report' });
+        res.status(500).json({ success: false, error: error.message || 'Failed to generate report' });
     }
 }
 

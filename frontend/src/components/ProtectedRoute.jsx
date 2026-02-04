@@ -63,7 +63,7 @@ export function PublicRoute({ children }) {
         // 1. If no household, go to /household (Priority 1)
         // 2. Else go to where they tried to go, or dashboard
         if (!user?.householdId) {
-            return <Navigate to="/household" replace />;
+            return <Navigate to="/onboarding" replace />;
         }
 
         const from = location.state?.from?.pathname || '/';

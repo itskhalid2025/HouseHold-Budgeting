@@ -1,0 +1,58 @@
+# Walkthrough - Two-Agent Query Parser Architecture
+
+## Summary
+Implemented a production-grade two-agent architecture that separates **query understanding** from **response generation**.
+
+## Architecture Flow
+```mermaid
+flowchart LR
+    A[User Query] --> B[Parser Agent]
+    B --> C[Query Builder]
+    C --> D[Database]
+    D --> E[Advisor Agent]
+    E --> F[Response + Chart]
+```
+
+## Files Created/Modified
+
+### [NEW] [queryParserAgent.js](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/backend/src/agents/queryParserAgent.js)
+AI-powered query parser that extracts:
+- Date ranges with intelligent parsing ("this year" vs "last year")
+- Category/type/merchant filters
+- Visualization preferences
+- Grounding (web search) requirements
+
+### [NEW] [queryBuilder.js](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/backend/src/utils/queryBuilder.js)
+SQL query builder that:
+- Converts parsed metadata to PostgreSQL queries
+- Builds RAG context from transactions
+- Pre-calculates chart data (monthly/weekly totals)
+
+### [MODIFIED] [advisorAgent.js](file:///c:/Users/KHALID/Downloads/HouseHold%20Budgeting/backend/src/agents/advisorAgent.js)
+Refactored to:
+- Remove all regex-based parsing (~200 lines removed)
+- Integrate Parser Agent and Query Builder
+- Include parsed query metadata in Opik traces
+
+## Key Improvements
+
+| Feature | Before | After |
+|---------|--------|-------|
+| "this year" parsing | ❌ Treated as "last 365 days" | ✅ Jan 1 → Today |
+| Month names | ❌ Regex with edge cases | ✅ AI understands context |
+| Chart selection | ❌ Limited heuristics | ✅ AI-detected intent |
+| Grounding | ❌ Pattern matching | ✅ AI-detected need |
+
+## Testing
+
+Try these queries:
+```
+✅ "Show me this year's spending"
+✅ "Compare December and January"
+✅ "Grocery breakdown per week"
+✅ "Best SIP plans in India"
+```
+
+Check Opik for:
+- `queryParserAgent.parseQuery` trace
+- `advisorAgent.getFinancialAdvice` trace

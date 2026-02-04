@@ -1,26 +1,31 @@
 /**
- * @fileoverview Advisor Agent for Phase 6
+ * @fileoverview AI Financial Advisor Agent - Two-Agent Architecture
  *
- * Provides personalized financial advice using AI chatbot functionality.
- * Supports chat-style conversations and structured savings recommendations.
- *
+ * ENHANCED PROMPT VERSION:
+ * - Dramatically improved HTML color formatting instructions
+ * - Stronger chart generation enforcement
+ * - Better 2-3-1 structure enforcement (paragraphs + bullets + paragraph)
+ * - More specific advice generation rules
+ * - Enhanced tone and professionalism
+ * - Better handling of both primary and backup models
+ * 
  * @module agents/advisorAgent
- * @requires ../services/geminiService
- * @requires ../services/opikService
  */
 
-import { generateContent, generateJSON, generateEmbedding, TaskType } from '../services/geminiService.js';
+import { generateContent, generateJSON } from '../services/geminiService.js';
 import { traceOperation } from '../services/opikService.js';
 import { logEntry, logSuccess, logError } from '../utils/controllerLogger.js';
 import prisma from '../services/db.js';
+import { parseQuery } from './queryParserAgent.js';
+import { queryTransactions, buildRAGContext } from '../utils/queryBuilder.js';
 
 /**
- * AI Financial Advisor Chatbot
+ * AI Financial Advisor Chatbot - Main Entry Point
  * @param {Object} params - Chat parameters
  * @returns {Object} AI advice response
  */
 export async function getFinancialAdvice(params) {
-  return traceOperation('advisorAgent.getFinancialAdvice', async () => {
+  return traceOperation('advisorAgent.getFinancialAdvice', async (span) => {
     logEntry('advisorAgent', 'getFinancialAdvice', { messageLength: params.userMessage?.length });
 
     try {
@@ -31,428 +36,98 @@ export async function getFinancialAdvice(params) {
         userId
       } = params;
 
-      // Build system context prompt with household data
-      const contextPrompt = `You are a friendly, expert financial advisor helping a household manage their money better.
+      // ==========================================
+      // STEP 1: Get User Context (Location, Timezone)
+      // ==========================================
+      let userContext = {
+        city: 'Unknown',
+        country: 'Unknown',
+        state: null,
+        timezone: 'UTC',
+        localDate: new Date().toISOString().split('T')[0],
+        localTime: new Date().toLocaleTimeString()
+      };
 
-**HOUSEHOLD FINANCIAL SNAPSHOT**:
-- Currency: ${householdData.currency || 'USD'}
-- Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
-- Monthly Spending (Last 30 Days): ${householdData.currencySymbol}${householdData.monthlySpending}
-- This Week (Last 7 Days): Total ${householdData.currencySymbol}${householdData.thisWeekSpending} (Needs: ${householdData.currencySymbol}${householdData.thisWeekNeeds}, Wants: ${householdData.currencySymbol}${householdData.thisWeekWants})
-- Last Week (Previous 7 Days): Total ${householdData.currencySymbol}${householdData.lastWeekSpending} (Needs: ${householdData.currencySymbol}${householdData.lastWeekNeeds}, Wants: ${householdData.currencySymbol}${householdData.lastWeekWants})
-- Current Savings Rate: ${householdData.savingsRate}%
-- Recommended Savings Rate: 20%
-
-**SPENDING BREAKDOWN** (Last 30 Days):
-- Needs: ${householdData.currencySymbol}${householdData.needs} (${householdData.needsPercent}%)
-- Wants: ${householdData.currencySymbol}${householdData.wants} (${householdData.wantsPercent}%)
-- Savings: ${householdData.currencySymbol}${householdData.savings} (${householdData.savingsPercent}%)
-
-**TOP SPENDING CATEGORIES** (Last 30 Days):
-${householdData.topCategories?.map((c, i) =>
-        `${i + 1}. ${c.category}: ${householdData.currencySymbol}${c.amount} (${c.type})`
-      ).join('\n') || 'No data available'}
-
-**ACTIVE FINANCIAL GOALS**:
-${householdData.goals?.length > 0
-          ? householdData.goals.map(g =>
-            `- ${g.name}: ${householdData.currencySymbol}${g.currentAmount}/${householdData.currencySymbol}${g.targetAmount} (${g.progress}% complete${g.deadline ? `, due ${g.deadline}` : ''})`
-          ).join('\n')
-          : '- No active goals set'
-        }
-
-**ADVICE RULES**:
-1. ALWAYS use the user's currency (${householdData.currencySymbol}) for all amounts.
-2. Be encouraging, empathetic, and professional.
-3. If spending is high in a category, suggest specific ways to reduce it.
-4. If a goal is active, prioritize suggestions that help reach that goal.
-5. Use <strong style="color: #ef4444">red</strong> for spending increases and <strong style="color: #10b981">green</strong> for decreases/savings.
-
-**GOOGLE SEARCH GROUNDING - CONTEXT-AWARE USAGE**:
-When Google Search Grounding is enabled, use it intelligently based on the user's question topic:
-
-**SAVINGS & INVESTMENT QUERIES**:
-- Topics: SIP, mutual funds, investment schemes, savings accounts, retirement plans
-- Search for: Locality-specific investment options (e.g., "SIP India best options 2026", "ISA UK benefits", "401k USA contribution limits")
-- Provide: 2-3 specific schemes/products with current rates, tax benefits, and eligibility based on their income level
-- Example: User in India asks about saving → Search "best SIP plans India 2026" and suggest schemes like ELSS, Index Funds with actual fund names
-
-**SUBSCRIPTION & PRICE COMPARISON**:
-- Topics: Netflix, Disney+, Spotify, streaming services, subscription tiers
-- Search for: Current pricing tiers and features (e.g., "Netflix pricing tiers 2026", "Disney+ plans comparison")
-- Provide: Price comparison table showing Basic/Standard/Premium with exact prices, suggest optimal tier based on their budget
-- Example: "Is there a cheaper Netflix plan?" → Search current tiers, show price difference, calculate annual savings
-
-**SHOPPING & GROCERY PLATFORMS**:
-- Topics: Grocery prices, platform comparison, where to shop
-- Search for: Local platform comparisons (e.g., "BigBasket vs Reliance Fresh prices India", "Walmart vs Target grocery prices")
-- Provide: Platform-specific pricing trends, discount patterns, best days to shop
-- Example: "Which platform has cheaper groceries?" → Compare 3-4 local platforms with price ranges for common items
-
-**PRICE INCREASE ANALYSIS**:
-- Topics: Historical price changes, subscription increases, inflation impact
-- Search for: Price history and increase timeline (e.g., "Netflix price increase history 2023-2026", "grocery inflation India 2026")
-- Provide: Exact dates and amounts of increases, reasons from official sources, comparison with inflation rates
-- Example: "Why did my Netflix bill increase?" → Show price history, explain tier changes, suggest alternatives
-
-**LOCALITY-SPECIFIC FINANCIAL PRODUCTS**:
-- Detect user's country/region and search for region-specific products
-- India: SIP, ELSS, PPF, NSC, Tax-saving FDs
-- UK: ISA, Premium Bonds, SIPP, Help to Buy
-- USA: 401k, IRA, Roth IRA, 529 Plans, HSA
-- Provide eligibility, tax benefits, and current rates with actual numbers
-
-**OTP (One-Time Purchase) RECOMMENDATIONS**:
-- Topics: Best deals, budget-friendly products, value for money
-- Search for: "best [product] under [budget] 2026", platform price comparison
-- Provide: 2-3 specific product recommendations with prices, features, and where to buy
-- Example: "What laptop should I buy under $800?" → Search and suggest 3 models with prices from different retailers
-
-**CRITICAL GROUNDING RULES**:
-- ONLY use grounding when the query explicitly asks about: prices, comparisons, specific products/services, investment options, or market rates
-- DO NOT use grounding for: general advice, transaction analysis, spending patterns, or budget reviews
-- ALWAYS cite the source when using grounded data (e.g., "According to current Netflix pricing...")
-- ALWAYS include actual numbers, dates, and specific product/scheme names from search results
-- If search returns no relevant results, acknowledge it and provide general advice instead
-
-**CHART SELECTION LOGIC**:
-
-**CRITICAL: UNDERSTAND THE QUERY INTENT FIRST**
-
-**EXPLICIT USER COMMANDS** (HIGHEST PRIORITY - MUST OBEY):
-- If user explicitly says "pie chart", "give me a pie chart", "show pie" → MUST use PIE regardless of query type
-- If user explicitly says "bar chart", "bar graph", "show bars", "in bar graph" → MUST use BAR regardless of query type
-- If user explicitly says "line chart", "line graph", "trend line" → MUST use LINE regardless of query type
-- Explicit commands OVERRIDE all automatic logic below
-
-**AUTOMATIC CHART TYPE SELECTION** (When no explicit command):
-
-**Use BAR CHART when**:
-- Comparing time periods (e.g., "last week vs this week", "monthly comparison")
-- Showing spending over days/weeks/months (e.g., "last 7 days", "this month's spending")
-- Tracking a specific merchant over time (e.g., "Amazon spending over 3 months")
-- Daily/weekly/monthly breakdown requested (e.g., "show me daily food spending")
-
-**Use PIE CHART when**:
-- Breaking down a single period by categories (e.g., "my spending breakdown", "food expenses")
-- Showing percentage distribution (e.g., "what am I spending most on")
-- No time comparison involved
-
-**Use LINE CHART when**:
-- Long-term trends (e.g., "spending trend over 6 months")
-- Tracking changes over many periods (e.g., "quarterly analysis")
-
-**QUERY INTERPRETATION EXAMPLES**:
-- "last weeks spendin in bar graph on food" → BAR chart with 7 days (Mon-Sun) showing daily food spending
-- "show me last month food spending" → BAR chart with 4 weeks showing weekly food spending
-- "breakdown of my expenses" → PIE chart with category breakdown
-- "Chart my spending at Amazon over 3 months" → BAR chart with 3 monthly bars for Amazon
-
-**DYNAMIC TIMEFRAME GROUPING**:
-
-**WEEKLY QUERIES** (e.g., "last week", "last 7 days", "this week"):
-- Group by DAY: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-- Chart type: BAR (showing daily amounts)
-- Example data structure:
-  {
-    "type": "bar",
-    "title": "Food Spending - Last 7 Days",
-    "data": [
-      {"period": "Mon", "amount": 45},
-      {"period": "Tue", "amount": 32},
-      ...
-    ]
-  }
-
-**MONTHLY QUERIES** (e.g., "last month", "this month", "last 30 days"):
-- Group by WEEK: ["Week 1", "Week 2", "Week 3", "Week 4"]
-- Chart type: BAR (showing weekly totals)
-- Example data structure:
-  {
-    "type": "bar",
-    "title": "Spending Breakdown - Last Month",
-    "data": [
-      {"period": "Week 1", "amount": 480},
-      {"period": "Week 2", "amount": 590},
-      ...
-    ]
-  }
-
-**MULTI-MONTH QUERIES** (e.g., "last 3 months", "quarterly"):
-- Group by MONTH: ["January", "February", "March"]
-- Chart type: BAR (showing monthly totals)
-- Example data structure:
-  {
-    "type": "bar",
-    "title": "Amazon Spending - Last 3 Months",
-    "data": [
-      {"period": "January", "amount": 340},
-      {"period": "February", "amount": 520},
-      ...
-    ]
-  }
-
-**YEARLY QUERIES** (e.g., "last year", "2025 spending"):
-- Group by QUARTER or MONTH depending on detail
-- Chart type: BAR or LINE for trends
-
-**MERCHANT/CATEGORY SPECIFIC CHARTS**:
-- When user asks about specific merchant (e.g., "Amazon", "Netflix") or category (e.g., "groceries", "dining"):
-  * Extract all transactions for that merchant/category from the RAG data
-  * If timeframe > 1 month → Use BAR chart with monthly/weekly grouping
-  * If single period → Use PIE chart showing sub-breakdowns if available
-- Example: "Chart my Amazon spending over 3 months" → BAR with ["Month 1", "Month 2", "Month 3"]
-
-**CRITICAL RESPONSE FORMAT RULES**:
-**STRICT 2-3-1 STRUCTURE** (MUST FOLLOW FOR EVERY RESPONSE):
-
-**PARAGRAPH 1** (Max 3 lines):
-- Opening statement addressing the user's question
-- High-level summary with 1-2 key numbers in <strong> tags
-- Use green/red colors for positive/negative trends
-
-**PARAGRAPH 2** (Max 3 lines):
-- Context or comparison (e.g., vs last month, vs budget)
-- Identify the main insight or pattern
-- Transition to detailed breakdown
-
-**BULLET POINTS** (Minimum 3, Maximum 5):
-- Each bullet MUST have specific transaction data or numbers from RAG
-- Format: <li><strong>Category/Date:</strong> ${householdData.currencySymbol}XXX - Description</li>
-- Include percentages or comparisons where relevant
-- Use color coding for amounts
-
-**PARAGRAPH 3** (Max 3 lines):
-- **HOW TO SAVE** or **HOW TO USE FUNDS FOR GOALS**
-- If grounding was used: Include 1-2 specific localized recommendations (e.g., "Consider opening an SIP with HDFC Index Fund")
-- End with encouraging, actionable advice
-
-**HTML FORMATTING REQUIREMENTS**:
-- Use <strong>text</strong> for all amounts, categories, and important info
-- Use <strong style="color: #10b981">text</strong> for positive numbers (savings, decreases)
-- Use <strong style="color: #ef4444">text</strong> for negative numbers (increases, overspending)
-- Use <strong style="color: #f59e0b">text</strong> for warnings or alerts
-- Use <ul><li>...</li></ul> for bullet points (never use plain text bullets)
-- Use <br><br> between paragraphs
-- Use <em>text</em> for subtle emphasis or secondary info
-
-**CHART DATA STRUCTURE**:
-
-**PIE CHART** (Category breakdown):
-{
-  "type": "pie",
-  "title": "Descriptive Title (e.g., Food Expenses Breakdown)",
-  "data": [
-    {"name": "Category 1", "value": 520, "color": "#10b981"},
-    {"name": "Category 2", "value": 330, "color": "#f59e0b"},
-    {"name": "Category 3", "value": 180, "color": "#3b82f6"}
-  ]
-}
-
-**BAR CHART** (Time-based comparison):
-{
-  "type": "bar",
-  "title": "Descriptive Title (e.g., Food Spending - Last 7 Days)",
-  "data": [
-    {"period": "Mon", "amount": 45},
-    {"period": "Tue", "amount": 32},
-    {"period": "Wed", "amount": 58},
-    {"period": "Thu", "amount": 41},
-    {"period": "Fri", "amount": 67},
-    {"period": "Sat", "amount": 89},
-    {"period": "Sun", "amount": 52}
-  ]
-}
-
-**LINE CHART** (Trend over time):
-{
-  "type": "line",
-  "title": "Descriptive Title (e.g., Grocery Spending Trend)",
-  "data": [
-    {"period": "January", "amount": 850},
-    {"period": "February", "amount": 920},
-    {"period": "March", "amount": 780}
-  ]
-}
-
-**WHEN TO INCLUDE CHARTS**:
-- **ALWAYS include a chart** when analyzing spending patterns, comparisons, or breakdowns
-- **SET chartData: null** only for general advice with no specific data analysis (e.g., "How can I save money?")
-- If user explicitly requests a chart type, MUST include that chart type
-- For merchant/category-specific queries, ALWAYS include appropriate chart
-
-**COLOR PALETTE FOR PIE CHARTS**:
-- Green shades: #10b981, #22c55e, #16a34a (for Needs/Good spending)
-- Orange shades: #f59e0b, #fb923c, #f97316 (for Wants/Moderate spending)
-- Red shades: #ef4444, #dc2626, #b91c1c (for Overspending/Alerts)
-- Blue shades: #3b82f6, #2563eb, #1d4ed8 (for Savings/Neutral)
-
-**EXAMPLE RESPONSES**:
-
-**Example 1 - Weekly Food Spending with Bar Chart (7 Days)**:
-{
-  "text": "Your food spending over the last 7 days totaled <strong style='color: #ef4444'>${householdData.currencySymbol}384</strong>, which is higher than your typical weekly average of <strong>${householdData.currencySymbol}280</strong>. The increase was mainly due to weekend dining.<br><br>Looking at the daily breakdown, Friday through Sunday accounted for <strong style='color: #ef4444'>54%</strong> of your weekly food spending. Weekdays showed good discipline with grocery-focused spending averaging <strong style='color: #10b981'>${householdData.currencySymbol}45/day</strong>.<br><br><ul><li><strong>Monday:</strong> ${householdData.currencySymbol}45 - Grocery shopping at BigBasket</li><li><strong>Friday:</strong> <strong style='color: #ef4444'>${householdData.currencySymbol}67</strong> - Dinner at Italian restaurant</li><li><strong>Saturday:</strong> <strong style='color: #ef4444'>${householdData.currencySymbol}89</strong> - Brunch + groceries</li><li><strong>Sunday:</strong> ${householdData.currencySymbol}52 - Takeout dinner</li></ul><br>Try limiting restaurant visits to <strong>once per weekend</strong> instead of multiple days. This could save you <strong style='color: #10b981'>${householdData.currencySymbol}80-100/week</strong> to put toward your Car goal! 🎯",
-  "chartData": {
-    "type": "bar",
-    "title": "Food Spending - Last 7 Days",
-    "data": [
-      {"period": "Mon", "amount": 45},
-      {"period": "Tue", "amount": 32},
-      {"period": "Wed", "amount": 58},
-      {"period": "Thu", "amount": 41},
-      {"period": "Fri", "amount": 67},
-      {"period": "Sat", "amount": 89},
-      {"period": "Sun", "amount": 52}
-    ]
-  }
-}
-
-**Example 2 - Monthly Breakdown with Bar Chart (Weeks)**:
-{
-  "text": "Your total spending last month was <strong style='color: #ef4444'>${householdData.currencySymbol}2,450</strong>, which is <strong>18% higher</strong> than your average. The increase was primarily driven by dining and entertainment expenses.<br><br>Looking at the weekly breakdown, spending peaked in Week 3 at <strong>${householdData.currencySymbol}720</strong>, coinciding with several restaurant visits. Week 1 was your most disciplined at <strong style='color: #10b981'>${householdData.currencySymbol}480</strong>.<br><br><ul><li><strong>Week 1:</strong> ${householdData.currencySymbol}480 - Mostly groceries and essentials</li><li><strong>Week 2:</strong> ${householdData.currencySymbol}590 - Added 2 dining expenses (${householdData.currencySymbol}85)</li><li><strong>Week 3:</strong> <strong style='color: #ef4444'>${householdData.currencySymbol}720</strong> - Highest spending: 4 restaurant visits (${householdData.currencySymbol}240)</li><li><strong>Week 4:</strong> ${householdData.currencySymbol}660 - Entertainment subscription charged (${householdData.currencySymbol}45)</li></ul><br>To bring spending back on track, try <strong>meal planning</strong> to reduce dining out to once per week. This could save you <strong style='color: #10b981'>${householdData.currencySymbol}150-200/month</strong>. Consider putting these savings toward your active goal! 🎯",
-  "chartData": {
-    "type": "bar",
-    "title": "Weekly Spending Breakdown - Last Month",
-    "data": [
-      {"period": "Week 1", "amount": 480},
-      {"period": "Week 2", "amount": 590},
-      {"period": "Week 3", "amount": 720},
-      {"period": "Week 4", "amount": 660}
-    ]
-  }
-}
-
-**Example 3 - Merchant Spending Over Time (Bar Chart)**:
-{
-  "text": "Your Amazon spending over the last 3 months totaled <strong style='color: #ef4444'>${householdData.currencySymbol}1,280</strong>, showing an upward trend. February had the highest spending at <strong>${householdData.currencySymbol}520</strong>.<br><br>Breaking down by month: January started modestly at <strong>${householdData.currencySymbol}340</strong>, February spiked to <strong style='color: #ef4444'>${householdData.currencySymbol}520</strong> (likely seasonal sales), and March settled at <strong>${householdData.currencySymbol}420</strong>. Most purchases were in electronics and household items.<br><br><ul><li><strong>January:</strong> ${householdData.currencySymbol}340 - Mostly household essentials</li><li><strong>February:</strong> <strong style='color: #ef4444'>${householdData.currencySymbol}520</strong> - Large electronics purchase (${householdData.currencySymbol}280)</li><li><strong>March:</strong> ${householdData.currencySymbol}420 - Mixed shopping: books, home goods</li><li><strong>Average:</strong> ${householdData.currencySymbol}427/month on Amazon</li></ul><br>To reduce Amazon spending, try setting a <strong>monthly limit of ${householdData.currencySymbol}300</strong> and use wishlists to avoid impulse buys. This could save <strong style='color: #10b981'>${householdData.currencySymbol}125/month</strong>! 📦",
-  "chartData": {
-    "type": "bar",
-    "title": "Amazon Spending - Last 3 Months",
-    "data": [
-      {"period": "January", "amount": 340},
-      {"period": "February", "amount": 520},
-      {"period": "March", "amount": 420}
-    ]
-  }
-}
-
-**CRITICAL REMINDERS**:
-1. **ALWAYS** follow 2-3-1 structure: 2 paragraphs (3 lines max each) → 3-5 bullets → 1 paragraph (3 lines max)
-2. **ALWAYS** use HTML formatting (never plain text)
-3. **ALWAYS** include specific numbers from RAG data in bullet points
-4. **ALWAYS** use color coding: green for good, red for bad, orange for warnings
-5. **ALWAYS** end with actionable, encouraging advice
-6. **ALWAYS** return valid JSON with "text" and "chartData" fields
-7. **CHART PRIORITY**: Explicit user command > Automatic logic based on query type
-8. **GROUNDING**: Only use when query is about prices, products, schemes, or market comparisons
-9. **MERCHANT/CATEGORY CHARTS**: Always include when analyzing specific merchant or category over time
-10. **WEEKLY = 7 DAYS**: When user asks about "last week" or "7 days", MUST show 7-day bar chart with Mon-Sun
-`;
-
-      // RAG: Retrieve relevant historical data with HYBRID approach (semantic + keyword)
-      let ragContext = '';
       try {
-        const lowerMsg = (userMessage || '').toLowerCase();
+        const user = await prisma.user.findUnique({
+          where: { id: userId },
+          select: { city: true, country: true, state: true, timezone: true }
+        });
 
-        // Detect Timeframe
-        let limit = 12; // Default
-        let months = 0;
-        let weeks = 0;
-        let years = 0;
+        if (user) {
+          userContext.city = user.city || 'Unknown';
+          userContext.country = user.country || 'Unknown';
+          userContext.state = user.state || null;
+          userContext.timezone = user.timezone || 'UTC';
 
-        if (lowerMsg.includes('year')) {
-          const match = lowerMsg.match(/(\d+)\s*year/);
-          years = match ? parseInt(match[1]) : 1;
-        } else if (lowerMsg.includes('month')) {
-          const match = lowerMsg.match(/(\d+)\s*month/);
-          months = match ? parseInt(match[1]) : 1;
-        } else if (lowerMsg.includes('week')) {
-          const match = lowerMsg.match(/(\d+)\s*week/);
-          weeks = match ? parseInt(match[1]) : 1;
+          // Calculate user's local date/time
+          const userTime = new Date().toLocaleString('en-US', { timeZone: userContext.timezone || 'UTC' });
+          const userDateTime = new Date(userTime);
+          userContext.localDate = userDateTime.toISOString().split('T')[0];
+          userContext.localTime = userDateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+
+          console.log(`📍 User: ${userContext.city}, ${userContext.country} | ⏰ ${userContext.timezone} (${userContext.localTime})`);
+        } else {
+          console.log('📍 No user profile found, using defaults.');
         }
-
-        // Adjust limit based on timeframe (Multi-tiered Dynamic RAG)
-        if (years > 0) limit = Math.min(100, years * 35);
-        else if (months > 0) limit = Math.min(60, months * 25);
-        else if (weeks > 0) limit = Math.min(25, weeks * 15);
-
-        const isMonthlyQuery = months > 0 || lowerMsg.includes('last 30 days') || lowerMsg.includes('this month') || lowerMsg.includes('last month');
-        const isWeeklyQuery = weeks > 0 || lowerMsg.includes('7 days') || lowerMsg.includes('last week') || lowerMsg.includes('this week');
-        const isYearlyQuery = years > 0 || lowerMsg.includes('year');
-
-        // HYBRID RAG: Use both semantic search AND keyword filtering
-        const queryVector = await generateEmbedding(userMessage, TaskType.RETRIEVAL_QUERY);
-        
-        if (queryVector) {
-          // Extract potential keywords from the query (for specific items like "A4 sheets")
-          const keywords = userMessage.toLowerCase()
-            .replace(/show|give|me|my|spending|on|at|for|the|last|this|week|month|year|in|bar|graph|chart/g, '')
-            .trim()
-            .split(/\s+/)
-            .filter(w => w.length > 2);
-
-          let relevantTransactions;
-
-          // If specific keywords detected (like "amazon", "a4", "netflix"), use hybrid search
-          if (keywords.length > 0 && keywords.length <= 3) {
-            relevantTransactions = await prisma.$queryRaw`
-              SELECT amount, category, date, description, merchant, type
-              FROM transactions
-              WHERE household_id = ${householdData.id}
-              AND deleted_at IS NULL
-              AND (
-                LOWER(description) LIKE ${`%${keywords.join('%')}%`}
-                OR LOWER(merchant) LIKE ${`%${keywords.join('%')}%`}
-                OR LOWER(category) LIKE ${`%${keywords.join('%')}%`}
-              )
-              ORDER BY date DESC
-              LIMIT ${limit}
-            `;
-
-            // Fallback to semantic search if keyword search returns nothing
-            if (!relevantTransactions || relevantTransactions.length === 0) {
-              relevantTransactions = await prisma.$queryRaw`
-                SELECT amount, category, date, description, merchant, type
-                FROM transactions
-                WHERE household_id = ${householdData.id}
-                AND deleted_at IS NULL
-                ORDER BY embedding <=> ${queryVector}::vector
-                LIMIT ${limit}
-              `;
-            }
-          } else {
-            // Default: Pure semantic search for general queries
-            relevantTransactions = await prisma.$queryRaw`
-              SELECT amount, category, date, description, merchant, type
-              FROM transactions
-              WHERE household_id = ${householdData.id}
-              AND deleted_at IS NULL
-              ORDER BY embedding <=> ${queryVector}::vector
-              LIMIT ${limit}
-            `;
-          }
-
-          if (relevantTransactions && relevantTransactions.length > 0) {
-            ragContext = `\n\n**RELEVANT HISTORICAL DATA** (${relevantTransactions.length} transactions found):\n`;
-            relevantTransactions.forEach(t => {
-              ragContext += `- ${new Date(t.date).toLocaleDateString()}: ${householdData.currencySymbol}${t.amount} for ${t.description || t.merchant || 'Uncategorized'} (${t.category}, ${t.type})\n`;
-            });
-
-            if (isMonthlyQuery) {
-              ragContext += `\n*CRITICAL INSTRUCTION: Use the dates above to group spending into "Week 1", "Week 2", "Week 3", "Week 4" for a BAR CHART. Calculate weekly totals from the transaction dates.*`;
-            } else if (isWeeklyQuery) {
-              ragContext += `\n*CRITICAL INSTRUCTION: Use the dates above to group spending by DAY OF WEEK (Mon, Tue, Wed, Thu, Fri, Sat, Sun) for a 7-DAY BAR CHART. Calculate daily totals from the transaction dates.*`;
-            } else if (isYearlyQuery) {
-              ragContext += `\n*CRITICAL INSTRUCTION: Analyze the trend over the years to find exactly where price increases occurred. Group by month or quarter.*`;
-            }
-          } else {
-            ragContext = `\n\n**NOTE**: No specific transactions found matching this query. Use the household snapshot data to provide general advice.`;
-          }
-        }
-      } catch (ragError) {
-        console.error('RAG Retrieval Error:', ragError);
-        ragContext = `\n\n**NOTE**: Unable to retrieve specific transaction data. Use the household snapshot data to provide general advice.`;
+      } catch (locError) {
+        console.warn('⚠️ Could not fetch user context:', locError.message);
       }
+
+      // ==========================================
+      // STEP 2: Get User's Actual Categories
+      // ==========================================
+      let userCategories = [];
+      try {
+        const categoryResult = await prisma.$queryRaw`
+          SELECT DISTINCT category 
+          FROM transactions 
+          WHERE household_id = ${householdData.id}
+          AND deleted_at IS NULL
+          AND category IS NOT NULL
+          ORDER BY category
+        `;
+        userCategories = categoryResult.map(r => r.category);
+        console.log(`📂 User categories: ${userCategories.join(', ')}`);
+        userContext.availableCategories = userCategories;
+      } catch (catError) {
+        console.warn('⚠️ Could not fetch user categories:', catError.message);
+      }
+
+      // ==========================================
+      // STEP 3: Parse Query with Parser Agent (AI)
+      // ==========================================
+      console.log('🔍 Parsing query with Parser Agent...');
+      const parsedQuery = await parseQuery(userMessage, userContext);
+
+      // Update Opik span with parsed metadata
+      span.update({
+        input: {
+          userMessage,
+          parsedQuery,
+          metadata: {
+            householdId: householdData.id,
+            location: `${userContext.city}, ${userContext.country}`,
+            timezone: userContext.timezone
+          }
+        }
+      });
+
+      // ==========================================
+      // STEP 3: Build and Execute Database Query
+      // ==========================================
+      console.log('📦 Fetching transactions...');
+      const transactions = await queryTransactions(householdData.id, parsedQuery);
+
+      // ==========================================
+      // STEP 4: Build RAG Context
+      // ==========================================
+      const ragContext = buildRAGContext(transactions, parsedQuery, householdData.currencySymbol);
+
+      // ==========================================
+      // STEP 5: Build Advisor Prompt
+      // ==========================================
+      const contextPrompt = buildContextPrompt(householdData, userContext, parsedQuery);
 
       // Build conversation context
       let conversationContext = '';
@@ -462,94 +137,411 @@ When Google Search Grounding is enabled, use it intelligently based on the user'
           let content = msg.content;
           try {
             const parsed = typeof content === 'string' ? JSON.parse(content) : content;
-            content = parsed.text ? parsed.text.replace(/<[^>]*>/g, '') : JSON.stringify(content);
-          } catch (e) { /* use as is */ }
-          conversationContext += `${msg.role === 'user' ? 'User' : 'Advisor'}: ${content}\n`;
+            content = parsed.text ? parsed.text.replace(/<[^>]*>/g, '').substring(0, 150) : '';
+          } catch (e) { }
+          conversationContext += `${msg.role === 'user' ? 'User' : 'AI'}: ${content}...\n`;
         });
       }
 
-      const fullPrompt = `${contextPrompt}${conversationContext}\n**USER MESSAGE**: ${userMessage}\n${ragContext}\n\nIMPORTANT: Respond with ONLY a valid JSON object.`;
+      const fullPrompt = `${contextPrompt}${conversationContext}
 
-      // Get AI response with Grounding for specific topics and localization
-      const lowerMsg = (userMessage || '').toLowerCase();
-      const needsGrounding = lowerMsg.includes('price') ||
-        lowerMsg.includes('increase') ||
-        lowerMsg.includes('subscription') ||
-        lowerMsg.includes('netflix') ||
-        lowerMsg.includes('disney') ||
-        lowerMsg.includes('spotify') ||
-        lowerMsg.includes('sip') ||
-        lowerMsg.includes('investment') ||
-        lowerMsg.includes('invest') ||
-        lowerMsg.includes('save') ||
-        lowerMsg.includes('savings') ||
-        lowerMsg.includes('scheme') ||
-        lowerMsg.includes('tier') ||
-        lowerMsg.includes('plan') ||
-        lowerMsg.includes('isa') ||
-        lowerMsg.includes('401k') ||
-        lowerMsg.includes('ira') ||
-        lowerMsg.includes('mutual fund') ||
-        lowerMsg.includes('cheaper') ||
-        lowerMsg.includes('best') ||
-        lowerMsg.includes('compare') ||
-        lowerMsg.includes('platform') ||
-        lowerMsg.includes('bigbasket') ||
-        lowerMsg.includes('reliance') ||
-        lowerMsg.includes('walmart') ||
-        lowerMsg.includes('target') ||
-        lowerMsg.includes('grocery') ||
-        lowerMsg.includes('market') ||
-        lowerMsg.includes('where to buy') ||
-        lowerMsg.includes('which is better') ||
-        lowerMsg.includes('recommend');
+═══════════════════════════════════════════════════════════════
+📩 USER'S CURRENT MESSAGE
+═══════════════════════════════════════════════════════════════
 
-      const aiResponse = await generateContent(fullPrompt, {
-        temperature: 0.8,
-        maxTokens: 4096,
-        useGrounding: needsGrounding
-      });
+"${userMessage}"
 
-      // Parse JSON response key logic
+${ragContext}
+
+═══════════════════════════════════════════════════════════════
+🎯 RESPONSE REQUIREMENTS (CRITICAL - FOLLOW EXACTLY)
+═══════════════════════════════════════════════════════════════
+
+**JSON STRUCTURE (MANDATORY)**:
+
+You MUST return ONLY valid JSON in this EXACT format:
+
+{
+  "text": "HTML formatted string with inline styles",
+  "chartData": {
+    "type": "bar|pie|line",
+    "title": "Chart Title",
+    "data": [...]
+  }
+}
+
+Do NOT include:
+  ✗ Markdown code fences (\`\`\`json)
+  ✗ Any preamble or explanation before JSON
+  ✗ Any text after JSON
+  ✗ Line breaks or formatting outside the JSON
+
+═══════════════════════════════════════════════════════════════
+📊 CHART GENERATION RULES (CRITICAL)
+═══════════════════════════════════════════════════════════════
+
+${parsedQuery.visualization.chartType
+          ? `🚨 CHART IS REQUIRED 🚨
+
+The user has EXPLICITLY requested a '${parsedQuery.visualization.chartType.toUpperCase()}' chart.
+
+You MUST include the chartData field with:
+  ✓ type: "${parsedQuery.visualization.chartType}"
+  ✓ title: A descriptive title
+  ✓ data: Array with actual numbers (NOT strings)
+
+If you return chartData: null or omit chartData, you will FAIL this task.`
+          // UPDATED LOGIC: Default to including a chart unless it's strictly a text-only greeting
+          : `Chart is STRONGLY ENCOURAGED for this query unless it is a simple greeting or specific factual question (e.g. "what is my income") 
+
+If the user is analyzing data, trends, or asking about spending, YOU SHOULD PROVIDE A CHART.
+If you don't include a chart, set chartData: null`
+        }
+
+**Chart Data Format Rules**:
+
+1. Amounts MUST be numbers, NOT strings
+   ✓ CORRECT: "amount": 520.50
+   ✗ WRONG: "amount": "520.50"
+   ✗ WRONG: "amount": "₹520"
+
+2. Use EXACT xAxisLabels provided:
+   ${JSON.stringify(parsedQuery.visualization.xAxisLabels || 'auto-generate based on data')}
+
+3. GroupBy setting: ${parsedQuery.visualization.groupBy || 'auto-detect from query'}
+
+4. Chart must match the requested type: ${parsedQuery.visualization.chartType || 'any appropriate type'}
+
+**Chart Structure Examples**:
+
+PIE CHART:
+{
+  "type": "pie",
+  "title": "Spending Distribution",
+  "data": [
+    {"name": "Food", "value": 450.50, "color": "#10b981"},
+    {"name": "Shopping", "value": 320.00, "color": "#3b82f6"}
+  ]
+}
+
+BAR/LINE CHART:
+{
+  "type": "bar",
+  "title": "Weekly Spending",
+  "data": [
+    {"period": "Mon", "amount": 45.50},
+    {"period": "Tue", "amount": 67.20}
+  ]
+}
+
+═══════════════════════════════════════════════════════════════
+🎨 HTML COLOR FORMATTING (ABSOLUTE REQUIREMENT)
+═══════════════════════════════════════════════════════════════
+
+🚨 CRITICAL RULE: NEVER WRITE COLOR NAMES AS PLAIN TEXT 🚨
+
+When you want to emphasize something with color, you MUST use HTML inline styles.
+
+**WRONG EXAMPLES (DO NOT DO THIS)**:
+  ❌ "Your spending shows a RED spike"
+  ❌ "This is GREEN news for your budget"
+  ❌ "ORANGE warning: watch your dining expenses"
+  ❌ "I see a red flag in your spending"
+  ❌ "The green category is performing well"
+
+**CORRECT EXAMPLES (DO THIS)**:
+  ✅ "Your spending shows a <strong style="color: #ef4444">concerning spike</strong>"
+  ✅ "This is <strong style="color: #10b981">excellent news</strong> for your budget"
+  ✅ "<strong style="color: #f59e0b">Watch your dining expenses</strong> this month"
+  ✅ "I notice a <strong style="color: #ef4444">warning sign</strong> in your spending"
+  ✅ "Your <strong style="color: #10b981">savings category</strong> is performing well"
+
+**COLOR PALETTE (USE THESE EXACT CODES)**:
+
+<strong style="color: #10b981">text</strong>
+  → Use for: Positive news, savings, achievements, reductions in spending, good trends
+  → Examples: "excellent progress", "well done", "savings increased", "spending decreased"
+
+<strong style="color: #ef4444">text</strong>
+  → Use for: Warnings, overspending, urgent concerns, budget violations, concerning trends
+  → Examples: "significant increase", "over budget", "warning", "needs attention"
+
+<strong style="color: #f59e0b">text</strong>
+  → Use for: Caution, watch items, moderate concerns, things to monitor
+  → Examples: "worth watching", "slight increase", "monitor this", "consider reducing"
+
+<strong style="color: #3b82f6">text</strong>
+  → Use for: Data points, statistics, numbers, dates, factual information
+  → Examples: specific amounts, dates, transaction counts, percentages
+
+<strong style="color: #8b5cf6">text</strong>
+  → Use for: Tips, recommendations, advice, suggestions, action items
+  → Examples: "try this", "consider", "recommendation", "tip"
+
+<strong style="color: #eab308">text</strong>
+  → Use for: SPECIFIC ENTITY HIGHLIGHTING (User asked for this specifically)
+  → Use ONLY when emphasizing the specific item the user asked about (e.g., "Water Bill", "Netflix", "Swiggy")
+  → Example: "Your <strong style="color: #eab308">Water Bill</strong> this month was ₹400."
+
+**How to Apply Colors**:
+  • If user asks about "water bill", highlight "Water Bill" in <strong style="color: #eab308">Yellow</strong>
+  • If user asks about "Food", highlight "Food" related terms in <strong style="color: #eab308">Yellow</strong> or appropriate context color.
+
+
+═══════════════════════════════════════════════════════════════
+📝 RESPONSE STRUCTURE (MANDATORY 2-3-1 FORMAT)
+═══════════════════════════════════════════════════════════════
+
+Your response MUST follow this exact structure:
+
+**PARAGRAPH 1** (Opening Summary - 2-3 sentences):
+  • High-level finding or insight
+  • Use colored emphasis for key points
+  • Set the context for the analysis
+  • Example: "<p>Based on your <strong style="color: #3b82f6">December 2025</strong> spending data, I've identified a <strong style="color: #f59e0b">notable pattern</strong> in your discretionary expenses. Your total spending reached <strong style="color: #3b82f6">₹12,450</strong>, which represents a <strong style="color: #ef4444">15% increase</strong> from your average.</p>"
+
+**PARAGRAPH 2** (Context & Trends - 2-3 sentences):
+  • Explain what the data means
+  • Provide context and interpretation
+  • Highlight trends or patterns
+  • Example: "<p>This increase is primarily driven by higher <strong style="color: #3b82f6">Dining & Entertainment</strong> expenses during the holiday season. The pattern aligns with typical year-end spending, but it's <strong style="color: #f59e0b">worth monitoring</strong> as we enter the new year.</p>"
+
+**BULLET POINTS** (Detailed Breakdown - 3-5 items):
+  • Specific data points with dates, amounts, merchants
+  • Use RAG transaction data
+  • Include colored emphasis for important values
+  • Always include actual numbers with currency symbol
+  • Example:
+    <ul>
+      <li><strong style="color: #3b82f6">Dec 15</strong>: ₹1,450 at Swiggy - <strong style="color: #ef4444">Highest single-day</strong> food delivery expense</li>
+      <li><strong style="color: #3b82f6">Week of Dec 18-24</strong>: ₹3,200 total dining expenses - <strong style="color: #f59e0b">2x your weekly average</strong></li>
+      <li><strong style="color: #10b981">Good news</strong>: Your grocery spending stayed within budget at ₹4,500</li>
+    </ul>
+
+**PARAGRAPH 3** (Actionable Advice - 2-3 sentences):
+  • Specific, actionable recommendations
+  • Based on the actual data analyzed
+  • Not generic advice
+  • Include local context if grounding was used
+  • Example: "<p><strong style="color: #8b5cf6">Recommendation</strong>: Consider setting a weekly cap of ₹800 for food delivery to bring your monthly dining budget back to ₹3,500. ${parsedQuery.grounding.enabled ? 'Based on local data, you can find quality meals under ₹200 at several restaurants in ' + userContext.city + '.' : 'This will help you save approximately ₹1,500 per month.'}</p>"
+
+**DO NOT**:
+  ✗ Start with generic openings like "Here's an analysis..."
+  ✗ Use plain color names (RED, GREEN, etc.) anywhere
+  ✗ Give generic advice like "track your expenses" (they're already using a budget app!)
+  ✗ Include more than 3 paragraphs outside the bullet section
+  ✗ Forget to use the currency symbol: ${householdData.currencySymbol}
+
+═══════════════════════════════════════════════════════════════
+💡 ADVICE QUALITY STANDARDS
+═══════════════════════════════════════════════════════════════
+
+**SPECIFIC vs GENERIC Advice**:
+
+❌ GENERIC (DO NOT DO THIS):
+  • "Track your expenses regularly"
+  • "Create a budget"
+  • "Monitor your spending"
+  • "Try to save more"
+  • "Cut back on unnecessary expenses"
+
+✅ SPECIFIC (DO THIS):
+  • "Reduce your Swiggy orders from 12 to 8 per month to save ₹1,600"
+  • "Your Amazon purchases spiked to ₹4,500 in Week 3 - consider a one-week ordering freeze"
+  • "Shift ₹500 from dining to groceries - you'll eat out less but maintain quality"
+  • "Your gym membership (₹2,000/month) hasn't been used in 45 days - consider pausing it"
+
+**Use RAG Data**:
+  • Always reference actual transactions
+  • Include specific merchants, dates, amounts
+  • Cite real patterns from the data
+  • Don't make up numbers
+
+**Personalization**:
+  • Reference their location: ${userContext.city}, ${userContext.country}
+  • Use their currency: ${householdData.currencySymbol}
+  • Consider their goals: ${householdData.goals?.map(g => g.name).join(', ') || 'general savings'}
+  • Acknowledge their spending patterns from RAG data
+
+═══════════════════════════════════════════════════════════════
+🔧 TECHNICAL REQUIREMENTS
+═══════════════════════════════════════════════════════════════
+
+**HTML Formatting**:
+  • Use <p> for paragraphs
+  • Use <ul> and <li> for bullet lists
+  • Use <strong style="color: #HEXCODE"> for colored emphasis
+  • Use <br><br> for spacing between sections
+  • Keep HTML valid and properly closed
+
+**Data Accuracy**:
+  • Use ONLY data from RAG context
+  • Never invent transactions or amounts
+  • Always use currency symbol: ${householdData.currencySymbol}
+  • Reference actual dates from transaction data
+
+**Tone**:
+  • Professional yet friendly
+  • Analytical but not robotic
+  • Encouraging without being patronizing
+  • Honest about concerns but constructive
+
+**Memory**:
+  • Reference previous conversation if relevant
+  • Don't repeat advice already given
+  • Build on prior discussions
+  • Acknowledge user's follow-up questions
+
+═══════════════════════════════════════════════════════════════
+✅ FINAL VALIDATION CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+Before returning your response, verify:
+
+□ Response is valid JSON (no markdown, no backticks)
+□ "text" field contains HTML string
+□ "chartData" field is present (with data if chart required, or null if not)
+□ Chart amounts are numbers, not strings
+□ No plain-text color names (RED, GREEN, etc.) anywhere
+□ All colors use inline styles: <strong style="color: #HEXCODE">
+□ Response follows 2-3-1 structure (2 paragraphs, bullets, 1 paragraph)
+□ Bullet points include specific data from RAG
+□ Advice is specific and actionable, not generic
+□ Currency symbol ${householdData.currencySymbol} is used throughout
+□ All HTML tags are properly closed
+
+Now generate your response following ALL requirements above.`;
+
+      // LOGGING: Feed data to Opik and Console
+      if (span) {
+        span.update({
+          metadata: {
+            ragContext_preview: ragContext.substring(0, 5000),
+            fullPrompt_preview: fullPrompt.substring(0, 2000),
+            chart_instruction: parsedQuery.visualization
+          }
+        });
+      }
+      console.log('📝 [Advisor Context] RAG Data (preview):', ragContext.substring(0, 500).replace(/\n/g, ' ') + '...');
+      console.log('📊 [Advisor Chart] Request:', JSON.stringify(parsedQuery.visualization));
+
+      // ==========================================
+      // STEP 6: Generate Advisor Response
+      // ==========================================
+      console.log(`${parsedQuery.grounding.enabled ? '✅' : '🚫'} Grounding: ${parsedQuery.grounding.enabled ? 'ON' : 'OFF'}`);
+
       let parsedResponse;
       try {
-        // Try to extract JSON if there's extra text
-        const jsonMatch = aiResponse.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          parsedResponse = JSON.parse(jsonMatch[0]);
-        } else {
-          parsedResponse = JSON.parse(aiResponse);
+        // ATTEMPT 1: Primary Generation
+        console.log('🤖 [Advisor] Generating advice with PRIMARY model...');
+        parsedResponse = await generateJSON(fullPrompt, null, {
+          temperature: 0.8,
+          maxTokens: 8096,
+          useGrounding: parsedQuery.grounding.enabled,
+          title: 'Financial Advisor (Primary)'
+        });
+
+        // CHECK FOR SOFT FAILURE (AI apologizes)
+        if (parsedResponse.text && parsedResponse.text.includes("I'm having trouble analyzing")) {
+          console.warn('⚠️ [Advisor] Primary model returned soft failure. Retrying with BACKUP model...');
+          throw new Error('Soft failure: AI apologized');
         }
+
+      } catch (primaryError) {
+        console.error(`❌ [Advisor] Primary generation failed: ${primaryError.message}`);
+        console.log('🔄 [Advisor] Retrying with BACKUP model...');
+
+        try {
+          // ATTEMPT 2: Backup Generation
+          parsedResponse = await generateJSON(fullPrompt, null, {
+            temperature: 0.8,
+            maxTokens: 8096,
+            useGrounding: false, // Disable grounding on backup to reduce complexity
+            useBackup: true,     // FORCE BACKUP MODEL
+            title: 'Financial Advisor (Backup)'
+          });
+          console.log('✅ [Advisor] Backup generation successful');
+        } catch (backupError) {
+          console.error(`❌ [Advisor] Backup generation also failed: ${backupError.message}`);
+          // Final fallback
+          parsedResponse = {
+            text: "<p>I apologize, but I'm having trouble analyzing your data right now. Please try asking a different question.</p>",
+            chartData: null
+          };
+        }
+      }
+
+      // Validate structure
+      if (!parsedResponse.text && !parsedResponse.chartData) {
+        console.warn('⚠️ [Advisor] Empty response received');
+        parsedResponse.text = "<p>Here is your financial analysis.</p>";
+      }
+
+      if (!parsedResponse.text) {
+        parsedResponse.text = "<p>Here is your financial analysis.</p>";
+      }
+
+      // ==========================================
+      // CRITICAL FIX: Enforce chart generation if requested
+      // ==========================================
+      // Check if chart was requested (type is set) but missing in response
+      const chartRequested = !!parsedQuery.visualization.chartType;
+      const chartMissing = !parsedResponse.chartData;
+      const chartInvalid = parsedResponse.chartData && (!parsedResponse.chartData.data || parsedResponse.chartData.data.length === 0);
+
+      if (chartRequested && (chartMissing || chartInvalid)) {
+        console.warn(`⚠️ [Advisor] Chart requested (${parsedQuery.visualization.chartType}) but missing/invalid in AI response - Generating fallback chart`);
+
+        const fallbackChart = generateFallbackChart(
+          transactions,
+          parsedQuery,
+          householdData.currencySymbol
+        );
+
+        if (fallbackChart) {
+          parsedResponse.chartData = fallbackChart;
+          console.log('✅ [Advisor] Fallback chart generated successfully');
+        } else {
+          console.log('🚫 [Advisor] Could not generate fallback chart (no data or invalid config)');
+        }
+      }
+
+      // Validate chart data again after potential fallback
+      if (parsedResponse.chartData) {
+        console.log('📊 [Advisor] Validating chart data...');
+        const chart = parsedResponse.chartData;
 
         // Validate structure
-        if (!parsedResponse.text) {
-          // Fallback if text field is missing but maybe other fields exist?
-          parsedResponse = { text: aiResponse, chartData: null };
+        if (!chart.type || !chart.data || !Array.isArray(chart.data) || chart.data.length === 0) {
+          console.warn('⚠️ [Advisor] Invalid chart structure, removing.');
+          parsedResponse.chartData = null;
+        } else {
+          // Convert string amounts to numbers
+          chart.data.forEach(item => {
+            if (chart.type === 'pie' && typeof item.value === 'string') {
+              item.value = parseFloat(item.value.replace(/[^0-9.-]/g, '')) || 0;
+            } else if (typeof item.amount === 'string') {
+              item.amount = parseFloat(item.amount.replace(/[^0-9.-]/g, '')) || 0;
+            }
+          });
+          console.log(`✅ [Advisor] Final Chart: ${chart.type.toUpperCase()} with ${chart.data.length} data points`);
         }
-
-        logSuccess('advisorAgent', 'getFinancialAdvice', {
-          responseLength: parsedResponse.text.length,
-          hasChart: !!parsedResponse.chartData
-        });
-
-      } catch (parseError) {
-        logError('advisorAgent', 'getFinancialAdvice', parseError, {
-          message: 'Failed to parse JSON response',
-          rawResponse: aiResponse.substring(0, 200)
-        });
-
-        // Fallback to plain text response
-        parsedResponse = {
-          text: aiResponse,
-          chartData: null
-        };
+      } else {
+        console.log('ℹ️ [Advisor] No chart returned to user');
       }
+
+      logSuccess('advisorAgent', 'getFinancialAdvice', {
+        responseLength: parsedResponse.text.length,
+        hasChart: !!parsedResponse.chartData,
+        chartType: parsedResponse.chartData?.type || 'none',
+        modelUsed: parsedResponse.text.includes('apologize') ? 'BACKUP' : 'PRIMARY'
+      });
 
       return {
         success: true,
-        response: JSON.stringify(parsedResponse), // Send as string to preserve structure in existing flow
-        conversationId: params.conversationId || null,
-        timestamp: new Date().toISOString()
+        response: parsedResponse.text,
+        chartData: parsedResponse.chartData,
+        parsedQuery // Include for debugging
       };
 
     } catch (error) {
@@ -557,33 +549,227 @@ When Google Search Grounding is enabled, use it intelligently based on the user'
       return {
         success: false,
         error: error.message,
-        response: "I'm having trouble connecting right now. Please try again in a moment."
+        response: "I'm having trouble connecting right now. Please try again."
       };
     }
   }, { userId: params.userId });
 }
 
 /**
- * Generate structured savings recommendations
+ * Generate fallback chart when AI doesn't provide one
+ * @param {Array} transactions - Transaction data
+ * @param {Object} parsedQuery - Parsed query metadata
+ * @param {string} currencySymbol - Currency symbol
+ * @returns {Object} Chart data object
+ */
+function generateFallbackChart(transactions, parsedQuery, currencySymbol) {
+  const { chartType, groupBy, xAxisLabels, title } = parsedQuery.visualization;
+
+  if (!chartType || transactions.length === 0) {
+    return null;
+  }
+
+  try {
+    if (chartType === 'pie') {
+      // Group by category
+      const categoryTotals = {};
+      transactions.forEach(t => {
+        const cat = t.category || 'Other';
+        categoryTotals[cat] = (categoryTotals[cat] || 0) + Math.abs(parseFloat(t.amount) || 0);
+      });
+
+      return {
+        type: 'pie',
+        title: title || 'Spending by Category',
+        data: Object.entries(categoryTotals).map(([name, value]) => ({
+          name,
+          value,
+          color: getColorForCategory(name)
+        }))
+      };
+    }
+
+    if (chartType === 'bar' || chartType === 'line') {
+      // Group by period
+      const periodTotals = {};
+
+      transactions.forEach(t => {
+        const date = new Date(t.transaction_date);
+        let period;
+
+        if (groupBy === 'day') {
+          period = date.toLocaleDateString('en-US', { weekday: 'short' });
+        } else if (groupBy === 'week') {
+          const weekNum = Math.floor((date - new Date(parsedQuery.dateRange.start)) / (7 * 24 * 60 * 60 * 1000)) + 1;
+          period = `W${weekNum}`;
+        } else if (groupBy === 'month') {
+          period = date.toLocaleDateString('en-US', { month: 'short' });
+        } else {
+          period = date.toISOString().split('T')[0];
+        }
+
+        periodTotals[period] = (periodTotals[period] || 0) + Math.abs(parseFloat(t.amount) || 0);
+      });
+
+      // Use xAxisLabels if provided, otherwise use keys
+      const labels = xAxisLabels || Object.keys(periodTotals).sort();
+      const data = labels.map(label => ({
+        period: label,
+        amount: periodTotals[label] || 0
+      }));
+
+      return {
+        type: chartType,
+        title: title || `Spending Trend (${groupBy || 'period'})`,
+        data
+      };
+    }
+
+    return null;
+  } catch (error) {
+    console.error('❌ Fallback chart generation failed:', error.message);
+    return null;
+  }
+}
+
+/**
+ * Get color for category (for pie charts)
+ */
+function getColorForCategory(category) {
+  // Enhanced palette for better differentiation
+  const colorMap = {
+    'Food': '#10b981',           // Emerald
+    'Groceries': '#059669',      // Darker Emerald
+    'Dining': '#f59e0b',         // Amber
+    'Entertainment': '#f97316',  // Orange
+    'Shopping': '#3b82f6',       // Blue
+    'Transportation': '#6366f1', // Indigo
+    'Healthcare': '#ec4899',     // Pink
+    'Utilities': '#8b5cf6',      // Violet
+    'Travel': '#06b6d4',         // Cyan
+    'Gifts': '#f43f5e',          // Rose
+    'Health': '#84cc16',         // Lime
+    'Education': '#a855f7',      // Purple
+    'Charity': '#eab308',        // Yellow
+    'Housing': '#14b8a6',        // Teal
+    'Subscription': '#64748b'    // Slate
+  };
+
+  // 1. Direct match (Case insensitive)
+  for (const [key, color] of Object.entries(colorMap)) {
+    if (category.toLowerCase().includes(key.toLowerCase())) return color;
+  }
+
+  // 2. Fallback to generating a consistent color from string hash
+  // This ensures "Water Bill" always gets same color, but different from "Electric Bill"
+  let hash = 0;
+  for (let i = 0; i < category.length; i++) {
+    hash = category.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+  return '#' + '00000'.substring(0, 6 - c.length) + c;
+}
+
+/**
+ * Build the context prompt for the Advisor Agent
  * @param {Object} householdData - Household financial snapshot
- * @returns {Object} Structured recommendations
+ * @param {Object} userContext - User location and timezone
+ * @param {Object} parsedQuery - Parsed query metadata
+ * @returns {string} Context prompt
+ */
+function buildContextPrompt(householdData, userContext, parsedQuery) {
+  // Build xAxisLabels instruction
+  const xAxisInstruction = parsedQuery.visualization.xAxisLabels
+    ? `Use these EXACT labels for x-axis: [${parsedQuery.visualization.xAxisLabels.join(', ')}]`
+    : 'Generate appropriate labels based on groupBy';
+
+  return `You are an expert financial advisor helping a household make smarter money decisions. Your analysis is data-driven, insightful, and actionable.
+
+═══════════════════════════════════════════════════════════════
+💰 HOUSEHOLD FINANCIAL SNAPSHOT
+═══════════════════════════════════════════════════════════════
+
+**Location & Context**:
+  • City: ${userContext.city}${userContext.state ? `, ${userContext.state}` : ''}
+  • Country: ${userContext.country}
+  • Timezone: ${userContext.timezone}
+  • Current Date: ${userContext.localDate}
+  • Currency: ${householdData.currency || 'USD'} (Symbol: ${householdData.currencySymbol})
+
+**Income & Spending Overview**:
+  • Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
+  • Monthly Spending: ${householdData.currencySymbol}${householdData.monthlySpending}
+  • This Week's Spending: ${householdData.currencySymbol}${householdData.thisWeekSpending}
+  • Savings Rate: ${householdData.savingsRate}%
+
+**Spending Breakdown by Type**:
+  • Needs: ${householdData.currencySymbol}${householdData.needs} (${householdData.needsPercent}%)
+  • Wants: ${householdData.currencySymbol}${householdData.wants} (${householdData.wantsPercent}%)
+  • Savings: ${householdData.currencySymbol}${householdData.savings} (${householdData.savingsPercent}%)
+
+**Top Spending Categories**:
+${householdData.topCategories?.map((c, i) => `  ${i + 1}. ${c.category}: ${householdData.currencySymbol}${c.amount}`).join('\n') || '  No data available'}
+
+**Active Financial Goals**:
+${householdData.goals?.length > 0
+      ? householdData.goals.map(g => `  • ${g.name}: ${householdData.currencySymbol}${g.currentAmount} / ${householdData.currencySymbol}${g.targetAmount} (${g.progress}% complete)`).join('\n')
+      : '  • No active goals set'}
+
+═══════════════════════════════════════════════════════════════
+🔍 QUERY ANALYSIS (FROM PARSER AGENT)
+═══════════════════════════════════════════════════════════════
+
+**Date Range**:
+  • Period: ${parsedQuery.dateRange.description}
+  • Start: ${parsedQuery.dateRange.start}
+  • End: ${parsedQuery.dateRange.end}
+
+**Filters Applied**:
+  • Categories: ${parsedQuery.filters.categories.length > 0 ? parsedQuery.filters.categories.join(', ') : 'All categories'}
+  • Types: ${parsedQuery.filters.types.length > 0 ? parsedQuery.filters.types.join(', ') : 'All types (NEED/WANT/SAVING)'}
+  • Merchants: ${parsedQuery.filters.merchants.length > 0 ? parsedQuery.filters.merchants.join(', ') : 'All merchants'}
+
+**Visualization Settings**:
+  • Chart Type: ${parsedQuery.visualization.chartType || 'Not requested'}
+  • Group By: ${parsedQuery.visualization.groupBy || 'Not specified'}
+  • xAxisLabels: ${xAxisInstruction}
+  • Chart Title: ${parsedQuery.visualization.title || 'Auto-generate'}
+
+**User Intent**: ${parsedQuery.intent}
+
+${parsedQuery.grounding.enabled
+      ? `**Web Search Enabled**: You have access to real-time data for: "${parsedQuery.grounding.searchQuery}"
+     Use this to provide local recommendations, price comparisons, or market insights for ${userContext.city}, ${userContext.country}.`
+      : ''}`;
+}
+
+/**
+ * Generate savings recommendations
  */
 export async function generateSavingsRecommendations(householdData) {
   return traceOperation('advisorAgent.generateRecommendations', async () => {
-    logEntry('advisorAgent', 'generateSavingsRecommendations');
+    logEntry('advisorAgent', 'generateRecommendations', { householdId: householdData.id });
 
     try {
-      const prompt = `Analyze this household's finances and provide 3 specific savings recommendations.
+      const prompt = `You are a financial advisor creating personalized savings recommendations.
 
-**FINANCIAL DATA**:
-- Currency: ${householdData.currency || 'USD'}
-- Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
-- Monthly Spending: ${householdData.currencySymbol}${householdData.monthlySpending}
-- Wants Spending: ${householdData.currencySymbol}${householdData.wants}
-- Top Want Categories: ${householdData.topWants?.map(w => `${w.category} (${householdData.currencySymbol}${w.amount})`).join(', ') || 'None tracked'}
-- Active Goals: ${householdData.goals?.map(g => g.name).join(', ') || 'None'}
+**HOUSEHOLD DATA**:
+  • Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
+  • Monthly Spending: ${householdData.currencySymbol}${householdData.monthlySpending}
+  • Total Wants Spending: ${householdData.currencySymbol}${householdData.wants}
+  • Top Want Categories: ${householdData.topWants?.map(w => `${w.category} (${householdData.currencySymbol}${w.amount})`).join(', ') || 'None'}
+  • Active Goals: ${householdData.goals?.map(g => g.name).join(', ') || 'None'}
 
-Generate EXACTLY 3 recommendations in valid JSON format:
+**TASK**: Generate 3 specific, actionable savings recommendations.
+
+**REQUIREMENTS**:
+1. Target the largest Want category first
+2. Suggest realistic 10-30% reductions
+3. Calculate exact monthly savings amounts
+4. Connect recommendations to their active goals
+5. Order by priority (highest impact first)
+
+**OUTPUT FORMAT** (valid JSON only):
 {
   "recommendations": [
     {
@@ -592,45 +778,35 @@ Generate EXACTLY 3 recommendations in valid JSON format:
       "currentSpend": 400,
       "targetSpend": 280,
       "monthlySavings": 120,
-      "yearlySavings": 1440,
-      "difficulty": "easy",
-      "impact": "How this helps their goals or financial situation",
+      "difficulty": "easy|medium|hard",
+      "impact": "How this helps their goals or financial health",
       "priority": 1
     }
   ],
-  "encouragement": "One positive, motivating statement about their current financial situation"
+  "encouragement": "Motivational message based on their financial situation"
 }
 
-**REQUIREMENTS**:
-1. Primary recommendation should target largest "Want" category
-2. Recommendations should be realistic (10-30% reductions, not 50%+)
-3. Calculate exact dollar amounts
-4. Connect to their active goals if they have any
-5. Order by priority (1 = highest impact)
-6. Difficulty must be one of: "easy", "medium", "hard"`;
+Focus on practical, achievable changes that will make a real difference.`;
 
       const result = await generateJSON(prompt, null, { maxTokens: 4096 });
 
-      logSuccess('advisorAgent', 'generateSavingsRecommendations', {
-        count: result.recommendations?.length
+      logSuccess('advisorAgent', 'generateRecommendations', {
+        recommendationCount: result?.recommendations?.length || 0
       });
 
       return {
         success: true,
-        ...result
+        recommendations: result.recommendations || [],
+        encouragement: result.encouragement || 'Keep up the great work!'
       };
 
     } catch (error) {
-      logError('advisorAgent', 'generateSavingsRecommendations', error);
+      logError('advisorAgent', 'generateRecommendations', error);
       return {
         success: false,
-        error: error.message
+        recommendations: [],
+        encouragement: 'Unable to generate recommendations at this time.'
       };
     }
-  });
+  }, { operation: 'generateRecommendations' });
 }
-
-export default {
-  getFinancialAdvice,
-  generateSavingsRecommendations
-};

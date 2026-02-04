@@ -28,43 +28,75 @@ const opik = new Opik({
  * @returns {Promise<any>} - Function result
  */
 export async function traceOperation(name, fn, metadata = {}) {
-    const trace = opik.trace({
-        name,
-        metadata: {
-            ...metadata,
-            project: 'household-budgeting',
-            timestamp: new Date().toISOString()
-        }
-    });
-
+    let trace;
     const startTime = Date.now();
 
+    // 1. Start Trace (Fail Safe)
     try {
-        // Pass the trace object to the function so it can create spans
+        trace = opik.trace({
+            name,
+            metadata: {
+                ...metadata,
+                project: 'household-budgeting',
+                timestamp: new Date().toISOString()
+            }
+        });
+    } catch (traceError) {
+        console.warn(`⚠️ Opik Tracing Failed (Start): ${traceError.message}`);
+        // trace is undefined, code continues
+    }
+
+    // 2. Execute Function
+    try {
+        // Pass the trace object (or null) to the function
         const result = await fn(trace);
 
-        trace.update({
-            output: typeof result === 'string' ? result.substring(0, 2000) : JSON.stringify(result).substring(0, 2000),
-            metadata: {
-                latency: Date.now() - startTime,
-                success: true
+        // 3. Update Trace on Success (Fail Safe)
+        if (trace) {
+            try {
+                trace.update({
+                    output: (typeof result === 'string' ? result : (JSON.stringify(result) || String(result))).substring(0, 5000),
+                    metadata: {
+                        latency: Date.now() - startTime,
+                        success: true
+                    }
+                });
+            } catch (updateError) {
+                console.warn(`⚠️ Opik Tracing Failed (Update Success): ${updateError.message}`);
             }
-        });
+        }
 
         return result;
-    } catch (error) {
-        trace.update({
-            output: `Error: ${error.message}`,
-            metadata: {
-                error: error.message,
-                latency: Date.now() - startTime,
-                success: false
-            }
-        });
 
+    } catch (error) {
+        // 4. Update Trace on Error (Fail Safe)
+        if (trace) {
+            try {
+                trace.update({
+                    output: `Error: ${error.message}`,
+                    metadata: {
+                        error: error.message,
+                        latency: Date.now() - startTime,
+                        success: false
+                    }
+                });
+            } catch (updateError) {
+                console.warn(`⚠️ Opik Tracing Failed (Update Error): ${updateError.message}`);
+            }
+        }
+
+        // Always re-throw the actual application error
         throw error;
+
     } finally {
-        trace.end();
+        // 5. End Trace (Fail Safe)
+        if (trace) {
+            try {
+                await trace.end();
+            } catch (endError) {
+                console.warn(`⚠️ Opik Tracing Failed (End): ${endError.message}`);
+            }
+        }
     }
 }
 
@@ -81,40 +113,58 @@ export async function traceSpan(parent, name, fn, metadata = {}) {
         return fn();
     }
 
-    const span = parent.span({
-        name,
-        metadata: {
-            ...metadata,
-            timestamp: new Date().toISOString()
-        }
-    });
+    let span;
+    try {
+        span = parent.span({
+            name,
+            metadata: {
+                ...metadata,
+                timestamp: new Date().toISOString()
+            }
+        });
+    } catch (startError) {
+        console.warn(`⚠️ Opik Span Failed (Start): ${startError.message}`);
+        return fn();
+    }
 
     const startTime = Date.now();
 
     try {
         const result = await fn(span);
 
-        span.update({
-            output: typeof result === 'string' ? result.substring(0, 1000) : JSON.stringify(result).substring(0, 1000),
-            metadata: {
-                latency: Date.now() - startTime,
-                success: true
-            }
-        });
+        try {
+            span.update({
+                output: (typeof result === 'string' ? result : (JSON.stringify(result) || String(result))).substring(0, 1000),
+                metadata: {
+                    latency: Date.now() - startTime,
+                    success: true
+                }
+            });
+        } catch (updateError) {
+            console.warn(`⚠️ Opik Span Failed (Update Success): ${updateError.message}`);
+        }
 
         return result;
     } catch (error) {
-        span.update({
-            output: `Error: ${error.message}`,
-            metadata: {
-                error: error.message,
-                latency: Date.now() - startTime,
-                success: false
-            }
-        });
+        try {
+            span.update({
+                output: `Error: ${error.message}`,
+                metadata: {
+                    error: error.message,
+                    latency: Date.now() - startTime,
+                    success: false
+                }
+            });
+        } catch (updateError) {
+            console.warn(`⚠️ Opik Span Failed (Update Error): ${updateError.message}`);
+        }
         throw error;
     } finally {
-        span.end();
+        try {
+            span.end();
+        } catch (endError) {
+            console.warn(`⚠️ Opik Span Failed (End): ${endError.message}`);
+        }
     }
 }
 

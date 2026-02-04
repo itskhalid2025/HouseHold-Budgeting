@@ -27,9 +27,11 @@ import {
 import Logo from '../assets/Logo.png';
 import { createHousehold, submitJoinRequest, getMyJoinRequestStatus } from '../api/api';
 import './Onboarding.css';
+import { useAuth } from '../context/AuthContext';
 
 export default function Onboarding() {
     const navigate = useNavigate();
+    const { refreshUser } = useAuth(); // Hooks must be inside component
     const observerRef = useRef(null);
 
     // -- State --
@@ -48,12 +50,24 @@ export default function Onboarding() {
                 const status = await getMyJoinRequestStatus();
                 if (status.hasPendingRequest) {
                     setPendingRequest(status.request);
+                } else {
+                    // If no longer pending, check if we were accepted!
+                    // Refresh user data to see if householdId is now set
+                    const updatedUser = await refreshUser();
+                    if (updatedUser && updatedUser.householdId) {
+                        // Accepted! Redirect to dashboard
+                        window.location.href = '/';
+                    } else {
+                        // Rejected or cancelled
+                        setPendingRequest(null);
+                    }
                 }
             } catch (err) {
                 console.error("Failed to check join request status", err);
             }
         };
         checkStatus();
+        const interval = setInterval(checkStatus, 5000); // Poll every 5s to see if accepted/rejected
 
         // Initialize intersection observer for scroll animations
         observerRef.current = new IntersectionObserver((entries) => {
@@ -67,7 +81,10 @@ export default function Onboarding() {
         const sections = document.querySelectorAll('.onboarding-section');
         sections.forEach(section => observerRef.current.observe(section));
 
-        return () => observerRef.current.disconnect();
+        return () => {
+            observerRef.current.disconnect();
+            clearInterval(interval);
+        };
     }, []);
 
     const handleCreate = async (e) => {
@@ -282,7 +299,7 @@ export default function Onboarding() {
                             <div className="modal-inner">
                                 <div className="modal-icon"><Users size={32} /></div>
                                 <h2>Join Household</h2>
-                                <p>Enter the 6-character invite code sent by your household admin.</p>
+                                <p>Enter the invite code sent by your household admin.</p>
 
                                 <form onSubmit={handleJoin}>
                                     <div className="onboarding-input-group">
@@ -291,7 +308,6 @@ export default function Onboarding() {
                                             placeholder="e.g. ABCDEF"
                                             value={inviteCode}
                                             onChange={e => setInviteCode(e.target.value.toUpperCase())}
-                                            maxLength={6}
                                             required
                                             autoFocus
                                         />

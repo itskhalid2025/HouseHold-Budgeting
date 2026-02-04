@@ -222,223 +222,225 @@ export default function Savings() {
     };
 
     return (
-        <div className="container savings-page">
-            <div className="page-header">
-                <h1>Savings & Goals</h1>
-                {canAdd && (
-                    <button
-                        className="btn-primary"
-                        onClick={() => { setEditingGoal(null); resetForm(); setShowAddModal(true); }}
-                    >
-                        + Add Goal
-                    </button>
-                )}
-            </div>
+        <>
+            <div className="container savings-page">
+                <div className="page-header">
+                    <h1>Savings & Goals</h1>
+                    {canAdd && (
+                        <button
+                            className="btn-primary"
+                            onClick={() => { setEditingGoal(null); resetForm(); setShowAddModal(true); }}
+                        >
+                            + Add Goal
+                        </button>
+                    )}
+                </div>
 
-            {error && <div className="error-banner">{error}</div>}
+                {error && <div className="error-banner">{error}</div>}
 
-            {/* Summary Stats */}
-            <div className="savings-summary-card">
-                <div className="summary-item">
-                    <div className="item-with-toggle">
-                        <h3>Monthly Saved</h3>
+                {/* Summary Stats */}
+                <div className="savings-summary-card">
+                    <div className="summary-item">
+                        <div className="item-with-toggle">
+                            <h3>Monthly Saved</h3>
+                        </div>
+                        <span className="summary-value highlight-green">
+                            {summary.monthlySaved ? formatCurrency(summary.monthlySaved, currency) : formatCurrency(0, currency)}
+                        </span>
+                        <span className="summary-sub">This Month</span>
                     </div>
-                    <span className="summary-value highlight-green">
-                        {summary.monthlySaved ? formatCurrency(summary.monthlySaved, currency) : formatCurrency(0, currency)}
-                    </span>
-                    <span className="summary-sub">This Month</span>
+                    <div className="summary-divider"></div>
+                    <div className="summary-item">
+                        <h3>Overall Saved</h3>
+                        <span className="summary-value">
+                            {formatCurrency(summary.totalSaved, currency)}
+                        </span>
+                        <span className="summary-sub">Lifetime Total</span>
+                    </div>
+                    <div className="summary-divider"></div>
+                    <div className="summary-item">
+                        <h3>Total Goal</h3>
+                        <span className="summary-value muted">
+                            {formatCurrency(summary.totalTarget, currency)}
+                        </span>
+                        <span className="summary-sub">All Targets</span>
+                    </div>
                 </div>
-                <div className="summary-divider"></div>
-                <div className="summary-item">
-                    <h3>Overall Saved</h3>
-                    <span className="summary-value">
-                        {formatCurrency(summary.totalSaved, currency)}
-                    </span>
-                    <span className="summary-sub">Lifetime Total</span>
+
+                <div className="filters-bar">
+                    <select
+                        value={filterType}
+                        onChange={(e) => setFilterType(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="">All Types</option>
+                        <option value="EMERGENCY_FUND">🚨 Emergency Fund</option>
+                        <option value="SINKING_FUND">🚢 Sinking Fund</option>
+                        <option value="DEBT_PAYOFF">📉 Debt Payoff</option>
+                        <option value="LONG_TERM">🏦 Long Term</option>
+                    </select>
+
+                    <select
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                        className="filter-select"
+                    >
+                        <option value="">All Statuses</option>
+                        <option value="in_progress">🔄 In Progress</option>
+                        <option value="completed">✅ Completed</option>
+                    </select>
                 </div>
-                <div className="summary-divider"></div>
-                <div className="summary-item">
-                    <h3>Total Goal</h3>
-                    <span className="summary-value muted">
-                        {formatCurrency(summary.totalTarget, currency)}
-                    </span>
-                    <span className="summary-sub">All Targets</span>
-                </div>
-            </div>
 
-            <div className="filters-bar">
-                <select
-                    value={filterType}
-                    onChange={(e) => setFilterType(e.target.value)}
-                    className="filter-select"
-                >
-                    <option value="">All Types</option>
-                    <option value="EMERGENCY_FUND">🚨 Emergency Fund</option>
-                    <option value="SINKING_FUND">🚢 Sinking Fund</option>
-                    <option value="DEBT_PAYOFF">📉 Debt Payoff</option>
-                    <option value="LONG_TERM">🏦 Long Term</option>
-                </select>
+                {loading ? (
+                    <div className="loading-state">
+                        <div className="spinner"></div>
+                        <p>Loading goals...</p>
+                    </div>
+                ) : (
+                    <div className="savings-grid">
+                        {filteredGoals.length > 0 ? (
+                            filteredGoals.map(goal => {
+                                const current = parseFloat(goal.currentAmount || 0);
+                                const target = parseFloat(goal.targetAmount || 0);
+                                const percent = target > 0
+                                    ? Math.min(100, (current / target) * 100)
+                                    : 0;
+                                const isCreator = goal.createdById === user?.id;
+                                const canAction = isOwner || isCreator;
+                                const isExpanded = expandedGoalId === goal.id;
 
-                <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="filter-select"
-                >
-                    <option value="">All Statuses</option>
-                    <option value="in_progress">🔄 In Progress</option>
-                    <option value="completed">✅ Completed</option>
-                </select>
-            </div>
+                                const isExceeded = current >= target && target > 0;
+                                const excessAmount = Math.max(0, current - target);
 
-            {loading ? (
-                <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>Loading goals...</p>
-                </div>
-            ) : (
-                <div className="savings-grid">
-                    {filteredGoals.length > 0 ? (
-                        filteredGoals.map(goal => {
-                            const current = parseFloat(goal.currentAmount || 0);
-                            const target = parseFloat(goal.targetAmount || 0);
-                            const percent = target > 0
-                                ? Math.min(100, (current / target) * 100)
-                                : 0;
-                            const isCreator = goal.createdById === user?.id;
-                            const canAction = isOwner || isCreator;
-                            const isExpanded = expandedGoalId === goal.id;
-
-                            const isExceeded = current >= target && target > 0;
-                            const excessAmount = Math.max(0, current - target);
-
-                            return (
-                                <div key={goal.id} className={`savings-card ${isExpanded ? 'expanded' : ''} ${isExceeded ? 'exceeded' : ''}`}>
-                                    <div className="savings-header">
-                                        <div className="header-left">
-                                            <span className={`goal-type ${goal.type.toLowerCase()}`}>
-                                                {goal.type.replace('_', ' ')}
-                                            </span>
-                                            {goal.createdBy && (
-                                                <span className="creator-badge">
-                                                    by {goal.createdBy.firstName}
+                                return (
+                                    <div key={goal.id} className={`savings-card ${isExpanded ? 'expanded' : ''} ${isExceeded ? 'exceeded' : ''}`}>
+                                        <div className="savings-header">
+                                            <div className="header-left">
+                                                <span className={`goal-type ${goal.type.toLowerCase()}`}>
+                                                    {goal.type.replace('_', ' ')}
                                                 </span>
+                                                {goal.createdBy && (
+                                                    <span className="creator-badge">
+                                                        by {goal.createdBy.firstName}
+                                                    </span>
+                                                )}
+                                            </div>
+                                            {canAction && (
+                                                <div className="card-actions">
+                                                    <button
+                                                        onClick={() => { setSelectedGoalId(goal.id); setContributeUserId(user?.id); setShowContributeModal(true); }}
+                                                        className="btn-icon add-funds"
+                                                        title="Add Funds"
+                                                        style={{ fontSize: '0.9rem', marginRight: '5px' }}
+                                                    >
+                                                        ➕
+                                                    </button>
+                                                    <button onClick={() => handleEdit(goal)} className="btn-icon">✏️</button>
+                                                    <button onClick={() => handleDelete(goal.id)} className="btn-icon delete">✖</button>
+                                                </div>
                                             )}
                                         </div>
-                                        {canAction && (
-                                            <div className="card-actions">
-                                                <button
-                                                    onClick={() => { setSelectedGoalId(goal.id); setContributeUserId(user?.id); setShowContributeModal(true); }}
-                                                    className="btn-icon add-funds"
-                                                    title="Add Funds"
-                                                    style={{ fontSize: '0.9rem', marginRight: '5px' }}
-                                                >
-                                                    ➕
-                                                </button>
-                                                <button onClick={() => handleEdit(goal)} className="btn-icon">✏️</button>
-                                                <button onClick={() => handleDelete(goal.id)} className="btn-icon delete">✖</button>
+                                        <h3>{getCategoryEmoji(goal.type, goal.name)} {goal.name}</h3>
+
+                                        {isExceeded && (
+                                            <div className="excess-message">
+                                                {excessAmount > 0 && (
+                                                    <span>🎉 Exceeded by {formatCurrency(excessAmount, currency)}!</span>
+                                                )}
+                                                {excessAmount == 0 && (
+                                                    <span>🎉 Congratualtions! You have reached your goal!</span>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        <div className="savings-progress">
+                                            <div className="progress-header">
+                                                <span>{formatCurrency(goal.currentAmount, currency)}</span>
+                                                <span>{Math.round(percent)}% of {goal.targetAmount ? formatCurrency(goal.targetAmount, currency) : 'N/A'}</span>
+                                            </div>
+                                            <div className="progress-bar-bg">
+                                                <div
+                                                    className="progress-bar-fill"
+                                                    style={{
+                                                        width: `${percent}%`,
+                                                        backgroundColor: getProgressColor(percent)
+                                                    }}
+                                                ></div>
+                                            </div>
+                                        </div>
+
+                                        <div className="savings-footer">
+                                            {goal.deadline ? (
+                                                <span className="deadline-badge">
+                                                    📅 Target: {new Date(goal.deadline).toLocaleDateString()}
+                                                </span>
+                                            ) : (
+                                                <span>No deadline set</span>
+                                            )}
+                                            <button
+                                                className="btn-text"
+                                                onClick={() => setExpandedGoalId(isExpanded ? null : goal.id)}
+                                                style={{ marginLeft: 'auto', fontSize: '0.9rem', color: '#6366f1' }}
+                                            >
+                                                {isExpanded ? 'Hide History' : 'View History'}
+                                            </button>
+                                        </div>
+
+                                        {/* Contribution History Table */}
+                                        {isExpanded && (
+                                            <div className="contribution-history" style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
+                                                <h4>Contribution History</h4>
+                                                {goal.transactions && goal.transactions.length > 0 ? (
+                                                    <table className="history-table" style={{ width: '100%', fontSize: '0.9rem', textAlign: 'left' }}>
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Date</th>
+                                                                <th>User</th>
+                                                                <th>Amount</th>
+                                                                <th></th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {goal.transactions.map(txn => (
+                                                                <tr key={txn.id}>
+                                                                    <td>{new Date(txn.date).toLocaleDateString()}</td>
+                                                                    <td>{txn.user?.firstName}</td>
+                                                                    <td style={{ fontWeight: 600, color: '#10b981' }}>
+                                                                        +{formatCurrency(txn.amount, currency)}
+                                                                    </td>
+                                                                    <td style={{ textAlign: 'right' }}>
+                                                                        {/* Only show delete if user owns transaction or is owner */}
+                                                                        {(isOwner || txn.user?.id === user?.id) && (
+                                                                            <button
+                                                                                onClick={() => handleDeleteTransaction(txn.id, goal.id)}
+                                                                                className="btn-icon-small delete"
+                                                                                style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}
+                                                                            >
+                                                                                🗑️
+                                                                            </button>
+                                                                        )}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                ) : (
+                                                    <p style={{ color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic' }}>No contributions recorded yet.</p>
+                                                )}
                                             </div>
                                         )}
                                     </div>
-                                    <h3>{getCategoryEmoji(goal.type, goal.name)} {goal.name}</h3>
+                                );
+                            })
+                        ) : (
+                            <div className="empty-state">
+                                <p>No savings goals found</p>
+                            </div>
+                        )}
+                    </div>
+                )}
 
-                                    {isExceeded && (
-                                        <div className="excess-message">
-                                            {excessAmount > 0 && (
-                                                <span>🎉 Exceeded by {formatCurrency(excessAmount, currency)}!</span>
-                                            )}
-                                            {excessAmount == 0 && (
-                                                <span>🎉 Congratualtions! You have reached your goal!</span>
-                                            )}
-                                        </div>
-                                    )}
-
-                                    <div className="savings-progress">
-                                        <div className="progress-header">
-                                            <span>{formatCurrency(goal.currentAmount, currency)}</span>
-                                            <span>{Math.round(percent)}% of {goal.targetAmount ? formatCurrency(goal.targetAmount, currency) : 'N/A'}</span>
-                                        </div>
-                                        <div className="progress-bar-bg">
-                                            <div
-                                                className="progress-bar-fill"
-                                                style={{
-                                                    width: `${percent}%`,
-                                                    backgroundColor: getProgressColor(percent)
-                                                }}
-                                            ></div>
-                                        </div>
-                                    </div>
-
-                                    <div className="savings-footer">
-                                        {goal.deadline ? (
-                                            <span className="deadline-badge">
-                                                📅 Target: {new Date(goal.deadline).toLocaleDateString()}
-                                            </span>
-                                        ) : (
-                                            <span>No deadline set</span>
-                                        )}
-                                        <button
-                                            className="btn-text"
-                                            onClick={() => setExpandedGoalId(isExpanded ? null : goal.id)}
-                                            style={{ marginLeft: 'auto', fontSize: '0.9rem', color: '#6366f1' }}
-                                        >
-                                            {isExpanded ? 'Hide History' : 'View History'}
-                                        </button>
-                                    </div>
-
-                                    {/* Contribution History Table */}
-                                    {isExpanded && (
-                                        <div className="contribution-history" style={{ marginTop: '20px', borderTop: '1px solid #e2e8f0', paddingTop: '10px' }}>
-                                            <h4>Contribution History</h4>
-                                            {goal.transactions && goal.transactions.length > 0 ? (
-                                                <table className="history-table" style={{ width: '100%', fontSize: '0.9rem', textAlign: 'left' }}>
-                                                    <thead>
-                                                        <tr>
-                                                            <th>Date</th>
-                                                            <th>User</th>
-                                                            <th>Amount</th>
-                                                            <th></th>
-                                                        </tr>
-                                                    </thead>
-                                                    <tbody>
-                                                        {goal.transactions.map(txn => (
-                                                            <tr key={txn.id}>
-                                                                <td>{new Date(txn.date).toLocaleDateString()}</td>
-                                                                <td>{txn.user?.firstName}</td>
-                                                                <td style={{ fontWeight: 600, color: '#10b981' }}>
-                                                                    +{formatCurrency(txn.amount, currency)}
-                                                                </td>
-                                                                <td style={{ textAlign: 'right' }}>
-                                                                    {/* Only show delete if user owns transaction or is owner */}
-                                                                    {(isOwner || txn.user?.id === user?.id) && (
-                                                                        <button
-                                                                            onClick={() => handleDeleteTransaction(txn.id, goal.id)}
-                                                                            className="btn-icon-small delete"
-                                                                            style={{ color: '#ef4444', background: 'none', border: 'none', cursor: 'pointer' }}
-                                                                        >
-                                                                            🗑️
-                                                                        </button>
-                                                                    )}
-                                                                </td>
-                                                            </tr>
-                                                        ))}
-                                                    </tbody>
-                                                </table>
-                                            ) : (
-                                                <p style={{ color: '#94a3b8', fontSize: '0.9rem', fontStyle: 'italic' }}>No contributions recorded yet.</p>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            );
-                        })
-                    ) : (
-                        <div className="empty-state">
-                            <p>No savings goals found</p>
-                        </div>
-                    )}
-                </div>
-            )}
-
+            </div>
             {/* Add/Edit Modal */}
             {
                 showAddModal && (
@@ -568,6 +570,6 @@ export default function Savings() {
                     </div>
                 )
             }
-        </div >
+        </>
     );
 }

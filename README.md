@@ -1,311 +1,82 @@
-# HouseHold Budgeting
+<div align="center">
+  <img src="frontend/src/assets/Logo.png" alt="HouseHold Budgeting Logo" width="120" />
+  <h1>HouseHold Budgeting</h1>
+  <h3>✨ Smart Finance for Smarter Living ✨</h3>
+  <p><b>AI-Powered Financial Clarity for the Whole Household</b></p>
 
-> **AI-Powered Financial Clarity for the Whole Household**
-
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
-[![Gemini](https://img.shields.io/badge/Gemini-1.5_Flash-red.svg)](https://ai.google.dev/)
-
----
-
-## 📋 Overview
-
-HouseHold Budgeting is a collaborative household financial tracking application that combines multi-user access with advanced Large Language Model (LLM) technology. It actively analyzes spending habits to generate dynamic visual reports and offers personalized, conversational guidance on saving money.
-
-### Key Features
-
-- 🏠 **Multi-User Households** - Invite family members via email or phone
-- 🎤 **Voice & Text Input** - Log expenses naturally using speech or text
-- 🤖 **AI Smart Categorization** - Automatic Needs vs Wants classification
-- 📊 **Dynamic Reports** - Weekly and monthly pulse reports
-- 💡 **Savings Guidance** - Personalized AI recommendations
-- 📈 **Natural Language Charts** - "Show me dining vs groceries last 3 months"
-- 🔍 **Full Observability** - Opik integration for LLM tracing and evaluation
+  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+  [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
+  [![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
+</div>
 
 ---
 
-## 🏗️ Tech Stack
+## 📋 Project Summary
 
-### Frontend
-- React 18 + Vite
-- React Router v6
-- Recharts (visualization)
-- Web Speech API (voice input)
+HouseHold Budgeting is a production-ready collaborative application designed to simplify family finance. By leveraging modern AI, it automates the tedious parts of money management—categorization, data entry, and analysis—allowing you to focus on your goals.
 
-### Backend
-- Node.js + Express
-- PostgreSQL + Prisma ORM
-- JWT Authentication
-- Polling (auto-refresh sync)
-
-### AI & Observability
-- Google Gemini API (Free Tier)
-- Opik by Comet (LLM Observability)
+The core philosophy is **"Zero Friction Finance"**: Log expenses via voice, text, or image instantly, so you actually stick to the habit.
 
 ---
 
-## 🚀 Quick Start
+## 🌍 Why is this needed in day-to-day life?
 
-### Prerequisites
-
-- Node.js 18+
-- npm or yarn
-- PostgreSQL 14+
-- Gemini API Key ([Get one free](https://ai.google.dev/))
-- Opik API Key ([Get one free](https://www.comet.com/opik))
-
-### Installation
-
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/household-budgeting.git
-cd household-budgeting
-
-# Install frontend dependencies
-cd frontend
-npm install
-
-# Install backend dependencies
-cd ../backend
-npm install
-
-# Set up environment variables
-cp .env.example .env
-# Edit .env with your API keys
-
-# Initialize database
-npx prisma migrate dev --name init
-npx prisma generate
-
-# Start development servers
-# Terminal 1 - Backend
-cd backend
-npm run dev
-
-# Terminal 2 - Frontend
-cd frontend
-npm run dev
-```
-
-### Environment Variables
-
-Create a `.env` file in the backend folder:
-
-```env
-# Database
-DATABASE_URL="postgresql://user:password@localhost:5432/household_budget"
-
-# Server
-PORT=3001
-NODE_ENV=development
-
-# Authentication
-JWT_SECRET=your-super-secret-jwt-key-change-in-production
-JWT_EXPIRES_IN=7d
-
-# Gemini AI
-GEMINI_API_KEY=your-gemini-api-key
-
-# Opik Observability
-OPIK_API_KEY=your-opik-api-key
-OPIK_PROJECT_NAME=household-budget
-```
+1.  **Invisible Spending**: The small daily purchases (coffees, snacks, apps) add up silently. Without tracking, they eat away at your wealth unnoticed.
+2.  **Subscription Overload**: In the age of digital services, it's chaotic to manage multiple recurring payments. This tool centralizes them so you never pay for what you don't use.
+3.  **Inflation Awareness**: Prices change, and your intuitive sense of "how much money I have" is often wrong. Real data gives you back your purchasing power.
+4.  **Mental Load**: Remembering due dates, balances, and who owes what causes chronic low-grade stress. Automation frees your mind for better things.
+5.  **Family Harmony**: Money is the #1 cause of domestic friction. A transparent, shared view replaces suspicion and nagging with trust and collaboration.
 
 ---
 
-## 📁 Project Structure
+## 💰 How can it help you?
 
-```
-household-budgeting/
-├── frontend/                 # React frontend application
-│   ├── src/
-│   │   ├── components/      # Reusable UI components
-│   │   ├── pages/           # Route pages
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── services/        # API client services
-│   │   └── utils/           # Utility functions
-│   └── package.json
-│
-├── backend/                  # Node.js backend API
-│   ├── src/
-│   │   ├── routes/          # Express route handlers
-│   │   ├── controllers/     # Request/response logic
-│   │   ├── services/        # Business logic
-│   │   ├── agents/          # AI agent implementations
-│   │   ├── middleware/      # Auth, validation, error handling
-│   │   └── utils/           # Helper functions
-│   ├── prisma/              # Database schema and migrations
-│   └── package.json
-│
-├── shared/                   # Shared types and utilities
-├── docs/                     # Documentation
-│   ├── phase1_guide.md      # Phase 1 implementation guide
-│   └── ...
-│
-└── README.md
-```
+### 🛡️ Save Money
+1.  **Identify Leaks**: Instantly visualizes where your money is bleeding out (e.g., dining out vs. cooking). Data makes the problem undeniable.
+2.  **Budget Alerts**: Receive proactive notifications *before* you overspend, acting as a guardrail for your wallet.
+3.  **Smart Goals**: Set specific targets (e.g., "Vacation Fund") and track progress visually, making the act of saving rewarding.
+4.  **Reduce Waste**: Highlights unused subscriptions or duplicate services that you might have forgotten about.
+5.  **Impulse Control**: The simple act of logging "Wants" creates a moment of reflection ("Do I really need this?"), often stopping the purchase.
+
+### 🌱 Grow Yourself
+1.  **Financial Discipline**: Building the daily habit of tracking fosters discipline that spills over into health, work, and other areas of life.
+2.  **Data Literacy**: Learn to make decisions based on concrete numbers and trends rather than emotions—a critical life skill.
+3.  **Goal Orientation**: Shifts your mindset from "surviving the month" to "building a future," encouraging long-term thinking.
+4.  **Confidence & Peace**: Knowing your exact financial position eliminates the anxiety of the unknown.
+5.  **Legacy Building**: Teaching these habits to your family and children sets the foundation for generational financial health.
+
+### ⚙️ Manage Money
+1.  **Centralized Dashboard**: See all your accounts, debts, and assets in one single, beautiful view. No more logging into 5 different banking apps.
+2.  **Automated Categorization**: AI sorts your spending into "Needs" vs. "Wants" automatically, saving you hours of manual spreadsheet work.
+3.  **Future Forecasting**: The AI Advisor predicts cash flow for upcoming months, helping you prepare for expenses before they happen.
+4.  **Debt Payoff Strategies**: Helps organize and prioritize debt repayment (Avalanche or Snowball methods) to get you debt-free faster.
+5.  **Role-Based Access**: Perfectly balances transparency and privacy—share household expenses while keeping personal discretionary spending private.
 
 ---
 
-## 🧪 Testing
+## ✨ Key Features
 
-### Run Tests
-
-```bash
-# Backend tests
-cd backend
-npm test
-
-# Frontend tests
-cd frontend
-npm test
-
-# End-to-end tests
-npm run test:e2e
-```
-
-### Opik Evaluations
-
-```bash
-# Run AI evaluation suite
-cd backend
-npm run eval
-
-# View results in Opik dashboard
-# https://www.comet.com/opik
-```
-
----
-
-## 📊 AI Features
-
-### Transaction Categorization
-
-```javascript
-// Input
-"spent 45.50 at Whole Foods yesterday"
-
-// AI Output
-{
-  "amount": 45.50,
-  "merchant": "Whole Foods",
-  "category": "Food",
-  "subcategory": "Groceries",
-  "type": "Need",
-  "confidence": 0.95
-}
-```
-
-### Natural Language Charts
-
-```javascript
-// Input
-"Show me dining out vs groceries for the last 3 months"
-
-// AI generates chart specification and renders
-// Bar chart comparing two categories over time
-```
-
-### Weekly Reports
-
-```javascript
-// Auto-generated every Sunday
-{
-  "highlight": "Great week! You stayed within budget at 78% used.",
-  "trend": "Dining out decreased 15% compared to last week.",
-  "recommendation": "Moving $50 less to dining could fund your vacation goal by March."
-}
-```
-
----
-
-## 🔒 API Endpoints
-
-### Authentication
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/auth/register` | Register new user |
-| POST | `/api/auth/login` | User login |
-| POST | `/api/auth/logout` | User logout |
-
-### Households
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/households` | Create household | ✅ |
-| GET | `/api/households/:id` | Get household | ✅ Member |
-| POST | `/api/invitations` | Send invite | ✅ Admin |
-
-### Transactions
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/transactions` | Add transaction | ✅ Member |
-| GET | `/api/transactions` | List transactions | ✅ Member |
-| PUT | `/api/transactions/:id` | Update transaction | ✅ Owner |
-
-### AI
-| Method | Endpoint | Description | Auth |
-|--------|----------|-------------|------|
-| POST | `/api/ai/categorize` | Categorize transaction | ✅ |
-| POST | `/api/ai/advice` | Get savings advice | ✅ |
-| POST | `/api/ai/chart` | Generate chart | ✅ |
-
----
-
-## 🎯 Implementation Phases
-
-| Phase | Description | Status |
-|-------|-------------|--------|
-| Phase 1 | Project Setup & Core Infrastructure | 🔄 In Progress |
-| Phase 2 | Authentication & User Management | ⏳ Pending |
-| Phase 3 | Household & Invitation System | ⏳ Pending |
-| Phase 4 | Transaction & Income Tracking | ⏳ Pending |
-| Phase 5 | AI Categorization Agent | ⏳ Pending |
-| Phase 6 | AI Advisory & Insights Agent | ⏳ Pending |
-| Phase 7 | Reporting & Visualization | ⏳ Pending |
-| Phase 8 | Opik Integration & Evaluation | ⏳ Pending |
-| Phase 9 | Testing & Polish | ⏳ Pending |
-| Phase 10 | Deployment & Hosting | ⏳ Pending |
-
-See individual `phaseX_guide.md` files for detailed implementation instructions.
-
----
-
-## 📈 Opik Integration
-
-This project showcases comprehensive LLM observability using Opik:
-
-- **Tracing**: Every AI call logged with input/output
-- **Evaluation**: LLM-as-judge scoring for advice quality
-- **Experiments**: A/B testing for prompt optimization
-- **Dashboards**: Real-time metrics visualization
-
-### Key Metrics Tracked
-- Categorization accuracy (target: 90%+)
-- Advice actionability score (target: 4.0/5.0)
-- Response latency (target: <2s)
-- Token usage per request
-
----
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+- **🏠 Multi-User Households**: Create a digital home for your finances. Invite family via email and manage permissions (Admin/Editor/Viewer).
+- **🎤 Smart Entry & Receipt Scanning**:
+    - **Voice/Text**: Just say *"Spent $50 on groceries"* to log it.
+    - **Image Scanning**: Upload photos of **bills, receipts, or salary slips**. The AI extracts merchant, date, amount, and category instantly.
+- **🤖 AI Financial Advisor (Multi-Agent RAG)**:
+    - A sophisticated agent that understands your history.
+    - Ask complex questions like *"How can I afford a car in 6 months?"* and get actionable, personalized advice.
+- **📑 Smart Reporting**:
+    - **Weekly/Monthly Digests**: Automated insights delivered to you.
+    - **Trend Analysis**: Spot lifestyle creep before it becomes a problem.
+- **🏆 Gamification**:
+    - **XP & Levels**: Earn points for good financial habits.
+    - **Streaks**: Maintain daily logging streaks.
+    - **Leaderboards**: Compete with family members to be the "Best Saver."
+- **📊 Dynamic Visualization**: Interactive Bar, Pie, and Line charts generated automatically from your queries.
+- **📱 Cross-Platform**: Works purely on any device (Desktop & Mobile PWA).
 
 ---
 
 ## 📞 Contact
 
-Mohammed Khalid - [itskhalid.25@gmail.com](mailto:itskhalid.25@gmail.com)
-
-Project Link: [https://github.com/itskhalid2025/HouseHold-Budgeting](https://github.com/itskhalid2025/HouseHold-Budgeting)
+**Mohammed Khalid**
+- Email: [itskhalid.25@gmail.com](mailto:itskhalid.25@gmail.com)
+- Project Link: [GitHub Repository](https://github.com/itskhalid2025/HouseHold-Budgeting)

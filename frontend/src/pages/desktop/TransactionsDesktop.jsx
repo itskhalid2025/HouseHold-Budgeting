@@ -229,233 +229,235 @@ export default function TransactionsDesktop() {
     };
 
     return (
-        <div className="container transactions-page">
-            <div className="page-header">
-                <h1>Transactions</h1>
-                <div className="header-actions">
-                    {/* Add Button */}
-                    {canEdit && (
-                        <button
-                            className="btn-primary"
-                            onClick={() => { setEditingTxn(null); resetForm(); setShowAddModal(true); }}
-                        >
-                            + Add Transaction
-                        </button>
-                    )}
-                    {!canEdit && (
-                        <span className="viewer-notice">👁️ View Only</span>
-                    )}
-                </div>
-            </div>
-
-            {/* Summary Card */}
-            <div className="transaction-summary-card">
-                <div className="summary-left">
-                    <h3>{filters.userId === user?.id ? 'My Monthly Expenses' : 'Total Monthly Expenses'}</h3>
-                    <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal spending' : 'Includes all household spending'}</p>
-                </div>
-                <div className="summary-center">
-                    <button
-                        className={`mine-toggle-btn ${filters.userId === user?.id ? 'active' : ''}`}
-                        onClick={() => handleFilterChange({ target: { name: 'userId', value: filters.userId === user?.id ? '' : user?.id } })}
-                    >
-                        {filters.userId === user?.id ? '👤 All Household' : '👤 Just Mine'}
-                    </button>
-                </div>
-                <div className="summary-right">
-                    <span className="total-amount-expense">{loading ? '...' : formatCurrency(totalExpenses, currency)}</span>
-                </div>
-            </div>
-
-            {/* Filters */}
-            <div className="filters-bar">
-                <input
-                    type="text"
-                    name="search"
-                    placeholder="Search..."
-                    value={filters.search}
-                    onChange={handleFilterChange}
-                    className="filter-input"
-                />
-                <select name="type" value={filters.type} onChange={handleFilterChange} className="filter-select">
-                    <option value="">All Types</option>
-                    <option value="NEED">Essential Needs (🍕🏠🚗)</option>
-                    <option value="WANT">Wants (🎭🛍️✈️)</option>
-                </select>
-                <select name="category" value={filters.category} onChange={handleFilterChange} className="filter-select">
-                    <option value="">All Categories</option>
-                    <option value="Food">🍕 Food</option>
-                    <option value="Transport">🚗 Transport</option>
-                    <option value="Housing">🏠 Housing</option>
-                    <option value="Entertainment">🎭 Entertainment</option>
-                    <option value="Healthcare">🏥 Healthcare</option>
-                    <option value="Childcare">Childcare</option>
-                    <option value="Debt">📉 Debt</option>
-                    <option value="Household Services">👨‍🍳 Household Services</option>
-                    <option value="Shopping">🛍️ Shopping</option>
-                    <option value="Travel">✈️ Travel</option>
-                    <option value="Health">🧘 Health</option>
-                    <option value="Gifts">🎁 Gifts</option>
-                </select>
-                <select name="userId" value={filters.userId || ''} onChange={handleFilterChange} className="filter-select">
-                    <option value="">All Users</option>
-                    {members.map(member => (
-                        <option key={member.id} value={member.id}>
-                            {member.firstName} {member.lastName}
-                        </option>
-                    ))}
-                </select>
-                <div className="date-filter-group">
-                    <label className="date-label">From:</label>
-                    <input
-                        type="date"
-                        name="startDate"
-                        value={filters.startDate}
-                        onChange={handleFilterChange}
-                        className="filter-date"
-                    />
-                </div>
-                <div className="date-filter-group">
-                    <label className="date-label">To:</label>
-                    <input
-                        type="date"
-                        name="endDate"
-                        value={filters.endDate}
-                        onChange={handleFilterChange}
-                        className="filter-date"
-                    />
-                </div>
-            </div>
-
-            {error && <div className="error-banner">{error}</div>}
-
-            {/* Transactions List */}
-            {loading ? (
-                <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>Loading transactions...</p>
-                </div>
-            ) : (
-                <>
-                    <div className="transactions-list">
-                        {transactions.length > 0 ? (
-                            transactions.map(txn => {
-                                const userColor = txn.user ? getUserColor(txn.user.firstName) : '#334155';
-                                // Theme-aware background
-                                const bgStyle = theme === 'light'
-                                    ? { backgroundColor: `${userColor}44` }
-                                    : { background: `linear-gradient(90deg, ${userColor}44 0%, rgba(30, 41, 59, 0.8) 100%)` };
-
-                                const borderColor = theme === 'light'
-                                    ? `${userColor}88`
-                                    : `${userColor}88`;
-
-                                return (
-                                    <div
-                                        key={txn.id}
-                                        className="transaction-card"
-                                        style={{
-                                            ...bgStyle,
-                                            borderColor: borderColor,
-                                            borderLeft: `6px solid ${userColor}`
-                                        }}
-                                    >
-                                        <div className="txn-left-group">
-                                            <div className="txn-date-simple">
-                                                {formatDate(txn.date)}
-                                            </div>
-                                            <div className="txn-details">
-                                                <div className="txn-desc">
-                                                    {getCategoryEmoji(txn.category, txn.subcategory)} {txn.description}
-                                                </div>
-                                                <div className="txn-meta">
-                                                    <span className="txn-category">{txn.category || 'Uncategorized'}</span>
-                                                    {txn.user && (
-                                                        <span
-                                                            className="txn-user-pill"
-                                                            style={{
-                                                                backgroundColor: userColor,
-                                                                color: '#fff',
-                                                                boxShadow: `0 2px 8px ${userColor}66`
-                                                            }}
-                                                        >
-                                                            {txn.user.firstName}
-                                                        </span>
-                                                    )}
-
-                                                    <span
-                                                        className={`txn-type-badge ${txn.type}`}
-                                                        style={{
-                                                            marginLeft: '12px',
-                                                            fontSize: '11px',
-                                                            fontWeight: '600',
-                                                            color: txn.type === 'NEED' ? '#fbbf24' : (txn.type === 'WANT' ? '#f87171' : '#10b981'),
-                                                            border: `1px solid ${txn.type === 'NEED' ? '#fbbf24' : (txn.type === 'WANT' ? '#f87171' : '#10b981')}`,
-                                                            padding: '1px 6px',
-                                                            borderRadius: '4px',
-                                                            textTransform: 'uppercase'
-                                                        }}
-                                                    >
-                                                        {txn.type || 'EXPENSE'}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* AI in the Middle */}
-                                        <div className="txn-center">
-                                            {txn.aiCategorized && (
-                                                <div className="ai-badge-center" title="Categorized by AI">✨ AI</div>
-                                            )}
-                                        </div>
-
-                                        {/* Price and Buttons moved to Right as requested */}
-                                        <div className="txn-right-group">
-                                            <div className={`txn-amount ${txn.type.toLowerCase()}`}>
-                                                {formatCurrency(-parseFloat(txn.amount), currency)}
-                                            </div>
-                                            <div className="txn-actions-inline">
-                                                {canEdit && (
-                                                    <>
-                                                        <button onClick={() => handleEdit(txn)} className="btn-icon">✏️</button>
-                                                        <button onClick={() => handleDelete(txn.id)} className="btn-icon delete">✖</button>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-                                );
-                            })
-                        ) : (
-                            <div className="empty-state">
-                                <p>No transactions found</p>
-                            </div>
+        <>
+            <div className="container transactions-page">
+                <div className="page-header">
+                    <h1>Transactions</h1>
+                    <div className="header-actions">
+                        {/* Add Button */}
+                        {canEdit && (
+                            <button
+                                className="btn-primary"
+                                onClick={() => { setEditingTxn(null); resetForm(); setShowAddModal(true); }}
+                            >
+                                + Add Transaction
+                            </button>
+                        )}
+                        {!canEdit && (
+                            <span className="viewer-notice">👁️ View Only</span>
                         )}
                     </div>
+                </div>
 
-                    {/* Pagination */}
-                    {totalPages > 1 && (
-                        <div className="pagination">
-                            <button
-                                disabled={page === 1}
-                                onClick={() => setPage(p => p - 1)}
-                                className="btn-page"
-                            >
-                                Previous
-                            </button>
-                            <span className="page-info">Page {page} of {totalPages}</span>
-                            <button
-                                disabled={page === totalPages}
-                                onClick={() => setPage(p => p + 1)}
-                                className="btn-page"
-                            >
-                                Next
-                            </button>
+                {/* Summary Card */}
+                <div className="transaction-summary-card">
+                    <div className="summary-left">
+                        <h3>{filters.userId === user?.id ? 'My Monthly Expenses' : 'Total Monthly Expenses'}</h3>
+                        <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal spending' : 'Includes all household spending'}</p>
+                    </div>
+                    <div className="summary-center">
+                        <button
+                            className={`mine-toggle-btn ${filters.userId === user?.id ? 'active' : ''}`}
+                            onClick={() => handleFilterChange({ target: { name: 'userId', value: filters.userId === user?.id ? '' : user?.id } })}
+                        >
+                            {filters.userId === user?.id ? '👤 All Household' : '👤 Just Mine'}
+                        </button>
+                    </div>
+                    <div className="summary-right">
+                        <span className="total-amount-expense">{loading ? '...' : formatCurrency(totalExpenses, currency)}</span>
+                    </div>
+                </div>
+
+                {/* Filters */}
+                <div className="filters-bar">
+                    <input
+                        type="text"
+                        name="search"
+                        placeholder="Search..."
+                        value={filters.search}
+                        onChange={handleFilterChange}
+                        className="filter-input"
+                    />
+                    <select name="type" value={filters.type} onChange={handleFilterChange} className="filter-select">
+                        <option value="">All Types</option>
+                        <option value="NEED">Essential Needs (🍕🏠🚗)</option>
+                        <option value="WANT">Wants (🎭🛍️✈️)</option>
+                    </select>
+                    <select name="category" value={filters.category} onChange={handleFilterChange} className="filter-select">
+                        <option value="">All Categories</option>
+                        <option value="Food">🍕 Food</option>
+                        <option value="Transport">🚗 Transport</option>
+                        <option value="Housing">🏠 Housing</option>
+                        <option value="Entertainment">🎭 Entertainment</option>
+                        <option value="Healthcare">🏥 Healthcare</option>
+                        <option value="Childcare">Childcare</option>
+                        <option value="Debt">📉 Debt</option>
+                        <option value="Household Services">👨‍🍳 Household Services</option>
+                        <option value="Shopping">🛍️ Shopping</option>
+                        <option value="Travel">✈️ Travel</option>
+                        <option value="Health">🧘 Health</option>
+                        <option value="Gifts">🎁 Gifts</option>
+                    </select>
+                    <select name="userId" value={filters.userId || ''} onChange={handleFilterChange} className="filter-select">
+                        <option value="">All Users</option>
+                        {members.map(member => (
+                            <option key={member.id} value={member.id}>
+                                {member.firstName} {member.lastName}
+                            </option>
+                        ))}
+                    </select>
+                    <div className="date-filter-group">
+                        <label className="date-label">From:</label>
+                        <input
+                            type="date"
+                            name="startDate"
+                            value={filters.startDate}
+                            onChange={handleFilterChange}
+                            className="filter-date"
+                        />
+                    </div>
+                    <div className="date-filter-group">
+                        <label className="date-label">To:</label>
+                        <input
+                            type="date"
+                            name="endDate"
+                            value={filters.endDate}
+                            onChange={handleFilterChange}
+                            className="filter-date"
+                        />
+                    </div>
+                </div>
+
+                {error && <div className="error-banner">{error}</div>}
+
+                {/* Transactions List */}
+                {loading ? (
+                    <div className="loading-state">
+                        <div className="spinner"></div>
+                        <p>Loading transactions...</p>
+                    </div>
+                ) : (
+                    <>
+                        <div className="transactions-list">
+                            {transactions.length > 0 ? (
+                                transactions.map(txn => {
+                                    const userColor = txn.user ? getUserColor(txn.user.firstName) : '#334155';
+                                    // Theme-aware background
+                                    const bgStyle = theme === 'light'
+                                        ? { backgroundColor: `${userColor}44` }
+                                        : { background: `linear-gradient(90deg, ${userColor}44 0%, rgba(30, 41, 59, 0.8) 100%)` };
+
+                                    const borderColor = theme === 'light'
+                                        ? `${userColor}88`
+                                        : `${userColor}88`;
+
+                                    return (
+                                        <div
+                                            key={txn.id}
+                                            className="transaction-card"
+                                            style={{
+                                                ...bgStyle,
+                                                borderColor: borderColor,
+                                                borderLeft: `6px solid ${userColor}`
+                                            }}
+                                        >
+                                            <div className="txn-left-group">
+                                                <div className="txn-date-simple">
+                                                    {formatDate(txn.date)}
+                                                </div>
+                                                <div className="txn-details">
+                                                    <div className="txn-desc">
+                                                        {getCategoryEmoji(txn.category, txn.subcategory)} {txn.description}
+                                                    </div>
+                                                    <div className="txn-meta">
+                                                        <span className="txn-category">{txn.category || 'Uncategorized'}</span>
+                                                        {txn.user && (
+                                                            <span
+                                                                className="txn-user-pill"
+                                                                style={{
+                                                                    backgroundColor: userColor,
+                                                                    color: '#fff',
+                                                                    boxShadow: `0 2px 8px ${userColor}66`
+                                                                }}
+                                                            >
+                                                                {txn.user.firstName}
+                                                            </span>
+                                                        )}
+
+                                                        <span
+                                                            className={`txn-type-badge ${txn.type}`}
+                                                            style={{
+                                                                marginLeft: '12px',
+                                                                fontSize: '11px',
+                                                                fontWeight: '600',
+                                                                color: txn.type === 'NEED' ? '#fbbf24' : (txn.type === 'WANT' ? '#f87171' : '#10b981'),
+                                                                border: `1px solid ${txn.type === 'NEED' ? '#fbbf24' : (txn.type === 'WANT' ? '#f87171' : '#10b981')}`,
+                                                                padding: '1px 6px',
+                                                                borderRadius: '4px',
+                                                                textTransform: 'uppercase'
+                                                            }}
+                                                        >
+                                                            {txn.type || 'EXPENSE'}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* AI in the Middle */}
+                                            <div className="txn-center">
+                                                {txn.aiCategorized && (
+                                                    <div className="ai-badge-center" title="Categorized by AI">✨ AI</div>
+                                                )}
+                                            </div>
+
+                                            {/* Price and Buttons moved to Right as requested */}
+                                            <div className="txn-right-group">
+                                                <div className={`txn-amount ${txn.type.toLowerCase()}`}>
+                                                    {formatCurrency(-parseFloat(txn.amount), currency)}
+                                                </div>
+                                                <div className="txn-actions-inline">
+                                                    {canEdit && (
+                                                        <>
+                                                            <button onClick={() => handleEdit(txn)} className="btn-icon">✏️</button>
+                                                            <button onClick={() => handleDelete(txn.id)} className="btn-icon delete">✖</button>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            ) : (
+                                <div className="empty-state">
+                                    <p>No transactions found</p>
+                                </div>
+                            )}
                         </div>
-                    )}
-                </>
-            )}
 
+                        {/* Pagination */}
+                        {totalPages > 1 && (
+                            <div className="pagination">
+                                <button
+                                    disabled={page === 1}
+                                    onClick={() => setPage(p => p - 1)}
+                                    className="btn-page"
+                                >
+                                    Previous
+                                </button>
+                                <span className="page-info">Page {page} of {totalPages}</span>
+                                <button
+                                    disabled={page === totalPages}
+                                    onClick={() => setPage(p => p + 1)}
+                                    className="btn-page"
+                                >
+                                    Next
+                                </button>
+                            </div>
+                        )}
+                    </>
+                )}
+
+            </div>
             {/* Add/Edit Modal */}
             {showAddModal && (
                 <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
@@ -547,7 +549,7 @@ export default function TransactionsDesktop() {
             }
 
 
-        </div >
+        </>
     );
 }
 

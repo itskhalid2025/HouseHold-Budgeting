@@ -74,6 +74,20 @@ export function AuthProvider({ children }) {
         setUserState(userData);
     };
 
+    const refreshUser = async () => {
+        try {
+            const data = await getMe();
+            setUserState(data.user);
+            setUser(data.user);
+            if (data.user.householdId) {
+                await refreshHousehold();
+            }
+            return data.user;
+        } catch (err) {
+            console.error('Failed to refresh user', err);
+        }
+    };
+
     return (
         <AuthContext.Provider value={{
             user,
@@ -83,6 +97,7 @@ export function AuthProvider({ children }) {
             login,
             logout,
             updateUser,
+            refreshUser,
             refreshHousehold,
             isAuthenticated: !!user
         }}>

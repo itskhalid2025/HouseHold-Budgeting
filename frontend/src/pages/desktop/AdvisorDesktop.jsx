@@ -151,33 +151,10 @@ export default function Advisor() {
                     setConversationId(data.conversationId);
                 }
 
-                // Parse AI response (it might be JSON string now, possibly wrapped in markdown)
-                let content = data.response;
-                let chartData = null;
-
-                try {
-                    let jsonString = content.trim();
-                    // Handle markdown blocks if present
-                    if (jsonString.includes('```')) {
-                        const match = jsonString.match(/```(?:json)?([\s\S]*?)```/);
-                        if (match) {
-                            jsonString = match[1].trim();
-                        }
-                    }
-
-                    if (jsonString.startsWith('{')) {
-                        const parsed = JSON.parse(jsonString);
-                        if (parsed.text) {
-                            content = parsed.text;
-                            chartData = parsed.chartData;
-                        } else if (parsed.content) {
-                            content = parsed.content;
-                            chartData = parsed.chartData;
-                        }
-                    }
-                } catch (e) {
-                    console.log('Response parsing failed, displaying as raw text');
-                }
+                // Use structured data directly from API
+                const content = data.response;
+                const chartData = data.chartData || null; // Fix: Get chartData directly
+                const metadata = data.metadata || null;
 
                 const aiMessageObj = {
                     role: 'assistant',

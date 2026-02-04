@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI, TaskType } from '@google/generative-ai';
 export { TaskType };
 import config from '../utils/config.js';
+import { traceOperation } from './opikService.js';
 
 let currentKeyIndex = 0;
 const apiKeys = config.gemini.apiKeys;
@@ -48,7 +49,7 @@ function rotateKey() {
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 /**
- * Generate content from a text prompt
+ * Generate content from a text prompt with full Opik integration
  * @param {string} promptOrParts - The text prompt or array of parts
  * @param {object} options - Configuration options
  * @returns {Promise<string>} - Generated text
@@ -56,214 +57,174 @@ const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 export async function generateContent(promptOrParts, options = {}) {
     const {
         temperature = 0.7,
-        maxTokens = 1024,
-        retries = 3,
-        useGrounding = false
+        maxTokens = 4000,
+        retries = 3, // retries per model/key combination logic if needed, but we will mostly rely on the waterfall
+        useGrounding = false,
+        title = 'Gemini Request'
     } = options;
-    const tools = useGrounding ? [{ googleSearch: {} }] : [];
 
-    let isUsingBackup = false;
-    let keysTriedForCurrentModel = 0;
+    const startTime = Date.now();
+    console.log(`\n🤖 ===== [${title}] =====`);
 
-    for (let attempt = 1; attempt <= (retries * 2); attempt++) {
-        // Switch to backup if all keys exhausted for primary, or on very last attempts
-        if (!isUsingBackup && keysTriedForCurrentModel >= apiKeys.length && config.gemini.modelBackup) {
-            isUsingBackup = true;
-            keysTriedForCurrentModel = 0; // Reset for backup model
-            console.log(`📡 [Gemini] All primary keys likely exhausted. Falling back to backup model: ${config.gemini.modelBackup}`);
-        }
+    return traceOperation(`gemini.${title.replace(/\s+/g, '_')}`, async (span) => {
+        const tools = useGrounding ? [{ googleSearch: {} }] : [];
 
-        const activeModel = getGenerativeModel(tools, isUsingBackup);
+        let lastError = null;
+        const totalKeys = apiKeys.length;
 
-        try {
-            console.log(`🤖 [Gemini] Request using Key #${currentKeyIndex + 1} (${isUsingBackup ? 'BACKUP' : 'PRIMARY'}) - Attempt ${attempt}`);
-
-            let parts;
-            if (Array.isArray(promptOrParts)) {
-                parts = promptOrParts;
-                console.log(`📝 [Input]: Multimodal Input (${parts.length} parts)`);
-            } else {
-                parts = [{ text: promptOrParts }];
-                console.log(`📝 [Input]: ${promptOrParts.substring(0, 100)}${promptOrParts.length > 100 ? '...' : ''}`);
+        // We will try every key
+        for (let keyAttempt = 0; keyAttempt < totalKeys; keyAttempt++) {
+            // For each key, we try Primary Model then Backup Model
+            const modelsToTry = [config.gemini.model];
+            if (config.gemini.modelBackup) {
+                modelsToTry.push(config.gemini.modelBackup);
             }
 
-            const result = await activeModel.generateContent({
-                contents: [{ role: 'user', parts: parts }],
-                generationConfig: {
-                    temperature,
-                    maxOutputTokens: maxTokens,
-                },
-            });
-
-            const response = result.response;
-            const text = response.text();
-
-            console.log(`✅ [Output]: ${text.substring(0, 50).replace(/\n/g, ' ')}${text.length > 50 ? '...' : ''}`);
-            return text;
-
-        } catch (error) {
-            console.error(`Gemini API error (attempt ${attempt}):`, error.message);
-            keysTriedForCurrentModel++;
-
-            // Handle rate limits and quota exhaustion by rotating key
-            const isRateLimitOrQuota = error.message?.includes('RATE_LIMIT') ||
-                error.message?.includes('429') ||
-                error.message?.includes('quota') ||
-                error.message?.includes('Too Many Requests');
-
-            if (isRateLimitOrQuota) {
-                console.log(`⚠️ Rate limit/quota hit on key #${currentKeyIndex + 1}`);
-
-                if (rotateKey()) {
-                    console.log('🔄 Retrying with next API key...');
-                    continue; // Try next key
+            for (const modelName of modelsToTry) {
+                const isBackup = modelName === config.gemini.modelBackup;
+                // Update span metadata for current attempt
+                if (span) {
+                    span.update({
+                        input: Array.isArray(promptOrParts) ? `Multimodal (${promptOrParts.length} parts)` : promptOrParts,
+                        metadata: {
+                            title,
+                            temperature,
+                            maxTokens,
+                            useGrounding,
+                            current_key_index: currentKeyIndex,
+                            current_model: modelName,
+                            is_backup: isBackup
+                        }
+                    });
                 }
 
-                // If only one key exists or we've somehow failed to rotate, try switching model or waiting
-                if (!isUsingBackup && config.gemini.modelBackup) {
-                    isUsingBackup = true;
-                    keysTriedForCurrentModel = 0;
-                    console.log(`📡 [Gemini] Falling back to backup model: ${config.gemini.modelBackup}`);
-                    continue;
+                try {
+                    const currentKey = apiKeys[currentKeyIndex];
+                    const genAI = new GoogleGenerativeAI(currentKey);
+
+                    const configObj = { model: modelName };
+                    if (tools && tools.length > 0) {
+                        configObj.tools = tools;
+                    }
+
+                    const activeModel = genAI.getGenerativeModel(configObj);
+
+                    console.log(`🤖 [Gemini] Request using Key #${currentKeyIndex + 1} | Model: ${modelName} ${isBackup ? '(BACKUP)' : '(PRIMARY)'}`);
+                    const requestStart = Date.now();
+
+                    const result = await activeModel.generateContent({
+                        contents: [{ role: 'user', parts: Array.isArray(promptOrParts) ? promptOrParts : [{ text: promptOrParts }] }],
+                        generationConfig: {
+                            temperature,
+                            maxOutputTokens: maxTokens,
+                        },
+                    });
+
+                    const response = result.response;
+                    const text = response.text();
+                    const usage = result.response.usageMetadata;
+                    const latency = Date.now() - requestStart;
+                    const totalLatency = Date.now() - startTime;
+
+                    if (span && usage) {
+                        span.update({
+                            output: text,
+                            metadata: {
+                                ...span.metadata,
+                                input_tokens: usage.promptTokenCount,
+                                output_tokens: usage.candidatesTokenCount,
+                                total_tokens: usage.totalTokenCount,
+                                model_used: modelName,
+                                final_key_index: currentKeyIndex,
+                                latency_ms: latency,
+                                total_time_ms: totalLatency,
+                                success: true
+                            }
+                        });
+                        console.log(`📈 [Tokens] In: ${usage.promptTokenCount} | Out: ${usage.candidatesTokenCount} | Total: ${usage.totalTokenCount} | Time: ${latency}ms`);
+                    }
+
+                    console.log(`✅ [Output]: ${text.substring(0, 100).replace(/\n/g, ' ')}...`);
+                    return text;
+
+                } catch (error) {
+                    lastError = error;
+                    console.error(`❌ Error with Key #${currentKeyIndex + 1} | Model: ${modelName}:`, error.message);
+
+                    // If this was the last model for this key, verify if we should rotate
+                    // The loop will continue to the next model automatically.
+                    // If both models fail, the inner loop finishes.
                 }
-
-                // Last resort: Exponential backoff
-                const waitTime = Math.min(Math.pow(2, attempt) * 1000, 10000);
-                console.log(`Waiting ${waitTime}ms before retry...`);
-                await sleep(waitTime);
-                continue;
             }
 
-            if (error.message?.includes('INVALID_ARGUMENT')) {
-                throw new Error('Invalid input provided to Gemini API');
-            }
-
-            if (attempt >= (retries * 2)) {
-                throw error;
-            }
+            // If we are here, both models failed for the current key.
+            // Move to next key.
+            console.log(`⚠️ Key #${currentKeyIndex + 1} exhausted (both models failed). Rotating...`);
+            rotateKey();
         }
-    }
+
+        throw new Error(`Gemini generation failed after trying all ${totalKeys} keys and fallback models. Last error: ${lastError ? lastError.message : 'Unknown error'}`);
+    });
 }
 
 /**
- * Generate JSON from a prompt
- * @param {string} promptOrParts - The text prompt or array of parts
- * @param {object} schema - Optional JSON schema for validation
- * @param {object} options - Generation options
- * @returns {Promise<object>} - Parsed JSON object
+ * Generate JSON from a prompt with full tracing
  */
 export async function generateJSON(promptOrParts, schema = null, options = {}) {
     const jsonInstruction = "\n\nReturn ONLY valid JSON, no markdown formatting or explanations.";
-
-    let fullInput;
-    if (Array.isArray(promptOrParts)) {
-        fullInput = [...promptOrParts];
-        const lastTextIndex = fullInput.map(p => !!p.text).lastIndexOf(true);
-        if (lastTextIndex >= 0) {
-            fullInput[lastTextIndex] = { text: fullInput[lastTextIndex].text + jsonInstruction };
-        } else {
-            fullInput.push({ text: jsonInstruction });
-        }
-    } else {
-        fullInput = `${promptOrParts}${jsonInstruction}`;
-    }
+    const fullInput = Array.isArray(promptOrParts) ? promptOrParts : `${promptOrParts}${jsonInstruction}`;
 
     const response = await generateContent(fullInput, options);
 
+    if (!response) {
+        throw new Error('Gemini API returned empty response');
+    }
+
     try {
         let jsonStr = response.trim();
-        if (jsonStr.startsWith('```json')) {
-            jsonStr = jsonStr.replace(/```json\n?/g, '').replace(/```\n?$/g, '');
-        } else if (jsonStr.startsWith('```')) {
-            jsonStr = jsonStr.replace(/```\n?/g, '');
+        if (jsonStr.includes('```')) {
+            const match = jsonStr.match(/```(?:json)?\s*([\s\S]*?)```/);
+            if (match) jsonStr = match[1];
+        }
+        if (!jsonStr.trim().startsWith('{')) {
+            const start = jsonStr.indexOf('{');
+            const end = jsonStr.lastIndexOf('}');
+            if (start !== -1 && end !== -1) jsonStr = jsonStr.substring(start, end + 1);
         }
 
-        const parsed = JSON.parse(jsonStr);
-        if (schema && schema.required) {
-            for (const field of schema.required) {
-                if (!(field in parsed)) throw new Error(`Missing required field: ${field}`);
-            }
-        }
+        const parsed = JSON.parse(jsonStr.trim());
         return parsed;
     } catch (error) {
-        console.error('Failed to parse JSON from Gemini:', error.message);
-        throw new Error('Failed to parse JSON response from Gemini');
+        console.error('Failed to parse JSON:', error.message);
+        throw new Error(`Failed to parse JSON response: ${error.message}`);
     }
 }
 
-/**
- * Generate embedding for a given text
- * @param {string} text - The text to embed
- * @param {string} taskType - Purpose of embedding (RETRIEVAL_DOCUMENT or RETRIEVAL_QUERY)
- * @param {string} title - Optional title for document embeddings
- * @returns {Promise<Array<number>>} - The embedding vector
- */
 export async function generateEmbedding(text, taskType = TaskType.RETRIEVAL_DOCUMENT, title = 'Household Budgeting Record') {
     if (!text) return null;
-
-    const tryGenerate = async (useBackup = false) => {
-        const modelName = useBackup ? config.gemini.embeddingModelBackup : config.gemini.embeddingModel;
-        console.log(`🤖 [Gemini] Generating embedding using Key #${currentKeyIndex + 1} (${useBackup ? 'BACKUP' : 'PRIMARY'}: ${modelName})`);
-
+    try {
         const genAI = new GoogleGenerativeAI(apiKeys[currentKeyIndex]);
-        const embeddingModel = genAI.getGenerativeModel({ model: modelName });
-
+        const embeddingModel = genAI.getGenerativeModel({ model: config.gemini.embeddingModel });
         const result = await embeddingModel.embedContent({
             content: { parts: [{ text }] },
             taskType,
-            title
+            title,
+            outputDimensionality: 768
         });
-
         return result.embedding.values;
-    };
-
-    try {
-        return await tryGenerate(false);
     } catch (error) {
-        console.error('Primary embedding failed, trying backup...', error.message);
-
-        try {
-            if (config.gemini.embeddingModelBackup) {
-                return await tryGenerate(true);
-            }
-            throw error;
-        } catch (backupError) {
-            console.error('Backup embedding failed:', backupError.message);
-            const isRateLimit = backupError.message?.includes('429') || backupError.message?.includes('quota');
-            if (isRateLimit && rotateKey()) {
-                console.log('🔄 Retrying primary embedding with new API key...');
-                return generateEmbedding(text, taskType, title);
-            }
-            throw backupError;
-        }
+        console.error('Embedding failed:', error.message);
+        return null;
     }
 }
 
-/**
- * Test Gemini API connection
- * @returns {Promise<object>} - Connection status
- */
 export async function testConnection() {
-    const startTime = Date.now();
     try {
-        await generateContent('Hello');
-        return {
-            success: true,
-            latency: Date.now() - startTime,
-            model: config.gemini.model
-        };
+        await generateContent('Hello', { title: 'Connection Test' });
+        return { success: true };
     } catch (error) {
-        return {
-            success: false,
-            error: error.message,
-            latency: Date.now() - startTime
-        };
+        return { success: false, error: error.message };
     }
 }
 
-export default {
-    generateContent,
-    generateJSON,
-    testConnection,
-    generateEmbedding
-};
+export default { generateContent, generateJSON, testConnection, generateEmbedding };

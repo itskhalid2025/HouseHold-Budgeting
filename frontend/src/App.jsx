@@ -38,6 +38,7 @@ import AdminSettings from './pages/admin/AdminSettings';
 import Onboarding from './pages/Onboarding';
 import { SyncProvider } from './context/SyncContext';
 import { BudgetProvider } from './context/BudgetContext';
+import { NotificationProvider, useNotification } from './context/NotificationContext';
 import PreWarmer from './components/PreWarmer';
 
 import './App.css';
@@ -120,51 +121,37 @@ function AINotification() {
 // Join Request Notification (Polling)
 function JoinRequestNotification() {
   const { isAuthenticated, user } = useAuth();
-  const [requests, setRequests] = useState([]);
+  const { joinRequests, refreshNotifications } = useNotification();
   const [visibleRequest, setVisibleRequest] = useState(null);
 
-  // Poll for join requests
+  // Poll for join requests handled by Context now.
+  // We just react to changes.
+
   useEffect(() => {
     if (!isAuthenticated || !user) return;
 
-    const fetchRequests = async () => {
-      try {
-        const data = await getJoinRequests();
-        const pending = data.requests || [];
+    if (joinRequests.length > 0 && !visibleRequest) {
+      // Only show if we haven't just acted on it? 
+      // Ideally we want to show it if it's NEW.
+      // For now, let's just show it if there is one and we aren't showing one.
+      setVisibleRequest(joinRequests[0]);
 
-        // Check for new requests (simplified logic: just show the first pending one if not already showing)
-        // In a real app we'd track seen IDs to avoid re-notifying, but this works for "active pending requests"
-        if (pending.length > 0 && !visibleRequest) {
-          // Only show if we haven't just acted on it? 
-          // Ideally we want to show it if it's NEW.
-          // For now, let's just show it if there is one and we aren't showing one.
-          setVisibleRequest(pending[0]);
+      // Auto-dismiss after 45s
+      setTimeout(() => {
+        setVisibleRequest(null);
+      }, 45000);
+    }
+  }, [joinRequests, isAuthenticated, user]);
 
-          // Auto-dismiss after 45s
-          setTimeout(() => {
-            setVisibleRequest(null);
-          }, 45000);
-        }
-      } catch (err) {
-        // Ignore errors
-      }
-    };
-
-    const interval = setInterval(fetchRequests, 30000); // Poll every 30s
-    // Initial fetch
-    fetchRequests();
-
-    return () => clearInterval(interval);
-  }, [isAuthenticated, user]);
-
-  const handleAction = async (requestId, action) => {
+  const handleAction = async (requestId, action, role) => {
     try {
       if (action === 'accept') {
-        await approveJoinRequest(requestId, 'member');
+        await approveJoinRequest(requestId, role);
       } else {
         await rejectJoinRequest(requestId);
       }
       setVisibleRequest(null);
+      refreshNotifications(); // Refresh context after action
     } catch (err) {
       console.error('Failed to handle join request', err);
     }
@@ -179,9 +166,12 @@ function JoinRequestNotification() {
           <strong>👤 Join Request</strong>
           <div className="timer-bar"></div>
         </div>
-        <p>{visibleRequest.user?.firstName} want to join.</p>
-        <div className="join-actions">
-          <button className="btn-accept" onClick={() => handleAction(visibleRequest.id, 'accept')}>Accept</button>
+        <p>{visibleRequest.requester?.firstName} wants to join.</p>
+        <div className="join-actions" style={{ flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button className="btn-accept" style={{ fontSize: '13px' }} onClick={() => handleAction(visibleRequest.id, 'accept', 'VIEWER')}>Viewer 👁️</button>
+            <button className="btn-accept" style={{ fontSize: '13px', background: '#3b82f6' }} onClick={() => handleAction(visibleRequest.id, 'accept', 'EDITOR')}>Editor ✏️</button>
+          </div>
           <button className="btn-reject" onClick={() => handleAction(visibleRequest.id, 'reject')}>Reject</button>
         </div>
       </div>
@@ -483,9 +473,11 @@ function App() {
         <ThemeProvider>
           <SyncProvider>
             <BudgetProvider>
-              <SmartEntryProvider>
-                <AppContent />
-              </SmartEntryProvider>
+              <NotificationProvider>
+                <SmartEntryProvider>
+                  <AppContent />
+                </SmartEntryProvider>
+              </NotificationProvider>
             </BudgetProvider>
           </SyncProvider>
         </ThemeProvider>

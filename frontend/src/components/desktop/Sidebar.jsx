@@ -2,6 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSmartEntry } from '../../context/SmartEntryContext';
+import { useNotification } from '../../context/NotificationContext';
 import { Plus } from 'lucide-react';
 import Logo from '../../assets/Logo.png';
 import './Sidebar.css';
@@ -12,6 +13,7 @@ import {
 const Sidebar = () => {
     const { isAuthenticated, user } = useAuth();
     const { openSmartEntry } = useSmartEntry();
+    const { requestCount } = useNotification();
 
     // State for household name
     const [householdName, setHouseholdName] = React.useState('');
@@ -68,6 +70,9 @@ const Sidebar = () => {
                 <NavLink to="/household" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                     <span className="icon">👥</span>
                     Household
+                    {requestCount > 0 && (
+                        <span className="sidebar-badge">{requestCount}</span>
+                    )}
                 </NavLink>
                 {user?.householdId && (
                     <>

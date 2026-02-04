@@ -53,10 +53,12 @@ async function getHouseholdSnapshot(householdId) {
         }
     });
 
-    // Get household settings for currency
+    // Get household settings for currency and location
     const household = await prisma.household.findUnique({
         where: { id: householdId },
-        select: { currency: true }
+        select: {
+            currency: true
+        }
     });
 
     // Get goals
@@ -145,8 +147,12 @@ async function getHouseholdSnapshot(householdId) {
         savingsRate,
         topCategories,
         goals: formattedGoals,
+        id: householdId,
         currency: household?.currency || 'USD',
-        currencySymbol: getCurrencySymbol(household?.currency || 'USD')
+        currencySymbol: getCurrencySymbol(household?.currency || 'USD'),
+        city: household?.city || null,
+        country: household?.country || null,
+        state: household?.state || null
     };
 }
 
@@ -228,6 +234,9 @@ export async function chat(req, res) {
         res.json({
             success: true,
             response: result.response,
+            chartData: result.chartData, // Fix: functionality to pass chart data
+            parsedQuery: result.parsedQuery, // Helpful for debugging
+            metadata: result.metadata, // Helpful for client reasoning
             conversationId: convId,
             timestamp: result.timestamp
         });

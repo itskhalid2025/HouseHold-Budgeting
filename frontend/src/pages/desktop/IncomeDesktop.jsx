@@ -193,120 +193,122 @@ export default function Income() {
     });
 
     return (
-        <div className="container income-page">
-            <div className="page-header">
-                <h1>Income & Earnings</h1>
-                {canEdit ? (
-                    <button
-                        className="btn-primary"
-                        onClick={() => { setEditingIncome(null); resetForm(); setShowAddModal(true); }}
-                    >
-                        + Add Income Source
-                    </button>
-                ) : (
-                    <span className="viewer-notice">👁️ View Only</span>
-                )}
-            </div>
-
-            {error && <div className="error-banner">{error}</div>}
-
-            {/* Summary Stats */}
-            <div className="income-summary-card">
-                <div className="summary-left">
-                    <h3>{filters.userId === user?.id ? 'My Monthly Income' : 'Total Monthly Income'}</h3>
-                    <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal earnings' : 'Estimated based on active sources'}</p>
-                </div>
-                <div className="summary-center">
-                    <button
-                        className={`mine-toggle-btn ${filters.userId === user?.id ? 'active' : ''}`}
-                        onClick={() => handleFilterChange({ target: { name: 'userId', value: filters.userId === user?.id ? '' : user?.id } })}
-                    >
-                        {filters.userId === user?.id ? '👤 All Household' : '👤 Just Mine'}
-                    </button>
-                </div>
-                <div className="summary-right">
-                    <span className="total-amount">{formatCurrency(monthlyStats.total, currency)}</span>
-                </div>
-            </div>
-
-            {/* Income List */}
-            <h2 className="section-title">Income Sources</h2>
-
-            {/* Filters */}
-            <div className="filters-bar">
-                <input
-                    type="text"
-                    name="search"
-                    placeholder="Search source..."
-                    value={filters.search}
-                    onChange={handleFilterChange}
-                    className="filter-input"
-                />
-                <select name="type" value={filters.type} onChange={handleFilterChange} className="filter-select">
-                    <option value="">All Types</option>
-                    <option value="PRIMARY">💼 Primary Job</option>
-                    <option value="FREELANCE">💻 Freelance</option>
-                    <option value="INVESTMENT">📉 Investment</option>
-                    <option value="GIFT">🎁 Gift</option>
-                    <option value="OTHER">💰 Other</option>
-                </select>
-                <select name="userId" value={filters.userId} onChange={handleFilterChange} className="filter-select">
-                    <option value="">All Users</option>
-                    {members.map(member => (
-                        <option key={member.id} value={member.id}>
-                            {member.firstName} {member.lastName}
-                        </option>
-                    ))}
-                </select>
-            </div>
-
-            {loading ? (
-                <div className="loading-state">
-                    <div className="spinner"></div>
-                    <p>Loading income data...</p>
-                </div>
-            ) : (
-                <div className="income-grid">
-                    {filteredIncomes.length > 0 ? (
-                        filteredIncomes.map(inc => (
-                            <div key={inc.id} className={`income-card ${inc.isActive ? '' : 'inactive'}`}>
-                                <div className="income-header">
-                                    <span className={`income-type ${inc.type.toLowerCase()}`}>{inc.type}</span>
-
-                                    {canModifyIncome(inc) && (
-                                        <div className="card-actions">
-                                            <button onClick={() => handleEdit(inc)} className="btn-icon">✏️</button>
-                                            <button onClick={() => handleDelete(inc.id)} className="btn-icon delete">✖</button>
-                                        </div>
-                                    )}
-                                </div>
-                                <h3>{getCategoryEmoji(inc.type, inc.source)} {inc.source}</h3>
-                                <div className="income-details">
-                                    <span className="income-amount">{formatCurrency(inc.amount, currency)}</span>
-                                    <span className="income-freq">per {inc.frequency.toLowerCase().replace('_', ' ')}</span>
-                                    <span className="income-date">{formatDate(inc.startDate)}</span>
-                                    {inc.user && (
-                                        <span className="user-badge" style={{ marginTop: '8px', display: 'inline-block' }}>
-                                            👤 {inc.user.firstName}
-                                        </span>
-                                    )}
-                                </div>
-                                <div className="income-footer">
-                                    <span className="monthly-equiv">
-                                        ≈ {formatCurrency(monthlyStats.breakdown.find(b => b.id === inc.id)?.monthlyEquivalent || 0, currency)} / mo
-                                    </span>
-                                    {!inc.isActive && <span className="status-badge">Inactive</span>}
-                                </div>
-                            </div>
-                        ))
+        <>
+            <div className="container income-page">
+                <div className="page-header">
+                    <h1>Income & Earnings</h1>
+                    {canEdit ? (
+                        <button
+                            className="btn-primary"
+                            onClick={() => { setEditingIncome(null); resetForm(); setShowAddModal(true); }}
+                        >
+                            + Add Income Source
+                        </button>
                     ) : (
-                        <div className="empty-state">
-                            <p>No income sources added yet</p>
-                        </div>
+                        <span className="viewer-notice">👁️ View Only</span>
                     )}
                 </div>
-            )}
 
+                {error && <div className="error-banner">{error}</div>}
+
+                {/* Summary Stats */}
+                <div className="income-summary-card">
+                    <div className="summary-left">
+                        <h3>{filters.userId === user?.id ? 'My Monthly Income' : 'Total Monthly Income'}</h3>
+                        <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal earnings' : 'Estimated based on active sources'}</p>
+                    </div>
+                    <div className="summary-center">
+                        <button
+                            className={`mine-toggle-btn ${filters.userId === user?.id ? 'active' : ''}`}
+                            onClick={() => handleFilterChange({ target: { name: 'userId', value: filters.userId === user?.id ? '' : user?.id } })}
+                        >
+                            {filters.userId === user?.id ? '👤 All Household' : '👤 Just Mine'}
+                        </button>
+                    </div>
+                    <div className="summary-right">
+                        <span className="total-amount">{formatCurrency(monthlyStats.total, currency)}</span>
+                    </div>
+                </div>
+
+                {/* Income List */}
+                <h2 className="section-title">Income Sources</h2>
+
+                {/* Filters */}
+                <div className="filters-bar">
+                    <input
+                        type="text"
+                        name="search"
+                        placeholder="Search source..."
+                        value={filters.search}
+                        onChange={handleFilterChange}
+                        className="filter-input"
+                    />
+                    <select name="type" value={filters.type} onChange={handleFilterChange} className="filter-select">
+                        <option value="">All Types</option>
+                        <option value="PRIMARY">💼 Primary Job</option>
+                        <option value="FREELANCE">💻 Freelance</option>
+                        <option value="INVESTMENT">📉 Investment</option>
+                        <option value="GIFT">🎁 Gift</option>
+                        <option value="OTHER">💰 Other</option>
+                    </select>
+                    <select name="userId" value={filters.userId} onChange={handleFilterChange} className="filter-select">
+                        <option value="">All Users</option>
+                        {members.map(member => (
+                            <option key={member.id} value={member.id}>
+                                {member.firstName} {member.lastName}
+                            </option>
+                        ))}
+                    </select>
+                </div>
+
+                {loading ? (
+                    <div className="loading-state">
+                        <div className="spinner"></div>
+                        <p>Loading income data...</p>
+                    </div>
+                ) : (
+                    <div className="income-grid">
+                        {filteredIncomes.length > 0 ? (
+                            filteredIncomes.map(inc => (
+                                <div key={inc.id} className={`income-card ${inc.isActive ? '' : 'inactive'}`}>
+                                    <div className="income-header">
+                                        <span className={`income-type ${inc.type.toLowerCase()}`}>{inc.type}</span>
+
+                                        {canModifyIncome(inc) && (
+                                            <div className="card-actions">
+                                                <button onClick={() => handleEdit(inc)} className="btn-icon">✏️</button>
+                                                <button onClick={() => handleDelete(inc.id)} className="btn-icon delete">✖</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <h3>{getCategoryEmoji(inc.type, inc.source)} {inc.source}</h3>
+                                    <div className="income-details">
+                                        <span className="income-amount">{formatCurrency(inc.amount, currency)}</span>
+                                        <span className="income-freq">per {inc.frequency.toLowerCase().replace('_', ' ')}</span>
+                                        <span className="income-date">{formatDate(inc.startDate)}</span>
+                                        {inc.user && (
+                                            <span className="user-badge" style={{ marginTop: '8px', display: 'inline-block' }}>
+                                                👤 {inc.user.firstName}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <div className="income-footer">
+                                        <span className="monthly-equiv">
+                                            ≈ {formatCurrency(monthlyStats.breakdown.find(b => b.id === inc.id)?.monthlyEquivalent || 0, currency)} / mo
+                                        </span>
+                                        {!inc.isActive && <span className="status-badge">Inactive</span>}
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="empty-state">
+                                <p>No income sources added yet</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+            </div>
             {/* Add/Edit Modal */}
             {showAddModal && (
                 <div className="modal-overlay" onClick={() => setShowAddModal(false)}>
@@ -387,6 +389,6 @@ export default function Income() {
                 </div >
             )
             }
-        </div >
+        </>
     );
 }
