@@ -53,7 +53,15 @@ const generateToken = (user) => {
 export const register = async (req, res) => {
     logEntry('authController', 'register', { email: req.body.email, phone: req.body.phone });
     try {
-        const { email, phone, password, firstName, lastName, currency, country, state, city } = req.body;
+        const { email, phone, password, firstName, lastName, currency, country, state, city, termsAccepted } = req.body;
+
+        // Security: Enforce Terms Acceptance on Backend
+        if (termsAccepted !== true && termsAccepted !== 'true') {
+            return res.status(400).json({
+                success: false,
+                error: 'You must accept the Terms of Service and Privacy Policy to register.'
+            });
+        }
 
         // Check if email already exists
         const existingEmail = await prisma.user.findUnique({
@@ -92,7 +100,11 @@ export const register = async (req, res) => {
                 emailVerified: false,
                 country,
                 state,
-                city
+                city,
+                // Capture consent timestamps
+                termsAcceptedAt: req.body.termsAccepted ? new Date() : undefined,
+                privacyAcceptedAt: req.body.termsAccepted ? new Date() : undefined,
+                cookieAcceptedAt: req.body.cookieAccepted ? new Date() : undefined
             },
             select: {
                 id: true,
@@ -280,8 +292,22 @@ export const me = async (req, res) => {
 export const logout = async (req, res) => {
     logEntry('authController', 'logout', { userId: req.user?.id });
     try {
-        // In a stateless JWT system, logout is handled client-side by discarding the token
-        // Optional: implement token blacklisting if needed
+        const token = req.headers.authorization?.split(' ')[1];
+
+        if (token) {
+            // Blacklist the token with 24h expiry (timestamp based)
+            // JWT expiry is usually less than 24h, but we ensure cleanup
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+            await prisma.blacklistedToken.create({
+                data: {
+                    token,
+                    expiresAt
+                }
+            });
+            logDB('create', 'BlacklistedToken', { token: '***' });
+        }
+
         logSuccess('authController', 'logout');
         return res.status(200).json({
             success: true,

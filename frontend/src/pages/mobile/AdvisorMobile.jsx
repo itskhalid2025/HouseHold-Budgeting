@@ -8,6 +8,8 @@ import {
 } from 'recharts';
 
 import MobileCard from '../../components/mobile/MobileCard';
+import useAutoTour from '../../hooks/useAutoTour';
+import { advisorTourMobile } from '../../tourConfigs';
 import './AdvisorMobile.css';
 
 // Vibrant Modern Palette
@@ -171,6 +173,9 @@ export default function AdvisorMobile() {
     };
 
     useEffect(() => { scrollToBottom(); }, [messages, loading]);
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('advisor-mobile', advisorTourMobile, loading);
 
     const handleSendMessage = async (customMsg = null) => {
         const msgText = customMsg || input;

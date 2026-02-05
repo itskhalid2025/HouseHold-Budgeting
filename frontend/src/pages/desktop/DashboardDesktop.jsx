@@ -39,7 +39,8 @@ import {
     Shield,
     Star,
     Crown,
-    Trophy
+    Trophy,
+    ChevronDown
 } from 'lucide-react';
 import TrendLineChart from '../../components/charts/TrendLineChart';
 import usePolling from '../../hooks/usePolling';
@@ -104,6 +105,7 @@ export default function DashboardDesktop() {
         type: '',
         data: []
     });
+    const [expandedCard, setExpandedCard] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [gamificationData, setGamificationData] = useState(null);
@@ -390,32 +392,122 @@ export default function DashboardDesktop() {
                         <p>Here's your financial overview for today.</p>
                     </div>
 
-                    {/* 2. Stat Cards */}
-                    <div className="stats-row" data-tour-id="dashboard-stats-income">
-                        <div className="stat-card-mini clickable" data-tour-id="dashboard-stats-income" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Income', type: 'income', data: stats.incomeBreakdown })}>
-                            <div className="stat-icon income">💰</div>
-                            <div className="stat-info">
-                                <span className="label">Income</span>
-                                <span className="value">{formatCurrency(stats.income, currency)}</span>
+                    {/* 2. Monthly Header */}
+                    <div className="dashboard-section-header">
+                        <h3>This Month's <span className="month-highlight">{new Date().toLocaleString('default', { month: 'long' })}</span> Overview</h3>
+                    </div>
 
+                    {/* 3. Stat Cards */}
+                    <div className="stats-row" style={{ alignItems: 'flex-start' }} data-tour-id="dashboard-stats-income">
+                        {/* Income Card */}
+                        <div
+                            className={`stat-card-mini clickable ${expandedCard === 'income' ? 'expanded' : ''}`}
+                            data-tour-id="dashboard-stats-income"
+                            onClick={() => setExpandedCard(expandedCard === 'income' ? null : 'income')}
+                        >
+                            <div className="stat-main-content">
+                                <div className="stat-icon income">💰</div>
+                                <div className="stat-info">
+                                    <span className="label">Income</span>
+                                    <span className="value">{formatCurrency(stats.income, currency)}</span>
+                                </div>
+                                <ChevronDown className={`stat-expand-icon ${expandedCard === 'income' ? 'rotate' : ''}`} size={20} />
                             </div>
-                            <div className="stat-hover-hint">View Breakdown</div>
+
+                            {expandedCard === 'income' && (
+                                <div className="stat-breakdown-list">
+                                    {stats.incomeBreakdown.map((item, idx) => {
+                                        const amount = Number(item.amount || item.total || 0);
+                                        const percent = stats.income > 0 ? (amount / stats.income) * 100 : 0;
+                                        return (
+                                            <div key={idx} className="breakdown-item-wrapper">
+                                                <div className="breakdown-item">
+                                                    <span className="user">{item.name || 'Unknown'}</span>
+                                                    <span className="amount">{formatCurrency(amount, currency)}</span>
+                                                </div>
+                                                <div className="breakdown-progress-bg">
+                                                    <div className="breakdown-progress-fill income" style={{ width: `${Math.min(percent, 100)}%` }}></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {stats.incomeBreakdown.length === 0 && <div className="no-data">No data available</div>}
+                                </div>
+                            )}
                         </div>
-                        <div className="stat-card-mini clickable" data-tour-id="dashboard-stats-expenses" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Expenses', type: 'expenses', data: stats.expensesBreakdown })}>
-                            <div className="stat-icon expense">💸</div>
-                            <div className="stat-info">
-                                <span className="label">Expenses</span>
-                                <span className="value">{formatCurrency(stats.expenses, currency)}</span>
+
+                        {/* Expenses Card */}
+                        <div
+                            className={`stat-card-mini clickable ${expandedCard === 'expenses' ? 'expanded' : ''}`}
+                            data-tour-id="dashboard-stats-expenses"
+                            onClick={() => setExpandedCard(expandedCard === 'expenses' ? null : 'expenses')}
+                        >
+                            <div className="stat-main-content">
+                                <div className="stat-icon expense">💸</div>
+                                <div className="stat-info">
+                                    <span className="label">Expenses</span>
+                                    <span className="value">{formatCurrency(stats.expenses, currency)}</span>
+                                </div>
+                                <ChevronDown className={`stat-expand-icon ${expandedCard === 'expenses' ? 'rotate' : ''}`} size={20} />
                             </div>
-                            <div className="stat-hover-hint">View Breakdown</div>
+
+                            {expandedCard === 'expenses' && (
+                                <div className="stat-breakdown-list">
+                                    {stats.expensesBreakdown.map((item, idx) => {
+                                        const amount = Number(item.amount || item.total || 0);
+                                        const percent = stats.expenses > 0 ? (amount / stats.expenses) * 100 : 0;
+                                        return (
+                                            <div key={idx} className="breakdown-item-wrapper">
+                                                <div className="breakdown-item">
+                                                    <span className="user">{item.name || 'Unknown'}</span>
+                                                    <span className="amount">{formatCurrency(amount, currency)}</span>
+                                                </div>
+                                                <div className="breakdown-progress-bg">
+                                                    <div className="breakdown-progress-fill expense" style={{ width: `${Math.min(percent, 100)}%` }}></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {stats.expensesBreakdown.length === 0 && <div className="no-data">No data available</div>}
+                                </div>
+                            )}
                         </div>
-                        <div className="stat-card-mini clickable" data-tour-id="dashboard-stats-balance" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Savings', type: 'savings', data: stats.savingsBreakdown })}>
-                            <div className="stat-icon savings">🐷</div>
-                            <div className="stat-info">
-                                <span className="label">Savings</span>
-                                <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
+
+                        {/* Savings Card */}
+                        <div
+                            className={`stat-card-mini clickable ${expandedCard === 'savings' ? 'expanded' : ''}`}
+                            data-tour-id="dashboard-stats-balance"
+                            onClick={() => setExpandedCard(expandedCard === 'savings' ? null : 'savings')}
+                        >
+                            <div className="stat-main-content">
+                                <div className="stat-icon savings">🐷</div>
+                                <div className="stat-info">
+                                    <span className="label">Savings</span>
+                                    <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
+                                </div>
+                                <ChevronDown className={`stat-expand-icon ${expandedCard === 'savings' ? 'rotate' : ''}`} size={20} />
                             </div>
-                            <div className="stat-hover-hint">View Breakdown</div>
+
+                            {expandedCard === 'savings' && (
+                                <div className="stat-breakdown-list">
+                                    {stats.savingsBreakdown.map((item, idx) => {
+                                        const amount = Number(item.amount || item.total || 0);
+                                        const percent = stats.monthlySaved > 0 ? (amount / stats.monthlySaved) * 100 : 0;
+                                        return (
+                                            <div key={idx} className="breakdown-item-wrapper">
+                                                <div className="breakdown-item">
+                                                    <span className="user">{item.name || 'Unknown'}</span>
+                                                    <span className="amount">{formatCurrency(amount, currency)}</span>
+                                                </div>
+                                                <div className="breakdown-progress-bg">
+                                                    <div className="breakdown-progress-fill savings" style={{ width: `${Math.min(percent, 100)}%` }}></div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {stats.savingsBreakdown.length === 0 && <div className="no-data">No data available</div>}
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -498,9 +590,12 @@ export default function DashboardDesktop() {
                                             <span className="txn-desc">{txn.description}</span>
                                             <div className="txn-meta">
                                                 <span className="txn-date">{formatDate(txn.date)}</span>
-                                                {txn.user && (
-                                                    <span className="txn-user-pill" style={{ backgroundColor: getUserColor(txn.user.firstName) }}>
-                                                        {txn.user.firstName}
+                                                {(txn.user || txn.userName) && (
+                                                    <span
+                                                        className="txn-user-pill"
+                                                        style={{ backgroundColor: getUserColor(txn.userName || txn.user?.firstName || 'Me') }}
+                                                    >
+                                                        {txn.userName || txn.user?.firstName || 'Me'}
                                                     </span>
                                                 )}
                                             </div>

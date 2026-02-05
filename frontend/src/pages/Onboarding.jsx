@@ -56,7 +56,7 @@ export default function Onboarding() {
                     const updatedUser = await refreshUser();
                     if (updatedUser && updatedUser.householdId) {
                         // Accepted! Redirect to dashboard
-                        window.location.href = '/';
+                        window.location.href = '/dashboard';
                     } else {
                         // Rejected or cancelled
                         setPendingRequest(null);
@@ -97,7 +97,7 @@ export default function Onboarding() {
             await createHousehold(createName);
             setSuccess('Household created successfully! Redirecting...');
             setTimeout(() => {
-                window.location.href = '/';
+                window.location.href = '/dashboard';
             }, 1500);
         } catch (err) {
             setError(err.message || 'Failed to create household');
@@ -143,6 +143,39 @@ export default function Onboarding() {
                     <h1>Welcome to HouseHold Budgeting</h1>
                     <p>The AI-powered financial platform that turns your household expenses into smart insights.</p>
                 </header>
+
+                {/* CTA Section */}
+                <section className="onboarding-section cta-section">
+                    <h2>Ready to Take Control?</h2>
+                    <p>Join thousands of households managing their finances with AI. Choose your path below to get started.</p>
+
+                    <div className="cta-buttons">
+                        {pendingRequest ? (
+                            <div className="pending-request-notice">
+                                <div className="feature-icon"><Loader2 className="animate-spin" /></div>
+                                <h3>Request Pending</h3>
+                                <p>Waiting for approval from <strong>{pendingRequest.householdName}</strong></p>
+                                <button className="cta-button btn-join" onClick={() => navigate('/household')}>
+                                    View Status
+                                </button>
+                            </div>
+                        ) : (
+                            <>
+                                <button className="cta-button btn-create" onClick={() => setActiveModal('create')}>
+                                    <Plus size={24} />
+                                    Create New Household
+                                </button>
+                                <button className="cta-button btn-join" onClick={() => setActiveModal('join')}>
+                                    <Users size={24} />
+                                    Join Existing Household
+                                </button>
+                            </>
+                        )}
+                    </div>
+
+                    <p style={{ marginTop: '32px', fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.5)' }}>
+                    </p>
+                </section>
 
                 {/* The Problem Section */}
                 <section className="onboarding-section onboarding-problem visible">
@@ -194,7 +227,7 @@ export default function Onboarding() {
                                     </div>
                                     <div className="feature-card-mini">
                                         <Upload size={24} />
-                                        <span>Receipts</span>
+                                        <span>Image-Receipts/Payslips</span>
                                     </div>
                                 </div>
                             </div>
@@ -229,38 +262,7 @@ export default function Onboarding() {
                     </div>
                 </section>
 
-                {/* CTA Section */}
-                <section className="onboarding-section cta-section">
-                    <h2>Ready to Take Control?</h2>
-                    <p>Join thousands of households managing their finances with AI. Choose your path below to get started.</p>
-
-                    <div className="cta-buttons">
-                        {pendingRequest ? (
-                            <div className="pending-request-notice">
-                                <div className="feature-icon"><Loader2 className="animate-spin" /></div>
-                                <h3>Request Pending</h3>
-                                <p>Waiting for approval from <strong>{pendingRequest.householdName}</strong></p>
-                                <button className="cta-button btn-join" onClick={() => navigate('/household')}>
-                                    View Status
-                                </button>
-                            </div>
-                        ) : (
-                            <>
-                                <button className="cta-button btn-create" onClick={() => setActiveModal('create')}>
-                                    <Plus size={24} />
-                                    Create New Household
-                                </button>
-                                <button className="cta-button btn-join" onClick={() => setActiveModal('join')}>
-                                    <Users size={24} />
-                                    Join Existing Household
-                                </button>
-                            </>
-                        )}
-                    </div>
-
-                    <p style={{ marginTop: '32px', fontSize: '0.9rem', color: 'rgba(255, 255, 255, 0.5)' }}>
-                    </p>
-                </section>
+                
             </div>
 
             {/* Modals */}

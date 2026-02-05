@@ -13,6 +13,7 @@
  */
 
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit'; // Security: Rate Limiting
 import {
     register,
     login,
@@ -34,6 +35,15 @@ import {
 import { authenticate } from '../middleware/auth.js';
 
 const router = Router();
+
+// Rate Limiter for Login/Register (Prevent Brute Force)
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 requests per window
+    message: { error: 'Too many attempts, please try again after 15 minutes' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 
 /**
  * @swagger
@@ -86,7 +96,7 @@ const router = Router();
  *         description: Validation error or duplicate email/phone
  */
 // User registration
-router.post('/register', validate(registerSchema), register);
+router.post('/register', authLimiter, validate(registerSchema), register);
 
 /**
  * @swagger
@@ -124,7 +134,7 @@ router.post('/register', validate(registerSchema), register);
  *         description: Invalid credentials
  */
 // User login
-router.post('/login', validate(loginSchema), login);
+router.post('/login', authLimiter, validate(loginSchema), login);
 
 /**
  * @swagger

@@ -27,6 +27,8 @@ import { getCategoryEmoji } from '../../utils/categoryIcons';
 
 // Import standalone CSS
 import './ReportsMobile.css';
+import useAutoTour from '../../hooks/useAutoTour';
+import { reportsTourMobile } from '../../tourConfigs';
 import ChatbotButton from '../../components/mobile/ChatbotButton';
 
 
@@ -217,6 +219,9 @@ export default function ReportsMobile() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab]);
+
+  // Auto-trigger tour for first-time users
+  useAutoTour('reports-mobile', reportsTourMobile, loading);
 
   const fetchHistory = async () => {
     setHistoryLoading(true);

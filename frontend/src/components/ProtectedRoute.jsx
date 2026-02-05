@@ -60,13 +60,13 @@ export function PublicRoute({ children }) {
 
     if (isAuthenticated) {
         // Redirect logic:
-        // 1. If no household, go to /household (Priority 1)
+        // 1. If no household, go to /onboarding (Priority 1)
         // 2. Else go to where they tried to go, or dashboard
         if (!user?.householdId) {
             return <Navigate to="/onboarding" replace />;
         }
 
-        const from = location.state?.from?.pathname || '/';
+        const from = location.state?.from?.pathname || '/dashboard';
         return <Navigate to={from} replace />;
     }
 

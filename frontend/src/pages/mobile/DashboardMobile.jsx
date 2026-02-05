@@ -8,10 +8,10 @@ import {
 import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
 import { formatCurrency } from '../../utils/currencyUtils';
-import { formatDate } from '../../utils/formatting';
+import { formatDate, getUserColor } from '../../utils/formatting';
 import { getCategoryEmoji } from '../../utils/categoryIcons';
 import TrendLineChart from '../../components/charts/TrendLineChart';
-import { HelpCircle } from 'lucide-react';
+import { HelpCircle, ChevronDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ChatbotButton from '../../components/mobile/ChatbotButton';
 import { useSync } from '../../context/SyncContext';
@@ -33,6 +33,7 @@ export default function DashboardMobile() {
 
     // State
     const [showGamification, setShowGamification] = useState(false);
+    const [expandedCard, setExpandedCard] = useState(null);
     const [stats, setStats] = useState({
         income: 0,
         expenses: 0,
@@ -170,19 +171,119 @@ export default function DashboardMobile() {
 
             {/* ... rest of dashboard ... */}
 
-            {/* 2. Summary Cards (Horizontal Scroll) */}
+            {/* 2. Monthly Header */}
+            <div className="mobile-section-header">
+                <h3>This Month's <span className="month-highlight">{new Date().toLocaleString('default', { month: 'long' })}</span> Overview</h3>
+            </div>
+
+            {/* 3. Summary Cards (Horizontal Scroll) */}
             <div className="summary-scroll" data-tour-id="dashboard-stats-mobile">
-                <div className="summary-card income" data-tour-id="dashboard-stats-income-mobile" onClick={() => setBreakdownModal({ isOpen: true, title: 'Income', type: 'income', data: stats.incomeBreakdown })}>
-                    <span className="label">Income</span>
-                    <span className="value">{formatCurrency(stats.income, currency)}</span>
+                {/* Income */}
+                <div
+                    className={`summary-card income ${expandedCard === 'income' ? 'expanded' : ''}`}
+                    data-tour-id="dashboard-stats-income-mobile"
+                    onClick={() => setExpandedCard(expandedCard === 'income' ? null : 'income')}
+                >
+                    <div className="summary-header">
+                        <div>
+                            <span className="label">Income</span>
+                            <span className="value">{formatCurrency(stats.income, currency)}</span>
+                        </div>
+                        <ChevronDown className={`expand-icon ${expandedCard === 'income' ? 'rotate' : ''}`} size={20} />
+                    </div>
+
+                    {expandedCard === 'income' && (
+                        <div className="summary-breakdown">
+                            {stats.incomeBreakdown.map((item, idx) => {
+                                const amount = item.amount || item.total || 0;
+                                const percent = stats.income > 0 ? (amount / stats.income) * 100 : 0;
+                                return (
+                                    <div key={idx} className="breakdown-wrapper">
+                                        <div className="breakdown-row">
+                                            <span className="name">{item.name || 'Unknown'}</span>
+                                            <span className="amt">{formatCurrency(amount, currency)}</span>
+                                        </div>
+                                        <div className="progress-bg">
+                                            <div className="progress-fill income" style={{ width: `${percent}%` }}></div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {stats.incomeBreakdown.length === 0 && <span className="no-data">No data</span>}
+                        </div>
+                    )}
                 </div>
-                <div className="summary-card expense" data-tour-id="dashboard-stats-expenses-mobile" onClick={() => setBreakdownModal({ isOpen: true, title: 'Expenses', type: 'expenses', data: stats.expensesBreakdown })}>
-                    <span className="label">Expenses</span>
-                    <span className="value">{formatCurrency(stats.expenses, currency)}</span>
+
+                {/* Expenses */}
+                <div
+                    className={`summary-card expense ${expandedCard === 'expenses' ? 'expanded' : ''}`}
+                    data-tour-id="dashboard-stats-expenses-mobile"
+                    onClick={() => setExpandedCard(expandedCard === 'expenses' ? null : 'expenses')}
+                >
+                    <div className="summary-header">
+                        <div>
+                            <span className="label">Expenses</span>
+                            <span className="value">{formatCurrency(stats.expenses, currency)}</span>
+                        </div>
+                        <ChevronDown className={`expand-icon ${expandedCard === 'expenses' ? 'rotate' : ''}`} size={20} />
+                    </div>
+
+                    {expandedCard === 'expenses' && (
+                        <div className="summary-breakdown">
+                            {stats.expensesBreakdown.map((item, idx) => {
+                                const amount = item.amount || item.total || 0;
+                                const percent = stats.expenses > 0 ? (amount / stats.expenses) * 100 : 0;
+                                return (
+                                    <div key={idx} className="breakdown-wrapper">
+                                        <div className="breakdown-row">
+                                            <span className="name">{item.name || 'Unknown'}</span>
+                                            <span className="amt">{formatCurrency(amount, currency)}</span>
+                                        </div>
+                                        <div className="progress-bg">
+                                            <div className="progress-fill expense" style={{ width: `${percent}%` }}></div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {stats.expensesBreakdown.length === 0 && <span className="no-data">No data</span>}
+                        </div>
+                    )}
                 </div>
-                <div className="summary-card savings" data-tour-id="dashboard-stats-balance-mobile" onClick={() => setBreakdownModal({ isOpen: true, title: 'Savings', type: 'savings', data: stats.savingsBreakdown })}>
-                    <span className="label">Savings</span>
-                    <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
+
+                {/* Savings */}
+                <div
+                    className={`summary-card savings ${expandedCard === 'savings' ? 'expanded' : ''}`}
+                    data-tour-id="dashboard-stats-balance-mobile"
+                    onClick={() => setExpandedCard(expandedCard === 'savings' ? null : 'savings')}
+                >
+                    <div className="summary-header">
+                        <div>
+                            <span className="label">Savings</span>
+                            <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
+                        </div>
+                        <ChevronDown className={`expand-icon ${expandedCard === 'savings' ? 'rotate' : ''}`} size={20} />
+                    </div>
+
+                    {expandedCard === 'savings' && (
+                        <div className="summary-breakdown">
+                            {stats.savingsBreakdown.map((item, idx) => {
+                                const amount = item.amount || item.total || 0;
+                                const percent = stats.monthlySaved > 0 ? (amount / stats.monthlySaved) * 100 : 0;
+                                return (
+                                    <div key={idx} className="breakdown-wrapper">
+                                        <div className="breakdown-row">
+                                            <span className="name">{item.name || 'Unknown'}</span>
+                                            <span className="amt">{formatCurrency(amount, currency)}</span>
+                                        </div>
+                                        <div className="progress-bg">
+                                            <div className="progress-fill savings" style={{ width: `${percent}%` }}></div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            {stats.savingsBreakdown.length === 0 && <span className="no-data">No data</span>}
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -216,7 +317,15 @@ export default function DashboardMobile() {
                                 </div>
                                 <div className="txn-info">
                                     <p className="txn-desc">{txn.description}</p>
-                                    <span className="txn-date">{formatDate(txn.date)}</span>
+                                    <div className="txn-meta-row">
+                                        <span
+                                            className="txn-user-pill"
+                                            style={{ backgroundColor: getUserColor(txn.userName || txn.user?.firstName || 'Me') }}
+                                        >
+                                            {txn.userName || txn.user?.firstName || 'Me'}
+                                        </span>
+                                        <span className="txn-date">{formatDate(txn.date)}</span>
+                                    </div>
                                 </div>
                                 <span className={`txn-amount ${txn.type?.toLowerCase()}`}>
                                     {formatCurrency(-parseFloat(txn.amount), currency)}

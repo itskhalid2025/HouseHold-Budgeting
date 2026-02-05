@@ -23,9 +23,11 @@ import {
 } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
+import useAutoTour from '../../hooks/useAutoTour';
 import { formatDate } from '../../utils/formatting.js';
 import { formatCurrency } from '../../utils/currencyUtils';
 import { getCategoryEmoji } from '../../utils/categoryIcons';
+import { incomeTourDesktop } from '../../tourConfigs';
 import './IncomeDesktop.css';
 
 export default function Income() {
@@ -77,6 +79,9 @@ export default function Income() {
 
     // Poll for updates every 10 seconds
     usePolling(fetchData, 10000);
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('income-desktop', incomeTourDesktop, loading);
 
     async function fetchData() {
         try {

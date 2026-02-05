@@ -37,6 +37,24 @@ export const authenticate = async (req, res, next) => {
 
     const token = authHeader.split(' ')[1];
 
+    // Check Blacklist
+    let blacklisted = null;
+    try {
+      blacklisted = await prisma.blacklistedToken.findUnique({
+        where: { token }
+      });
+    } catch (err) {
+      console.error('Blacklist check failed:', err);
+      // If table doesn't exist yet (migration pending), ignore and compare token only
+    }
+
+    if (blacklisted) {
+      return res.status(401).json({
+        success: false,
+        error: 'Session expired or logged out'
+      });
+    }
+
     // Verify token
     let decoded;
     try {

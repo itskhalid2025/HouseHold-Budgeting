@@ -17,6 +17,8 @@ import MobileModal from '../../components/mobile/MobileModal';
 import MobileButton from '../../components/mobile/MobileButton';
 import MobileInput from '../../components/mobile/MobileInput';
 import { Plus, Trash2, Edit2, TrendingUp, Calendar, User, Filter, X } from 'lucide-react';
+import useAutoTour from '../../hooks/useAutoTour';
+import { incomeTourMobile } from '../../tourConfigs';
 import './IncomeMobile.css';
 
 export default function IncomeMobile() {
@@ -96,6 +98,9 @@ export default function IncomeMobile() {
             setLoading(false);
         }
     }
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('income-mobile', incomeTourMobile, loading);
 
     // Handlers
     const handleInputChange = (e) => {

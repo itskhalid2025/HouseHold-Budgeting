@@ -13,13 +13,13 @@ export default function Navbar() {
     const { isOnline } = useSync();
     const { requestCount } = useNotification();
 
-    // Hide navbar on login/register pages
-    if (['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'].includes(location.pathname)) {
+    // Hide navbar on login/register/landing pages
+    if (['/login', '/register', '/forgot-password', '/reset-password', '/verify-email', '/'].includes(location.pathname)) {
         return null;
     }
 
     const navItems = [
-        { path: '/', icon: LayoutDashboard, label: 'Home', tourId: 'navbar-home' },
+        { path: '/dashboard', icon: LayoutDashboard, label: 'Home', tourId: 'navbar-home' },
         { path: '/transactions', icon: Receipt, label: 'Txns', tourId: 'navbar-transactions' },
         {
             path: '#', // Dummy path

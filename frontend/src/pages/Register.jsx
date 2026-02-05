@@ -33,7 +33,9 @@ export default function Register() {
         currency: 'USD',
         country: '',
         state: '',
-        city: ''
+        city: '',
+        termsAccepted: false,
+        cookieAccepted: false
     });
     const [locationCodes, setLocationCodes] = useState({
         countryCode: '',
@@ -87,6 +89,11 @@ export default function Register() {
 
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
+            return;
+        }
+
+        if (!formData.termsAccepted) {
+            setError('You must agree to the Terms and Privacy Policy');
             return;
         }
 
@@ -298,6 +305,33 @@ export default function Register() {
                                 ))}
                             </select>
                         </div>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={formData.termsAccepted}
+                                onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
+                                required
+                            />
+                            <span>
+                                I agree to the <Link to="/terms" target="_blank">Terms of Service</Link> and <Link to="/privacy" target="_blank">Privacy Policy</Link>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={formData.cookieAccepted}
+                                onChange={(e) => setFormData({ ...formData, cookieAccepted: e.target.checked })}
+                            />
+                            <span>
+                                I consent to the use of <Link to="/cookie-policy" target="_blank">Cookies</Link> (Optional)
+                            </span>
+                        </label>
                     </div>
 
                     <button type="submit" className="auth-button" disabled={loading}>

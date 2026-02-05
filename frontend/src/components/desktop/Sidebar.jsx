@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSmartEntry } from '../../context/SmartEntryContext';
 import { useNotification } from '../../context/NotificationContext';
-import { Plus } from 'lucide-react';
+import { Plus, LogOut } from 'lucide-react';
 import Logo from '../../assets/Logo.png';
 import './Sidebar.css';
 import {
@@ -11,7 +11,7 @@ import {
 } from '../../api/api';
 
 const Sidebar = () => {
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user, logout } = useAuth();
     const { openSmartEntry } = useSmartEntry();
     const { requestCount } = useNotification();
 
@@ -49,7 +49,7 @@ const Sidebar = () => {
             <nav className="sidebar-nav">
                 {user?.householdId && (
                     <>
-                        <NavLink to="/" data-tour-id="sidebar-dashboard" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                        <NavLink to="/dashboard" data-tour-id="sidebar-dashboard" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                             <span className="icon">🏠</span>
                             Dashboard
                         </NavLink>
@@ -91,6 +91,11 @@ const Sidebar = () => {
                     </>
                 )}
             </nav>
+
+            <button onClick={logout} className="logout-btn-glass" data-tour-id="sidebar-logout">
+                <div className="icon-box"><LogOut size={18} /></div>
+                <span>Logout</span>
+            </button>
         </aside>
     );
 };

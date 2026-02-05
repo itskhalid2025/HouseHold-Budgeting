@@ -30,10 +30,12 @@ import {
 } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
+import useAutoTour from '../../hooks/useAutoTour';
 import './SavingsDesktop.css';
 
 import { formatCurrency } from '../../utils/currencyUtils';
 import { getCategoryEmoji } from '../../utils/categoryIcons';
+import { savingsTourDesktop } from '../../tourConfigs';
 
 export default function Savings() {
     const { user, currency } = useAuth();
@@ -77,6 +79,9 @@ export default function Savings() {
     }, [filterCreator]);
 
     usePolling(fetchData, 10000);
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('savings-desktop', savingsTourDesktop, loading);
 
     async function fetchData() {
         try {

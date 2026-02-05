@@ -24,6 +24,8 @@ import {
     XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from 'recharts';
 import { chatWithAdvisor } from '../../api/api';
+import useAutoTour from '../../hooks/useAutoTour';
+import { advisorTourDesktop } from '../../tourConfigs';
 import './AdvisorDesktop.css';
 
 const COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6', '#ec4899'];
@@ -229,6 +231,9 @@ export default function Advisor() {
     useEffect(() => {
         scrollToBottom();
     }, [messages, loading]);
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('advisor-desktop', advisorTourDesktop, loading);
 
     const handleSendMessage = async () => {
         if (!input.trim()) return;

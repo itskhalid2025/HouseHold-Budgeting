@@ -85,9 +85,22 @@ app.use(morgan('dev'));
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
+import rateLimit from 'express-rate-limit';
+
+// ...
+
+// Rate Limiter for Auth Routes
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 requests per window
+    message: { error: 'Too many attempts, please try again after 15 minutes' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Routes
 app.use('/api/admin', adminRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes); // Remove global limiter here
 app.use('/api/households', authenticate, householdRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/transactions', transactionRoutes);

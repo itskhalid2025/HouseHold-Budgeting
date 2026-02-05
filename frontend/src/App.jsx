@@ -43,6 +43,14 @@ import { SyncProvider } from './context/SyncContext';
 import { BudgetProvider } from './context/BudgetContext';
 import { NotificationProvider, useNotification } from './context/NotificationContext';
 import PreWarmer from './components/PreWarmer';
+import { initAnalytics } from './services/analytics';
+import LandingPage from './pages/LandingPage';
+import ContactPage from './pages/ContactPage';
+import FeaturesPage from './pages/FeaturesPage';
+import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
+import TermsOfServicePage from './pages/TermsOfServicePage';
+import CookiePolicyPage from './pages/CookiePolicyPage';
+import Footer from './components/Footer';
 
 import './App.css';
 
@@ -220,6 +228,9 @@ function AiLimitNotification({ isMobile }) {
     window.addEventListener('ai-warning', handleWarning);
     window.addEventListener('ai-error', handleError);
 
+    // Initialize Analytics
+    initAnalytics();
+
     return () => {
       window.removeEventListener('ai-warning', handleWarning);
       window.removeEventListener('ai-error', handleError);
@@ -272,6 +283,7 @@ function AppContent() {
   const isMobile = useIsMobile();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith('/admin');
+  const isLandingPage = location.pathname === '/';
   const { openSmartEntry } = useSmartEntry();
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
@@ -335,6 +347,18 @@ function AppContent() {
     );
   }
 
+  // Landing page - no sidebar/navbar
+  if (isLandingPage) {
+    return (
+      <div className="app">
+        <ServerStatus />
+        <main className="app-main">
+          <AppRoutes />
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div
       className="app"
@@ -374,12 +398,10 @@ function AppContent() {
           <Sidebar />
           <div className="desktop-main-wrapper">
             <TopBar />
-            <main className="app-main">
+            <main className="app-main" style={{ paddingBottom: '100px' }}> {/* Add padding for fixed footer */}
               <AppRoutes />
             </main>
-            <footer className="app-footer">
-              <p>&copy; 2026 HouseHold Budgeting.</p>
-            </footer>
+            <Footer />
           </div>
         </div>
       )}
@@ -391,9 +413,20 @@ function AppContent() {
 function AppRoutes() {
   return (
     <Routes>
-      {/* ... existing routes ... */}
-      {/* Protected Routes */}
+      {/* Public Landing Page */}
       <Route path="/" element={
+        <PublicRoute>
+          <LandingPage />
+        </PublicRoute>
+      } />
+      <Route path="/contact" element={<ContactPage />} />
+      <Route path="/features" element={<FeaturesPage />} />
+      <Route path="/privacy" element={<PrivacyPolicyPage />} />
+      <Route path="/terms" element={<TermsOfServicePage />} />
+      <Route path="/cookie-policy" element={<CookiePolicyPage />} />
+
+      {/* Protected Routes */}
+      <Route path="/dashboard" element={
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>

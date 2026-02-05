@@ -19,6 +19,8 @@ import MobileModal from '../../components/mobile/MobileModal';
 import MobileButton from '../../components/mobile/MobileButton';
 import MobileInput from '../../components/mobile/MobileInput';
 import { Search, Filter, Plus, Trash2, Edit2, Calendar } from 'lucide-react';
+import useAutoTour from '../../hooks/useAutoTour';
+import { transactionsTourMobile } from '../../tourConfigs';
 import './TransactionsMobile.css';
 
 // Import Sibling Tabs
@@ -195,6 +197,9 @@ function SpendingTab() {
             setLoading(false);
         }
     }
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('transactions-mobile', transactionsTourMobile, loading);
 
     // Handlers
     const handleInputChange = (e) => {

@@ -23,10 +23,13 @@ import {
     Sparkles,
     Zap,
     Download,
-    RefreshCw
+    RefreshCw,
+    FileText
 } from 'lucide-react';
 import { useTour } from '../../context/TourContext';
 import { useNavigate } from 'react-router-dom';
+import useAutoTour from '../../hooks/useAutoTour';
+import { settingsTourMobile } from '../../tourConfigs';
 import './SettingsMobile.css';
 
 /**
@@ -116,6 +119,9 @@ export default function SettingsMobile() {
     useEffect(() => {
         setMsg({ type: '', text: '' });
     }, [subPage]);
+
+    // Auto-trigger tour for first-time users (only on main settings page)
+    useAutoTour('settings-mobile', settingsTourMobile, false);
 
     // -- Helpers --
     const isOwner = user?.role === 'OWNER';
@@ -563,6 +569,42 @@ export default function SettingsMobile() {
 
                 <MobileCard
                     className="menu-card vibrant-card-interactive"
+                    onClick={() => navigate('/privacy')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Privacy Policy"
+                >
+                    <div className="menu-item">
+                        <div className="icon-bg gradient-1">
+                            <Shield size={22} className="menu-icon" />
+                        </div>
+                        <div className="menu-text-col">
+                            <span className="menu-text">Privacy Policy</span>
+                        </div>
+                        <ChevronRight size={20} className="menu-arrow" />
+                    </div>
+                </MobileCard>
+
+                <MobileCard
+                    className="menu-card vibrant-card-interactive"
+                    onClick={() => navigate('/terms')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Terms of Service"
+                >
+                    <div className="menu-item">
+                        <div className="icon-bg gradient-2">
+                            <FileText size={22} className="menu-icon" />
+                        </div>
+                        <div className="menu-text-col">
+                            <span className="menu-text">Terms of Service</span>
+                        </div>
+                        <ChevronRight size={20} className="menu-arrow" />
+                    </div>
+                </MobileCard>
+
+                <MobileCard
+                    className="menu-card vibrant-card-interactive"
                     onClick={() => {
                         resetAllTours();
                         navigate('/');
@@ -583,8 +625,8 @@ export default function SettingsMobile() {
                         </div>
                         <ChevronRight size={20} className="menu-arrow" />
                     </div>
-                </MobileCard>
-            </nav>
+                </MobileCard >
+            </nav >
 
             <footer className="logout-section" data-tour-id="settings-account-mobile">
                 <button className="logout-btn-vibrant" onClick={handleLogout} aria-label="Sign Out">

@@ -18,6 +18,8 @@ import MobileButton from '../../components/mobile/MobileButton';
 import MobileModal from '../../components/mobile/MobileModal';
 import MobileInput from '../../components/mobile/MobileInput';
 import { Plus, Trash2, Edit2, TrendingUp, History, X, Check, Filter } from 'lucide-react';
+import useAutoTour from '../../hooks/useAutoTour';
+import { savingsTourMobile } from '../../tourConfigs';
 import confetti from 'canvas-confetti';
 import './SavingsMobile.css';
 
@@ -85,6 +87,9 @@ export default function SavingsMobile() {
 
     useEffect(() => { fetchData(); }, [filters.userId]);
     usePolling(fetchData, 15000);
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('savings-mobile', savingsTourMobile, loading);
 
     // Handlers
     const handleSaveGoal = async () => {

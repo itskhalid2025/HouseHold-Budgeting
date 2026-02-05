@@ -32,6 +32,8 @@ import {
     Wifi,
     Zap
 } from 'lucide-react';
+import useAutoTour from '../../hooks/useAutoTour';
+import { householdTourMobile } from '../../tourConfigs';
 import './HouseholdMobile.css';
 
 /**
@@ -111,6 +113,9 @@ export default function HouseholdMobile() { // Default Export Compliance
 
     // Automated polling to keep data fresh every 10 seconds
     usePolling(fetchHouseholdData, 10000, true, [user?.id]);
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('household-mobile', householdTourMobile, loading);
 
     // -- Action Handlers --
 

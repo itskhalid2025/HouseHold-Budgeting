@@ -24,8 +24,10 @@ import {
 import { getLatestReport, generateReport, getHousehold, getReports } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import useAutoTour from '../../hooks/useAutoTour';
 import { formatCurrency } from '../../utils/currencyUtils';
 import { getCategoryEmoji } from '../../utils/categoryIcons';
+import { reportsTourDesktop } from '../../tourConfigs';
 import './ReportsDesktop.css';
 
 export default function Reports() {
@@ -98,6 +100,9 @@ export default function Reports() {
         }
         fetchMembers();
     }, []);
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('reports-desktop', reportsTourDesktop, loading);
 
     const fetchReport = async (type = 'weekly') => {
         if (type === 'custom') return; // Don't auto-fetch custom

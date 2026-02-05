@@ -10,9 +10,70 @@
     padding: 24px 0;
     height: 100vh;
     box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
-    position: relative;
-    z-index: 50;
+    position: sticky;
+    /* Fix for scrolling gap */
+    top: 0;
+    z-index: 1002;
+    /* Above footer */
     transition: background 0.3s ease, border-right 0.3s ease;
+}
+
+/* Logout Button Redesign - High Visibility Glass */
+.logout-btn-glass {
+    width: calc(100% - 48px);
+    /* Full width minus margin */
+    margin: auto 24px 24px;
+    /* Push to bottom, side margins, bottom margin */
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 24px;
+    background: rgba(220, 38, 38, 0.15);
+    /* Stronger red background */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(220, 38, 38, 0.4);
+    /* clearer border */
+    border-radius: 100px;
+    /* Full pill shape */
+    color: #fca5a5;
+    /* Light red text for dark mode contrast */
+    font-weight: 700;
+    /* Bold text */
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.logout-btn-glass:hover {
+    background: rgba(220, 38, 38, 0.8);
+    /* Solid red on hover for clarity */
+    border-color: #dc2626;
+    color: white;
+    /* White text on hover */
+    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
+    transform: translateY(-2px);
+}
+
+.logout-btn-glass:active {
+    transform: translateY(0);
+}
+
+/* Icon Styling */
+.logout-btn-glass .icon-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Text Styling */
+.logout-btn-glass span {
+    font-weight: 600;
 }
 
 .sidebar-header {

@@ -29,6 +29,8 @@ import {
 } from '../../api/api';
 import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
+import useAutoTour from '../../hooks/useAutoTour';
+import { householdTourDesktop } from '../../tourConfigs';
 import './HouseholdDesktop.css';
 
 export default function Household() {
@@ -107,6 +109,9 @@ export default function Household() {
 
     // Poll for updates (e.g., membership changes, role updates)
     usePolling(fetchHouseholdData, 10000, true, [user?.id]);
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('household-desktop', householdTourDesktop, loading);
 
     // Create household
     const handleCreateHousehold = async (e) => {

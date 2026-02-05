@@ -28,10 +28,12 @@ import {
 import { useAuth } from '../../context/AuthContext';
 
 import usePolling from '../../hooks/usePolling';
+import useAutoTour from '../../hooks/useAutoTour';
 import { formatDate, getUserColor } from '../../utils/formatting';
 import { formatCurrency } from '../../utils/currencyUtils';
 import { getCategoryEmoji } from '../../utils/categoryIcons';
 import { useTheme } from '../../context/ThemeContext';
+import { transactionsTourDesktop } from '../../tourConfigs';
 import './TransactionsDesktop.css';
 
 export default function TransactionsDesktop() {
@@ -96,6 +98,9 @@ export default function TransactionsDesktop() {
 
     // Polling for updates
     const { refetch } = usePolling(fetchTransactions, 10000, true, [page, filters]);
+
+    // Auto-trigger tour for first-time users
+    useAutoTour('transactions-desktop', transactionsTourDesktop, loading);
 
     useEffect(() => {
         fetchTransactions({ isInitial: true });

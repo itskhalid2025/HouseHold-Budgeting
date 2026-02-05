@@ -24,7 +24,9 @@ import 'react-phone-input-2/lib/style.css';
 import { Country, State, City } from 'country-state-city';
 import { useSync } from '../../context/SyncContext';
 import { useTour } from '../../context/TourContext';
-import { RefreshCw } from 'lucide-react';
+import useAutoTour from '../../hooks/useAutoTour';
+import { settingsTourDesktop } from '../../tourConfigs';
+import { RefreshCw, User, Home, Bell, Shield } from 'lucide-react';
 import './SettingsDesktop.css';
 
 export default function Settings() {
@@ -149,6 +151,9 @@ export default function Settings() {
         }
     }, [household]);
 
+    // Auto-trigger tour for first-time users
+    useAutoTour('settings-desktop', settingsTourDesktop, loading);
+
     const handleForgotPassword = async () => {
         if (!user?.email) return;
         try {
@@ -193,86 +198,91 @@ export default function Settings() {
 
     const isOwner = user?.role === 'OWNER';
 
+    // Sidebar Navigation Item Component
+    const NavItem = ({ id, icon: Icon, label }) => (
+        <button
+            className={`nav-item ${activeTab === id ? 'active' : ''}`}
+            onClick={() => setActiveTab(id)}
+        >
+            <Icon size={20} />
+            <span>{label}</span>
+        </button>
+    );
+
     return (
         <div className="settings-page">
             <div className="settings-container">
-                <h1>Settings</h1>
+                {/* Sidebar */}
+                <aside className="settings-sidebar">
+                    <div className="sidebar-header">Preferences</div>
+                    <NavItem id="profile" icon={User} label="My Profile" />
+                    <NavItem id="household" icon={Home} label="Household" />
+                    
+                    <NavItem id="security" icon={Shield} label="Security" />
+                </aside>
 
-                <div className="settings-tabs">
-                    <button
-                        className={`tab-btn ${activeTab === 'profile' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('profile')}
-                    >
-                        Profile
-                    </button>
-                    <button
-                        className={`tab-btn ${activeTab === 'household' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('household')}
-                        data-tour-id="settings-preferences-mobile"
-                    >
-                        Household
-                    </button>
-                </div>
-
-                <div className="settings-content">
+                {/* Main Content */}
+                <main className="settings-content-area glass-panel">
                     {activeTab === 'profile' && (
-                        <div className="tab-pane" data-tour-id="settings-profile">
-                            <h2>Profile Settings</h2>
-                            <div className="profile-card">
-                                <div className="avatar-large">
-                                    {(user?.firstName?.[0] || 'U').toUpperCase()}
+                        <div className="tab-pane fade-in">
+                            <div className="section-header">
+                                <h2>My Profile</h2>
+                                <p>Manage your personal information and preferences.</p>
+                            </div>
+
+                            <div className="profile-header-card">
+                                <div className="avatar-wrapper">
+                                    <div className="avatar-xl">
+                                        {(user?.firstName?.[0] || 'U').toUpperCase()}
+                                    </div>
                                 </div>
-                                <div className="profile-info">
+                                <div className="user-details">
                                     <h3>{user?.firstName} {user?.lastName}</h3>
-                                    <p>{user?.email}</p>
+                                    <div className="email">{user?.email}</div>
                                     <span className="role-badge">{user?.role}</span>
                                 </div>
                             </div>
 
-                            <div className="profile-edit-section">
-                                <div className="form-row">
-                                    <div className="setting-group">
-                                        <label>First Name</label>
-                                        <input
-                                            type="text"
-                                            name="firstName"
-                                            value={profileData.firstName}
-                                            onChange={handleProfileChange}
-                                            className="input-field"
-                                        />
-                                    </div>
-                                    <div className="setting-group">
-                                        <label>Last Name</label>
-                                        <input
-                                            type="text"
-                                            name="lastName"
-                                            value={profileData.lastName}
-                                            onChange={handleProfileChange}
-                                            className="input-field"
-                                        />
-                                    </div>
+                            <div className="form-grid">
+                                <div className="input-wrapper">
+                                    <label>First Name</label>
+                                    <input
+                                        type="text"
+                                        name="firstName"
+                                        value={profileData.firstName}
+                                        onChange={handleProfileChange}
+                                        className="glass-input"
+                                    />
                                 </div>
-
-                                <div className="setting-group">
+                                <div className="input-wrapper">
+                                    <label>Last Name</label>
+                                    <input
+                                        type="text"
+                                        name="lastName"
+                                        value={profileData.lastName}
+                                        onChange={handleProfileChange}
+                                        className="glass-input"
+                                    />
+                                </div>
+                                <div className="input-wrapper full-width">
                                     <label>Phone Number</label>
                                     <PhoneInput
                                         country={locationCodes.countryCode ? locationCodes.countryCode.toLowerCase() : 'in'}
                                         value={profileData.phone}
                                         onChange={phone => setProfileData(prev => ({ ...prev, phone: phone.startsWith('+') ? phone : `+${phone}` }))}
                                         containerClass="phone-input-container"
-                                        inputClass="phone-input-field"
+                                        inputClass="modern-phone-input"
                                         buttonClass="phone-input-button"
-                                        dropdownClass="phone-input-dropdown"
+                                        dropdownClass="country-list"
                                     />
                                 </div>
-
-                                <div className="setting-group">
+                                <div className="input-wrapper">
                                     <label>Country</label>
                                     <select
                                         name="country"
                                         value={profileData.country}
                                         onChange={handleProfileChange}
-                                        className="select-field"
+                                        className="glass-input"
                                     >
                                         <option value="">Select Country</option>
                                         {countries.map(c => (
@@ -280,153 +290,111 @@ export default function Settings() {
                                         ))}
                                     </select>
                                 </div>
-
-                                <div className="form-row">
-                                    <div className="setting-group">
-                                        <label>State / Province</label>
-                                        <select
-                                            name="state"
-                                            value={profileData.state}
-                                            onChange={handleProfileChange}
-                                            disabled={!profileData.country}
-                                            className="select-field"
-                                        >
-                                            <option value="">Select State</option>
-                                            {states.map(s => (
-                                                <option key={s.isoCode} value={s.name}>{s.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="setting-group">
-                                        <label>City</label>
-                                        <select
-                                            name="city"
-                                            value={profileData.city}
-                                            onChange={handleProfileChange}
-                                            disabled={!profileData.state}
-                                            className="select-field"
-                                        >
-                                            <option value="">Select City</option>
-                                            {cities.map(c => (
-                                                <option key={c.name} value={c.name}>{c.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
+                                <div className="input-wrapper">
+                                    <label>State / Province</label>
+                                    <select
+                                        name="state"
+                                        value={profileData.state}
+                                        onChange={handleProfileChange}
+                                        disabled={!profileData.country}
+                                        className="glass-input"
+                                    >
+                                        <option value="">Select State</option>
+                                        {states.map(s => (
+                                            <option key={s.isoCode} value={s.name}>{s.name}</option>
+                                        ))}
+                                    </select>
                                 </div>
+                                <div className="input-wrapper">
+                                    <label>City</label>
+                                    <select
+                                        name="city"
+                                        value={profileData.city}
+                                        onChange={handleProfileChange}
+                                        disabled={!profileData.state}
+                                        className="glass-input"
+                                    >
+                                        <option value="">Select City</option>
+                                        {cities.map(c => (
+                                            <option key={c.name} value={c.name}>{c.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
 
+                            <div className="action-panel">
                                 <button
-                                    className="btn-primary"
+                                    className="btn-save"
                                     onClick={handleProfileUpdate}
                                     disabled={loading}
-                                    style={{ marginTop: '10px' }}
                                 >
-                                    {loading ? 'Saving...' : 'Save Profile Changes'}
+                                    {loading ? 'Saving Changes...' : 'Save Changes'}
                                 </button>
-                                {profileMsg && <div className="success-msg" style={{ marginTop: '10px' }}>{profileMsg}</div>}
-                                {profileError && <div className="error-msg" style={{ marginTop: '10px' }}>{profileError}</div>}
                             </div>
-
-                            <div className="divider-line" style={{ margin: '30px 0' }}></div>
-
-                            <div className="setting-group" data-tour-id="settings-security">
-                                <label>Password Management</label>
-                                <button className="btn-secondary" onClick={handleForgotPassword}>
-                                    Send Reset Password Email
-                                </button>
-                                <p className="help-text">We'll send a link to {user?.email} to reset your password.</p>
-                            </div>
-
-                            {!isInstalled && (
-                                <div className="setting-group pwa-install-section" style={{ marginTop: '20px' }}>
-                                    <label>App Installation</label>
-                                    <button className="btn-primary" onClick={installApp}>
-                                        Install HouseHold Budgeting
-                                    </button>
-                                    <p className="help-text">Install as a desktop app for quick access and a better experience.</p>
-                                </div>
-                            )}
-
-                            <div className="setting-group tour-guide-section" style={{ marginTop: '20px' }} data-tour-id="settings-restart-guide">
-                                <label>Interactive Guide</label>
-                                <button
-                                    className="btn-secondary restart-guide-btn"
-                                    onClick={() => {
-                                        resetAllTours();
-                                        navigate('/');
-                                        window.location.reload();
-                                    }}
-                                >
-                                    <RefreshCw size={16} />
-                                    Restart Platform Guide
-                                </button>
-                                <p className="help-text">Restart the interactive tour to learn about all platform features again.</p>
-                            </div>
-
-                            <footer className="logout-section" data-tour-id="settings-account-mobile">
-                                <button className="logout-btn-vibrant" onClick={logout} aria-label="Sign Out" style={{ marginTop: '2rem' }}>Sign Out</button>
-                            </footer>
+                            {profileMsg && <div className="success-msg">{profileMsg}</div>}
+                            {profileError && <div className="error-msg">{profileError}</div>}
                         </div>
                     )}
 
                     {activeTab === 'household' && (
-                        <div className="tab-pane" data-tour-id="settings-preferences">
-                            <h2>Household Management</h2>
+                        <div className="tab-pane fade-in">
+                            <div className="section-header">
+                                <h2>Household Settings</h2>
+                                <p>Manage currency, name, and invite codes.</p>
+                            </div>
+
                             {household ? (
                                 <div className="household-settings">
-                                    <div className="setting-group">
-                                        <label>Household Name</label>
-                                        <div className="input-group">
-                                            <input
-                                                type="text"
-                                                value={householdName}
-                                                onChange={(e) => setHouseholdName(e.target.value)}
-                                                disabled={!isOwner || loading}
-                                                className={`input-field ${!isOwner ? 'disabled' : ''}`}
-                                            />
-                                            {isOwner && (
-                                                <button
-                                                    onClick={handleHouseholdNameUpdate}
-                                                    disabled={loading || householdName === household.name}
-                                                    className="btn-primary-small"
-                                                    style={{ marginLeft: '10px' }}
-                                                >
-                                                    Update
-                                                </button>
-                                            )}
+                                    <div className="form-grid">
+                                        <div className="input-wrapper full-width">
+                                            <label>Household Name</label>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <input
+                                                    type="text"
+                                                    value={householdName}
+                                                    onChange={(e) => setHouseholdName(e.target.value)}
+                                                    disabled={!isOwner || loading}
+                                                    className="glass-input"
+                                                />
+                                                {isOwner && (
+                                                    <button
+                                                        onClick={handleHouseholdNameUpdate}
+                                                        className="btn-primary-small"
+                                                        disabled={loading || householdName === household.name}
+                                                    >
+                                                        Update
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="setting-group">
-                                        <label>Invite Code</label>
-                                        <div className="code-display">
-                                            {household.inviteCode}
+                                        <div className="input-wrapper">
+                                            <label>Invite Code</label>
+                                            <div className="code-display">
+                                                {household.inviteCode}
+                                            </div>
                                         </div>
-                                    </div>
 
-                                    <div className="setting-group">
-                                        <label>Currency</label>
-                                        {isOwner ? (
-                                            <div className="currency-selector">
+                                        <div className="input-wrapper">
+                                            <label>Currency</label>
+                                            {isOwner ? (
                                                 <select
                                                     value={household.currency || 'USD'}
                                                     onChange={handleCurrencyChange}
                                                     disabled={loading}
-                                                    className="select-field"
+                                                    className="glass-input"
                                                 >
                                                     {Object.entries(CURRENCIES).map(([code, symbol]) => (
                                                         <option key={code} value={code}>{code} ({symbol})</option>
                                                     ))}
                                                 </select>
-                                                <p className="help-text">This will apply to all members.</p>
-                                            </div>
-                                        ) : (
-                                            <div className="hidden-currency">
-                                                {/* Hidden for members as requested */}
-                                                <p className="text-muted italic">Currency settings are managed by the household owner.</p>
-                                            </div>
-                                        )}
+                                            ) : (
+                                                <div className="glass-input disabled">
+                                                    {household.currency || 'USD'} (Owner managed)
+                                                </div>
+                                            )}
+                                        </div>
                                     </div>
-
                                     {message && <div className="success-msg">{message}</div>}
                                     {error && <div className="error-msg">{error}</div>}
                                 </div>
@@ -437,21 +405,59 @@ export default function Settings() {
                     )}
 
                     {activeTab === 'notifications' && (
-                        <div className="tab-pane" data-tour-id="settings-notifications">
-                            <h2>Notification Preferences</h2>
+                        <div className="tab-pane fade-in">
+                            <div className="section-header">
+                                <h2>Notifications</h2>
+                                <p>Customize how and when you want to be alerted.</p>
+                            </div>
                             <div className="notification-options">
-                                <div className="option-row">
-                                    <span>Email Notifications</span>
+                                <div className="toggle-row">
+                                    <div className="toggle-info">
+                                        <h4>Email Notifications</h4>
+                                        <p>Receive weekly reports and security alerts.</p>
+                                    </div>
                                     <input type="checkbox" defaultChecked />
                                 </div>
-                                <div className="option-row">
-                                    <span>Push Notifications</span>
+                                <div className="toggle-row">
+                                    <div className="toggle-info">
+                                        <h4>Push Notifications</h4>
+                                        <p>Get real-time alerts for transactions and messages.</p>
+                                    </div>
                                     <input type="checkbox" defaultChecked />
                                 </div>
                             </div>
                         </div>
                     )}
-                </div>
+
+                    {activeTab === 'security' && (
+                        <div className="tab-pane fade-in">
+                            <div className="section-header">
+                                <h2>Security</h2>
+                                <p>Manage password and account access.</p>
+                            </div>
+
+                            <div className="setting-group">
+                                <label>Password Reset</label>
+                                <p className="help-text" style={{ marginBottom: '10px' }}>
+                                    We'll send a password recovery link to your registered email address.
+                                </p>
+                                <button className="btn-secondary" onClick={handleForgotPassword}>
+                                    Send Reset Link
+                                </button>
+                            </div>
+
+                            
+
+                            <div className="danger-zone">
+                                <div className="danger-header">
+                                    <Shield size={20} />
+                                    <span>Logout</span>
+                                </div>
+                                <button className="logout-btn" onClick={logout}> Sign Out </button>
+                            </div>
+                        </div>
+                    )}
+                </main>
             </div>
         </div>
     );

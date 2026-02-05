@@ -7,428 +7,412 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                      String        @id @default(uuid())
-  email                   String        @unique
-  phone                   String
-  passwordHash            String        @map("password_hash")
-  firstName               String        @map("first_name")
-  lastName                String        @map("last_name")
-  currency                String        @default("USD")
-  avatarUrl               String?       @map("avatar_url")
-  timezone                String        @default("UTC")
-  notificationPreferences Json          @default("{}") @map("notification_preferences")
-  householdId             String?       @map("household_id")
-  role                    Role          @default(VIEWER)
-  emailVerified           Boolean       @default(false) @map("email_verified")
-  phoneVerified           Boolean       @default(false) @map("phone_verified")
-  resetToken              String?       @map("reset_token")
-  resetTokenExpiry        DateTime?     @map("reset_token_expiry")
-  createdAt               DateTime      @default(now()) @map("created_at")
-  updatedAt               DateTime      @updatedAt @map("updated_at")
-  lastReportsViewedAt     DateTime?     @map("last_reports_viewed_at")
-  verificationToken       String?       @map("verification_token")
-  verificationTokenExpiry DateTime?     @map("verification_token_expiry")
-  aiRequestCount          Int           @default(0) @map("ai_request_count")
-  aiTokenCount            Int           @default(0) @map("ai_token_count")
-  isAiRestricted          Boolean       @default(false) @map("is_ai_restricted")
-  aiSettings              Json?         @map("ai_settings")
-  country                 String?
-  lastIp                  String?       @map("last_ip")
-  city                    String?
-  currentStreak           Int           @default(0) @map("current_streak")
-  lastLogDate             DateTime?     @map("last_log_date")
-  longestStreak           Int           @default(0) @map("longest_streak")
-  rankProgress            Int           @default(0) @map("rank_progress")
-  rankTier                String        @default("NOVICE") @map("rank_tier")
-  state                   String?
-  totalPoints             Int           @default(0) @map("total_points")
-  weeklyActivityLog       Json          @default("[]") @map("weekly_activity_log")
-  achievements            Achievement[]
-  aiLogs                  AiUsageLog[]
-  feedback                Feedback[]
-  goals                   Goal[]
-  adminHouseholds         Household[]   @relation("HouseholdAdmin")
-  incomes                 Income[]
-  sentInvitations         Invitation[]
-  loans                   Loan[]
-  transactions            Transaction[]
-  household               Household?    @relation(fields: [householdId], references: [id])
+model achievements {
+  id         String   @id
+  user_id    String
+  type       String
+  created_at DateTime @default(now())
+  users      users    @relation(fields: [user_id], references: [id])
 
-  @@map("users")
+  @@index([user_id])
 }
 
-model Achievement {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  type      String
-  createdAt DateTime @default(now()) @map("created_at")
-  user      User     @relation(fields: [userId], references: [id])
+model admin_activity_logs {
+  id              String          @id
+  admin_id        String
+  action          String
+  target_type     String?
+  target_id       String?
+  details         Json?
+  ip_address      String?
+  created_at      DateTime        @default(now())
+  platform_admins platform_admins @relation(fields: [admin_id], references: [id])
 
-  @@index([userId])
-  @@map("achievements")
+  @@index([admin_id, created_at])
 }
 
-model Household {
-  id                String             @id @default(uuid())
-  name              String
-  inviteCode        String             @unique @map("invite_code")
-  adminId           String             @map("admin_id")
-  lastModifiedAt    DateTime           @default(now()) @map("last_modified_at")
-  createdAt         DateTime           @default(now()) @map("created_at")
-  currency          String             @default("USD")
-  aiRequestCount    Int                @default(0) @map("ai_request_count")
-  isAiRestricted    Boolean            @default(false) @map("is_ai_restricted")
-  country           String?
-  aiSettings        Json?              @map("ai_settings")
-  aiLogs            AiUsageLog[]
-  customCategories  CustomCategory[]
-  goals             Goal[]
-  admin             User               @relation("HouseholdAdmin", fields: [adminId], references: [id])
-  incomes           Income[]
-  invitations       Invitation[]
-  loans             Loan[]
-  recurringExpenses RecurringExpense[]
-  reports           Report[]
-  splitExpenses     SplitExpense[]
-  transactions      Transaction[]
-  members           User[]
-
-  @@map("households")
+model admin_invitations {
+  id              String          @id
+  email           String          @unique
+  token           String          @unique
+  invited_by_id   String
+  expires_at      DateTime
+  used_at         DateTime?
+  created_at      DateTime        @default(now())
+  platform_admins platform_admins @relation(fields: [invited_by_id], references: [id])
 }
 
-model Transaction {
-  id            String          @id @default(uuid())
-  householdId   String          @map("household_id")
-  userId        String          @map("user_id")
-  amount        Decimal         @db.Decimal(10, 2)
-  currency      String          @default("USD")
-  merchant      String?
-  description   String
-  category      String
-  subcategory   String?
-  type          TransactionType
-  date          DateTime        @db.Date
-  aiCategorized Boolean         @default(false) @map("ai_categorized")
-  confidence    Float?
-  userOverride  Boolean         @default(false) @map("user_override")
-  deletedAt     DateTime?       @map("deleted_at")
-  createdAt     DateTime        @default(now()) @map("created_at")
-  updatedAt     DateTime        @updatedAt @map("updated_at")
-  embedding     Unsupported("vector(768)")? 
-  goalId        String?         @map("goal_id")
-  splits        SplitExpense[]
-  goal          Goal?           @relation(fields: [goalId], references: [id])
-  household     Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  user          User            @relation(fields: [userId], references: [id])
+model ai_usage_logs {
+  id           String      @id
+  user_id      String
+  household_id String?
+  type         AiLogType
+  tokens       Int         @default(0)
+  country      String?
+  created_at   DateTime    @default(now())
+  households   households? @relation(fields: [household_id], references: [id])
+  users        users       @relation(fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@index([householdId, date])
-  @@index([category, type])
-  @@map("transactions")
+  @@index([created_at])
+  @@index([household_id, type])
+  @@index([user_id, type])
 }
 
-model Income {
-  id          String          @id @default(uuid())
-  householdId String          @map("household_id")
-  userId      String          @map("user_id")
-  amount      Decimal         @db.Decimal(10, 2)
-  currency    String          @default("USD")
-  source      String
-  type        IncomeType
-  frequency   IncomeFrequency
-  startDate   DateTime        @map("start_date") @db.Date
-  endDate     DateTime?       @map("end_date") @db.Date
-  isActive    Boolean         @default(true) @map("is_active")
-  createdAt   DateTime        @default(now()) @map("created_at")
-  updatedAt   DateTime        @updatedAt @map("updated_at")
-  household   Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  user        User            @relation(fields: [userId], references: [id])
-
-  @@index([householdId, isActive])
-  @@map("incomes")
+model announcements {
+  id         String    @id
+  title      String
+  message    String
+  type       String    @default("info")
+  is_active  Boolean   @default(true)
+  created_at DateTime  @default(now())
+  expires_at DateTime?
 }
 
-model Invitation {
-  id             String           @id @default(uuid())
-  householdId    String           @map("household_id")
-  invitedById    String           @map("invited_by_id")
-  recipientEmail String?          @map("recipient_email")
-  recipientPhone String?          @map("recipient_phone")
-  role           Role
-  token          String           @unique
-  status         InvitationStatus @default(PENDING)
-  expiresAt      DateTime         @map("expires_at")
-  acceptedAt     DateTime?        @map("accepted_at")
-  createdAt      DateTime         @default(now()) @map("created_at")
-  household      Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  invitedBy      User             @relation(fields: [invitedById], references: [id])
-
-  @@unique([householdId, recipientEmail], map: "unique_household_email")
-  @@unique([householdId, recipientPhone], map: "unique_household_phone")
-  @@map("invitations")
+model blacklisted_tokens {
+  id         String   @id
+  token      String   @unique
+  expires_at DateTime
+  created_at DateTime @default(now())
 }
 
-model Goal {
-  id            String        @id @default(uuid())
-  householdId   String        @map("household_id")
-  name          String
-  type          GoalType
-  targetAmount  Decimal?      @map("target_amount") @db.Decimal(10, 2)
-  currentAmount Decimal       @default(0) @map("current_amount") @db.Decimal(10, 2)
-  deadline      DateTime?     @db.Date
-  isActive      Boolean       @default(true) @map("is_active")
-  createdAt     DateTime      @default(now()) @map("created_at")
-  updatedAt     DateTime      @updatedAt @map("updated_at")
-  createdById   String?       @map("created_by_id")
-  createdBy     User?         @relation(fields: [createdById], references: [id])
-  household     Household     @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  transactions  Transaction[]
+model custom_categories {
+  id              String       @id
+  household_id    String
+  name            String
+  type            CategoryType
+  parent_category String?
+  is_active       Boolean      @default(true)
+  created_at      DateTime     @default(now())
+  households      households   @relation(fields: [household_id], references: [id], onDelete: Cascade)
 
-  @@index([householdId, isActive])
-  @@map("goals")
+  @@unique([household_id, name])
 }
 
-model Report {
-  id          String    @id @default(uuid())
-  householdId String    @map("household_id")
-  type        String
-  createdAt   DateTime  @default(now()) @map("created_at")
-  content     Json
-  dateEnd     DateTime  @map("date_end") @db.Date
-  dateStart   DateTime  @map("date_start") @db.Date
-  embedding   Unsupported("vector(768)")?
-  household   Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
-
-  @@index([householdId, createdAt])
-  @@map("reports")
+model daily_insights {
+  id         String   @id
+  date       DateTime @unique @db.Date
+  news       Json
+  quotes     Json
+  created_at DateTime @default(now())
+  updated_at DateTime
 }
 
-model CustomCategory {
-  id             String       @id @default(uuid())
-  householdId    String       @map("household_id")
+model feedback {
+  id         String   @id
+  user_id    String
+  type       String   @default("general")
+  message    String
+  status     String   @default("pending")
+  created_at DateTime @default(now())
+  users      users    @relation(fields: [user_id], references: [id])
+}
+
+model goals {
+  id             String         @id
+  household_id   String
   name           String
-  type           CategoryType
-  parentCategory String?      @map("parent_category")
-  isActive       Boolean      @default(true) @map("is_active")
-  createdAt      DateTime     @default(now()) @map("created_at")
-  household      Household    @relation(fields: [householdId], references: [id], onDelete: Cascade)
+  type           GoalType
+  target_amount  Decimal?       @db.Decimal(10, 2)
+  current_amount Decimal        @default(0) @db.Decimal(10, 2)
+  deadline       DateTime?      @db.Date
+  is_active      Boolean        @default(true)
+  created_at     DateTime       @default(now())
+  updated_at     DateTime
+  created_by_id  String?
+  users          users?         @relation(fields: [created_by_id], references: [id])
+  households     households     @relation(fields: [household_id], references: [id], onDelete: Cascade)
+  transactions   transactions[]
 
-  @@unique([householdId, name])
-  @@map("custom_categories")
+  @@index([household_id, is_active])
 }
 
-model RecurringExpense {
-  id          String             @id @default(uuid())
-  householdId String             @map("household_id")
-  name        String
-  amount      Decimal            @db.Decimal(10, 2)
-  category    String
-  subcategory String?
-  frequency   RecurringFrequency
-  skipDates   Json               @default("[]") @map("skip_dates")
-  isActive    Boolean            @default(true) @map("is_active")
-  startDate   DateTime           @map("start_date") @db.Date
-  endDate     DateTime?          @map("end_date") @db.Date
-  createdAt   DateTime           @default(now()) @map("created_at")
-  updatedAt   DateTime           @updatedAt @map("updated_at")
-  household   Household          @relation(fields: [householdId], references: [id], onDelete: Cascade)
-
-  @@index([householdId, isActive])
-  @@map("recurring_expenses")
+model households {
+  id                                   String               @id
+  name                                 String
+  invite_code                          String               @unique
+  admin_id                             String
+  last_modified_at                     DateTime             @default(now())
+  created_at                           DateTime             @default(now())
+  currency                             String               @default("USD")
+  ai_request_count                     Int                  @default(0)
+  is_ai_restricted                     Boolean              @default(false)
+  country                              String?
+  ai_settings                          Json?
+  ai_usage_logs                        ai_usage_logs[]
+  custom_categories                    custom_categories[]
+  goals                                goals[]
+  users_households_admin_idTousers     users                @relation("households_admin_idTousers", fields: [admin_id], references: [id])
+  incomes                              incomes[]
+  invitations                          invitations[]
+  loans                                loans[]
+  recurring_expenses                   recurring_expenses[]
+  reports                              reports[]
+  split_expenses                       split_expenses[]
+  transactions                         transactions[]
+  users_users_household_idTohouseholds users[]              @relation("users_household_idTohouseholds")
 }
 
-model Loan {
-  id              String          @id @default(uuid())
-  householdId     String          @map("household_id")
-  userId          String          @map("user_id")
-  type            LoanType
-  personName      String          @map("person_name")
-  principalAmount Decimal         @map("principal_amount") @db.Decimal(10, 2)
-  remainingAmount Decimal         @map("remaining_amount") @db.Decimal(10, 2)
-  dueDate         DateTime?       @map("due_date") @db.Date
-  notes           String?
-  isSettled       Boolean         @default(false) @map("is_settled")
-  createdAt       DateTime        @default(now()) @map("created_at")
-  updatedAt       DateTime        @updatedAt @map("updated_at")
-  repayments      LoanRepayment[]
-  household       Household       @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  user            User            @relation(fields: [userId], references: [id])
+model incomes {
+  id           String          @id
+  household_id String
+  user_id      String
+  amount       Decimal         @db.Decimal(10, 2)
+  currency     String          @default("USD")
+  source       String
+  type         IncomeType
+  frequency    IncomeFrequency
+  start_date   DateTime        @db.Date
+  end_date     DateTime?       @db.Date
+  is_active    Boolean         @default(true)
+  created_at   DateTime        @default(now())
+  updated_at   DateTime
+  households   households      @relation(fields: [household_id], references: [id], onDelete: Cascade)
+  users        users           @relation(fields: [user_id], references: [id])
 
-  @@index([householdId, isSettled])
-  @@map("loans")
+  @@index([household_id, is_active])
 }
 
-model LoanRepayment {
-  id        String   @id @default(uuid())
-  loanId    String   @map("loan_id")
-  amount    Decimal  @db.Decimal(10, 2)
-  date      DateTime @db.Date
-  method    String?
-  note      String?
-  createdAt DateTime @default(now()) @map("created_at")
-  loan      Loan     @relation(fields: [loanId], references: [id], onDelete: Cascade)
+model invitations {
+  id              String           @id
+  household_id    String
+  invited_by_id   String
+  recipient_email String?
+  recipient_phone String?
+  role            Role
+  token           String           @unique
+  status          InvitationStatus @default(PENDING)
+  expires_at      DateTime
+  accepted_at     DateTime?
+  created_at      DateTime         @default(now())
+  households      households       @relation(fields: [household_id], references: [id], onDelete: Cascade)
+  users           users            @relation(fields: [invited_by_id], references: [id])
 
-  @@map("loan_repayments")
+  @@unique([household_id, recipient_email], map: "unique_household_email")
+  @@unique([household_id, recipient_phone], map: "unique_household_phone")
 }
 
-model SplitExpense {
-  id             String           @id @default(uuid())
-  householdId    String           @map("household_id")
-  transactionId  String           @map("transaction_id")
-  totalAmount    Decimal          @map("total_amount") @db.Decimal(10, 2)
-  yourShare      Decimal          @map("your_share") @db.Decimal(10, 2)
-  splits         Json
-  isFullySettled Boolean          @default(false) @map("is_fully_settled")
-  createdAt      DateTime         @default(now()) @map("created_at")
-  updatedAt      DateTime         @updatedAt @map("updated_at")
-  household      Household        @relation(fields: [householdId], references: [id], onDelete: Cascade)
-  transaction    Transaction      @relation(fields: [transactionId], references: [id])
-  repayments     SplitRepayment[]
-
-  @@map("split_expenses")
+model loan_repayments {
+  id         String   @id
+  loan_id    String
+  amount     Decimal  @db.Decimal(10, 2)
+  date       DateTime @db.Date
+  method     String?
+  note       String?
+  created_at DateTime @default(now())
+  loans      loans    @relation(fields: [loan_id], references: [id], onDelete: Cascade)
 }
 
-model SplitRepayment {
-  id             String       @id @default(uuid())
-  splitExpenseId String       @map("split_expense_id")
-  personName     String       @map("person_name")
-  amount         Decimal      @db.Decimal(10, 2)
-  date           DateTime     @db.Date
-  method         String?
-  createdAt      DateTime     @default(now()) @map("created_at")
-  splitExpense   SplitExpense @relation(fields: [splitExpenseId], references: [id], onDelete: Cascade)
+model loans {
+  id               String            @id
+  household_id     String
+  user_id          String
+  type             LoanType
+  person_name      String
+  principal_amount Decimal           @db.Decimal(10, 2)
+  remaining_amount Decimal           @db.Decimal(10, 2)
+  due_date         DateTime?         @db.Date
+  notes            String?
+  is_settled       Boolean           @default(false)
+  created_at       DateTime          @default(now())
+  updated_at       DateTime
+  loan_repayments  loan_repayments[]
+  households       households        @relation(fields: [household_id], references: [id], onDelete: Cascade)
+  users            users             @relation(fields: [user_id], references: [id])
 
-  @@map("split_repayments")
+  @@index([household_id, is_settled])
 }
 
-model PlatformAdmin {
-  id               String             @id @default(uuid())
-  email            String             @unique
-  username         String             @unique
-  passwordHash     String             @map("password_hash")
-  firstName        String             @map("first_name")
-  lastName         String             @map("last_name")
-  avatarUrl        String?            @map("avatar_url")
-  adminLevel       AdminLevel         @default(STANDARD)
-  lastLoginAt      DateTime?          @map("last_login_at")
-  lastLoginIp      String?            @map("last_login_ip")
-  twoFactorEnabled Boolean            @default(false) @map("two_factor_enabled")
-  twoFactorSecret  String?            @map("two_factor_secret")
-  isActive         Boolean            @default(true) @map("is_active")
-  isSuperAdmin     Boolean            @default(false) @map("is_super_admin")
-  createdAt        DateTime           @default(now()) @map("created_at")
-  updatedAt        DateTime           @updatedAt @map("updated_at")
-  activityLogs     AdminActivityLog[]
-  sentInvitations  AdminInvitation[]  @relation("AdminInvites")
-
-  @@map("platform_admins")
+model platform_admins {
+  id                  String                @id
+  email               String                @unique
+  username            String                @unique
+  password_hash       String
+  first_name          String
+  last_name           String
+  avatar_url          String?
+  adminLevel          AdminLevel            @default(STANDARD)
+  last_login_at       DateTime?
+  last_login_ip       String?
+  two_factor_enabled  Boolean               @default(false)
+  two_factor_secret   String?
+  is_active           Boolean               @default(true)
+  is_super_admin      Boolean               @default(false)
+  created_at          DateTime              @default(now())
+  updated_at          DateTime
+  admin_activity_logs admin_activity_logs[]
+  admin_invitations   admin_invitations[]
 }
 
-model AdminInvitation {
-  id          String        @id @default(uuid())
-  email       String        @unique
-  token       String        @unique
-  invitedById String        @map("invited_by_id")
-  expiresAt   DateTime      @map("expires_at")
-  usedAt      DateTime?     @map("used_at")
-  createdAt   DateTime      @default(now()) @map("created_at")
-  invitedBy   PlatformAdmin @relation("AdminInvites", fields: [invitedById], references: [id])
+model recurring_expenses {
+  id           String             @id
+  household_id String
+  name         String
+  amount       Decimal            @db.Decimal(10, 2)
+  category     String
+  subcategory  String?
+  frequency    RecurringFrequency
+  skip_dates   Json               @default("[]")
+  is_active    Boolean            @default(true)
+  start_date   DateTime           @db.Date
+  end_date     DateTime?          @db.Date
+  created_at   DateTime           @default(now())
+  updated_at   DateTime
+  households   households         @relation(fields: [household_id], references: [id], onDelete: Cascade)
 
-  @@map("admin_invitations")
+  @@index([household_id, is_active])
 }
 
-model AdminActivityLog {
-  id         String        @id @default(uuid())
-  adminId    String        @map("admin_id")
-  action     String
-  targetType String?       @map("target_type")
-  targetId   String?       @map("target_id")
-  details    Json?
-  ipAddress  String?       @map("ip_address")
-  createdAt  DateTime      @default(now()) @map("created_at")
-  admin      PlatformAdmin @relation(fields: [adminId], references: [id])
+model reports {
+  id           String                 @id
+  household_id String
+  type         String
+  created_at   DateTime               @default(now())
+  content      Json
+  date_end     DateTime               @db.Date
+  date_start   DateTime               @db.Date
+  embedding    Unsupported("vector")?
+  households   households             @relation(fields: [household_id], references: [id], onDelete: Cascade)
 
-  @@index([adminId, createdAt])
-  @@map("admin_activity_logs")
+  @@index([household_id, created_at])
 }
 
-model Announcement {
-  id        String    @id @default(uuid())
-  title     String
-  message   String
-  type      String    @default("info")
-  isActive  Boolean   @default(true) @map("is_active")
-  createdAt DateTime  @default(now()) @map("created_at")
-  expiresAt DateTime? @map("expires_at")
-
-  @@map("announcements")
+model split_expenses {
+  id               String             @id
+  household_id     String
+  transaction_id   String
+  total_amount     Decimal            @db.Decimal(10, 2)
+  your_share       Decimal            @db.Decimal(10, 2)
+  splits           Json
+  is_fully_settled Boolean            @default(false)
+  created_at       DateTime           @default(now())
+  updated_at       DateTime
+  households       households         @relation(fields: [household_id], references: [id], onDelete: Cascade)
+  transactions     transactions       @relation(fields: [transaction_id], references: [id])
+  split_repayments split_repayments[]
 }
 
-model SystemSetting {
+model split_repayments {
+  id               String         @id
+  split_expense_id String
+  person_name      String
+  amount           Decimal        @db.Decimal(10, 2)
+  date             DateTime       @db.Date
+  method           String?
+  created_at       DateTime       @default(now())
+  split_expenses   split_expenses @relation(fields: [split_expense_id], references: [id], onDelete: Cascade)
+}
+
+model system_settings {
   key         String   @id
   value       String
   description String?
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("system_settings")
+  updated_at  DateTime
 }
 
-model Feedback {
-  id        String   @id @default(uuid())
-  userId    String   @map("user_id")
-  type      String   @default("general")
-  message   String
-  status    String   @default("pending")
-  createdAt DateTime @default(now()) @map("created_at")
-  user      User     @relation(fields: [userId], references: [id])
+model transactions {
+  id             String                 @id
+  household_id   String
+  user_id        String
+  amount         Decimal                @db.Decimal(10, 2)
+  currency       String                 @default("USD")
+  merchant       String?
+  description    String
+  category       String
+  subcategory    String?
+  type           TransactionType
+  date           DateTime               @db.Date
+  ai_categorized Boolean                @default(false)
+  confidence     Float?
+  user_override  Boolean                @default(false)
+  deleted_at     DateTime?
+  created_at     DateTime               @default(now())
+  updated_at     DateTime
+  goal_id        String?
+  embedding      Unsupported("vector")?
+  split_expenses split_expenses[]
+  goals          goals?                 @relation(fields: [goal_id], references: [id])
+  households     households             @relation(fields: [household_id], references: [id], onDelete: Cascade)
+  users          users                  @relation(fields: [user_id], references: [id])
 
-  @@map("feedback")
+  @@index([category, type])
+  @@index([household_id, date])
 }
 
-model AiUsageLog {
-  id          String     @id @default(uuid())
-  userId      String     @map("user_id")
-  householdId String?    @map("household_id")
-  type        AiLogType
-  tokens      Int        @default(0)
-  country     String?
-  createdAt   DateTime   @default(now()) @map("created_at")
-  household   Household? @relation(fields: [householdId], references: [id])
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId, type])
-  @@index([householdId, type])
-  @@index([createdAt])
-  @@map("ai_usage_logs")
+model users {
+  id                                        String          @id
+  email                                     String          @unique
+  phone                                     String
+  password_hash                             String
+  first_name                                String
+  last_name                                 String
+  currency                                  String          @default("USD")
+  avatar_url                                String?
+  timezone                                  String          @default("UTC")
+  notification_preferences                  Json            @default("{}")
+  household_id                              String?
+  role                                      Role            @default(VIEWER)
+  email_verified                            Boolean         @default(false)
+  phone_verified                            Boolean         @default(false)
+  reset_token                               String?
+  reset_token_expiry                        DateTime?
+  created_at                                DateTime        @default(now())
+  updated_at                                DateTime
+  verification_token                        String?
+  verification_token_expiry                 DateTime?
+  ai_request_count                          Int             @default(0)
+  ai_token_count                            Int             @default(0)
+  is_ai_restricted                          Boolean         @default(false)
+  ai_settings                               Json?
+  country                                   String?
+  last_ip                                   String?
+  city                                      String?
+  current_streak                            Int             @default(0)
+  last_log_date                             DateTime?
+  longest_streak                            Int             @default(0)
+  rank_progress                             Int             @default(0)
+  rank_tier                                 String          @default("NOVICE")
+  state                                     String?
+  total_points                              Int             @default(0)
+  weekly_activity_log                       Json            @default("[]")
+  last_reports_viewed_at                    DateTime?
+  cookie_accepted_at                        DateTime?
+  privacy_accepted_at                       DateTime?
+  terms_accepted_at                         DateTime?
+  achievements                              achievements[]
+  ai_usage_logs                             ai_usage_logs[]
+  feedback                                  feedback[]
+  goals                                     goals[]
+  households_households_admin_idTousers     households[]    @relation("households_admin_idTousers")
+  incomes                                   incomes[]
+  invitations                               invitations[]
+  loans                                     loans[]
+  transactions                              transactions[]
+  households_users_household_idTohouseholds households?     @relation("users_household_idTohouseholds", fields: [household_id], references: [id])
 }
 
-model DailyInsight {
-  id        String   @id @default(uuid())
-  date      DateTime @unique @db.Date
-  news      Json
-  quotes    Json
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("daily_insights")
+enum AdminLevel {
+  STANDARD
+  MODERATOR
+  ADMINISTRATOR
 }
 
-enum Role {
-  OWNER
-  EDITOR
-  VIEWER
+enum AiLogType {
+  CHAT
+  SMART_ENTRY
+  REPORT
 }
 
-enum TransactionType {
-  NEED
-  WANT
+enum CategoryType {
+  NEEDS
+  WANTS
   SAVINGS
 }
 
-enum IncomeType {
-  PRIMARY
-  VARIABLE
-  PASSIVE
+enum GoalType {
+  EMERGENCY_FUND
+  SINKING_FUND
+  DEBT_PAYOFF
+  LONG_TERM
 }
 
 enum IncomeFrequency {
@@ -440,18 +424,17 @@ enum IncomeFrequency {
   YEARLY
 }
 
+enum IncomeType {
+  PRIMARY
+  VARIABLE
+  PASSIVE
+}
+
 enum InvitationStatus {
   PENDING
   ACCEPTED
   EXPIRED
   CANCELLED
-}
-
-enum GoalType {
-  EMERGENCY_FUND
-  SINKING_FUND
-  DEBT_PAYOFF
-  LONG_TERM
 }
 
 enum LoanType {
@@ -466,20 +449,14 @@ enum RecurringFrequency {
   YEARLY
 }
 
-enum CategoryType {
-  NEEDS
-  WANTS
+enum Role {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum TransactionType {
+  NEED
+  WANT
   SAVINGS
-}
-
-enum AdminLevel {
-  STANDARD
-  MODERATOR
-  ADMINISTRATOR
-}
-
-enum AiLogType {
-  CHAT
-  SMART_ENTRY
-  REPORT
 }
