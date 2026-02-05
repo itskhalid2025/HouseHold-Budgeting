@@ -906,4 +906,103 @@
             box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
         }
     }
+
+    /* --- Branched Stats Layout --- */
+    .branched-stats-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        margin-bottom: 24px;
+        width: 100%;
+    }
+
+    .month-header-centered {
+        text-align: center;
+        margin-bottom: 0;
+        z-index: 5;
+        background: var(--bg-card);
+        padding: 8px 24px;
+        border-radius: 100px;
+        border: 1px solid var(--border-light);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        animation: fadeInDown 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        display: inline-block;
+    }
+
+    .month-header-centered h3 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        color: var(--text-primary);
+    }
+
+    [data-theme='light'] .month-header-centered {
+        background: rgba(255, 255, 255, 0.8);
+    }
+
+    .branch-connectors {
+        height: 60px;
+        width: 100%;
+        position: relative;
+        margin-top: -2px;
+        margin-bottom: -15px;
+        z-index: 1;
+        pointer-events: none;
+    }
+
+    .branch-svg {
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+    }
+
+    .connector-line-base {
+        fill: none;
+        stroke: var(--border-light);
+        stroke-width: 2;
+        stroke-linecap: round;
+        opacity: 0.3;
+    }
+
+    .connector-line-glow {
+        fill: none;
+        stroke: var(--primary);
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-dasharray: 20 150;
+        animation: flow-pulse 2s infinite linear;
+        filter: drop-shadow(0 0 8px var(--primary));
+        opacity: 0.9;
+    }
+
+    @keyframes flow-pulse {
+        0% {
+            stroke-dashoffset: 170;
+        }
+
+        100% {
+            stroke-dashoffset: 0;
+        }
+    }
+
+    .branch-1 {
+        animation-delay: 0s;
+    }
+
+    .branch-2 {
+        animation-delay: 0.8s;
+    }
+
+    .branch-3 {
+        animation-delay: 1.6s;
+    }
+
+    /* Override stats-row to ensure correct stacking */
+    .stats-row {
+        position: relative;
+        z-index: 2;
+        width: 100%;
+    }
 }

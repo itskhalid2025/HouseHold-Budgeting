@@ -27,34 +27,44 @@ function TermsOfServiceMobile() {
                 </div>
 
                 <div className="landing-feature-card" style={{ padding: '25px 20px' }}>
-                    <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>1. Acceptance</h2>
+                    <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>1. Acceptance of Terms</h2>
                     <p style={{ marginBottom: '25px', lineHeight: '1.6', fontSize: '0.95rem' }}>
-                        By using HouseHold Budgeting, you agree to these terms.
+                        By accessing and using HouseHold Budgeting, you agree to comply with and be bound by these Terms of Service.
+                        If you do not agree, strictly do not use this platform.
                     </p>
 
                     <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>2. Rules of Usage</h2>
                     <ul style={{ marginBottom: '25px', paddingLeft: '15px', lineHeight: '1.6', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                        <li style={{ marginBottom: '8px' }}><strong>Guests:</strong> Household creator is responsible for invited guests.</li>
-                        <li style={{ marginBottom: '8px' }}><strong>Accuracy:</strong> Bad data (blurry receipts) = Bad budget. Validate your inputs.</li>
+                        <li style={{ marginBottom: '8px' }}><strong>Household Responsibility:</strong> The "Household Creator" is fully responsible for the guests they invite to their digital household.</li>
+                        <li style={{ marginBottom: '8px' }}><strong>Data Accuracy:</strong> The AI insights are only as good as the data provided. If you upload blurry receipts or input incorrect data, the budget tracking will be inaccurate. You are responsible for verifying the accuracy of your inputs.</li>
+                        <li style={{ marginBottom: '8px' }}><strong>Prohibited Use:</strong> You agree not to misuse the AI features for malicious purposes or to reverse engineer our models.</li>
                     </ul>
 
                     <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>3. NOT FINANCIAL ADVICE</h2>
                     <div style={{ padding: '15px', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '3px solid #ef4444', borderRadius: '4px', marginBottom: '25px' }}>
                         <p style={{ marginBottom: '0', lineHeight: '1.6', fontSize: '0.9rem', fontWeight: '500' }}>
-                            <strong>DISCLAIMER:</strong> This AI tool is for <strong>information only</strong>. We are <strong>not</strong> financial advisors.
-                            <br />
-                            Consult a pro for real money decisions.
+                            <strong>DISCLAIMER:</strong> The "AI Financial Advisor" and all related features are for <strong>informational and educational purposes only</strong>.
+                            HouseHold Budgeting is <strong>not</strong> a licensed financial planner, tax advisor, or investment broker, however it will provide the information. On which if the user takes an action then the user is responsible.
+                            <br /><br />
+                            The AI provides suggestions based on patterns, but it cannot predict market changes or personal life events.
+                            <strong>Always consult a certified professional before making significant financial decisions.</strong>
                         </p>
                     </div>
 
-                    <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>4. Liability</h2>
+                    <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>4. Limitation of Liability</h2>
                     <p style={{ marginBottom: '25px', lineHeight: '1.6', fontSize: '0.95rem' }}>
-                        We are not liable for financial losses. Use at your own risk.
+                        HouseHold Budgeting provides this service "as is". We are not liable for any financial losses, missed payments, or tax penalties
+                        resulting from reliance on our AI tools or categorization errors.
                     </p>
 
-                    <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>5. Updates</h2>
+                    <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>5. Account Termination</h2>
+                    <p style={{ marginBottom: '25px', lineHeight: '1.6', fontSize: '0.95rem' }}>
+                        We reserve the right to suspend or terminate accounts that violate these terms or engage in fraudulent activity.
+                    </p>
+
+                    <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>6. Changes to Terms</h2>
                     <p style={{ lineHeight: '1.6', fontSize: '0.95rem' }}>
-                        Terms may change. Continued use means acceptance.
+                        We may update these terms periodically. Continued use of the service constitutes acceptance of any changes.
                     </p>
                 </div>
             </section>

@@ -4,12 +4,17 @@ const API_KEY = import.meta.env.VITE_POSTHOG_KEY;
 const API_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
 
 export const initAnalytics = () => {
-    // 1. Check if user agreed to cookies (we saved this in localStorage during Register/Login ideally)
-    // Or we can check the user profile if we have it loaded.
-    // For now, let's check a localStorage flag 'cookieConsent' or relying on the backend user object if passed.
-
-    // In this app, we saved consent in the Backend User Profile.
-    // We should only enable if we know the user consented.
+    // Check local storage for preferences
+    let analyticsEnabled = true; // Default to true or false based on policy
+    try {
+        const prefs = localStorage.getItem('cookiePreferences');
+        if (prefs) {
+            const parsed = JSON.parse(prefs);
+            analyticsEnabled = !!parsed.analytics;
+        }
+    } catch (e) {
+        console.warn('Failed to parse cookie preferences', e);
+    }
 
     if (!API_KEY) {
         console.warn('PostHog API Key not found');
@@ -19,17 +24,32 @@ export const initAnalytics = () => {
     try {
         posthog.init(API_KEY, {
             api_host: API_HOST,
-            person_profiles: 'identified_only', // Optimized for anonymity
-            autocapture: true, // Automatically track clicks/views
-            capture_pageview: true,
-            persistence: 'localStorage', // Uses cookies/localstorage
+            person_profiles: 'identified_only',
+            autocapture: analyticsEnabled, // Only capture if enabled
+            capture_pageview: analyticsEnabled,
+            persistence: 'localStorage',
+            opt_out_capturing_by_default: !analyticsEnabled, // Opt out if not enabled
             loaded: (posthog) => {
-                // Optional: debug log
-                // console.log('PostHog Loaded');
+                // Confirm state on load
+                if (analyticsEnabled) {
+                    posthog.opt_in_capturing();
+                } else {
+                    posthog.opt_out_capturing();
+                }
             }
         });
     } catch (error) {
         console.error('PostHog Init Failed:', error);
+    }
+};
+
+export const updateConsent = (analyticsEnabled) => {
+    if (posthog.__loaded) {
+        if (analyticsEnabled) {
+            posthog.opt_in_capturing();
+        } else {
+            posthog.opt_out_capturing();
+        }
     }
 };
 

@@ -164,6 +164,8 @@ export default function AdvisorMobile() {
 
     const quickActions = [
         { icon: DollarSign, text: "How can I save more?" },
+        { icon: DollarSign, text: "Checkout cheap places to buy groceries" },
+        { icon: DollarSign, text: "check out tax advice" },
         { icon: TrendingUp, text: "Analyze spending trends" },
         { icon: Target, text: "Help me reach goals" }
     ];

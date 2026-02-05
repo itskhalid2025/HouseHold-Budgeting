@@ -212,6 +212,8 @@ export default function Advisor() {
             text: "How can I save more money?",
             color: "green"
         },
+        { icon: DollarSign, text: "Checkout cheap places to buy groceries", color: "blue" },
+        { icon: DollarSign, text: "check out tax advice", color: "green" },
         {
             icon: TrendingUp,
             text: "Analyze my spending trends",

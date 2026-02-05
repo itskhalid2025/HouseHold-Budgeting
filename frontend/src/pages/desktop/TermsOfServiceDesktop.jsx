@@ -46,7 +46,7 @@ function TermsOfServiceDesktop() {
                         <div style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', borderRadius: '4px', marginBottom: '30px' }}>
                             <p style={{ lineHeight: '1.8', fontWeight: '500', color: 'var(--text-primary)' }}>
                                 <strong>DISCLAIMER:</strong> The "AI Financial Advisor" and all related features are for <strong>informational and educational purposes only</strong>.
-                                HouseHold Budgeting is <strong>not</strong> a licensed financial planner, tax advisor, or investment broker.
+                                HouseHold Budgeting is <strong>not</strong> a licensed financial planner, tax advisor, or investment broker, however it will provide the information.On which if the user takes an action then the user is responsible.
                                 <br /><br />
                                 The AI provides suggestions based on patterns, but it cannot predict market changes or personal life events.
                                 <strong>Always consult a certified professional before making significant financial decisions.</strong>
