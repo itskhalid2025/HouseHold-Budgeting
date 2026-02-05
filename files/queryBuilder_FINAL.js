@@ -13,7 +13,6 @@
  */
 
 import prisma from '../services/db.js';
-import { findSimilarTransactions } from './embeddingUtils.js';
 
 /**
  * Query transactions with filters from parsed query
@@ -23,26 +22,26 @@ import { findSimilarTransactions } from './embeddingUtils.js';
  */
 export async function queryTransactions(householdId, parsedQuery) {
     const { dateRange, filters } = parsedQuery;
-
+    
     // Build WHERE conditions
     const conditions = [];
-
+    
     // Date range
     conditions.push(`date >= '${dateRange.start}'::date`);
     conditions.push(`date <= '${dateRange.end}'::date`);
-
+    
     // Categories filter (exact match)
     if (filters.categories && filters.categories.length > 0) {
         const categoryList = filters.categories.map(c => `'${c.replace(/'/g, "''")}'`).join(', ');
         conditions.push(`category IN (${categoryList})`);
     }
-
+    
     // Types filter (NEED/WANT/SAVING)
     if (filters.types && filters.types.length > 0) {
         const typeList = filters.types.map(t => `'${t}'`).join(', ');
         conditions.push(`type IN (${typeList})`);
     }
-
+    
     // Merchants filter - IMPROVED: Use ILIKE for case-insensitive partial matching
     if (filters.merchants && filters.merchants.length > 0) {
         const merchantConditions = filters.merchants.map(merchant => {
@@ -51,7 +50,7 @@ export async function queryTransactions(householdId, parsedQuery) {
         });
         conditions.push(`(${merchantConditions.join(' OR ')})`);
     }
-
+    
     // 🆕 Description keywords filter - Search in description field for specific items
     if (filters.descriptionKeywords && filters.descriptionKeywords.length > 0) {
         const keywordConditions = filters.descriptionKeywords.map(keyword => {
@@ -60,11 +59,11 @@ export async function queryTransactions(householdId, parsedQuery) {
         });
         conditions.push(`(${keywordConditions.join(' OR ')})`);
     }
-
-    const whereClause = conditions.length > 0
+    
+    const whereClause = conditions.length > 0 
         ? `WHERE household_id = '${householdId}' AND deleted_at IS NULL AND ${conditions.join(' AND ')}`
         : `WHERE household_id = '${householdId}' AND deleted_at IS NULL`;
-
+    
     const query = `
     SELECT amount, category, date, description, merchant, type
     FROM transactions
@@ -72,9 +71,9 @@ export async function queryTransactions(householdId, parsedQuery) {
     ORDER BY date DESC
     LIMIT 200
   `;
-
+    
     console.log('🔧 SQL Query:', query.replace(/\s+/g, ' ').trim());
-
+    
     try {
         const transactions = await prisma.$queryRawUnsafe(query);
         console.log(`📦 Retrieved ${transactions.length} transactions`);
@@ -160,7 +159,7 @@ export function buildRAGContext(transactions, parsedQuery, currencySymbol) {
         // Calculate monthly average
         const monthsInRange = Math.ceil(dateRangeDays / 30);
         const avgPerMonth = totalAmount / monthsInRange;
-
+        
         // Group by month for trend analysis
         const monthlyTotals = {};
         transactions.forEach(t => {
@@ -168,11 +167,11 @@ export function buildRAGContext(transactions, parsedQuery, currencySymbol) {
             const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
             monthlyTotals[monthKey] = (monthlyTotals[monthKey] || 0) + Math.abs(parseFloat(t.amount) || 0);
         });
-
+        
         const monthlyAmounts = Object.values(monthlyTotals);
         const maxMonth = Math.max(...monthlyAmounts);
         const minMonth = Math.min(...monthlyAmounts);
-
+        
         timeInsights = `
 **Long-Term Analysis** (${dateRangeDays} days / ~${monthsInRange} months):
   • Average Per Month: ${currencySymbol}${avgPerMonth.toFixed(2)}
@@ -189,7 +188,7 @@ export function buildRAGContext(transactions, parsedQuery, currencySymbol) {
         // Check if amounts vary significantly (might indicate price change)
         const amounts = transactions.map(t => Math.abs(parseFloat(t.amount))).sort((a, b) => a - b);
         const uniqueAmounts = [...new Set(amounts)];
-
+        
         if (uniqueAmounts.length > 1 && uniqueAmounts.length < 5) {
             priceChangeInsight = `
 **Price Variation Detected**:
@@ -205,7 +204,7 @@ export function buildRAGContext(transactions, parsedQuery, currencySymbol) {
         const date = new Date(t.date);
         const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
-
+        
         return `  ${idx + 1}. ${formattedDate} (${dayOfWeek}): ${currencySymbol}${Math.abs(parseFloat(t.amount)).toFixed(2)} at ${t.merchant || 'Unknown'} - ${t.description || 'No description'} [${t.category || 'Uncategorized'}]`;
     }).join('\n');
 
@@ -276,30 +275,22 @@ ${hintsSection}
  */
 export async function semanticSearch(householdId, searchQuery, limit = 10) {
     try {
-        // Try vector similarity search first using embeddings
-        const vectorResults = await findSimilarTransactions(householdId, searchQuery, limit);
-
-        if (vectorResults && vectorResults.length > 0) {
-            console.log(`✅ Semantic search found ${vectorResults.length} matches via embeddings`);
-            return vectorResults;
-        }
-
-        console.log('⚠️ No vector matches found, falling back to keyword search');
-
-        // Fallback to advanced text search if no vector results (or embeddings not generated)
+        // This would use vector similarity search with embeddings
+        // For now, fallback to advanced text search
+        
         // Split search query into keywords
         const keywords = searchQuery.toLowerCase().split(/\s+/).filter(k => k.length > 2);
-
+        
         if (keywords.length === 0) {
             return [];
         }
-
+        
         // Build ILIKE conditions for each keyword
         const keywordConditions = keywords.map(keyword => {
             const escaped = keyword.replace(/'/g, "''");
             return `(description ILIKE '%${escaped}%' OR merchant ILIKE '%${escaped}%' OR category ILIKE '%${escaped}%')`;
         }).join(' OR ');
-
+        
         const query = `
             SELECT amount, category, date, description, merchant, type
             FROM transactions
@@ -309,9 +300,9 @@ export async function semanticSearch(householdId, searchQuery, limit = 10) {
             ORDER BY date DESC
             LIMIT ${limit}
         `;
-
+        
         const results = await prisma.$queryRawUnsafe(query);
-        console.log(`🔍 Keyword fallback for "${searchQuery}" found ${results?.length || 0} results`);
+        console.log(`🔍 Semantic search for "${searchQuery}" found ${results?.length || 0} results`);
         return results || [];
     } catch (error) {
         console.error('Semantic search failed:', error.message);
@@ -337,7 +328,7 @@ export async function findTransactionByItem(householdId, itemDescription) {
             ORDER BY date DESC
             LIMIT 1
         `;
-
+        
         const results = await prisma.$queryRawUnsafe(query);
         return results && results.length > 0 ? results[0] : null;
     } catch (error) {
@@ -357,7 +348,7 @@ export async function analyzeSubscription(householdId, merchant, monthsBack = 12
     try {
         const startDate = new Date();
         startDate.setMonth(startDate.getMonth() - monthsBack);
-
+        
         const escaped = merchant.replace(/'/g, "''");
         const query = `
             SELECT amount, date, description
@@ -368,20 +359,20 @@ export async function analyzeSubscription(householdId, merchant, monthsBack = 12
             AND date >= '${startDate.toISOString().split('T')[0]}'
             ORDER BY date ASC
         `;
-
+        
         const transactions = await prisma.$queryRawUnsafe(query);
-
+        
         if (!transactions || transactions.length === 0) {
             return null;
         }
-
+        
         const amounts = transactions.map(t => Math.abs(parseFloat(t.amount)));
         const total = amounts.reduce((sum, a) => sum + a, 0);
         const avg = total / amounts.length;
-
+        
         // Detect price changes
         const uniqueAmounts = [...new Set(amounts.map(a => a.toFixed(2)))];
-
+        
         return {
             merchant,
             transactionCount: transactions.length,

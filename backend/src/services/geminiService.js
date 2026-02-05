@@ -6,6 +6,50 @@ import { traceOperation } from './opikService.js';
 let currentKeyIndex = 0;
 const apiKeys = config.gemini.apiKeys;
 
+// EXTENDED STATE TRACKING
+const keyStates = apiKeys.map((key, index) => ({
+    index: index + 1,
+    maskedKey: `${key.substring(0, 4)}...${key.substring(key.length - 4)}`,
+    status: 'IDLE', // IDLE, ACTIVE, DEGRADED, EXHAUSTED
+    totalRequests: 0,
+    successCount: 0,
+    errorCount: 0,
+    lastUsed: null,
+    lastError: null,
+    models: {
+        [config.gemini.model]: { status: 'UNKNOWN', failures: 0 },
+        ...(config.gemini.backupModels || []).reduce((acc, m) => ({ ...acc, [m]: { status: 'UNKNOWN', failures: 0 } }), {})
+    }
+}));
+
+let lastResetDate = new Date(); // Track daily reset
+
+const systemErrorLog = []; // In-memory error history (capped at 50)
+
+export function getKeyStatus() {
+    // Check for daily reset (Midnight rollover)
+    const now = new Date();
+    if (now.getDate() !== lastResetDate.getDate() || now.getMonth() !== lastResetDate.getMonth()) {
+        console.log('📅 Performing Daily Reset of API Status...');
+        lastResetDate = now;
+        keyStates.forEach(k => {
+            k.totalRequests = 0;
+            k.successCount = 0;
+            k.errorCount = 0;
+            k.status = 'IDLE'; // Reset status too
+        });
+        currentKeyIndex = 0; // Optional: Reset to first key? Maybe no.
+    }
+
+    return {
+        currentIndex: currentKeyIndex + 1,
+        totalKeys: apiKeys.length,
+        keys: keyStates,
+        errors: systemErrorLog,
+        lastReset: lastResetDate
+    };
+}
+
 /**
  * Get instance of Gemini model with current API key and optional tools
  * @param {Array} tools - Optional tools (like Google Search)
@@ -37,9 +81,35 @@ let model = getGenerativeModel();
 function rotateKey() {
     if (apiKeys.length <= 1) return false;
 
+    // Mark current key as exhausted before rotating
+    keyStates[currentKeyIndex].status = 'EXHAUSTED';
+
     const oldIndex = currentKeyIndex;
-    currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
-    console.log(`🔄 Rotating Gemini API key to key #${currentKeyIndex + 1}/${apiKeys.length} (was #${oldIndex + 1})`);
+    let nextIndex = (currentKeyIndex + 1) % apiKeys.length;
+    let foundHealthy = false;
+
+    // "Smart Skip": Look for the next key that is NOT exhausted
+    for (let i = 0; i < apiKeys.length - 1; i++) { // Check all other keys
+        if (keyStates[nextIndex].status !== 'EXHAUSTED') {
+            currentKeyIndex = nextIndex;
+            foundHealthy = true;
+            break;
+        }
+        nextIndex = (nextIndex + 1) % apiKeys.length;
+    }
+
+    // If all keys are exhausted, we must reuse one. 
+    // We fall back to standard rotation (next sequential) and reset it.
+    if (!foundHealthy) {
+        currentKeyIndex = (oldIndex + 1) % apiKeys.length;
+        console.warn('⚠️ All keys exhausted. Recycling next key in sequence.');
+        // Reset status to ACTIVE to give it another chance
+        keyStates[currentKeyIndex].status = 'ACTIVE';
+        keyStates[currentKeyIndex].errorCount = 0;
+    }
+
+    console.log(`🔄 Rotating Gemini API key to key #${currentKeyIndex + 1}/${apiKeys.length} (was #${oldIndex + 1}) | Skipped Exhausted: ${foundHealthy}`);
+
     model = getGenerativeModel();
     return true;
 }
@@ -59,8 +129,9 @@ export async function generateContent(promptOrParts, options = {}) {
     const {
         temperature = 0.7,
         maxTokens = 4000,
-        retries = 3, // retries per model/key combination logic if needed, but we will mostly rely on the waterfall
+        retries = 3,
         useGrounding = false,
+        useBackup = false, // Add useBackup option
         title = 'Gemini Request'
     } = options;
 
@@ -75,14 +146,39 @@ export async function generateContent(promptOrParts, options = {}) {
 
         // We will try every key
         for (let keyAttempt = 0; keyAttempt < totalKeys; keyAttempt++) {
-            // For each key, we try Primary Model then Backup Model
-            const modelsToTry = [config.gemini.model];
-            if (config.gemini.modelBackup) {
-                modelsToTry.push(config.gemini.modelBackup);
+            // Update Key Stats
+            const keyState = keyStates[currentKeyIndex];
+            keyState.lastUsed = new Date().toISOString();
+            if (keyState.status === 'IDLE') keyState.status = 'ACTIVE';
+
+            // For each key, we try Primary Model then all Backup Models
+            // FIX: Respect useBackup flag to skip primary model on retries
+            const modelsToTry = [];
+
+            if (!useBackup) {
+                modelsToTry.push(config.gemini.model); // Add Primary
             }
 
-            for (const modelName of modelsToTry) {
-                const isBackup = modelName === config.gemini.modelBackup;
+            if (config.gemini.backupModels && config.gemini.backupModels.length > 0) {
+                modelsToTry.push(...config.gemini.backupModels); // Add Backups
+            } else if (useBackup) {
+                // If usage of backup is forced but no backup models are configured, 
+                // we must fallback to primary or throw. Let's fallback to primary but log warning.
+                console.warn('⚠️ useBackup=true but no backup models configured. Falling back to PRIMARY.');
+                modelsToTry.push(config.gemini.model);
+            }
+
+            for (let modelIndex = 0; modelIndex < modelsToTry.length; modelIndex++) {
+                const modelName = modelsToTry[modelIndex];
+
+                // Logic to clear up what is backup and what is primary
+                // If useBackup is true, ALL models in the list are backups
+                // If useBackup is false, index 0 is Primary, index > 0 are Backups
+                const isBackup = useBackup || modelIndex > 0;
+                const backupLevel = useBackup ? modelIndex + 1 : modelIndex;
+
+                const modelLabel = isBackup ? `BACKUP-${backupLevel}` : 'PRIMARY';
+
                 // Update span metadata for current attempt
                 if (span) {
                     span.update({
@@ -94,7 +190,10 @@ export async function generateContent(promptOrParts, options = {}) {
                             useGrounding,
                             current_key_index: currentKeyIndex,
                             current_model: modelName,
-                            is_backup: isBackup
+                            is_backup: isBackup,
+                            backup_level: backupLevel,
+                            models_tried: modelIndex + 1,
+                            total_models: modelsToTry.length
                         }
                     });
                 }
@@ -110,8 +209,10 @@ export async function generateContent(promptOrParts, options = {}) {
 
                     const activeModel = genAI.getGenerativeModel(configObj);
 
-                    console.log(`🤖 [Gemini] Request using Key #${currentKeyIndex + 1} | Model: ${modelName} ${isBackup ? '(BACKUP)' : '(PRIMARY)'}`);
+                    console.log(`🤖 [Gemini] Request using Key #${currentKeyIndex + 1}/${totalKeys} | Model: ${modelName} (${modelLabel}) [${modelIndex + 1}/${modelsToTry.length}]`);
                     const requestStart = Date.now();
+
+                    keyState.totalRequests++;
 
                     const result = await activeModel.generateContent({
                         contents: [{ role: 'user', parts: Array.isArray(promptOrParts) ? promptOrParts : [{ text: promptOrParts }] }],
@@ -126,6 +227,12 @@ export async function generateContent(promptOrParts, options = {}) {
                     const usage = result.response.usageMetadata;
                     const latency = Date.now() - requestStart;
                     const totalLatency = Date.now() - startTime;
+
+                    // SUCCESS STATE UPDATE
+                    keyState.successCount++;
+                    if (!keyState.models[modelName]) keyState.models[modelName] = { status: 'OK', failures: 0 };
+                    keyState.models[modelName].status = 'OK';
+                    keyState.status = (keyState.status === 'DEGRADED' && !isBackup) ? 'ACTIVE' : keyState.status; // Recover status if primary works
 
                     if (span && usage) {
                         span.update({
@@ -150,21 +257,43 @@ export async function generateContent(promptOrParts, options = {}) {
 
                 } catch (error) {
                     lastError = error;
-                    console.error(`❌ Error with Key #${currentKeyIndex + 1} | Model: ${modelName}:`, error.message);
 
-                    // If this was the last model for this key, verify if we should rotate
-                    // The loop will continue to the next model automatically.
-                    // If both models fail, the inner loop finishes.
+                    // FAILURE STATE UPDATE
+                    const modelLabel = isBackup ? `BACKUP-${backupLevel}` : 'PRIMARY';
+                    keyState.errorCount++;
+                    keyState.lastError = error.message;
+                    if (!keyState.models[modelName]) keyState.models[modelName] = { status: 'ERROR', failures: 0 };
+                    keyState.models[modelName].status = 'ERROR';
+                    keyState.models[modelName].failures++;
+
+                    // Log to system error log
+                    systemErrorLog.unshift({
+                        timestamp: new Date().toISOString(),
+                        keyIndex: currentKeyIndex + 1,
+                        model: modelName,
+                        label: modelLabel,
+                        context: title,
+                        error: error.message
+                    });
+                    if (systemErrorLog.length > 50) systemErrorLog.pop(); // Cap log size
+
+                    // If Primary fails, mark Degraded
+                    if (!isBackup) keyState.status = 'DEGRADED';
+
+                    console.error(`❌ Error with Key #${currentKeyIndex + 1} | Model: ${modelName} (${modelLabel}):`, error.message);
+
+                    // Continue to next model in the list
+                    // If this was the last model, the loop will end and we'll rotate keys
                 }
             }
 
-            // If we are here, both models failed for the current key.
+            // If we are here, all models failed for the current key.
             // Move to next key.
-            console.log(`⚠️ Key #${currentKeyIndex + 1} exhausted (both models failed). Rotating...`);
+            console.log(`⚠️ Key #${currentKeyIndex + 1} exhausted (all ${modelsToTry.length} models failed). Rotating to next key...`);
             rotateKey();
         }
 
-        throw new Error(`Gemini generation failed after trying all ${totalKeys} keys and fallback models. Last error: ${lastError ? lastError.message : 'Unknown error'}`);
+        throw new Error(`Gemini generation failed after trying all ${totalKeys} keys and ${config.gemini.backupModels.length + 1} models per key. Last error: ${lastError ? lastError.message : 'Unknown error'}`);
     });
 }
 

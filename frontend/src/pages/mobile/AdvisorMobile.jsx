@@ -4,7 +4,7 @@ import { Send, Bot, User, Sparkles, TrendingUp, DollarSign, Target, ArrowUp, X }
 import { chatWithAdvisor } from '../../api/api';
 import {
     PieChart, Pie, Cell,
-    BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend
+    BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, Legend
 } from 'recharts';
 
 import MobileCard from '../../components/mobile/MobileCard';
@@ -22,10 +22,9 @@ const COLORS = [
     '#6366F1'  // Indigo
 ];
 
-// Helper Component for Charts
 const MessageChart = ({ chart }) => {
     if (!chart || !chart.data) return null;
-    const height = 280; // Slightly taller for legend space
+    const height = 350; // Increased height for better visibility
 
     // Normalize data keys
     const normalizedData = chart.data.map(d => ({
@@ -37,16 +36,18 @@ const MessageChart = ({ chart }) => {
     // Common Tooltip Style
     const tooltipStyle = {
         backgroundColor: 'rgba(30, 30, 40, 0.95)',
-        borderRadius: '12px',
+        borderRadius: '8px',
         border: '1px solid rgba(255,255,255,0.1)',
-        boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
-        padding: '8px 12px',
-        color: '#fff'
+        boxShadow: '0 4px 16px rgba(0,0,0,0.3)',
+        padding: '6px 10px',
+        color: '#fff',
+        fontSize: '11px',
+        maxWidth: '150px'
     };
 
     if (chart.type === 'pie') {
         return (
-            <div style={{ width: '100%', height, marginTop: 16 }}>
+            <div style={{ width: '100%', height, marginTop: 16, minHeight: height }}>
                 <ResponsiveContainer>
                     <PieChart>
                         <Pie
@@ -61,7 +62,13 @@ const MessageChart = ({ chart }) => {
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
-                        <Tooltip contentStyle={tooltipStyle} itemStyle={{ color: '#fff' }} formatter={(value) => `$${value}`} />
+                        <Tooltip
+                            contentStyle={tooltipStyle}
+                            itemStyle={{ color: '#fff', fontSize: '11px' }}
+                            formatter={(value) => `$${value}`}
+                            position={{ y: -10 }}
+                            offset={10}
+                        />
                         <Legend
                             verticalAlign="bottom"
                             height={70}
@@ -76,12 +83,26 @@ const MessageChart = ({ chart }) => {
 
     if (chart.type === 'bar') {
         return (
-            <div style={{ width: '100%', height, marginTop: 12 }}>
+            <div style={{ width: '100%', height, marginTop: 12, minHeight: height }}>
                 <ResponsiveContainer>
-                    <BarChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--text-secondary)' }} />
+                    <BarChart data={normalizedData} margin={{ top: 10, right: 15, left: 0, bottom: 35 }}>
+                        <XAxis
+                            dataKey="name"
+                            fontSize={9}
+                            tickLine={false}
+                            axisLine={false}
+                            tick={{ fill: 'var(--text-secondary)' }}
+                            angle={-15}
+                            textAnchor="end"
+                            height={40}
+                        />
                         <YAxis fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} tick={{ fill: 'var(--text-secondary)' }} />
-                        <Tooltip cursor={{ fill: 'var(--bg-hover)' }} contentStyle={tooltipStyle} />
+                        <Tooltip
+                            cursor={{ fill: 'var(--bg-hover)' }}
+                            contentStyle={tooltipStyle}
+                            position="top"
+                            offset={5}
+                        />
                         <Bar dataKey="value" radius={[4, 4, 4, 4]}>
                             {normalizedData.map((entry, index) => (
                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -95,12 +116,25 @@ const MessageChart = ({ chart }) => {
 
     if (chart.type === 'line') {
         return (
-            <div style={{ width: '100%', height, marginTop: 12 }}>
+            <div style={{ width: '100%', height, marginTop: 12, minHeight: height }}>
                 <ResponsiveContainer>
-                    <LineChart data={normalizedData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                        <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} tick={{ fill: 'var(--text-secondary)' }} />
+                    <LineChart data={normalizedData} margin={{ top: 10, right: 15, left: 0, bottom: 35 }}>
+                        <XAxis
+                            dataKey="name"
+                            fontSize={9}
+                            tickLine={false}
+                            axisLine={false}
+                            tick={{ fill: 'var(--text-secondary)' }}
+                            angle={-15}
+                            textAnchor="end"
+                            height={40}
+                        />
                         <YAxis fontSize={10} tickLine={false} axisLine={false} tickFormatter={(value) => `$${value}`} tick={{ fill: 'var(--text-secondary)' }} />
-                        <Tooltip contentStyle={{ borderRadius: 8, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }} />
+                        <Tooltip
+                            contentStyle={tooltipStyle}
+                            position="top"
+                            offset={5}
+                        />
                         <Line type="monotone" dataKey="value" stroke="var(--primary)" strokeWidth={3} dot={{ r: 4, fill: 'var(--primary)' }} />
                     </LineChart>
                 </ResponsiveContainer>

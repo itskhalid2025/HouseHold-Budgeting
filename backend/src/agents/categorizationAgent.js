@@ -174,7 +174,38 @@ export async function categorizeEntry(inputPayload) {
 
             console.log('🤖 [AI Request] Type:', isAudio ? 'Audio (Multimodal)' : hasMedia ? `Media (${mediaItems.length})` : 'Text Only');
 
-            const data = await generateJSON(parts, null, { maxTokens: 4096 });
+            const MAX_RETRIES = 4;
+            let data;
+            let lastError;
+
+            for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                    const isRetry = attempt > 1;
+                    if (isRetry) console.log(`🔄 [Categorization] Retry Attempt ${attempt}/${MAX_RETRIES}...`);
+
+                    data = await generateJSON(parts, null, {
+                        maxTokens: 4096,
+                        useBackup: isRetry, // Use backup keys on retry
+                        title: isRetry ? `Categorization (Retry #${attempt})` : 'Categorization'
+                    });
+
+                    // If successful, break format
+                    console.log(`✅ [Categorization] Success on attempt ${attempt}`);
+                    lastError = null;
+                    break;
+                } catch (err) {
+                    console.error(`❌ [Categorization] Attempt ${attempt} failed: ${err.message}`);
+                    lastError = err;
+                    if (attempt < MAX_RETRIES) {
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
+                }
+            }
+
+            if (!data) {
+                throw lastError || new Error('All categorization attempts failed');
+            }
+
             console.log('🤖 AI Categorization Result:', JSON.stringify(data, null, 2));
 
             // Ensure we always return the entries array

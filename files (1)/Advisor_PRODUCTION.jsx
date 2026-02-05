@@ -67,18 +67,18 @@ const ChatChart = ({ data }) => {
     };
 
     return (
-        <div className="advisor-chart-container" style={{
-            marginTop: '1rem',
-            width: '100%',
-            height: '350px',
-            minHeight: '350px'
+        <div className="advisor-chart-container" style={{ 
+            marginTop: '1rem', 
+            width: '100%', 
+            height: '350px', 
+            minHeight: '350px' 
         }}>
             {title && (
-                <h4 style={{
-                    margin: '0 0 10px 0',
-                    fontSize: '0.95rem',
-                    opacity: 0.9,
-                    fontWeight: '600'
+                <h4 style={{ 
+                    margin: '0 0 10px 0', 
+                    fontSize: '0.95rem', 
+                    opacity: 0.9, 
+                    fontWeight: '600' 
                 }}>
                     {title}
                 </h4>
@@ -98,15 +98,15 @@ const ChatChart = ({ data }) => {
                             labelLine={false}
                         >
                             {chartData.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={entry.color || COLORS[index % COLORS.length]}
+                                <Cell 
+                                    key={`cell-${index}`} 
+                                    fill={entry.color || COLORS[index % COLORS.length]} 
                                 />
                             ))}
                         </Pie>
                         <Tooltip content={<CustomTooltip />} />
-                        <Legend
-                            iconType="circle"
+                        <Legend 
+                            iconType="circle" 
                             wrapperStyle={{ fontSize: '12px' }}
                             formatter={(value, entry) => (
                                 <span style={{ color: '#94a3b8' }}>{value}</span>
@@ -114,73 +114,71 @@ const ChatChart = ({ data }) => {
                         />
                     </PieChart>
                 ) : type === 'line' ? (
-                    <LineChart
-                        data={chartData}
+                    <LineChart 
+                        data={chartData} 
                         margin={{ top: 10, right: 20, left: 5, bottom: 30 }}
                     >
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                         <XAxis
                             dataKey="period"
                             stroke="#94a3b8"
-                            fontSize={13}
-                            tick={{ fontWeight: 'bold' }}
+                            fontSize={11}
                             tickLine={false}
                             angle={-15}
                             textAnchor="end"
                             height={50}
                         />
-                        <YAxis
-                            stroke="#94a3b8"
-                            fontSize={12}
+                        <YAxis 
+                            stroke="#94a3b8" 
+                            fontSize={12} 
                             tickLine={false}
                             tickFormatter={(value) => `₹${value}`}
                         />
                         <Tooltip content={<CustomTooltip />} />
-                        <Line
-                            type="monotone"
-                            dataKey="amount"
-                            stroke="#10b981"
-                            strokeWidth={3}
+                        <Line 
+                            type="monotone" 
+                            dataKey="amount" 
+                            stroke="#10b981" 
+                            strokeWidth={3} 
                             dot={{ fill: '#10b981', r: 4 }}
                             activeDot={{ r: 6 }}
                         />
                     </LineChart>
                 ) : (
-                    <BarChart
-                        data={chartData}
+                    <BarChart 
+                        data={chartData} 
                         margin={{ top: 10, right: 20, left: 5, bottom: 30 }}
                     >
-                        <CartesianGrid
-                            strokeDasharray="3 3"
-                            vertical={false}
-                            stroke="#334155"
+                        <CartesianGrid 
+                            strokeDasharray="3 3" 
+                            vertical={false} 
+                            stroke="#334155" 
                         />
                         <XAxis
                             dataKey="period"
                             stroke="#94a3b8"
-                            fontSize={13}
-                            tick={{ fontWeight: 'bold' }}
+                            fontSize={11}
                             tickLine={false}
                             angle={-15}
                             textAnchor="end"
                             height={50}
                         />
-                        <YAxis
-                            stroke="#94a3b8"
-                            fontSize={12}
+                        <YAxis 
+                            stroke="#94a3b8" 
+                            fontSize={12} 
                             tickLine={false}
                             tickFormatter={(value) => `₹${value}`}
                         />
                         <Tooltip content={<CustomTooltip />} />
-                        <Bar
-                            dataKey="amount"
-                            fill="#3b82f6"
+                        <Bar 
+                            dataKey="amount" 
+                            fill="#3b82f6" 
                             radius={[4, 4, 0, 0]}
                         >
                             {chartData.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={COLORS[index % COLORS.length]}
+                                <Cell 
+                                    key={`cell-${index}`} 
+                                    fill={COLORS[index % COLORS.length]} 
                                 />
                             ))}
                         </Bar>
@@ -302,9 +300,9 @@ export default function Advisor() {
 
     const formatTime = (isoString) => {
         try {
-            return new Date(isoString).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
+            return new Date(isoString).toLocaleTimeString([], { 
+                hour: '2-digit', 
+                minute: '2-digit' 
             });
         } catch (e) {
             return '';
@@ -328,8 +326,8 @@ export default function Advisor() {
             <div className="chat-window">
                 <div className="chat-messages">
                     {messages.map((msg, i) => (
-                        <div
-                            key={i}
+                        <div 
+                            key={i} 
                             className={`message-row ${msg.role === 'user' ? 'user' : 'assistant'}`}
                         >
                             {msg.role === 'assistant' && (
@@ -343,13 +341,13 @@ export default function Advisor() {
                                 </div>
                             )}
 
-                            <div
+                            <div 
                                 className={`message-bubble ${msg.role === 'user' ? 'user' : 'bot'} ${msg.isError ? 'error' : ''}`}
                             >
                                 {msg.role === 'assistant' ? (
-                                    <div
-                                        className="message-content"
-                                        dangerouslySetInnerHTML={{ __html: msg.content }}
+                                    <div 
+                                        className="message-content" 
+                                        dangerouslySetInnerHTML={{ __html: msg.content }} 
                                     />
                                 ) : (
                                     <div className="message-content">{msg.content}</div>
@@ -423,9 +421,9 @@ export default function Advisor() {
                         className="send-btn"
                     >
                         <Send size={18} />
-                        <span style={{
-                            display: 'none',
-                            '@media (min-width: 640px)': { display: 'inline' }
+                        <span style={{ 
+                            display: 'none', 
+                            '@media (min-width: 640px)': { display: 'inline' } 
                         }}>
                             Send
                         </span>

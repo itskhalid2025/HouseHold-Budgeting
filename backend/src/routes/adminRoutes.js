@@ -1,5 +1,5 @@
 import express from 'express';
-import { loginAdmin, getMe, createInvitation, getAllUsers, getAllHouseholds, updateUserRestriction, registerAdmin, getDashboardStats, getAiAnalytics, updateUser, deleteUser, updateHousehold, deleteHousehold, updateAllUserAiLimits } from '../controllers/adminController.js';
+import { loginAdmin, getMe, createInvitation, getAllUsers, getAllHouseholds, updateUserRestriction, registerAdmin, getDashboardStats, getAiAnalytics, updateUser, deleteUser, updateHousehold, deleteHousehold, updateAllUserAiLimits, getSystemStatus } from '../controllers/adminController.js';
 import { authenticateAdmin, requireSuperAdmin } from '../middleware/adminAuth.js';
 
 const router = express.Router();
@@ -13,6 +13,7 @@ router.get('/me', authenticateAdmin, getMe);
 router.post('/invite', authenticateAdmin, requireSuperAdmin, createInvitation);
 router.get('/dashboard-stats', authenticateAdmin, getDashboardStats);
 router.get('/ai-stats', authenticateAdmin, getAiAnalytics);
+router.get('/system-status', authenticateAdmin, requireSuperAdmin, getSystemStatus);
 
 // Management
 router.put('/users/ai-limits/bulk', authenticateAdmin, requireSuperAdmin, updateAllUserAiLimits); // Bulk Update BEFORE :userId

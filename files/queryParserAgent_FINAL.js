@@ -25,19 +25,19 @@ import { getCategoryListForAI } from '../config/categories.js';
  * @returns {Object} Parsed query metadata
  */
 export async function parseQuery(userMessage, userContext) {
-  return traceOperation('queryParserAgent.parseQuery', async () => {
-    logEntry('queryParserAgent', 'parseQuery', { messageLength: userMessage?.length });
+    return traceOperation('queryParserAgent.parseQuery', async () => {
+        logEntry('queryParserAgent', 'parseQuery', { messageLength: userMessage?.length });
 
-    const currentDate = userContext.localDate || new Date().toISOString().split('T')[0];
-    const timezone = userContext.timezone || 'UTC';
-    const city = userContext.city || 'Unknown';
-    const country = userContext.country || 'Unknown';
+        const currentDate = userContext.localDate || new Date().toISOString().split('T')[0];
+        const timezone = userContext.timezone || 'UTC';
+        const city = userContext.city || 'Unknown';
+        const country = userContext.country || 'Unknown';
 
-    // Get user's actual categories (if available) and category hierarchy
-    const userCategories = userContext.availableCategories || [];
-    const categoryHierarchy = getCategoryListForAI();
+        // Get user's actual categories (if available) and category hierarchy
+        const userCategories = userContext.availableCategories || [];
+        const categoryHierarchy = getCategoryListForAI();
 
-    const prompt = `You are an expert query parser for a financial budgeting platform. Your role is to extract precise, structured metadata from natural language queries about spending, budgets, and financial transactions.
+        const prompt = `You are an expert query parser for a financial budgeting platform. Your role is to extract precise, structured metadata from natural language queries about spending, budgets, and financial transactions.
 
 ═══════════════════════════════════════════════════════════════
 📅 CURRENT CONTEXT (CRITICAL - READ THIS FIRST)
@@ -56,7 +56,7 @@ User Location: ${city}, ${country}
 ═══════════════════════════════════════════════════════════════
 
 ${userCategories.length > 0 ?
-        `These are the ONLY categories that exist in this user's transaction history:
+                `These are the ONLY categories that exist in this user's transaction history:
 ${userCategories.map(cat => `  • ${cat}`).join('\n')}
 
 🚨 CRITICAL: You MUST ONLY select from these exact category names.
@@ -64,7 +64,7 @@ ${userCategories.map(cat => `  • ${cat}`).join('\n')}
    - Do NOT use similar but different category names
    - Match category names EXACTLY as shown (case-sensitive)
    - If user asks for something not in this list, leave categories empty` :
-        `No categories available in user data - leave categories filter empty`}
+                `No categories available in user data - leave categories filter empty`}
 
 ═══════════════════════════════════════════════════════════════
 📊 CATEGORY HIERARCHY & TYPE CLASSIFICATION
@@ -518,155 +518,110 @@ You MUST return ONLY valid JSON with this EXACT structure (no markdown, no backt
 Now analyze this query and return the structured JSON metadata following ALL rules above.
 
 🚨 REMEMBER: 
-- Default to last 30 days if no time period mentioned unless its asked like when did i bought a new phone? then check all the transactions
-  example- when did i bought a new phone? -> check all the transactions, when did i bought a new phone in 2023? -> check all the transactions in 2023, my spending-> check last 30 days,my food spending-> check last 30 days, last amazon purchase -> check all transactions.
+- Default to last 30 days if no time period mentioned
 - Extract descriptionKeywords for item-specific queries
 - Infer merchants for "online" context
 - Provide analysisHints for better advisor responses`;
 
-    const MAX_RETRIES = 4;
-    let result;
-    let parseError;
+        try {
+            const result = await generateJSON(prompt, null, {
+                temperature: 0.3,
+                maxTokens: 4096,
+                title: 'Query Parser'
+            });
 
-    // RETRY LOOP
-    for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
-      try {
-        const isRetry = attempt > 1;
-        console.log(`🤖 [QueryParser] Generation Attempt ${attempt}/${MAX_RETRIES} (${isRetry ? 'BACKUP' : 'PRIMARY'})...`);
+            // Normalize types
+            const normalizedTypes = (result.filters?.types || []).map(t => {
+                const upper = t.toUpperCase();
+                if (upper === 'NEEDS') return 'NEED';
+                if (upper === 'WANTS') return 'WANT';
+                if (upper === 'SAVINGS') return 'SAVING';
+                return upper;
+            });
 
-        result = await generateJSON(prompt, null, {
-          temperature: 0.3,
-          maxTokens: 4096,
-          title: isRetry ? `Query Parser (Retry #${attempt})` : 'Query Parser',
-          useBackup: isRetry // Trigger backup model usage on retries
-        });
+            // CRITICAL FIX: Validate date range
+            let dateRange = result.dateRange || {
+                start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                end: new Date().toISOString().split('T')[0],
+                description: 'last 30 days (default)'
+            };
 
-        // If successful, break the loop
-        parseError = null;
-        console.log(`✅ [QueryParser] Generation successful on attempt ${attempt}`);
-        break;
-      } catch (err) {
-        console.error(`❌ [QueryParser] Attempt ${attempt} failed: ${err.message}`);
-        parseError = err;
+            // Check if AI made a mistake (single day but description says multi-day period)
+            if (dateRange.start === dateRange.end && 
+                (dateRange.description.includes('30 days') || 
+                 dateRange.description.includes('month') ||
+                 dateRange.description.includes('week'))) {
+                console.warn('⚠️ Parser returned single-day range for multi-day query. Fixing to last 30 days.');
+                const endDate = new Date(currentDate);
+                const startDate = new Date(endDate);
+                startDate.setDate(startDate.getDate() - 30);
+                
+                dateRange = {
+                    start: startDate.toISOString().split('T')[0],
+                    end: endDate.toISOString().split('T')[0],
+                    description: 'last 30 days (corrected)'
+                };
+            }
 
-        if (attempt < MAX_RETRIES) {
-          await new Promise(r => setTimeout(r, 1000)); // Wait 1s before retry
+            const parsed = {
+                dateRange,
+                filters: {
+                    categories: result.filters?.categories || [],
+                    types: normalizedTypes,
+                    merchants: result.filters?.merchants || [],
+                    descriptionKeywords: result.filters?.descriptionKeywords || []
+                },
+                visualization: {
+                    chartType: result.visualization?.chartType || null,
+                    groupBy: result.visualization?.groupBy || null,
+                    xAxisLabels: result.visualization?.xAxisLabels || null,
+                    title: result.visualization?.title || null
+                },
+                grounding: {
+                    enabled: result.grounding?.enabled || false,
+                    searchQuery: result.grounding?.searchQuery || null,
+                    useLocation: result.grounding?.useLocation || false
+                },
+                analysisHints: result.analysisHints || [],
+                metadata: {
+                    location: `${city}, ${country}`,
+                    timezone: timezone,
+                    currentDate: currentDate
+                },
+                intent: result.intent || 'analysis'
+            };
+
+            console.log('✅ Query parsed:', JSON.stringify(parsed, null, 2));
+            return parsed;
+
+        } catch (error) {
+            logError('queryParserAgent', 'parseQuery', error);
+
+            // Return safe defaults on error
+            return {
+                dateRange: {
+                    start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    end: new Date().toISOString().split('T')[0],
+                    description: 'last 30 days (default)'
+                },
+                filters: { 
+                    categories: [], 
+                    types: [], 
+                    merchants: [],
+                    descriptionKeywords: []
+                },
+                visualization: { chartType: null, groupBy: null, xAxisLabels: null, title: null },
+                grounding: { enabled: false, searchQuery: null, useLocation: false },
+                analysisHints: [],
+                metadata: {
+                    location: `${city}, ${country}`,
+                    timezone: timezone,
+                    currentDate: currentDate
+                },
+                intent: 'analysis'
+            };
         }
-      }
-    }
-
-    // If all attempts failed, handle error
-    if (!result) {
-      logError('queryParserAgent', 'parseQuery', parseError || new Error('All retry attempts failed'));
-
-      // Return safe defaults
-      return {
-        dateRange: {
-          start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          end: new Date().toISOString().split('T')[0],
-          description: 'last 30 days (default)'
-        },
-        filters: {
-          categories: [],
-          types: [],
-          merchants: [],
-          descriptionKeywords: []
-        },
-        visualization: { chartType: null, groupBy: null, xAxisLabels: null, title: null },
-        grounding: { enabled: false, searchQuery: null, useLocation: false },
-        analysisHints: [],
-        metadata: {
-          location: `${city}, ${country}`,
-          timezone: timezone,
-          currentDate: currentDate
-        },
-        intent: 'analysis'
-      };
-    }
-
-    try {
-      // Normalize types
-      const normalizedTypes = (result.filters?.types || []).map(t => {
-        const upper = t.toUpperCase();
-        if (upper === 'NEEDS') return 'NEED';
-        if (upper === 'WANTS') return 'WANT';
-        if (upper === 'SAVINGS') return 'SAVING';
-        return upper;
-      });
-
-      // CRITICAL FIX: Validate date range
-      let dateRange = result.dateRange || {
-        start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        end: new Date().toISOString().split('T')[0],
-        description: 'last 30 days (default)'
-      };
-
-      // Check if AI made a mistake (single day but description says multi-day period)
-      if (dateRange.start === dateRange.end &&
-        (dateRange.description.includes('30 days') ||
-          dateRange.description.includes('month') ||
-          dateRange.description.includes('week'))) {
-        console.warn('⚠️ Parser returned single-day range for multi-day query. Fixing to last 30 days.');
-        const endDate = new Date(currentDate);
-        const startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 30);
-
-        dateRange = {
-          start: startDate.toISOString().split('T')[0],
-          end: endDate.toISOString().split('T')[0],
-          description: 'last 30 days (corrected)'
-        };
-      }
-
-      const parsed = {
-        dateRange,
-        filters: {
-          categories: result.filters?.categories || [],
-          types: normalizedTypes,
-          merchants: result.filters?.merchants || [],
-          descriptionKeywords: result.filters?.descriptionKeywords || []
-        },
-        visualization: {
-          chartType: result.visualization?.chartType || null,
-          groupBy: result.visualization?.groupBy || null,
-          xAxisLabels: result.visualization?.xAxisLabels || null,
-          title: result.visualization?.title || null
-        },
-        grounding: {
-          enabled: result.grounding?.enabled || false,
-          searchQuery: result.grounding?.searchQuery || null,
-          useLocation: result.grounding?.useLocation || false
-        },
-        analysisHints: result.analysisHints || [],
-        metadata: {
-          location: `${city}, ${country}`,
-          timezone: timezone,
-          currentDate: currentDate
-        },
-        intent: result.intent || 'analysis'
-      };
-
-      console.log('✅ Query parsed:', JSON.stringify(parsed, null, 2));
-      return parsed;
-
-    } catch (postProcessError) {
-      // Fallback if post-processing fails
-      logError('queryParserAgent', 'parseQuery_PostProcess', postProcessError);
-      return {
-        dateRange: {
-          start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          end: new Date().toISOString().split('T')[0],
-          description: 'last 30 days (default)'
-        },
-        filters: { categories: [], types: [], merchants: [], descriptionKeywords: [] },
-        visualization: { chartType: null, groupBy: null, xAxisLabels: null, title: null },
-        grounding: { enabled: false, searchQuery: null, useLocation: false },
-        analysisHints: [],
-        metadata: { location: `${city}, ${country}`, timezone, currentDate },
-        intent: 'analysis'
-      };
-    }
-  }, { operation: 'parseQuery' });
+    }, { operation: 'parseQuery' });
 }
 
 /**
@@ -675,10 +630,10 @@ Now analyze this query and return the structured JSON metadata following ALL rul
  * @returns {Object} { startDate, endDate } as ISO strings
  */
 export function getDateStrings(dateRange) {
-  return {
-    startDate: dateRange.start,
-    endDate: dateRange.end
-  };
+    return {
+        startDate: dateRange.start,
+        endDate: dateRange.end
+    };
 }
 
 /**
@@ -688,46 +643,46 @@ export function getDateStrings(dateRange) {
  * @returns {string[]} Array of labels for chart
  */
 export function generateXAxisLabels(groupBy, dateRange) {
-  const start = new Date(dateRange.start);
-  const end = new Date(dateRange.end);
-  const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const start = new Date(dateRange.start);
+    const end = new Date(dateRange.end);
+    const daysDiff = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
 
-  if (groupBy === 'day') {
-    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const labels = [];
-    const current = new Date(start);
-    while (current <= end) {
-      labels.push(days[current.getDay()]);
-      current.setDate(current.getDate() + 1);
+    if (groupBy === 'day') {
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        const labels = [];
+        const current = new Date(start);
+        while (current <= end) {
+            labels.push(days[current.getDay()]);
+            current.setDate(current.getDate() + 1);
+        }
+        return labels;
     }
-    return labels;
-  }
 
-  if (groupBy === 'week') {
-    const weeks = Math.ceil(daysDiff / 7);
-    return Array.from({ length: weeks }, (_, i) => `W${i + 1}`);
-  }
-
-  if (groupBy === 'month') {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    const labels = [];
-    const current = new Date(start);
-    while (current <= end) {
-      labels.push(months[current.getMonth()]);
-      current.setMonth(current.getMonth() + 1);
+    if (groupBy === 'week') {
+        const weeks = Math.ceil(daysDiff / 7);
+        return Array.from({ length: weeks }, (_, i) => `W${i + 1}`);
     }
-    return labels;
-  }
 
-  if (groupBy === 'year') {
-    const years = [];
-    const currentYear = start.getFullYear();
-    const endYear = end.getFullYear();
-    for (let year = currentYear; year <= endYear; year++) {
-      years.push(year.toString());
+    if (groupBy === 'month') {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const labels = [];
+        const current = new Date(start);
+        while (current <= end) {
+            labels.push(months[current.getMonth()]);
+            current.setMonth(current.getMonth() + 1);
+        }
+        return labels;
     }
-    return years;
-  }
 
-  return null;
+    if (groupBy === 'year') {
+        const years = [];
+        const currentYear = start.getFullYear();
+        const endYear = end.getFullYear();
+        for (let year = currentYear; year <= endYear; year++) {
+            years.push(year.toString());
+        }
+        return years;
+    }
+
+    return null;
 }

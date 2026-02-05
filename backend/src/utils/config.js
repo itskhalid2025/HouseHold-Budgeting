@@ -37,7 +37,13 @@ const config = {
             process.env.GEMINI_API_KEY10
         ].filter(Boolean),
         model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
-        modelBackup: process.env.GEMINI_MODEL_BACKUP || 'gemini-2.0-flash-lite',
+        // Array of backup models to try in order
+        backupModels: [
+            process.env.GEMINI_MODEL2,
+            process.env.GEMINI_MODEL3,
+            process.env.GEMINI_MODEL4,
+            process.env.GEMINI_MODEL5
+        ].filter(Boolean),
         embeddingModel: process.env.GEMINI_EMBEDDING_MODEL || 'models/gemini-embedding-001',
         embeddingModelBackup: process.env.GEMINI_EMBEDDING_MODEL_BACKUP || 'text-embedding-004'
     },

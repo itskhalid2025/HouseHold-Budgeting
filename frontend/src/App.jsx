@@ -35,6 +35,7 @@ import AdminHouseholds from './pages/admin/AdminHouseholds';
 import AdminAiUsage from './pages/admin/AdminAiUsage';
 import AdminRegister from './pages/admin/AdminRegister';
 import AdminSettings from './pages/admin/AdminSettings';
+import SystemStatus from './pages/admin/dashboard/SystemStatus';
 import Onboarding from './pages/Onboarding';
 import { SyncProvider } from './context/SyncContext';
 import { BudgetProvider } from './context/BudgetContext';
@@ -325,6 +326,7 @@ function AppContent() {
           <Route path="users" element={<AdminUsers />} />
           <Route path="households" element={<AdminHouseholds />} />
           <Route path="ai-usage" element={<AdminAiUsage />} />
+          <Route path="status" element={<SystemStatus />} />
           <Route path="settings" element={<AdminSettings />} />
         </Route>
       </Routes>

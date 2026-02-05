@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Home, Activity, Settings, LogOut } from 'lucide-react';
+import { LayoutDashboard, Users, Home, Activity, Settings, LogOut, Server } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import './AdminTheme.css';
 import './AdminLayout.css';
@@ -19,6 +19,7 @@ const AdminLayout = () => {
         { icon: <Users size={20} />, label: 'Users', path: '/admin/users' },
         { icon: <Home size={20} />, label: 'Households', path: '/admin/households' },
         { icon: <Activity size={20} />, label: 'AI Usage', path: '/admin/ai-usage' },
+        { icon: <Server size={20} />, label: 'System Status', path: '/admin/status' },
         { icon: <Settings size={20} />, label: 'Settings', path: '/admin/settings' },
     ];
 

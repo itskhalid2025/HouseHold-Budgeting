@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import config from '../utils/config.js';
 import prisma from '../services/db.js';
+import { getKeyStatus } from '../services/geminiService.js';
 
 // Admin Login
 export const loginAdmin = async (req, res) => {
@@ -734,5 +735,21 @@ export const updateAllUserAiLimits = async (req, res) => {
     } catch (error) {
         console.error('Bulk AI Update Error:', error);
         res.status(500).json({ success: false, error: 'Failed to update global limits.' });
+    }
+};
+
+// Get System Status (API Keys & Health)
+export const getSystemStatus = async (req, res) => {
+    try {
+        // Restricted to Super Admins
+        if (!req.admin.isSuperAdmin) {
+            return res.status(403).json({ success: false, error: 'Access denied' });
+        }
+
+        const status = getKeyStatus();
+        res.json({ success: true, status });
+    } catch (error) {
+        console.error('System Status Error:', error);
+        res.status(500).json({ success: false, error: 'Server error' });
     }
 };

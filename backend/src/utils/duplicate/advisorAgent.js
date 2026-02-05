@@ -17,7 +17,7 @@ import { traceOperation } from '../services/opikService.js';
 import { logEntry, logSuccess, logError } from '../utils/controllerLogger.js';
 import prisma from '../services/db.js';
 import { parseQuery } from './queryParserAgent.js';
-import { queryTransactions, buildRAGContext, semanticSearch } from '../utils/queryBuilder.js';
+import { queryTransactions, buildRAGContext } from '../utils/queryBuilder.js';
 
 /**
  * AI Financial Advisor Chatbot - Main Entry Point
@@ -117,22 +117,7 @@ export async function getFinancialAdvice(params) {
       // STEP 3: Build and Execute Database Query
       // ==========================================
       console.log('📦 Fetching transactions...');
-      let transactions = await queryTransactions(householdData.id, parsedQuery);
-
-      // FALLBACK: If strict search returns no results, try semantic search
-      if (transactions.length === 0) {
-        console.log('⚠️ Strict search returned 0 transactions. Attempting semantic search fallback...');
-        const semanticResults = await semanticSearch(householdData.id, userMessage, 20);
-
-        if (semanticResults && semanticResults.length > 0) {
-          console.log(`✅ Semantic fallback found ${semanticResults.length} transactions`);
-          transactions = semanticResults;
-          // Add a hint to the parser/context that this was a semantic match
-          parsedQuery.analysisHints.push('NOTICE: These transactions were found using semantic search (vector embeddings) because strict filters returned no data.');
-        } else {
-          console.log('🚫 Semantic fallback also returned 0 results');
-        }
-      }
+      const transactions = await queryTransactions(householdData.id, parsedQuery);
 
       // ==========================================
       // STEP 4: Build RAG Context
@@ -422,38 +407,24 @@ Your response MUST follow this exact structure:
   • Acknowledge user's follow-up questions
 
 ═══════════════════════════════════════════════════════════════
-🚨 CRITICAL JSON FORMATTING RULES
-═══════════════════════════════════════════════════════════════
-1. Do NOT use literal newlines inside JSON strings.
-   INCORRECT: "text": "<p>Line 1
-   Line 2</p>"
-   CORRECT: "text": "<p>Line 1\nLine 2</p>"
-
-2. Do NOT use unescaped double quotes inside strings.
-   INCORRECT: "text": "<span class="red">"
-   CORRECT: "text": "<span class=\"red\">"
-
-3. Return ONLY valid JSON. No markdown code blocks (\`\`\`json).
-
-═══════════════════════════════════════════════════════════════
 ✅ FINAL VALIDATION CHECKLIST
 ═══════════════════════════════════════════════════════════════
 
 Before returning your response, verify:
 
-□ Response is valid JSON(no markdown, no backticks)
+□ Response is valid JSON (no markdown, no backticks)
 □ "text" field contains HTML string
-□ "chartData" field is present(with data if chart required, or null if not)
+□ "chartData" field is present (with data if chart required, or null if not)
 □ Chart amounts are numbers, not strings
-□ No plain - text color names(RED, GREEN, etc.) anywhere
+□ No plain-text color names (RED, GREEN, etc.) anywhere
 □ All colors use inline styles: <strong style="color: #HEXCODE">
-    □ Response follows 2-3-1 structure (2 paragraphs, bullets, 1 paragraph)
-    □ Bullet points include specific data from RAG
-    □ Advice is specific and actionable, not generic
-    □ Currency symbol ${householdData.currencySymbol} is used throughout
-    □ All HTML tags are properly closed
+□ Response follows 2-3-1 structure (2 paragraphs, bullets, 1 paragraph)
+□ Bullet points include specific data from RAG
+□ Advice is specific and actionable, not generic
+□ Currency symbol ${householdData.currencySymbol} is used throughout
+□ All HTML tags are properly closed
 
-    Now generate your response following ALL requirements above.`;
+Now generate your response following ALL requirements above.`;
 
       // LOGGING: Feed data to Opik and Console
       if (span) {
@@ -474,48 +445,43 @@ Before returning your response, verify:
       console.log(`${parsedQuery.grounding.enabled ? '✅' : '🚫'} Grounding: ${parsedQuery.grounding.enabled ? 'ON' : 'OFF'}`);
 
       let parsedResponse;
+      try {
+        // ATTEMPT 1: Primary Generation
+        console.log('🤖 [Advisor] Generating advice with PRIMARY model...');
+        parsedResponse = await generateJSON(fullPrompt, null, {
+          temperature: 0.8,
+          maxTokens: 8096,
+          useGrounding: parsedQuery.grounding.enabled,
+          title: 'Financial Advisor (Primary)'
+        });
 
-      const MAX_RETRIES = 4;
+        // CHECK FOR SOFT FAILURE (AI apologizes)
+        if (parsedResponse.text && parsedResponse.text.includes("I'm having trouble analyzing")) {
+          console.warn('⚠️ [Advisor] Primary model returned soft failure. Retrying with BACKUP model...');
+          throw new Error('Soft failure: AI apologized');
+        }
 
-      for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+      } catch (primaryError) {
+        console.error(`❌ [Advisor] Primary generation failed: ${primaryError.message}`);
+        console.log('🔄 [Advisor] Retrying with BACKUP model...');
+
         try {
-          const isRetry = attempt > 1;
-          const modelTitle = isRetry ? `Financial Advisor (Retry #${attempt})` : 'Financial Advisor (Primary)';
-
-          console.log(`🤖 [Advisor] Generation Attempt ${attempt}/${MAX_RETRIES} (${isRetry ? 'BACKUP' : 'PRIMARY'})...`);
-
+          // ATTEMPT 2: Backup Generation
           parsedResponse = await generateJSON(fullPrompt, null, {
             temperature: 0.8,
             maxTokens: 8096,
-            useGrounding: parsedQuery.grounding.enabled && !isRetry, // Disable grounding on retries to reduce complexity
-            useBackup: isRetry,     // Use backup models on retries
-            title: modelTitle
+            useGrounding: false, // Disable grounding on backup to reduce complexity
+            useBackup: true,     // FORCE BACKUP MODEL
+            title: 'Financial Advisor (Backup)'
           });
-
-          // CHECK FOR SOFT FAILURE (AI apologizes)
-          if (parsedResponse.text && parsedResponse.text.includes("I'm having trouble analyzing")) {
-            throw new Error('Soft failure: AI apologized');
-          }
-
-          // If we got here, success!
-          console.log(`✅ [Advisor] Generation successful on attempt ${attempt}`);
-          break;
-
-        } catch (error) {
-          console.error(`❌ [Advisor] Attempt ${attempt} failed: ${error.message}`);
-
-          if (attempt === MAX_RETRIES) {
-            console.error('❌ [Advisor] All attempts exhausted. Returning fallback.');
-            // Final fallback
-            parsedResponse = {
-              text: "<p>I apologize, but I'm having trouble analyzing your data right now. Please try asking a different question.</p>",
-              chartData: null
-            };
-          } else {
-            console.log(`🔄 [Advisor] Retrying...`);
-            // Short delay before retry
-            await new Promise(r => setTimeout(r, 1000));
-          }
+          console.log('✅ [Advisor] Backup generation successful');
+        } catch (backupError) {
+          console.error(`❌ [Advisor] Backup generation also failed: ${backupError.message}`);
+          // Final fallback
+          parsedResponse = {
+            text: "<p>I apologize, but I'm having trouble analyzing your data right now. Please try asking a different question.</p>",
+            chartData: null
+          };
         }
       }
 
@@ -606,10 +572,10 @@ Before returning your response, verify:
 /**
  * Generate fallback chart when AI doesn't provide one
  * @param {Array} transactions - Transaction data
-    * @param {Object} parsedQuery - Parsed query metadata
-    * @param {string} currencySymbol - Currency symbol
-    * @returns {Object} Chart data object
-    */
+ * @param {Object} parsedQuery - Parsed query metadata
+ * @param {string} currencySymbol - Currency symbol
+ * @returns {Object} Chart data object
+ */
 function generateFallbackChart(transactions, parsedQuery, currencySymbol) {
   const { chartType, groupBy, xAxisLabels, title } = parsedQuery.visualization;
 
@@ -721,10 +687,10 @@ function getColorForCategory(category) {
 /**
  * Build the context prompt for the Advisor Agent
  * @param {Object} householdData - Household financial snapshot
-    * @param {Object} userContext - User location and timezone
-    * @param {Object} parsedQuery - Parsed query metadata
-    * @returns {string} Context prompt
-    */
+ * @param {Object} userContext - User location and timezone
+ * @param {Object} parsedQuery - Parsed query metadata
+ * @returns {string} Context prompt
+ */
 function buildContextPrompt(householdData, userContext, parsedQuery) {
   // Build xAxisLabels instruction
   const xAxisInstruction = parsedQuery.visualization.xAxisLabels
@@ -733,59 +699,59 @@ function buildContextPrompt(householdData, userContext, parsedQuery) {
 
   return `You are an expert financial advisor helping a household make smarter money decisions. Your analysis is data-driven, insightful, and actionable.
 
-    ═══════════════════════════════════════════════════════════════
-    💰 HOUSEHOLD FINANCIAL SNAPSHOT
-    ═══════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════
+💰 HOUSEHOLD FINANCIAL SNAPSHOT
+═══════════════════════════════════════════════════════════════
 
-    **Location & Context**:
-    • City: ${userContext.city}${userContext.state ? `, ${userContext.state}` : ''}
-    • Country: ${userContext.country}
-    • Timezone: ${userContext.timezone}
-    • Current Date: ${userContext.localDate}
-    • Currency: ${householdData.currency || 'USD'} (Symbol: ${householdData.currencySymbol})
+**Location & Context**:
+  • City: ${userContext.city}${userContext.state ? `, ${userContext.state}` : ''}
+  • Country: ${userContext.country}
+  • Timezone: ${userContext.timezone}
+  • Current Date: ${userContext.localDate}
+  • Currency: ${householdData.currency || 'USD'} (Symbol: ${householdData.currencySymbol})
 
-    **Income & Spending Overview**:
-    • Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
-    • Monthly Spending: ${householdData.currencySymbol}${householdData.monthlySpending}
-    • This Week's Spending: ${householdData.currencySymbol}${householdData.thisWeekSpending}
-    • Savings Rate: ${householdData.savingsRate}%
+**Income & Spending Overview**:
+  • Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
+  • Monthly Spending: ${householdData.currencySymbol}${householdData.monthlySpending}
+  • This Week's Spending: ${householdData.currencySymbol}${householdData.thisWeekSpending}
+  • Savings Rate: ${householdData.savingsRate}%
 
-    **Spending Breakdown by Type**:
-    • Needs: ${householdData.currencySymbol}${householdData.needs} (${householdData.needsPercent}%)
-    • Wants: ${householdData.currencySymbol}${householdData.wants} (${householdData.wantsPercent}%)
-    • Savings: ${householdData.currencySymbol}${householdData.savings} (${householdData.savingsPercent}%)
+**Spending Breakdown by Type**:
+  • Needs: ${householdData.currencySymbol}${householdData.needs} (${householdData.needsPercent}%)
+  • Wants: ${householdData.currencySymbol}${householdData.wants} (${householdData.wantsPercent}%)
+  • Savings: ${householdData.currencySymbol}${householdData.savings} (${householdData.savingsPercent}%)
 
-    **Top Spending Categories**:
-    ${householdData.topCategories?.map((c, i) => `  ${i + 1}. ${c.category}: ${householdData.currencySymbol}${c.amount}`).join('\n') || '  No data available'}
+**Top Spending Categories**:
+${householdData.topCategories?.map((c, i) => `  ${i + 1}. ${c.category}: ${householdData.currencySymbol}${c.amount}`).join('\n') || '  No data available'}
 
-    **Active Financial Goals**:
-    ${householdData.goals?.length > 0
+**Active Financial Goals**:
+${householdData.goals?.length > 0
       ? householdData.goals.map(g => `  • ${g.name}: ${householdData.currencySymbol}${g.currentAmount} / ${householdData.currencySymbol}${g.targetAmount} (${g.progress}% complete)`).join('\n')
       : '  • No active goals set'}
 
-    ═══════════════════════════════════════════════════════════════
-    🔍 QUERY ANALYSIS (FROM PARSER AGENT)
-    ═══════════════════════════════════════════════════════════════
+═══════════════════════════════════════════════════════════════
+🔍 QUERY ANALYSIS (FROM PARSER AGENT)
+═══════════════════════════════════════════════════════════════
 
-    **Date Range**:
-    • Period: ${parsedQuery.dateRange.description}
-    • Start: ${parsedQuery.dateRange.start}
-    • End: ${parsedQuery.dateRange.end}
+**Date Range**:
+  • Period: ${parsedQuery.dateRange.description}
+  • Start: ${parsedQuery.dateRange.start}
+  • End: ${parsedQuery.dateRange.end}
 
-    **Filters Applied**:
-    • Categories: ${parsedQuery.filters.categories.length > 0 ? parsedQuery.filters.categories.join(', ') : 'All categories'}
-    • Types: ${parsedQuery.filters.types.length > 0 ? parsedQuery.filters.types.join(', ') : 'All types (NEED/WANT/SAVING)'}
-    • Merchants: ${parsedQuery.filters.merchants.length > 0 ? parsedQuery.filters.merchants.join(', ') : 'All merchants'}
+**Filters Applied**:
+  • Categories: ${parsedQuery.filters.categories.length > 0 ? parsedQuery.filters.categories.join(', ') : 'All categories'}
+  • Types: ${parsedQuery.filters.types.length > 0 ? parsedQuery.filters.types.join(', ') : 'All types (NEED/WANT/SAVING)'}
+  • Merchants: ${parsedQuery.filters.merchants.length > 0 ? parsedQuery.filters.merchants.join(', ') : 'All merchants'}
 
-    **Visualization Settings**:
-    • Chart Type: ${parsedQuery.visualization.chartType || 'Not requested'}
-    • Group By: ${parsedQuery.visualization.groupBy || 'Not specified'}
-    • xAxisLabels: ${xAxisInstruction}
-    • Chart Title: ${parsedQuery.visualization.title || 'Auto-generate'}
+**Visualization Settings**:
+  • Chart Type: ${parsedQuery.visualization.chartType || 'Not requested'}
+  • Group By: ${parsedQuery.visualization.groupBy || 'Not specified'}
+  • xAxisLabels: ${xAxisInstruction}
+  • Chart Title: ${parsedQuery.visualization.title || 'Auto-generate'}
 
-    **User Intent**: ${parsedQuery.intent}
+**User Intent**: ${parsedQuery.intent}
 
-    ${parsedQuery.grounding.enabled
+${parsedQuery.grounding.enabled
       ? `**Web Search Enabled**: You have access to real-time data for: "${parsedQuery.grounding.searchQuery}"
      Use this to provide local recommendations, price comparisons, or market insights for ${userContext.city}, ${userContext.country}.`
       : ''}`;
@@ -801,40 +767,40 @@ export async function generateSavingsRecommendations(householdData) {
     try {
       const prompt = `You are a financial advisor creating personalized savings recommendations.
 
-    **HOUSEHOLD DATA**:
-    • Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
-    • Monthly Spending: ${householdData.currencySymbol}${householdData.monthlySpending}
-    • Total Wants Spending: ${householdData.currencySymbol}${householdData.wants}
-    • Top Want Categories: ${householdData.topWants?.map(w => `${w.category} (${householdData.currencySymbol}${w.amount})`).join(', ') || 'None'}
-    • Active Goals: ${householdData.goals?.map(g => g.name).join(', ') || 'None'}
+**HOUSEHOLD DATA**:
+  • Monthly Income: ${householdData.currencySymbol}${householdData.monthlyIncome}
+  • Monthly Spending: ${householdData.currencySymbol}${householdData.monthlySpending}
+  • Total Wants Spending: ${householdData.currencySymbol}${householdData.wants}
+  • Top Want Categories: ${householdData.topWants?.map(w => `${w.category} (${householdData.currencySymbol}${w.amount})`).join(', ') || 'None'}
+  • Active Goals: ${householdData.goals?.map(g => g.name).join(', ') || 'None'}
 
-    **TASK**: Generate 3 specific, actionable savings recommendations.
+**TASK**: Generate 3 specific, actionable savings recommendations.
 
-    **REQUIREMENTS**:
-    1. Target the largest Want category first
-    2. Suggest realistic 10-30% reductions
-    3. Calculate exact monthly savings amounts
-    4. Connect recommendations to their active goals
-    5. Order by priority (highest impact first)
+**REQUIREMENTS**:
+1. Target the largest Want category first
+2. Suggest realistic 10-30% reductions
+3. Calculate exact monthly savings amounts
+4. Connect recommendations to their active goals
+5. Order by priority (highest impact first)
 
-    **OUTPUT FORMAT** (valid JSON only):
-    {
-      "recommendations": [
+**OUTPUT FORMAT** (valid JSON only):
+{
+  "recommendations": [
     {
       "action": "Specific action to take",
-    "category": "Category name",
-    "currentSpend": 400,
-    "targetSpend": 280,
-    "monthlySavings": 120,
-    "difficulty": "easy|medium|hard",
-    "impact": "How this helps their goals or financial health",
-    "priority": 1
+      "category": "Category name",
+      "currentSpend": 400,
+      "targetSpend": 280,
+      "monthlySavings": 120,
+      "difficulty": "easy|medium|hard",
+      "impact": "How this helps their goals or financial health",
+      "priority": 1
     }
-    ],
-    "encouragement": "Motivational message based on their financial situation"
+  ],
+  "encouragement": "Motivational message based on their financial situation"
 }
 
-    Focus on practical, achievable changes that will make a real difference.`;
+Focus on practical, achievable changes that will make a real difference.`;
 
       const result = await generateJSON(prompt, null, { maxTokens: 4096 });
 

@@ -108,8 +108,37 @@ Generate a financial report in VALID JSON format with these exact fields:
 5. Make recommendations specific (e.g., "Reduce dining by ${aggregatedData.currencySymbol}100" not "spend less")
 6. ALWAYS use the currency symbol "${aggregatedData.currencySymbol}" (e.g. ${aggregatedData.currencySymbol}100) and NEVER use the code (e.g. ${aggregatedData.currency}100).`;
 
-            // Call Gemini API
-            const reportContent = await generateJSON(prompt, null, { maxTokens: 4096 });
+            // Call Gemini API with Retry Logic
+            let reportContent;
+            let lastError;
+            const MAX_RETRIES = 4;
+
+            for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                    const isRetry = attempt > 1;
+                    if (isRetry) console.log(`🔄 [ReportAgent] Retry Attempt ${attempt}/${MAX_RETRIES}...`);
+
+                    reportContent = await generateJSON(prompt, null, {
+                        maxTokens: 4096,
+                        useBackup: isRetry,
+                        title: isRetry ? `Report Generation (Retry #${attempt})` : 'Report Generation'
+                    });
+
+                    console.log(`✅ [ReportAgent] Success on attempt ${attempt}`);
+                    lastError = null;
+                    break;
+                } catch (err) {
+                    console.error(`❌ [ReportAgent] Attempt ${attempt} failed: ${err.message}`);
+                    lastError = err;
+                    if (attempt < MAX_RETRIES) {
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
+                }
+            }
+
+            if (!reportContent) {
+                throw lastError || new Error('All report generation attempts failed');
+            }
 
             // Add chart data configurations
             reportContent.charts = [

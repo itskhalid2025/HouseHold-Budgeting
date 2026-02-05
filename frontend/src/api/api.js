@@ -902,6 +902,17 @@ export const getAdminAiStats = async (period = 'month') => {
     return handleResponse(response);
 };
 
+export const getSystemStatus = async () => {
+    const token = localStorage.getItem('adminToken');
+    const response = await trackedFetch(`${API_BASE_URL}/admin/system-status`, { // Matches backend route
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`
+        }
+    });
+    return handleResponse(response);
+};
+
 // ================== GAMIFICATION API ==================
 
 export async function getGamificationStatus() {

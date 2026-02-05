@@ -5,11 +5,8 @@
  * Features:
  * - Real-time chat with AI
  * - Context-aware advice based on household finances
- * - Enhanced chart rendering with dynamic colors
- * - HTML content rendering with proper styling
+ * - Structured savings recommendations
  * - Clean, dark-themed UI
- *
- * PRODUCTION VERSION - Enhanced for new backend features
  *
  * @module pages/Advisor
  */
@@ -28,61 +25,14 @@ import './AdvisorDesktop.css';
 
 const COLORS = ['#10b981', '#f59e0b', '#3b82f6', '#ef4444', '#8b5cf6', '#ec4899'];
 
-/**
- * Enhanced Chart Component with support for pie, bar, and line charts
- * Now supports dynamic colors from backend and better formatting
- */
 const ChatChart = ({ data }) => {
     if (!data || !data.data || data.data.length === 0) return null;
 
     const { type, title, data: chartData } = data;
 
-    // Format currency for tooltips
-    const formatCurrency = (value) => {
-        // Try to detect currency from the data or use a default
-        return `₹${value.toFixed(2)}`;
-    };
-
-    // Custom tooltip for better data display
-    const CustomTooltip = ({ active, payload, label }) => {
-        if (active && payload && payload.length) {
-            return (
-                <div style={{
-                    backgroundColor: '#1e293b',
-                    border: '1px solid #334155',
-                    borderRadius: '6px',
-                    padding: '8px 12px',
-                    fontSize: '12px'
-                }}>
-                    <p style={{ margin: 0, fontWeight: 600, marginBottom: '4px' }}>{label}</p>
-                    {payload.map((entry, index) => (
-                        <p key={index} style={{ margin: 0, color: entry.color }}>
-                            {entry.name}: {formatCurrency(entry.value)}
-                        </p>
-                    ))}
-                </div>
-            );
-        }
-        return null;
-    };
-
     return (
-        <div className="advisor-chart-container" style={{
-            marginTop: '1rem',
-            width: '100%',
-            height: '350px',
-            minHeight: '350px'
-        }}>
-            {title && (
-                <h4 style={{
-                    margin: '0 0 10px 0',
-                    fontSize: '0.95rem',
-                    opacity: 0.9,
-                    fontWeight: '600'
-                }}>
-                    {title}
-                </h4>
-            )}
+        <div className="advisor-chart-container" style={{ marginTop: '1rem', width: '100%', height: '350px', minHeight: '350px' }}>
+            {title && <h4 style={{ margin: '0 0 10px 0', fontSize: '0.95rem', opacity: 0.9, fontWeight: '600' }}>{title}</h4>}
             <ResponsiveContainer width="100%" height="100%">
                 {type === 'pie' ? (
                     <PieChart>
@@ -94,94 +44,81 @@ const ChatChart = ({ data }) => {
                             outerRadius={70}
                             paddingAngle={5}
                             dataKey="value"
-                            label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                            labelLine={false}
                         >
                             {chartData.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={entry.color || COLORS[index % COLORS.length]}
-                                />
+                                <Cell key={`cell-${index}`} fill={entry.color || COLORS[index % COLORS.length]} />
                             ))}
                         </Pie>
-                        <Tooltip content={<CustomTooltip />} />
-                        <Legend
-                            iconType="circle"
-                            wrapperStyle={{ fontSize: '12px' }}
-                            formatter={(value, entry) => (
-                                <span style={{ color: '#94a3b8' }}>{value}</span>
-                            )}
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: '#1e293b',
+                                border: '1px solid #334155',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                fontSize: '12px'
+                            }}
+                            itemStyle={{ color: '#fff' }}
+                            position={{ y: -10 }}
+                            offset={10}
                         />
+                        <Legend iconType="circle" wrapperStyle={{ fontSize: '12px' }} />
                     </PieChart>
                 ) : type === 'line' ? (
-                    <LineChart
-                        data={chartData}
-                        margin={{ top: 10, right: 20, left: 5, bottom: 30 }}
-                    >
+                    <LineChart data={chartData} margin={{ top: 10, right: 20, left: 5, bottom: 30 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
                         <XAxis
                             dataKey="period"
                             stroke="#94a3b8"
-                            fontSize={13}
-                            tick={{ fontWeight: 'bold' }}
+                            fontSize={11}
                             tickLine={false}
                             angle={-15}
                             textAnchor="end"
                             height={50}
                         />
-                        <YAxis
-                            stroke="#94a3b8"
-                            fontSize={12}
-                            tickLine={false}
-                            tickFormatter={(value) => `₹${value}`}
+                        <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
+                        <Tooltip
+                            contentStyle={{
+                                backgroundColor: '#1e293b',
+                                border: '1px solid #334155',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                fontSize: '12px'
+                            }}
+                            itemStyle={{ color: '#fff' }}
+                            position="top"
+                            offset={5}
                         />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Line
-                            type="monotone"
-                            dataKey="amount"
-                            stroke="#10b981"
-                            strokeWidth={3}
-                            dot={{ fill: '#10b981', r: 4 }}
-                            activeDot={{ r: 6 }}
-                        />
+                        <Line type="monotone" dataKey="amount" stroke="#10b981" strokeWidth={3} dot={{ fill: '#10b981' }} />
                     </LineChart>
                 ) : (
-                    <BarChart
-                        data={chartData}
-                        margin={{ top: 10, right: 20, left: 5, bottom: 30 }}
-                    >
-                        <CartesianGrid
-                            strokeDasharray="3 3"
-                            vertical={false}
-                            stroke="#334155"
-                        />
+                    <BarChart data={chartData} margin={{ top: 10, right: 20, left: 5, bottom: 30 }}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#334155" />
                         <XAxis
                             dataKey="period"
                             stroke="#94a3b8"
-                            fontSize={13}
-                            tick={{ fontWeight: 'bold' }}
+                            fontSize={11}
                             tickLine={false}
                             angle={-15}
                             textAnchor="end"
                             height={50}
                         />
-                        <YAxis
-                            stroke="#94a3b8"
-                            fontSize={12}
-                            tickLine={false}
-                            tickFormatter={(value) => `₹${value}`}
+                        <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} />
+                        <Tooltip
+                            cursor={{ fill: 'rgba(255,255,255,0.05)' }}
+                            contentStyle={{
+                                backgroundColor: '#1e293b',
+                                border: '1px solid #334155',
+                                borderRadius: '6px',
+                                padding: '6px 10px',
+                                fontSize: '12px'
+                            }}
+                            itemStyle={{ color: '#fff' }}
+                            position="top"
+                            offset={5}
                         />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Bar
-                            dataKey="amount"
-                            fill="#3b82f6"
-                            radius={[4, 4, 0, 0]}
-                        >
+                        <Bar dataKey="amount" fill="#3b82f6" radius={[4, 4, 0, 0]}>
                             {chartData.map((entry, index) => (
-                                <Cell
-                                    key={`cell-${index}`}
-                                    fill={COLORS[index % COLORS.length]}
-                                />
+                                <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                             ))}
                         </Bar>
                     </BarChart>
@@ -256,14 +193,13 @@ export default function Advisor() {
 
                 // Use structured data directly from API
                 const content = data.response;
-                const chartData = data.chartData || null;
+                const chartData = data.chartData || null; // Fix: Get chartData directly
                 const metadata = data.metadata || null;
 
                 const aiMessageObj = {
                     role: 'assistant',
                     content: content,
                     chartData: chartData,
-                    metadata: metadata,
                     timestamp: data.timestamp
                 };
                 setMessages(prev => [...prev, aiMessageObj]);
@@ -302,10 +238,7 @@ export default function Advisor() {
 
     const formatTime = (isoString) => {
         try {
-            return new Date(isoString).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit'
-            });
+            return new Date(isoString).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
         } catch (e) {
             return '';
         }
@@ -328,10 +261,7 @@ export default function Advisor() {
             <div className="chat-window">
                 <div className="chat-messages">
                     {messages.map((msg, i) => (
-                        <div
-                            key={i}
-                            className={`message-row ${msg.role === 'user' ? 'user' : 'assistant'}`}
-                        >
+                        <div key={i} className={`message-row ${msg.role === 'user' ? 'user' : 'assistant'}`}>
                             {msg.role === 'assistant' && (
                                 <div className="avatar bot">
                                     <Bot size={20} color="white" />
@@ -343,14 +273,9 @@ export default function Advisor() {
                                 </div>
                             )}
 
-                            <div
-                                className={`message-bubble ${msg.role === 'user' ? 'user' : 'bot'} ${msg.isError ? 'error' : ''}`}
-                            >
+                            <div className={`message-bubble ${msg.role === 'user' ? 'user' : 'bot'} ${msg.isError ? 'error' : ''}`}>
                                 {msg.role === 'assistant' ? (
-                                    <div
-                                        className="message-content"
-                                        dangerouslySetInnerHTML={{ __html: msg.content }}
-                                    />
+                                    <div className="message-content" dangerouslySetInnerHTML={{ __html: msg.content }} />
                                 ) : (
                                     <div className="message-content">{msg.content}</div>
                                 )}
@@ -423,12 +348,7 @@ export default function Advisor() {
                         className="send-btn"
                     >
                         <Send size={18} />
-                        <span style={{
-                            display: 'none',
-                            '@media (min-width: 640px)': { display: 'inline' }
-                        }}>
-                            Send
-                        </span>
+                        <span style={{ display: 'none', '@media (min-width: 640px)': { display: 'inline' } }}>Send</span>
                     </button>
                 </div>
                 <p className="disclaimer">
