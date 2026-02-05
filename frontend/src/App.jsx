@@ -10,6 +10,8 @@ import Navbar from './components/mobile/Navbar';
 import Sidebar from './components/desktop/Sidebar';
 import TopBar from './components/desktop/TopBar';
 import { SmartEntryProvider, useSmartEntry } from './context/SmartEntryContext';
+import { TourProvider } from './context/TourContext';
+import TourOverlay from './components/common/TourOverlay';
 import './components/gamification/RewardAnimation.css';
 
 // Pages
@@ -477,7 +479,10 @@ function App() {
             <BudgetProvider>
               <NotificationProvider>
                 <SmartEntryProvider>
-                  <AppContent />
+                  <TourProvider>
+                    <TourOverlay />
+                    <AppContent />
+                  </TourProvider>
                 </SmartEntryProvider>
               </NotificationProvider>
             </BudgetProvider>

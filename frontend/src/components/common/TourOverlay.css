@@ -1,0 +1,341 @@
+/* ============================================
+   Tour Overlay - Interactive Guided Tour Styles
+   ============================================ */
+
+/* Main overlay container */
+.tour-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 99999;
+    pointer-events: auto;
+}
+
+/* SVG backdrop with spotlight cutout */
+.tour-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
+.tour-backdrop rect {
+    transition: all 0.3s ease-out;
+}
+
+.spotlight-animate {
+    animation: spotlightPulse 2s ease-in-out infinite;
+}
+
+@keyframes spotlightPulse {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5));
+    }
+
+    50% {
+        filter: drop-shadow(0 0 16px rgba(99, 102, 241, 0.8));
+    }
+}
+
+/* Spotlight highlight ring */
+.tour-spotlight-ring {
+    position: fixed;
+    border-radius: 8px;
+    border: 2px solid var(--primary, #6366f1);
+    box-shadow:
+        0 0 0 4px rgba(99, 102, 241, 0.2),
+        0 0 20px rgba(99, 102, 241, 0.4),
+        inset 0 0 20px rgba(99, 102, 241, 0.1);
+    pointer-events: none;
+    transition: all 0.3s ease-out;
+    animation: ringPulse 2s ease-in-out infinite;
+}
+
+@keyframes ringPulse {
+
+    0%,
+    100% {
+        box-shadow:
+            0 0 0 4px rgba(99, 102, 241, 0.2),
+            0 0 20px rgba(99, 102, 241, 0.4),
+            inset 0 0 20px rgba(99, 102, 241, 0.1);
+    }
+
+    50% {
+        box-shadow:
+            0 0 0 8px rgba(99, 102, 241, 0.3),
+            0 0 30px rgba(99, 102, 241, 0.6),
+            inset 0 0 30px rgba(99, 102, 241, 0.15);
+    }
+}
+
+/* Tooltip container */
+.tour-tooltip {
+    position: fixed;
+    background: var(--card-bg, rgba(255, 255, 255, 0.95));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.2));
+    border-radius: 16px;
+    padding: 20px;
+    min-width: 280px;
+    max-width: 380px;
+    box-shadow:
+        0 20px 60px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    z-index: 100000;
+    animation: tooltipEnter 0.3s ease-out;
+}
+
+[data-theme="dark"] .tour-tooltip {
+    background: rgba(30, 30, 45, 0.95);
+    border-color: rgba(255, 255, 255, 0.1);
+}
+
+@keyframes tooltipEnter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Skip button */
+.tour-skip-btn {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #666);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.tour-skip-btn:hover {
+    background: var(--hover-bg, rgba(0, 0, 0, 0.05));
+    color: var(--text-primary, #333);
+}
+
+[data-theme="dark"] .tour-skip-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+/* Content area */
+.tour-content {
+    margin-bottom: 16px;
+}
+
+.tour-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary, #1a1a2e);
+    margin: 0 0 8px 0;
+    padding-right: 24px;
+}
+
+[data-theme="dark"] .tour-title {
+    color: #fff;
+}
+
+.tour-description {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #666);
+    margin: 0;
+    line-height: 1.5;
+}
+
+[data-theme="dark"] .tour-description {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Footer with progress and navigation */
+.tour-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+}
+
+[data-theme="dark"] .tour-footer {
+    border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Progress text */
+.tour-progress {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #666);
+    font-weight: 500;
+}
+
+.tour-progress-separator {
+    opacity: 0.5;
+}
+
+/* Navigation buttons */
+.tour-nav {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tour-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.tour-prev {
+    background: var(--surface, #f5f5f5);
+    color: var(--text-secondary, #666);
+}
+
+.tour-prev:hover {
+    background: var(--hover-bg, #e5e5e5);
+}
+
+[data-theme="dark"] .tour-prev {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.7);
+}
+
+[data-theme="dark"] .tour-prev:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.tour-next,
+.tour-finish {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+}
+
+.tour-next:hover,
+.tour-finish:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(99, 102, 241, 0.4);
+}
+
+.tour-finish {
+    background: linear-gradient(135deg, #10b981, #059669);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.tour-finish:hover {
+    box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4);
+}
+
+/* Progress dots */
+.tour-dots {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 16px;
+}
+
+.tour-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--surface, #e0e0e0);
+    transition: all 0.3s ease;
+}
+
+.tour-dot.active {
+    width: 20px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+}
+
+.tour-dot.completed {
+    background: #10b981;
+}
+
+[data-theme="dark"] .tour-dot {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   Mobile Responsive Styles
+   ============================================ */
+
+@media (max-width: 768px) {
+    .tour-tooltip {
+        min-width: unset;
+        max-width: calc(100vw - 32px);
+        width: calc(100vw - 32px);
+        left: 16px !important;
+        right: 16px;
+        padding: 16px;
+    }
+
+    .tour-title {
+        font-size: 1rem;
+    }
+
+    .tour-description {
+        font-size: 0.85rem;
+    }
+
+    .tour-nav-btn {
+        padding: 8px 12px;
+        font-size: 0.8rem;
+    }
+
+    .tour-dots {
+        margin-top: 12px;
+    }
+
+    .tour-dot {
+        width: 5px;
+        height: 5px;
+    }
+
+    .tour-dot.active {
+        width: 16px;
+    }
+}
+
+/* Accessibility - Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+
+    .tour-tooltip,
+    .tour-spotlight-ring,
+    .spotlight-animate {
+        animation: none;
+    }
+
+    .tour-backdrop rect,
+    .tour-spotlight-ring,
+    .tour-nav-btn {
+        transition: none;
+    }
+}

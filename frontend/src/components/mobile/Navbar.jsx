@@ -19,20 +19,21 @@ export default function Navbar() {
     }
 
     const navItems = [
-        { path: '/', icon: LayoutDashboard, label: 'Home' },
-        { path: '/transactions', icon: Receipt, label: 'Txns' },
+        { path: '/', icon: LayoutDashboard, label: 'Home', tourId: 'navbar-home' },
+        { path: '/transactions', icon: Receipt, label: 'Txns', tourId: 'navbar-transactions' },
         {
             path: '#', // Dummy path
             icon: Plus, // Use Plus icon for 'Add'
             label: 'Add',
             isPrimary: true,
+            tourId: 'navbar-add',
             onClick: (e) => {
                 e.preventDefault();
                 openSmartEntry();
             }
         },
-        { path: '/reports', icon: BarChart2, label: 'Stats' },
-        { path: '/household', icon: Users, label: 'Household' }
+        { path: '/reports', icon: BarChart2, label: 'Stats', tourId: 'navbar-stats' },
+        { path: '/household', icon: Users, label: 'Household', tourId: 'navbar-household' }
     ];
 
     return (
@@ -48,6 +49,7 @@ export default function Navbar() {
                     key={item.label} // Use label as key since path might be duplicate or dummy
                     to={item.path}
                     onClick={item.onClick} // Attach click handler
+                    data-tour-id={item.tourId}
                     className={({ isActive }) => `nav-item ${isActive && !item.isPrimary ? 'active' : ''} ${item.isPrimary ? 'nav-item-primary' : ''}`}
                 >
                     <div className={item.isPrimary ? "icon-container" : ""}>

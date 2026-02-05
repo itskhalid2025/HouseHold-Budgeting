@@ -22,8 +22,11 @@ import {
     Mail,
     Sparkles,
     Zap,
-    Download
+    Download,
+    RefreshCw
 } from 'lucide-react';
+import { useTour } from '../../context/TourContext';
+import { useNavigate } from 'react-router-dom';
 import './SettingsMobile.css';
 
 /**
@@ -39,6 +42,8 @@ export default function SettingsMobile() {
     // -- Auth Context & Global State --
     const { user, logout, household, refreshHousehold, updateUser } = useAuth();
     const { isInstallable, installApp, isInstalled } = useSync();
+    const { resetAllTours } = useTour();
+    const navigate = useNavigate();
 
     // -- Local UI State --
     const [subPage, setSubPage] = useState(null); // 'profile' | 'household' | 'notifications'
@@ -553,6 +558,30 @@ export default function SettingsMobile() {
                         </div>
                     </MobileCard>
                 )}
+
+                <MobileCard
+                    className="menu-card vibrant-card-interactive"
+                    onClick={() => {
+                        resetAllTours();
+                        navigate('/');
+                        window.location.reload();
+                    }}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Restart Platform Guide"
+                    data-tour-id="settings-restart-guide-mobile"
+                >
+                    <div className="menu-item">
+                        <div className="icon-bg gradient-3">
+                            <RefreshCw size={22} className="menu-icon" />
+                        </div>
+                        <div className="menu-text-col">
+                            <span className="menu-text">Restart Guide</span>
+                            <span className="menu-sub">Learn about all features again</span>
+                        </div>
+                        <ChevronRight size={20} className="menu-arrow" />
+                    </div>
+                </MobileCard>
             </nav>
 
             <footer className="logout-section">

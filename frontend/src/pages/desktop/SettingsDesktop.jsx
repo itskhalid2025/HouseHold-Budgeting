@@ -23,6 +23,8 @@ import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import { Country, State, City } from 'country-state-city';
 import { useSync } from '../../context/SyncContext';
+import { useTour } from '../../context/TourContext';
+import { RefreshCw } from 'lucide-react';
 import './SettingsDesktop.css';
 
 export default function Settings() {
@@ -30,6 +32,7 @@ export default function Settings() {
     const { isInstallable, installApp, isInstalled } = useSync();
     const location = useLocation();
     const navigate = useNavigate();
+    const { resetAllTours, startTour } = useTour();
     const [activeTab, setActiveTab] = useState('profile');
 
     // Profile State
@@ -341,6 +344,22 @@ export default function Settings() {
                                     <p className="help-text">Install as a desktop app for quick access and a better experience.</p>
                                 </div>
                             )}
+
+                            <div className="setting-group tour-guide-section" style={{ marginTop: '20px' }} data-tour-id="settings-restart-guide">
+                                <label>Interactive Guide</label>
+                                <button
+                                    className="btn-secondary restart-guide-btn"
+                                    onClick={() => {
+                                        resetAllTours();
+                                        navigate('/');
+                                        window.location.reload();
+                                    }}
+                                >
+                                    <RefreshCw size={16} />
+                                    Restart Platform Guide
+                                </button>
+                                <p className="help-text">Restart the interactive tour to learn about all platform features again.</p>
+                            </div>
 
                             <button className="logout-btn-large" onClick={logout} style={{ marginTop: '2rem' }}>Sign Out</button>
                         </div>

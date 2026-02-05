@@ -49,6 +49,8 @@ import { formatCurrency } from '../../utils/currencyUtils';
 import { formatDate, getUserColor } from '../../utils/formatting';
 import { getCategoryEmoji } from '../../utils/categoryIcons';
 import { triggerConfetti } from '../../utils/confetti';
+import { useTour } from '../../context/TourContext';
+import { sidebarTourDesktop, dashboardTourDesktop } from '../../tourConfigs';
 import GamificationHubDesktop from '../../components/gamification/GamificationHubDesktop';
 import BreakdownModal from '../../components/common/BreakdownModal';
 import './DashboardDesktop.css';
@@ -234,6 +236,26 @@ export default function DashboardDesktop() {
         fetchDashboardData();
     }, []);
 
+    // Tour auto-trigger for first-time users
+    const { startTour, hasCompletedTour, isTourActive } = useTour();
+
+    useEffect(() => {
+        // Don't trigger if already in a tour or still loading
+        if (loading || isTourActive) return;
+
+        // Small delay to ensure DOM is ready
+        const timer = setTimeout(() => {
+            // First trigger sidebar tour, then dashboard tour
+            if (!hasCompletedTour('navigation-desktop')) {
+                startTour('navigation-desktop', sidebarTourDesktop);
+            } else if (!hasCompletedTour('dashboard-desktop')) {
+                startTour('dashboard-desktop', dashboardTourDesktop);
+            }
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [loading, isTourActive, hasCompletedTour, startTour]);
+
     // Generic handler for both Voice and Text
     const processSmartEntry = async (inputPayload) => {
         try {
@@ -361,7 +383,7 @@ export default function DashboardDesktop() {
                     </div>
 
                     {/* 2. Welcome Message */}
-                    <div className="welcome-card">
+                    <div className="welcome-card" data-tour-id="dashboard-welcome">
                         <h1>
                             Welcome back, <span className="highlight-name">{user?.firstName || 'User'}</span>! 👋
                         </h1>
@@ -369,16 +391,17 @@ export default function DashboardDesktop() {
                     </div>
 
                     {/* 2. Stat Cards */}
-                    <div className="stats-row">
-                        <div className="stat-card-mini clickable" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Income', type: 'income', data: stats.incomeBreakdown })}>
+                    <div className="stats-row" data-tour-id="dashboard-stats-income">
+                        <div className="stat-card-mini clickable" data-tour-id="dashboard-stats-income" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Income', type: 'income', data: stats.incomeBreakdown })}>
                             <div className="stat-icon income">💰</div>
                             <div className="stat-info">
                                 <span className="label">Income</span>
                                 <span className="value">{formatCurrency(stats.income, currency)}</span>
+                                
                             </div>
                             <div className="stat-hover-hint">View Breakdown</div>
                         </div>
-                        <div className="stat-card-mini clickable" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Expenses', type: 'expenses', data: stats.expensesBreakdown })}>
+                        <div className="stat-card-mini clickable" data-tour-id="dashboard-stats-expenses" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Expenses', type: 'expenses', data: stats.expensesBreakdown })}>
                             <div className="stat-icon expense">💸</div>
                             <div className="stat-info">
                                 <span className="label">Expenses</span>
@@ -386,7 +409,7 @@ export default function DashboardDesktop() {
                             </div>
                             <div className="stat-hover-hint">View Breakdown</div>
                         </div>
-                        <div className="stat-card-mini clickable" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Savings', type: 'savings', data: stats.savingsBreakdown })}>
+                        <div className="stat-card-mini clickable" data-tour-id="dashboard-stats-balance" onClick={() => setBreakdownModal({ isOpen: true, title: 'Monthly Savings', type: 'savings', data: stats.savingsBreakdown })}>
                             <div className="stat-icon savings">🐷</div>
                             <div className="stat-info">
                                 <span className="label">Savings</span>

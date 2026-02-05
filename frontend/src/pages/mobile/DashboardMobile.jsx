@@ -23,6 +23,8 @@ import MobileCard from '../../components/mobile/MobileCard';
 import RankBadge from '../../components/gamification/RankBadge';
 import GamificationHubMobile from '../../components/gamification/GamificationHubMobile';
 import BreakdownModal from '../../components/common/BreakdownModal';
+import { useTour } from '../../context/TourContext';
+import { navbarTourMobile, dashboardTourMobile } from '../../tourConfigs';
 
 import './DashboardMobile.css';
 
@@ -124,16 +126,36 @@ export default function DashboardMobile() {
         return () => window.removeEventListener('transaction-updated', handleUpdate);
     }, []);
 
+    // Tour auto-trigger for first-time mobile users
+    const { startTour, hasCompletedTour, isTourActive } = useTour();
+
+    useEffect(() => {
+        // Don't trigger if already in a tour or still loading
+        if (loading || isTourActive) return;
+
+        // Small delay to ensure DOM is ready
+        const timer = setTimeout(() => {
+            // First trigger navbar tour, then dashboard tour
+            if (!hasCompletedTour('navigation-mobile')) {
+                startTour('navigation-mobile', navbarTourMobile);
+            } else if (!hasCompletedTour('dashboard-mobile')) {
+                startTour('dashboard-mobile', dashboardTourMobile);
+            }
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [loading, isTourActive, hasCompletedTour, startTour]);
+
     return (
         <div className="mobile-page dashboard-mobile">
             {/* 1. Header */}
-            <header className="mobile-header">
+            <header className="mobile-header" data-tour-id="dashboard-header-mobile">
                 <div>
                     <p className="greeting">Good {new Date().getHours() < 12 ? 'Morning' : 'Evening'},</p>
                     <h2 className="username">{user?.firstName || 'User'}</h2>
                 </div>
                 <div className="header-actions">
-                    <RankBadge onClick={() => setShowGamification(true)} />
+                    <RankBadge onClick={() => setShowGamification(true)} data-tour-id="dashboard-gamification-mobile" />
                     <button className="icon-btn" onClick={() => setShowGuide(true)} title="Platform Guide">
                         <HelpCircle size={24} />
                     </button>
@@ -147,16 +169,16 @@ export default function DashboardMobile() {
             {/* ... rest of dashboard ... */}
 
             {/* 2. Summary Cards (Horizontal Scroll) */}
-            <div className="summary-scroll">
-                <div className="summary-card income" onClick={() => setBreakdownModal({ isOpen: true, title: 'Income', type: 'income', data: stats.incomeBreakdown })}>
+            <div className="summary-scroll" data-tour-id="dashboard-stats-mobile">
+                <div className="summary-card income" data-tour-id="dashboard-stats-income-mobile" onClick={() => setBreakdownModal({ isOpen: true, title: 'Income', type: 'income', data: stats.incomeBreakdown })}>
                     <span className="label">Income</span>
                     <span className="value">{formatCurrency(stats.income, currency)}</span>
                 </div>
-                <div className="summary-card expense" onClick={() => setBreakdownModal({ isOpen: true, title: 'Expenses', type: 'expenses', data: stats.expensesBreakdown })}>
+                <div className="summary-card expense" data-tour-id="dashboard-stats-expenses-mobile" onClick={() => setBreakdownModal({ isOpen: true, title: 'Expenses', type: 'expenses', data: stats.expensesBreakdown })}>
                     <span className="label">Expenses</span>
                     <span className="value">{formatCurrency(stats.expenses, currency)}</span>
                 </div>
-                <div className="summary-card savings" onClick={() => setBreakdownModal({ isOpen: true, title: 'Savings', type: 'savings', data: stats.savingsBreakdown })}>
+                <div className="summary-card savings" data-tour-id="dashboard-stats-balance-mobile" onClick={() => setBreakdownModal({ isOpen: true, title: 'Savings', type: 'savings', data: stats.savingsBreakdown })}>
                     <span className="label">Savings</span>
                     <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
                 </div>

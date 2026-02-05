@@ -34,13 +34,13 @@ const Sidebar = () => {
 
     return (
         <aside className="app-sidebar">
-            <div className="sidebar-header">
+            <div className="sidebar-header" data-tour-id="sidebar-logo">
                 <img src={Logo} alt="Logo" className="sidebar-logo" />
                 <h1 className="sidebar-title">{householdName || 'HouseHold'}</h1>
             </div>
 
             <div className="sidebar-action">
-                <button onClick={() => openSmartEntry()} className="new-entry-btn">
+                <button onClick={() => openSmartEntry()} className="new-entry-btn" data-tour-id="sidebar-new-entry">
                     <Plus size={20} />
                     <span>New Entry</span>
                 </button>
@@ -49,25 +49,25 @@ const Sidebar = () => {
             <nav className="sidebar-nav">
                 {user?.householdId && (
                     <>
-                        <NavLink to="/" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                        <NavLink to="/" data-tour-id="sidebar-dashboard" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                             <span className="icon">🏠</span>
                             Dashboard
                         </NavLink>
-                        <NavLink to="/transactions" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                        <NavLink to="/transactions" data-tour-id="sidebar-transactions" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                             <span className="icon">💳</span>
                             Transactions
                         </NavLink>
-                        <NavLink to="/income" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                        <NavLink to="/income" data-tour-id="sidebar-income" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                             <span className="icon">💰</span>
                             Income
                         </NavLink>
-                        <NavLink to="/savings" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                        <NavLink to="/savings" data-tour-id="sidebar-savings" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                             <span className="icon">🐷</span>
                             Savings
                         </NavLink>
                     </>
                 )}
-                <NavLink to="/household" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                <NavLink to="/household" data-tour-id="sidebar-household" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                     <span className="icon">👥</span>
                     Household
                     {requestCount > 0 && (
@@ -76,15 +76,15 @@ const Sidebar = () => {
                 </NavLink>
                 {user?.householdId && (
                     <>
-                        <NavLink to="/reports" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                        <NavLink to="/reports" data-tour-id="sidebar-reports" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                             <span className="icon">📊</span>
                             Reports
                         </NavLink>
-                        <NavLink to="/advisor" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                        <NavLink to="/advisor" data-tour-id="sidebar-advisor" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                             <span className="icon">🤖</span>
                             AI Advisor
                         </NavLink>
-                        <NavLink to="/settings" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                        <NavLink to="/settings" data-tour-id="sidebar-settings" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                             <span className="icon">⚙️</span>
                             Settings
                         </NavLink>
