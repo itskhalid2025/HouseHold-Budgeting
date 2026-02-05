@@ -1,22 +1,55 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useTour } from '../../context/TourContext';
 import { Sun, Moon, HelpCircle } from 'lucide-react';
-import UserGuideDesktop from './UserGuideDesktop';
 import RankBadge from '../gamification/RankBadge';
 import GamificationHubDesktop from '../gamification/GamificationHubDesktop';
 import RewardAnimation from '../gamification/RewardAnimation';
 import GlobalSmartEntry from '../mobile/GlobalSmartEntry';
+import {
+    sidebarTourDesktop,
+    dashboardTourDesktop,
+    transactionsTourDesktop,
+    incomeTourDesktop,
+    savingsTourDesktop,
+    householdTourDesktop,
+    reportsTourDesktop,
+    advisorTourDesktop,
+    settingsTourDesktop
+} from '../../tourConfigs';
 import './TopBar.css';
 
 const TopBar = () => {
     const { isAuthenticated, user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
+    const { startTour } = useTour();
+    const location = useLocation();
     const [showMenu, setShowMenu] = useState(false);
-    const [showGuide, setShowGuide] = useState(false);
     const [showGamification, setShowGamification] = useState(false);
     const navigate = useNavigate();
+
+    // Get the tour config for the current page
+    const getPageTour = () => {
+        const path = location.pathname;
+        const tourMap = {
+            '/': { id: 'dashboard-desktop', steps: dashboardTourDesktop },
+            '/transactions': { id: 'transactions-desktop', steps: transactionsTourDesktop },
+            '/income': { id: 'income-desktop', steps: incomeTourDesktop },
+            '/savings': { id: 'savings-desktop', steps: savingsTourDesktop },
+            '/household': { id: 'household-desktop', steps: householdTourDesktop },
+            '/reports': { id: 'reports-desktop', steps: reportsTourDesktop },
+            '/advisor': { id: 'advisor-desktop', steps: advisorTourDesktop },
+            '/settings': { id: 'settings-desktop', steps: settingsTourDesktop }
+        };
+        return tourMap[path] || { id: 'navigation-desktop', steps: sidebarTourDesktop };
+    };
+
+    const handleTriggerGuide = () => {
+        const tour = getPageTour();
+        startTour(tour.id, tour.steps);
+    };
 
     const handleNavigate = (tab) => {
         setShowMenu(false);
@@ -63,14 +96,15 @@ const TopBar = () => {
                         className="theme-toggle-btn"
                         onClick={toggleTheme}
                         title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                        data-tour-id="settings-theme"
                     >
                         {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                     </button>
 
                     <button
                         className="theme-toggle-btn"
-                        onClick={() => setShowGuide(true)}
-                        title="User Guide"
+                        onClick={handleTriggerGuide}
+                        title="Page Guide"
                     >
                         <HelpCircle size={20} />
                     </button>
@@ -113,7 +147,6 @@ const TopBar = () => {
                     </div>
                 </div>
 
-                <UserGuideDesktop isOpen={showGuide} onClose={() => setShowGuide(false)} />
                 <GamificationHubDesktop
                     isOpen={showGamification}
                     onClose={() => setShowGamification(false)}

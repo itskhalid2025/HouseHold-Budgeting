@@ -10,12 +10,6 @@ export const dashboardTourDesktop = [
         position: 'bottom'
     },
     {
-        targetId: 'dashboard-smart-entry',
-        title: 'Smart Entry Box ✨',
-        description: 'Voice, text, or image input! Add salary, transactions, savings with auto-categorization. Supports multiple entries at once and any language!',
-        position: 'bottom'
-    },
-    {
         targetId: 'dashboard-stats-income',
         title: 'Income Card',
         description: 'Total income this month. Click to expand and see contribution breakdown by source and member!',
@@ -34,15 +28,15 @@ export const dashboardTourDesktop = [
         position: 'bottom'
     },
     {
-        targetId: 'dashboard-recent-transactions',
-        title: 'Recent Transactions',
-        description: 'Latest expenses at a glance. See who spent what and when.',
+        targetId: 'dashboard-chart',
+        title: 'Weekly Spending Trend 📊',
+        description: 'Visual chart showing your spending patterns over the past week. Track how your expenses fluctuate day by day.',
         position: 'top'
     },
     {
-        targetId: 'dashboard-savings-goals',
-        title: 'Savings Goals',
-        description: 'Track progress on your savings. See how close you are to each goal.',
+        targetId: 'dashboard-recent-transactions',
+        title: 'Recent Transactions',
+        description: 'Latest expenses at a glance. See who spent what and when. Click "View All" to see your complete transaction history.',
         position: 'top'
     },
     {
@@ -50,12 +44,6 @@ export const dashboardTourDesktop = [
         title: 'Your Progress 🏆',
         description: 'Your streak progress and ranking details. Log daily to build streaks and earn XP!',
         position: 'left'
-    },
-    {
-        targetId: 'dashboard-drag-drop',
-        title: 'Receipt Scanning 📸',
-        description: 'Drag & drop receipts anywhere on the dashboard! Our AI will extract and categorize items automatically.',
-        position: 'bottom'
     }
 ];
 

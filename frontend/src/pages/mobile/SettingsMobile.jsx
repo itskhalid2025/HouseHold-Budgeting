@@ -505,6 +505,7 @@ export default function SettingsMobile() {
             <nav className="menu-list" role="navigation" aria-label="Settings Menu">
                 <MobileCard
                     className="menu-card vibrant-card-interactive"
+                    data-tour-id="settings-profile-mobile"
                     onClick={() => setSubPage('profile')}
                     role="button"
                     tabIndex={0}
@@ -521,6 +522,7 @@ export default function SettingsMobile() {
 
                 <MobileCard
                     className="menu-card vibrant-card-interactive"
+                    data-tour-id="settings-preferences-mobile"
                     onClick={() => setSubPage('household')}
                     role="button"
                     tabIndex={0}
@@ -584,7 +586,7 @@ export default function SettingsMobile() {
                 </MobileCard>
             </nav>
 
-            <footer className="logout-section">
+            <footer className="logout-section" data-tour-id="settings-account-mobile">
                 <button className="logout-btn-vibrant" onClick={handleLogout} aria-label="Sign Out">
                     <LogOut size={18} />
                     <span>Sign Out</span>

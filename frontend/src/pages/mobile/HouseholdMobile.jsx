@@ -325,7 +325,7 @@ export default function HouseholdMobile() { // Default Export Compliance
             <div className="cyber-glow-orb bottom-left"></div>
 
             {/* Header Data Card */}
-            <header className="cyber-glass-panel header-panel">
+            <header className="cyber-glass-panel header-panel" data-tour-id="household-header-mobile">
                 <div className="panel-decoration top-left"></div>
                 <div className="panel-decoration bottom-right"></div>
 
@@ -349,6 +349,7 @@ export default function HouseholdMobile() { // Default Export Compliance
                     role="button"
                     aria-label="Copy Invite Code"
                     onClick={copyCode}
+                    data-tour-id="household-invite-mobile"
                 >
                     <div className="terminal-label">ACCESS_CODE</div>
                     <div className="terminal-display">
@@ -374,7 +375,7 @@ export default function HouseholdMobile() { // Default Export Compliance
 
             {/* Admin Notifications */}
             {isOwner && pendingRequests.length > 0 && (
-                <section className="cyber-section">
+                <section className="cyber-section" data-tour-id="household-requests-mobile">
                     <header className="section-header">
                         <h2 className="section-title"><Zap size={16} /> PENDING REQUESTS</h2>
                         <span className="cyber-counter">{pendingRequests.length}</span>
@@ -409,7 +410,7 @@ export default function HouseholdMobile() { // Default Export Compliance
             )}
 
             {/* Member Directory */}
-            <section className="cyber-section">
+            <section className="cyber-section" data-tour-id="household-members-mobile">
                 <header className="section-header">
                     <h2 className="section-title"><Users size={16} /> HOUSEHOLD MEMBERS</h2>
                 </header>

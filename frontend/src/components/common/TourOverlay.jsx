@@ -104,19 +104,27 @@ const TourOverlay = () => {
 
         const viewportWidth = window.innerWidth;
         const viewportHeight = window.innerHeight;
+        const isMobile = viewportWidth <= 768;
 
+        // On mobile, use fixed bottom positioning via CSS (no JS positioning needed)
+        if (isMobile) {
+            setTooltipPosition({});
+            return;
+        }
+
+        // Desktop positioning logic
         const position = currentStep?.position || 'auto';
         let top, left, transform = '';
         let actualPosition = position;
 
-        // Auto-detect best position
+        // Auto-detect best position for desktop
         if (position === 'auto') {
             const spaceTop = targetRect.top;
             const spaceBottom = viewportHeight - targetRect.bottom;
             const spaceLeft = targetRect.left;
             const spaceRight = viewportWidth - targetRect.right;
 
-            // Prefer bottom, then top, then right, then left
+            // Desktop: prefer bottom, then top, then right, then left
             if (spaceBottom >= tooltipRect.height + padding * 2) {
                 actualPosition = 'bottom';
             } else if (spaceTop >= tooltipRect.height + padding * 2) {
@@ -150,7 +158,7 @@ const TourOverlay = () => {
                 left = targetRect.left;
         }
 
-        // Keep tooltip within viewport
+        // Keep tooltip within viewport on desktop
         left = Math.max(padding, Math.min(viewportWidth - tooltipRect.width - padding, left));
         top = Math.max(padding, Math.min(viewportHeight - tooltipRect.height - padding, top));
 

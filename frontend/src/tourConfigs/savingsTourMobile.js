@@ -3,21 +3,27 @@
  */
 export const savingsTourMobile = [
     {
-        targetId: 'savings-overview-mobile',
+        targetId: 'savings-summary-mobile',
         title: 'Savings Overview',
-        description: 'Your total saved amount. See all goals at a glance.',
+        description: 'See your total lifetime savings and how much you have contributed this month.',
         position: 'bottom'
     },
     {
-        targetId: 'savings-goals-mobile',
-        title: 'Active Goals',
-        description: 'Tap any goal to contribute or view progress history.',
+        targetId: 'savings-filters-mobile',
+        title: 'Filter Goals',
+        description: 'Quickly find specific goals by filtering by type or status.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'savings-list-mobile',
+        title: 'Goal Tracking',
+        description: 'Your progress bars for each goal. Tap any card to add funds or view transaction history.',
         position: 'top'
     },
     {
-        targetId: 'savings-add-mobile',
-        title: 'New Goal',
-        description: 'Create a new savings target. Vacation? Emergency fund? Start tracking!',
+        targetId: 'savings-add-btn-mobile',
+        title: 'Add New Goal',
+        description: 'Ready to start saving for something new? Tap the plus icon to create a goal!',
         position: 'top'
     }
 ];

@@ -3,28 +3,28 @@
  */
 export const incomeTourDesktop = [
     {
-        targetId: 'income-total',
-        title: 'Total Income',
-        description: 'Your total household income for the selected period. Click to see breakdown.',
+        targetId: 'income-summary',
+        title: 'Monthly Overview',
+        description: 'See your total household income for the current month. Toggle to see personal earnings.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'income-filters',
+        title: 'Filter Sources',
+        description: 'Narrow down sources by job type, freelancer status, or household member.',
         position: 'bottom'
     },
     {
         targetId: 'income-add-btn',
-        title: 'Add Income',
-        description: 'Record salary, freelance earnings, or any other income source.',
+        title: 'New Income Source',
+        description: 'Add freelance gigs, dividends, or salary updates. Keep your budget baseline accurate!',
         position: 'left'
     },
     {
-        targetId: 'income-list',
-        title: 'Income History',
-        description: 'All income entries with source and contributor. Click to edit any entry.',
+        targetId: 'income-grid',
+        title: 'Income Sources',
+        description: 'All active income sources. Each shows the contributor and monthly equivalent of the frequency.',
         position: 'top'
-    },
-    {
-        targetId: 'income-chart',
-        title: 'Income Trends',
-        description: 'Visual chart showing income patterns over time.',
-        position: 'left'
     }
 ];
 

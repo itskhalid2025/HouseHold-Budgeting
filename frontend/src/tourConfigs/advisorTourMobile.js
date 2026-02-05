@@ -19,12 +19,6 @@ export const advisorTourMobile = [
         title: 'AI Responses',
         description: 'Get personalized advice, insights, and even visual charts.',
         position: 'top'
-    },
-    {
-        targetId: 'advisor-voice-mobile',
-        title: 'Voice Mode',
-        description: 'Tap the mic to ask questions using your voice.',
-        position: 'top'
     }
 ];
 

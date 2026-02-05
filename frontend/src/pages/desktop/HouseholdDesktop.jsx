@@ -380,9 +380,9 @@ export default function Household() {
 
             {/* Household Header */}
             <div className="household-header">
-                <div className="household-info">
+                <div className="household-info" data-tour-id="household-info">
                     <h1>{household.name}</h1>
-                    <div className="invite-code-section">
+                    <div className="invite-code-section" data-tour-id="household-invite">
                         <span className="code-label">Invite Code:</span>
                         <code className="code-value">{household.inviteCode}</code>
                         <button className="copy-btn" onClick={copyInviteCode} title="Copy code">
@@ -403,7 +403,7 @@ export default function Household() {
 
             {/* Pending Join Requests (Owner only) */}
             {isOwner && pendingRequests.length > 0 && (
-                <div className="pending-requests-section">
+                <div className="pending-requests-section" data-tour-id="household-requests">
                     <h2>🔔 Pending Join Requests ({pendingRequests.length})</h2>
                     <div className="requests-list">
                         {pendingRequests.map(request => (
@@ -441,9 +441,9 @@ export default function Household() {
             )}
 
             {/* Members List */}
-            <div className="members-section">
+            <div className="members-section" data-tour-id="household-members">
                 <h2>Members ({household.members?.length || 0})</h2>
-                <div className="members-grid">
+                <div className="members-grid" data-tour-id="household-roles">
                     {household.members?.map(member => (
                         <div key={member.id} className="member-card">
                             <div className="member-avatar">

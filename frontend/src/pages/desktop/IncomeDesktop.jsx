@@ -15,7 +15,6 @@
 import { useState, useEffect } from 'react';
 import {
     getIncomes,
-
     getMembers,
     addIncome,
     updateIncome,
@@ -160,7 +159,6 @@ export default function Income() {
             type: inc.type,
             frequency: inc.frequency,
             startDate: inc.startDate.split('T')[0],
-
             endDate: inc.endDate ? inc.endDate.split('T')[0] : '',
             userId: inc.userId
         });
@@ -178,7 +176,6 @@ export default function Income() {
             userId: user?.id || ''
         });
     };
-
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
@@ -201,6 +198,7 @@ export default function Income() {
                         <button
                             className="btn-primary"
                             onClick={() => { setEditingIncome(null); resetForm(); setShowAddModal(true); }}
+                            data-tour-id="income-add-btn"
                         >
                             + Add Income Source
                         </button>
@@ -212,7 +210,7 @@ export default function Income() {
                 {error && <div className="error-banner">{error}</div>}
 
                 {/* Summary Stats */}
-                <div className="income-summary-card">
+                <div className="income-summary-card" data-tour-id="income-summary">
                     <div className="summary-left">
                         <h3>{filters.userId === user?.id ? 'My Monthly Income' : 'Total Monthly Income'}</h3>
                         <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal earnings' : 'Estimated based on active sources'}</p>
@@ -234,7 +232,7 @@ export default function Income() {
                 <h2 className="section-title">Income Sources</h2>
 
                 {/* Filters */}
-                <div className="filters-bar">
+                <div className="filters-bar" data-tour-id="income-filters">
                     <input
                         type="text"
                         name="search"
@@ -267,7 +265,7 @@ export default function Income() {
                         <p>Loading income data...</p>
                     </div>
                 ) : (
-                    <div className="income-grid">
+                    <div className="income-grid" data-tour-id="income-grid">
                         {filteredIncomes.length > 0 ? (
                             filteredIncomes.map(inc => (
                                 <div key={inc.id} className={`income-card ${inc.isActive ? '' : 'inactive'}`}>

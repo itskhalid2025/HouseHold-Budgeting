@@ -3,34 +3,28 @@
  */
 export const savingsTourDesktop = [
     {
-        targetId: 'savings-total',
-        title: 'Total Savings',
-        description: 'Combined savings across all your goals. Track your wealth building!',
+        targetId: 'savings-summary',
+        title: 'Savings Statistics',
+        description: 'Track your monthly savings, lifetime total, and progress towards all combined targets.',
         position: 'bottom'
     },
     {
-        targetId: 'savings-goals-list',
+        targetId: 'savings-filters',
+        title: 'Organize Goals',
+        description: 'Filter your goals by type (Emergency Fund, Debt Payoff, etc.) or completion status.',
+        position: 'bottom'
+    },
+    {
+        targetId: 'savings-add-btn',
+        title: 'Set a New Goal',
+        description: 'Dreaming of a vacation or a new car? Create a dedicated goal and start tracking your path to it!',
+        position: 'left'
+    },
+    {
+        targetId: 'savings-grid',
         title: 'Your Goals',
-        description: 'Each savings goal with progress bar. Click to contribute or view history.',
+        description: 'Visual progress for every goal. Click the plus icon on any card to add funds or view the contribution history.',
         position: 'top'
-    },
-    {
-        targetId: 'savings-add-goal',
-        title: 'Create New Goal',
-        description: 'Set up a new savings target. Name it, set the amount, and start saving!',
-        position: 'left'
-    },
-    {
-        targetId: 'savings-contribute',
-        title: 'Quick Contribute',
-        description: 'Add money to any goal quickly. Track contributions from each member.',
-        position: 'bottom'
-    },
-    {
-        targetId: 'savings-chart',
-        title: 'Savings Progress',
-        description: 'Visual chart showing how your savings grow over time.',
-        position: 'left'
     }
 ];
 

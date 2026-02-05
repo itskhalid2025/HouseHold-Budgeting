@@ -25,12 +25,6 @@ export const advisorTourDesktop = [
         title: 'Visual Insights',
         description: 'When relevant, AI generates charts to visualize your data.',
         position: 'left'
-    },
-    {
-        targetId: 'advisor-voice',
-        title: 'Voice Input',
-        description: 'Speak your questions! Works in any language.',
-        position: 'left'
     }
 ];
 

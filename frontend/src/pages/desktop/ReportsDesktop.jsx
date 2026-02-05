@@ -255,6 +255,7 @@ export default function Reports() {
                             onClick={() => handleGenerateReport(activeTab)}
                             disabled={generating}
                             className="btn-primary"
+                            data-tour-id="reports-generate"
                         >
                             <RefreshCw className={generating ? 'spin' : ''} />
                             {generating ? 'Analyzing...' : 'Refresh Analysis'}
@@ -266,6 +267,7 @@ export default function Reports() {
                             fetchHistory();
                         }}
                         className="btn-history"
+                        data-tour-id="reports-history"
                     >
                         <Clock className="w-5 h-5" />
                         History
@@ -274,7 +276,7 @@ export default function Reports() {
             </div>
 
             {/* Tabs */}
-            <div className="tabs-container">
+            <div className="tabs-container" data-tour-id="reports-period-selector">
                 {['weekly', 'monthly', 'custom'].map(tab => (
                     <button
                         key={tab}
@@ -422,7 +424,7 @@ export default function Reports() {
                     </h2>
 
                     {/* Stats Overview */}
-                    <div className="stats-grid">
+                    <div className="stats-grid" data-tour-id="reports-summary">
                         <StatCard
                             icon={DollarSign}
                             label="Total Spent"
@@ -453,7 +455,7 @@ export default function Reports() {
                     </div>
 
                     {/* AI Insights Section */}
-                    <div className="insights-section">
+                    <div className="insights-section" data-tour-id="reports-insights">
                         <div className="insights-content">
                             <div className="main-insight">
                                 <h2>{report.title}</h2>
@@ -479,7 +481,7 @@ export default function Reports() {
                     </div>
 
                     {/* Charts Grid */}
-                    <div className="charts-grid">
+                    <div className="charts-grid" data-tour-id="reports-charts">
                         {/* Pie Chart: Spending by Type */}
                         <div className="chart-card">
                             <h3 className="chart-title">Spending by Type</h3>

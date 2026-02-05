@@ -230,6 +230,7 @@ export default function Savings() {
                         <button
                             className="btn-primary"
                             onClick={() => { setEditingGoal(null); resetForm(); setShowAddModal(true); }}
+                            data-tour-id="savings-add-btn"
                         >
                             + Add Goal
                         </button>
@@ -239,7 +240,7 @@ export default function Savings() {
                 {error && <div className="error-banner">{error}</div>}
 
                 {/* Summary Stats */}
-                <div className="savings-summary-card">
+                <div className="savings-summary-card" data-tour-id="savings-summary">
                     <div className="summary-item">
                         <div className="item-with-toggle">
                             <h3>Monthly Saved</h3>
@@ -267,7 +268,7 @@ export default function Savings() {
                     </div>
                 </div>
 
-                <div className="filters-bar">
+                <div className="filters-bar" data-tour-id="savings-filters">
                     <select
                         value={filterType}
                         onChange={(e) => setFilterType(e.target.value)}
@@ -297,7 +298,7 @@ export default function Savings() {
                         <p>Loading goals...</p>
                     </div>
                 ) : (
-                    <div className="savings-grid">
+                    <div className="savings-grid" data-tour-id="savings-grid">
                         {filteredGoals.length > 0 ? (
                             filteredGoals.map(goal => {
                                 const current = parseFloat(goal.currentAmount || 0);

@@ -239,6 +239,7 @@ export default function TransactionsDesktop() {
                             <button
                                 className="btn-primary"
                                 onClick={() => { setEditingTxn(null); resetForm(); setShowAddModal(true); }}
+                                data-tour-id="transactions-add-btn"
                             >
                                 + Add Transaction
                             </button>
@@ -250,7 +251,7 @@ export default function TransactionsDesktop() {
                 </div>
 
                 {/* Summary Card */}
-                <div className="transaction-summary-card">
+                <div className="transaction-summary-card" data-tour-id="transactions-summary">
                     <div className="summary-left">
                         <h3>{filters.userId === user?.id ? 'My Monthly Expenses' : 'Total Monthly Expenses'}</h3>
                         <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal spending' : 'Includes all household spending'}</p>
@@ -269,7 +270,7 @@ export default function TransactionsDesktop() {
                 </div>
 
                 {/* Filters */}
-                <div className="filters-bar">
+                <div className="filters-bar" data-tour-id="transactions-filters">
                     <input
                         type="text"
                         name="search"
@@ -338,7 +339,7 @@ export default function TransactionsDesktop() {
                     </div>
                 ) : (
                     <>
-                        <div className="transactions-list">
+                        <div className="transactions-list" data-tour-id="transactions-list">
                             {transactions.length > 0 ? (
                                 transactions.map(txn => {
                                     const userColor = txn.user ? getUserColor(txn.user.firstName) : '#334155';

@@ -67,7 +67,7 @@ const ChatChart = ({ data }) => {
     };
 
     return (
-        <div className="advisor-chart-container" style={{
+        <div className="advisor-chart-container" data-tour-id="advisor-charts" style={{
             marginTop: '1rem',
             width: '100%',
             height: '350px',
@@ -326,7 +326,7 @@ export default function Advisor() {
 
             {/* Chat Area */}
             <div className="chat-window">
-                <div className="chat-messages">
+                <div className="chat-messages" data-tour-id="advisor-chat-history">
                     {messages.map((msg, i) => (
                         <div
                             key={i}
@@ -389,7 +389,7 @@ export default function Advisor() {
             {messages.length < 3 && !loading && (
                 <div className="quick-actions">
                     <p className="qa-label">Suggested Questions</p>
-                    <div className="qa-buttons">
+                    <div className="qa-buttons" data-tour-id="advisor-suggestions">
                         {quickActions.map((action, i) => (
                             <button
                                 key={i}
@@ -414,6 +414,7 @@ export default function Advisor() {
                         onKeyPress={handleKeyPress}
                         placeholder="Ask for advice, savings tips, or analysis..."
                         className="chat-input"
+                        data-tour-id="advisor-chat-input"
                         disabled={loading}
                         autoFocus
                     />

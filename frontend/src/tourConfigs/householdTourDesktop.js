@@ -4,32 +4,32 @@
 export const householdTourDesktop = [
     {
         targetId: 'household-info',
-        title: 'Household Details',
-        description: 'Your household name and settings. Owner can edit these details.',
+        title: 'Household Profile',
+        description: 'View your household name and shared settings. This is the heart of your family budgeting.',
         position: 'bottom'
     },
     {
-        targetId: 'household-members',
-        title: 'Family Members',
-        description: 'Everyone in your household. See their roles and contribution stats.',
-        position: 'top'
-    },
-    {
         targetId: 'household-invite',
-        title: 'Invite Members',
-        description: 'Share the invite code to add family members to your household.',
-        position: 'left'
+        title: 'Invite Family',
+        description: 'Copy and share this unique code with family members. They can use it to request to join your household.',
+        position: 'bottom'
     },
     {
         targetId: 'household-requests',
-        title: 'Join Requests',
-        description: 'Pending requests from people wanting to join. Accept as Viewer or Editor.',
+        title: 'Manage Requests',
+        description: 'When new members use your invite code, their requests will appear here for your approval.',
+        position: 'top'
+    },
+    {
+        targetId: 'household-members',
+        title: 'Member List',
+        description: 'See everyone who has joined your household, their roles, and manage their permissions.',
         position: 'top'
     },
     {
         targetId: 'household-roles',
         title: 'Member Roles',
-        description: 'Owner (full access), Editor (add/edit transactions), Viewer (read only).',
+        description: 'Assign roles like Editor (can add/edit data) or Viewer (read-only) to control what members can do.',
         position: 'left'
     }
 ];

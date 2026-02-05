@@ -236,7 +236,7 @@ export default function AdvisorMobile() {
             </div>
 
             {/* Chat Area */}
-            <div className="chat-area">
+            <div className="chat-area" data-tour-id="advisor-chat-mobile">
                 {messages.map((msg, i) => (
                     <div key={i} className={`msg-row ${msg.role}`}>
                         {msg.role === 'assistant' && (
@@ -266,7 +266,7 @@ export default function AdvisorMobile() {
             {/* Input & Quick Actions */}
             <div className="input-container-fixed">
                 {messages.length < 3 && !loading && (
-                    <div className="quick-chips">
+                    <div className="quick-chips" data-tour-id="advisor-suggestions-mobile">
                         {quickActions.map((qa, i) => (
                             <button key={i} className="chip-btn" onClick={() => handleQuickAction(qa.text)}>
                                 {qa.text}
@@ -275,7 +275,7 @@ export default function AdvisorMobile() {
                     </div>
                 )}
 
-                <div className="input-box">
+                <div className="input-box" data-tour-id="advisor-input-mobile">
                     <input
                         type="text"
                         value={input}

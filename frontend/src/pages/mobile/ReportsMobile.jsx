@@ -307,6 +307,7 @@ export default function ReportsMobile() {
               }}
               className="neo-btn-icon history-btn"
               title="View History"
+              data-tour-id="reports-history-mobile"
             >
               <FileText size={20} />
             </button>
@@ -350,7 +351,7 @@ export default function ReportsMobile() {
       </header>
 
       {/* --- Scrollable Tab Navigation --- */}
-      <nav className="neo-tabs-scroll" role="tablist" aria-label="Report Frequency">
+      <nav className="neo-tabs-scroll" role="tablist" aria-label="Report Frequency" data-tour-id="reports-tabs-mobile">
         {['weekly', 'monthly', 'custom'].map(tab => (
           <button
             key={tab}
@@ -479,7 +480,7 @@ export default function ReportsMobile() {
           </h2>
 
           {/* 1. Stats Grid */}
-          <section className="neo-grid-2x2">
+          <section className="neo-grid-2x2" data-tour-id="reports-summary-mobile">
             <StatCard
               icon={DollarSign}
               label="Spent"
@@ -510,7 +511,7 @@ export default function ReportsMobile() {
           </section>
 
           {/* 2. AI Insights */}
-          <section className="neo-glass-panel highlight-panel">
+          <section className="neo-glass-panel highlight-panel" data-tour-id="reports-insights-mobile">
             <div className="glow-effect"></div>
             <div className="panel-content">
               <h2 className="insight-title">{report.title}</h2>
@@ -535,7 +536,7 @@ export default function ReportsMobile() {
           </section>
 
           {/* 3. Charts */}
-          <section className="charts-stack">
+          <section className="charts-stack" data-tour-id="reports-charts-mobile">
 
             {/* Pie Chart 1 */}
             <div className="neo-chart-card">

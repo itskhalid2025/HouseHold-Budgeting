@@ -37,12 +37,6 @@ export const reportsTourDesktop = [
         title: 'Report History',
         description: 'Access previous reports. Auto-generated weekly and monthly reports saved here.',
         position: 'left'
-    },
-    {
-        targetId: 'reports-download',
-        title: 'Download Report',
-        description: 'Export report as PDF for sharing or record-keeping.',
-        position: 'left'
     }
 ];
 

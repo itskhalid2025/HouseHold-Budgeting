@@ -299,13 +299,13 @@ function SpendingTab() {
             <header className="txn-header">
                 <div className="header-top-row">
                     <h1>Transactions</h1>
-                    <button className={`filter-icon-btn ${Object.values(filters).some(Boolean) && filters.type !== '' ? 'active' : ''}`} onClick={() => setShowFilterModal(true)}>
+                    <button className={`filter-icon-btn ${Object.values(filters).some(Boolean) && filters.type !== '' ? 'active' : ''}`} onClick={() => setShowFilterModal(true)} data-tour-id="transactions-filters-mobile">
                         <Filter size={20} />
                     </button>
                 </div>
 
                 {/* Expense Tracker Card */}
-                <div className="spending-summary-card">
+                <div className="spending-summary-card" data-tour-id="transactions-summary-mobile">
                     <div className="summary-left">
                         <div className="summary-label">{filters.userId === user?.id ? 'My Spending' : 'Household Spent'}</div>
                         <div className="summary-amount">{formatCurrency(stats.totalExpenses, currency)}</div>
@@ -318,7 +318,7 @@ function SpendingTab() {
                     </button>
                 </div>
 
-                <div className="search-bar">
+                <div className="search-bar" data-tour-id="transactions-search-mobile">
                     <Search size={20} className="search-icon" />
                     <input
                         type="text"
@@ -331,7 +331,7 @@ function SpendingTab() {
             </header>
 
             {/* Transaction List */}
-            <div className="txn-list">
+            <div className="txn-list" data-tour-id="transactions-list-mobile">
                 {loading && transactions.length === 0 ? (
                     <p className="loading-text">Loading...</p>
                 ) : transactions.length === 0 ? (
@@ -398,7 +398,7 @@ function SpendingTab() {
                         className="fab-main"
                         onClick={() => { setEditingTxn(null); resetForm(); setShowAddModal(true); }}
                     >
-                        <Plus size={28} color="white" />
+                        <Plus size={28} color="white" data-tour-id="transactions-add-btn-mobile" />
                     </button>
                 </div>
             )}

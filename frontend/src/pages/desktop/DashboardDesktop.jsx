@@ -397,7 +397,7 @@ export default function DashboardDesktop() {
                             <div className="stat-info">
                                 <span className="label">Income</span>
                                 <span className="value">{formatCurrency(stats.income, currency)}</span>
-                                
+
                             </div>
                             <div className="stat-hover-hint">View Breakdown</div>
                         </div>
@@ -474,7 +474,7 @@ export default function DashboardDesktop() {
                 {/* --- RIGHT COLUMN --- */}
                 <div className="right-column">
                     {/* 1. Chart */}
-                    <div className="dashboard-card chart-section">
+                    <div className="dashboard-card chart-section" data-tour-id="dashboard-chart">
                         <div className="card-header">
                             <h3>Weekly Spending Trend</h3>
                         </div>
@@ -484,7 +484,7 @@ export default function DashboardDesktop() {
                     </div>
 
                     {/* 2. Recent Transactions */}
-                    <div className="dashboard-card recent-transactions">
+                    <div className="dashboard-card recent-transactions" data-tour-id="dashboard-recent-transactions">
                         <div className="card-header">
                             <h3>Recent Transactions</h3>
                             <button className="view-all-link" onClick={() => window.location.href = '/transactions'}>View All</button>

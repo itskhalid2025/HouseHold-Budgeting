@@ -4,26 +4,26 @@
 export const householdTourMobile = [
     {
         targetId: 'household-header-mobile',
-        title: 'Your Household',
-        description: 'Household name and quick stats about your family finances.',
+        title: 'Household Terminal',
+        description: 'Your central hub for household connectivity. View status and manage your identity.',
         position: 'bottom'
     },
     {
-        targetId: 'household-members-mobile',
-        title: 'Members',
-        description: 'All family members. Tap to view their contribution and manage roles.',
-        position: 'top'
-    },
-    {
         targetId: 'household-invite-mobile',
-        title: 'Add Members',
-        description: 'Share invite link or code. New members can request to join.',
-        position: 'top'
+        title: 'Access Code',
+        description: 'Your secure invite code. Tap to copy and transmit to new family members.',
+        position: 'bottom'
     },
     {
         targetId: 'household-requests-mobile',
-        title: 'Pending Requests',
-        description: 'Accept or reject join requests from family members.',
+        title: 'Sync Requests',
+        description: 'Approve or deny incoming connection requests from new household members.',
+        position: 'top'
+    },
+    {
+        targetId: 'household-members-mobile',
+        title: 'Member Directory',
+        description: 'List of all synchronized household members and their active clearance levels.',
         position: 'top'
     }
 ];

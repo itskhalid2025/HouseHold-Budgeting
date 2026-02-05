@@ -205,13 +205,13 @@ export default function SavingsMobile() {
     return (
         <div className="mobile-page savings-mobile">
             {/* Header Summary */}
-            <div className="savings-header-card">
+            <div className="savings-header-card" data-tour-id="savings-summary-mobile">
                 <div className="header-top">
                     <div className="total-saved">
                         <span className="label">Total Saved</span>
                         <h1>{formatCurrency(summary.totalSaved, currency)}</h1>
                     </div>
-                    <button className={`filter-icon-btn ${Object.values(filters).some(Boolean) ? 'active' : ''}`} onClick={() => setShowFilterModal(true)}>
+                    <button className={`filter-icon-btn ${Object.values(filters).some(Boolean) ? 'active' : ''}`} onClick={() => setShowFilterModal(true)} data-tour-id="savings-filters-mobile">
                         <Filter size={20} />
                     </button>
                 </div>
@@ -233,7 +233,7 @@ export default function SavingsMobile() {
             {error && <div className="error-banner" onClick={() => setError('')}>{error}</div>}
 
             {/* Goals List */}
-            <div className="goals-list">
+            <div className="goals-list" data-tour-id="savings-list-mobile">
                 {filteredGoals.length === 0 ? (
                     <div className="empty-state">
                         <TrendingUp size={48} className="text-gray-300 mb-4" />
@@ -304,7 +304,7 @@ export default function SavingsMobile() {
                     setGoalForm({ name: '', targetAmount: '', currentAmount: '', type: 'LONG_TERM', deadline: '', userId: user.id });
                     setActiveModal('create');
                 }}>
-                    <Plus size={28} color="white" />
+                    <Plus size={28} color="white" data-tour-id="savings-add-btn-mobile" />
                 </button>
             </div>
 

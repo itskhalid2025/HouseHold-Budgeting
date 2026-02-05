@@ -29,7 +29,7 @@ export const settingsTourMobile = [
     {
         targetId: 'settings-account-mobile',
         title: 'Account',
-        description: 'Manage your account, password, and security settings.',
+        description: 'Sign out and manage account-level actions.',
         position: 'top'
     }
 ];

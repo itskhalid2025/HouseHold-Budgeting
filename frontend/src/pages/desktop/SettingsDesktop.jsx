@@ -208,6 +208,7 @@ export default function Settings() {
                     <button
                         className={`tab-btn ${activeTab === 'household' ? 'active' : ''}`}
                         onClick={() => setActiveTab('household')}
+                        data-tour-id="settings-preferences-mobile"
                     >
                         Household
                     </button>
@@ -215,7 +216,7 @@ export default function Settings() {
 
                 <div className="settings-content">
                     {activeTab === 'profile' && (
-                        <div className="tab-pane">
+                        <div className="tab-pane" data-tour-id="settings-profile">
                             <h2>Profile Settings</h2>
                             <div className="profile-card">
                                 <div className="avatar-large">
@@ -327,7 +328,7 @@ export default function Settings() {
 
                             <div className="divider-line" style={{ margin: '30px 0' }}></div>
 
-                            <div className="setting-group">
+                            <div className="setting-group" data-tour-id="settings-security">
                                 <label>Password Management</label>
                                 <button className="btn-secondary" onClick={handleForgotPassword}>
                                     Send Reset Password Email
@@ -361,12 +362,14 @@ export default function Settings() {
                                 <p className="help-text">Restart the interactive tour to learn about all platform features again.</p>
                             </div>
 
-                            <button className="logout-btn-large" onClick={logout} style={{ marginTop: '2rem' }}>Sign Out</button>
+                            <footer className="logout-section" data-tour-id="settings-account-mobile">
+                                <button className="logout-btn-vibrant" onClick={logout} aria-label="Sign Out" style={{ marginTop: '2rem' }}>Sign Out</button>
+                            </footer>
                         </div>
                     )}
 
                     {activeTab === 'household' && (
-                        <div className="tab-pane">
+                        <div className="tab-pane" data-tour-id="settings-preferences">
                             <h2>Household Management</h2>
                             {household ? (
                                 <div className="household-settings">
@@ -434,7 +437,7 @@ export default function Settings() {
                     )}
 
                     {activeTab === 'notifications' && (
-                        <div className="tab-pane">
+                        <div className="tab-pane" data-tour-id="settings-notifications">
                             <h2>Notification Preferences</h2>
                             <div className="notification-options">
                                 <div className="option-row">

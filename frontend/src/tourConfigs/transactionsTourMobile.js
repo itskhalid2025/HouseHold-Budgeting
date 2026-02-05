@@ -3,27 +3,33 @@
  */
 export const transactionsTourMobile = [
     {
+        targetId: 'transactions-summary-mobile',
+        title: 'Spending Summary',
+        description: 'Total household spending for the month. Tap "Mine" to quickly filter by your own entries.',
+        position: 'bottom'
+    },
+    {
         targetId: 'transactions-search-mobile',
-        title: 'Search Transactions',
-        description: 'Find any transaction quickly. Search by description or amount.',
+        title: 'Quick Search',
+        description: 'Find any transaction instantly by searching for descriptions or amounts.',
         position: 'bottom'
     },
     {
         targetId: 'transactions-filters-mobile',
-        title: 'Filter Options',
-        description: 'Filter by date, category (Needs/Wants/Savings), or household member.',
+        title: 'Filter & Organize',
+        description: 'Refine your view by category, member, or date range using advanced filters.',
         position: 'bottom'
     },
     {
         targetId: 'transactions-list-mobile',
-        title: 'Your Expenses',
-        description: 'Swipe left on any transaction for quick actions. Tap to view full details.',
+        title: 'Transaction History',
+        description: 'Your complete transaction timeline. Tap any entry to edit details or delete it.',
         position: 'top'
     },
     {
-        targetId: 'transactions-summary-mobile',
-        title: 'Summary View',
-        description: 'Quick overview of spending by category for the selected period.',
+        targetId: 'transactions-add-btn-mobile',
+        title: 'Add New Entry',
+        description: 'Tap the plus icon to quickly log a new expense on the go!',
         position: 'top'
     }
 ];

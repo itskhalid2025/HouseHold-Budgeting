@@ -288,30 +288,63 @@
    ============================================ */
 
 @media (max-width: 768px) {
+
+    /* Fixed bottom positioning for mobile to avoid overflow */
     .tour-tooltip {
+        position: fixed !important;
+        bottom: 80px !important;
+        /* Above the navbar */
+        left: 12px !important;
+        right: 12px !important;
+        top: auto !important;
+        transform: none !important;
+
         min-width: unset;
-        max-width: calc(100vw - 32px);
-        width: calc(100vw - 32px);
-        left: 16px !important;
-        right: 16px;
-        padding: 16px;
+        max-width: unset;
+        width: auto;
+        padding: 14px;
+        max-height: 40vh;
+        overflow-y: auto;
+
+        /* More compact on mobile */
+        border-radius: 12px;
+    }
+
+    /* Adjust spotlight ring for mobile */
+    .tour-spotlight-ring {
+        border-radius: 6px;
+        border-width: 2px;
     }
 
     .tour-title {
-        font-size: 1rem;
+        font-size: 0.95rem;
+        margin-bottom: 6px;
+        padding-right: 20px;
     }
 
     .tour-description {
-        font-size: 0.85rem;
+        font-size: 0.82rem;
+        line-height: 1.4;
+    }
+
+    .tour-footer {
+        margin-top: 12px;
+        padding-top: 12px;
+    }
+
+    .tour-progress {
+        font-size: 0.75rem;
     }
 
     .tour-nav-btn {
-        padding: 8px 12px;
+        padding: 9px 13px;
         font-size: 0.8rem;
+        gap: 4px;
     }
 
     .tour-dots {
-        margin-top: 12px;
+        margin-top: 10px;
+        gap: 5px;
     }
 
     .tour-dot {
@@ -320,7 +353,12 @@
     }
 
     .tour-dot.active {
-        width: 16px;
+        width: 14px;
+    }
+
+    .tour-skip-btn {
+        top: 10px;
+        right: 10px;
     }
 }
 

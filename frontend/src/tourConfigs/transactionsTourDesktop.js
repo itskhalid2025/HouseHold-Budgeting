@@ -3,34 +3,28 @@
  */
 export const transactionsTourDesktop = [
     {
+        targetId: 'transactions-summary',
+        title: 'Monthly Summary',
+        description: 'View total monthly expenses. Toggle between "Just Mine" and "All Household" to filter by personal or household spending.',
+        position: 'bottom'
+    },
+    {
         targetId: 'transactions-filters',
         title: 'Filter & Search',
-        description: 'Search transactions by description, filter by date range, category, or member.',
+        description: 'Search transactions by description, filter by date range, category (Needs/Wants), or household member.',
         position: 'bottom'
     },
     {
         targetId: 'transactions-add-btn',
         title: 'Add Transaction',
-        description: 'Quickly add a new expense. Or use Smart Entry from the sidebar for voice/image input!',
+        description: 'Quickly add a new expense manually. Each transaction can be categorized as a Need or Want.',
         position: 'left'
     },
     {
         targetId: 'transactions-list',
         title: 'Transaction List',
-        description: 'All your expenses organized by date. Click any transaction to view details or edit.',
+        description: 'All your expenses organized by date. Each card shows who spent, category, and AI categorization badge if applicable. Click edit or delete icons to manage.',
         position: 'top'
-    },
-    {
-        targetId: 'transactions-category-filter',
-        title: 'Category Filter',
-        description: 'Filter by expense category: Needs, Wants, or Savings. Quick way to analyze spending.',
-        position: 'bottom'
-    },
-    {
-        targetId: 'transactions-export',
-        title: 'Export Data',
-        description: 'Download your transactions as CSV or PDF for record-keeping.',
-        position: 'left'
     }
 ];
 

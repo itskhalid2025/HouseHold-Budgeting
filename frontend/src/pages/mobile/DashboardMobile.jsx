@@ -14,7 +14,6 @@ import TrendLineChart from '../../components/charts/TrendLineChart';
 import { HelpCircle } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import ChatbotButton from '../../components/mobile/ChatbotButton';
-import UserGuideMobile from '../../components/mobile/UserGuideMobile';
 import { useSync } from '../../context/SyncContext';
 
 // Mobile Components
@@ -33,7 +32,6 @@ export default function DashboardMobile() {
     const { isInstalled } = useSync();
 
     // State
-    const [showGuide, setShowGuide] = useState(false);
     const [showGamification, setShowGamification] = useState(false);
     const [stats, setStats] = useState({
         income: 0,
@@ -156,7 +154,11 @@ export default function DashboardMobile() {
                 </div>
                 <div className="header-actions">
                     <RankBadge onClick={() => setShowGamification(true)} data-tour-id="dashboard-gamification-mobile" />
-                    <button className="icon-btn" onClick={() => setShowGuide(true)} title="Platform Guide">
+                    <button
+                        className="icon-btn"
+                        onClick={() => startTour('dashboard-mobile', dashboardTourMobile)}
+                        title="Page Guide"
+                    >
                         <HelpCircle size={24} />
                     </button>
                     <Link to="/settings" className="avatar-small">
@@ -189,7 +191,7 @@ export default function DashboardMobile() {
                 <div className="section-header">
                     <h3>Weekly Spending</h3>
                 </div>
-                <MobileCard>
+                <MobileCard data-tour-id="dashboard-chart-mobile">
                     <div style={{ height: '200px', width: '100%' }}>
                         <TrendLineChart data={trendData} />
                     </div>
@@ -201,7 +203,7 @@ export default function DashboardMobile() {
                     <Link to="/transactions" className="link-btn">View All</Link>
                 </div>
 
-                <div className="txn-list-mobile">
+                <div className="txn-list-mobile" data-tour-id="dashboard-recent-mobile">
                     {loading && recentTransactions.length === 0 ? (
                         <p className="loading-text">Loading...</p>
                     ) : recentTransactions.length === 0 ? (
@@ -226,9 +228,6 @@ export default function DashboardMobile() {
             </div>
 
             <ChatbotButton />
-
-            {/* User Guide Modal (Mobile) */}
-            <UserGuideMobile isOpen={showGuide} onClose={() => setShowGuide(false)} />
 
             <BreakdownModal
                 isOpen={breakdownModal.isOpen}

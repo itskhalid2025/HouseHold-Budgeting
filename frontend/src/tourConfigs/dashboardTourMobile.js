@@ -16,15 +16,15 @@ export const dashboardTourMobile = [
         position: 'bottom'
     },
     {
-        targetId: 'dashboard-recent-mobile',
-        title: 'Recent Activity',
-        description: 'Your latest transactions displayed here. Tap to view details.',
+        targetId: 'dashboard-chart-mobile',
+        title: 'Weekly Spending Trend 📊',
+        description: 'Visual chart showing your spending patterns over the past week.',
         position: 'top'
     },
     {
-        targetId: 'dashboard-goals-mobile',
-        title: 'Savings Progress',
-        description: 'Track your savings goals. See visual progress bars for each goal.',
+        targetId: 'dashboard-recent-mobile',
+        title: 'Recent Activity',
+        description: 'Your latest transactions displayed here. Tap to view details.',
         position: 'top'
     },
     {
