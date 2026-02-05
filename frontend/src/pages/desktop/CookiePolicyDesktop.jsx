@@ -1,7 +1,3 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Moon, Sun, Cookie, Shield, Settings, Info } from 'lucide-react';
-import '../Landing.css';
 
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';

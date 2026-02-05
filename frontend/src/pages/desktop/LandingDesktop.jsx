@@ -138,14 +138,14 @@ function LandingDesktop() {
                             This is the brain of your financial system. It uses advanced AI to provide personalized guidance.
                         </p>
                         <ul className="landing-feature-list">
-                            <li>Reads your real transactions</li>
+                            <li>Maintains chat memory & context</li>
+                            <li>Uses advanced RAG technology</li>
+                            <li>Generates interactive pie charts & bar graphs</li>
+                            <li>Finds cheap grocery places near you</li>
                             <li>Analyzes actual spending patterns</li>
                             <li>Compares time periods</li>
                             <li>Highlights financial risks</li>
                             <li>Shows wasteful spending</li>
-                            <li>Recommends smart savings</li>
-                            <li>Generates custom charts</li>
-                            <li>Understands needs vs wants</li>
                         </ul>
                         <p style={{ marginTop: '15px', fontStyle: 'italic', fontSize: '0.9rem' }}>
                             Like a personal financial coach, not a chatbot.

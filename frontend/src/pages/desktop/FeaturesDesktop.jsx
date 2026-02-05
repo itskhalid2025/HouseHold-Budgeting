@@ -178,8 +178,9 @@ function FeaturesDesktop() {
                         <ul className="landing-feature-list" style={{ marginBottom: '25px' }}>
                             <li>Navigate to the Advisor page</li>
                             <li>Ask questions in natural language</li>
-                            <li>AI retrieves your relevant transaction data</li>
-                            <li>Receive insights, charts, and recommendations</li>
+                            <li>AI uses RAG technology to retrieve your relevant transaction data</li>
+                            <li>Maintains Chat Memory to understand follow-up questions</li>
+                            <li>Receive insights with Pie Charts & Bar Graphs</li>
                         </ul>
 
                         <h4 style={{ color: 'var(--primary)', marginBottom: '15px', fontSize: '1.1rem' }}>Examples:</h4>
@@ -187,12 +188,12 @@ function FeaturesDesktop() {
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
                                 <CheckCircle size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
                                 <div>
-                                    <strong style={{ color: 'var(--text)' }}>Example 1: Spending Query</strong>
+                                    <strong style={{ color: 'var(--text)' }}>Example 1: Tax Insights</strong>
                                     <p style={{ margin: '5px 0', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                                        You ask: "How much did I spend on dining last month?"
+                                        You ask: "What is the tax based on my income?"
                                     </p>
                                     <p style={{ margin: '5px 0', color: 'var(--success)', fontSize: '0.95rem' }}>
-                                        → AI shows: Total amount, breakdown by restaurant, comparison chart, and suggests: "You spent 30% more than previous month"
+                                        → AI analyzes your income entries, estimates tax brackets often using local tax laws (RAG), and provides a breakdown.
                                     </p>
                                 </div>
                             </div>
@@ -202,12 +203,12 @@ function FeaturesDesktop() {
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
                                 <CheckCircle size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
                                 <div>
-                                    <strong style={{ color: 'var(--text)' }}>Example 2: Budget Analysis</strong>
+                                    <strong style={{ color: 'var(--text)' }}>Example 2: Local Recommendations</strong>
                                     <p style={{ margin: '5px 0', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                                        You ask: "Am I overspending on wants?"
+                                        You ask: "Where is the cheapest grocery store nearby?"
                                     </p>
                                     <p style={{ margin: '5px 0', color: 'var(--success)', fontSize: '0.95rem' }}>
-                                        → AI analyzes: Your wants spending, shows pie chart, identifies top luxury items, recommends: "Consider reducing entertainment by 15%"
+                                        → AI searches for local prices and recommends: "Aldi on Main St is currently 15% cheaper for your typical items."
                                     </p>
                                 </div>
                             </div>
@@ -217,12 +218,12 @@ function FeaturesDesktop() {
                             <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '10px' }}>
                                 <CheckCircle size={20} color="var(--primary)" style={{ flexShrink: 0, marginTop: '2px' }} />
                                 <div>
-                                    <strong style={{ color: 'var(--text)' }}>Example 3: Savings Trend</strong>
+                                    <strong style={{ color: 'var(--text)' }}>Example 3: Visual Spending Analysis</strong>
                                     <p style={{ margin: '5px 0', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-                                        You ask: "Show me my savings trend over the last 3 months"
+                                        You ask: "Show me a pie chart of my expenses this month"
                                     </p>
                                     <p style={{ margin: '5px 0', color: 'var(--success)', fontSize: '0.95rem' }}>
-                                        → AI displays: Line chart of monthly savings, percentage growth, identifies patterns, suggests: "Great job! You're saving 20% more each month"
+                                        → AI generates an interactive Pie Chart displaying your category breakdown instantly.
                                     </p>
                                 </div>
                             </div>

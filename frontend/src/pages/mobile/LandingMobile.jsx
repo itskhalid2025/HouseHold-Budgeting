@@ -127,11 +127,12 @@ function LandingMobile() {
                             Your personal AI financial coach with advanced intelligence.
                         </p>
                         <ul className="landing-feature-list">
+                            <li>Chat memory & context</li>
+                            <li>Uses advanced RAG technology</li>
+                            <li>Pie charts & bar graphs</li>
+                            <li>Finds cheap groceries nearby</li>
                             <li>Analyzes spending patterns</li>
                             <li>Highlights risks</li>
-                            <li>Recommends savings</li>
-                            <li>Generates charts</li>
-                            <li>Personalized tips</li>
                         </ul>
                     </div>
                 </div>

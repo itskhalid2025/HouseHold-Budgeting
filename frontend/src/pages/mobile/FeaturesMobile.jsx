@@ -146,41 +146,41 @@ function FeaturesMobile() {
 
                     <h4 style={{ color: 'var(--primary)', marginBottom: '12px', fontSize: '1rem' }}>How to Use:</h4>
                     <ul className="landing-feature-list" style={{ marginBottom: '20px', fontSize: '0.9rem' }}>
-                        <li>Go to Advisor page</li>
                         <li>Ask in natural language</li>
-                        <li>Get insights + charts</li>
+                        <li>Uses RAG & Chat Memory</li>
+                        <li>Get Pie Charts & Graphs</li>
                         <li>Receive recommendations</li>
                     </ul>
 
                     <h4 style={{ color: 'var(--primary)', marginBottom: '12px', fontSize: '1rem' }}>Examples:</h4>
 
                     <div style={{ background: 'var(--background)', padding: '15px', borderRadius: '10px', marginBottom: '12px' }}>
-                        <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}>1. Spending Query</strong>
+                        <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}>1. Tax Insights</strong>
                         <p style={{ margin: '5px 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                            "Dining spend last month?"
+                            "What is the tax based on my income?"
                         </p>
                         <p style={{ margin: '5px 0', color: 'var(--success)', fontSize: '0.85rem' }}>
-                            → Total + chart + tips
+                            → Estimates tax & brackets.
                         </p>
                     </div>
 
                     <div style={{ background: 'var(--background)', padding: '15px', borderRadius: '10px', marginBottom: '12px' }}>
-                        <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}>2. Budget Analysis</strong>
+                        <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}>2. Cheap Groceries</strong>
                         <p style={{ margin: '5px 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                            "Overspending on wants?"
+                            "Cheapest grocery store nearby?"
                         </p>
                         <p style={{ margin: '5px 0', color: 'var(--success)', fontSize: '0.85rem' }}>
-                            → Analysis + advice
+                            → Recommends local stores.
                         </p>
                     </div>
 
                     <div style={{ background: 'var(--background)', padding: '15px', borderRadius: '10px' }}>
-                        <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}>3. Savings Trend</strong>
+                        <strong style={{ color: 'var(--text)', fontSize: '0.9rem' }}>3. Visual Graphs</strong>
                         <p style={{ margin: '5px 0', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
-                            "Show savings trend"
+                            "Show pie chart of expenses"
                         </p>
                         <p style={{ margin: '5px 0', color: 'var(--success)', fontSize: '0.85rem' }}>
-                            → Line chart + patterns
+                            → Generates interactive chart.
                         </p>
                     </div>
                 </div>

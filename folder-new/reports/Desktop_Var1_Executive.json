@@ -1,0 +1,14 @@
+{
+    "screen_id": "e9628d9c4e7946c79d202064173db1cf",
+    "project_id": "6352551569990525816",
+    "title": "Executive Financial Health Dashboard",
+    "platform": "DESKTOP",
+    "theme": "Dark (Deep Navy + Gold/Bronze)",
+    "features": [
+        "Sparkline KPI Cards",
+        "Financial Health Score Radial Gauge",
+        "Daily Brief Insights Card",
+        "Net Worth Trend Area Chart",
+        "Minimalist Typography"
+    ]
+}
