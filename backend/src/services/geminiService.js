@@ -37,8 +37,9 @@ let model = getGenerativeModel();
 function rotateKey() {
     if (apiKeys.length <= 1) return false;
 
+    const oldIndex = currentKeyIndex;
     currentKeyIndex = (currentKeyIndex + 1) % apiKeys.length;
-    console.log(`🔄 Rotating Gemini API key to key #${currentKeyIndex + 1}`);
+    console.log(`🔄 Rotating Gemini API key to key #${currentKeyIndex + 1}/${apiKeys.length} (was #${oldIndex + 1})`);
     model = getGenerativeModel();
     return true;
 }

@@ -1,7 +1,12 @@
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Load environment variables
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables from the backend root (.env is two levels up from src/utils)
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const config = {
     // Server
@@ -13,7 +18,7 @@ const config = {
 
     // JWT
     jwt: {
-        secret: process.env.JWT_SECRET || 'default-secret.change-in-production-noone@canHack$$',
+        secret: process.env.JWT_SECRET || 'default-secret^(,?).change-in-production-noone@canHack$$',
         expiresIn: process.env.JWT_EXPIRES_IN || '7d'
     },
 
@@ -24,7 +29,12 @@ const config = {
             process.env.GEMINI_API_KEY2,
             process.env.GEMINI_API_KEY3,
             process.env.GEMINI_API_KEY4,
-            process.env.GEMINI_API_KEY5
+            process.env.GEMINI_API_KEY5,
+            process.env.GEMINI_API_KEY6,
+            process.env.GEMINI_API_KEY7,
+            process.env.GEMINI_API_KEY8,
+            process.env.GEMINI_API_KEY9,
+            process.env.GEMINI_API_KEY10
         ].filter(Boolean),
         model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
         modelBackup: process.env.GEMINI_MODEL_BACKUP || 'gemini-2.0-flash-lite',
@@ -60,8 +70,8 @@ export function validateConfig() {
     const missing = required.filter(key => !process.env[key]);
 
     // Check for at least one Gemini key
-    if (!process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY2 && !process.env.GEMINI_API_KEY3) {
-        missing.push('GEMINI_API_KEY (or GEMINI_API_KEY2/3)');
+    if (!process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY2 && !process.env.GEMINI_API_KEY3 && !process.env.GEMINI_API_KEY4) {
+        missing.push('GEMINI_API_KEY (or multiple backup keys)');
     }
 
     if (missing.length > 0) {

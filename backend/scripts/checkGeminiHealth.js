@@ -1,15 +1,23 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import config from '../utils/config.js';
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
-// Load env vars manually because we might run this as checkGeminiHealth.js script
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Re-read config in case it didn't pick up from the standard import context
-// (Though config.js likely handles it, being safe)
+// Load env vars from the backend root (one level up from scripts/)
+const envPath = path.resolve(__dirname, '../.env');
+dotenv.config({ path: envPath });
+
+console.log(`📝 Loading env from: ${envPath}`);
+console.log(`🔑 GEMINI_API_KEY present in process.env: ${!!process.env.GEMINI_API_KEY}`);
+
+// Use dynamic import to ensure dotenv.config has finished BEFORE config.js is loaded
+const { default: config } = await import('../src/utils/config.js');
 
 const apiKeys = config.gemini.apiKeys;
+console.log(`📦 Config gemini.apiKeys length: ${apiKeys?.length}`);
 const primaryModel = config.gemini.model;
 const backupModel = config.gemini.modelBackup;
 
