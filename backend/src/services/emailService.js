@@ -11,15 +11,21 @@ const transporter = nodemailer.createTransport({
         user: process.env.SMTP_USER,
         pass: process.env.SMTP_PASS,
     },
+    // Add timeouts to prevent hanging on slow/unresponsive SMTP servers
+    connectionTimeout: 5000, // 5 seconds
+    greetingTimeout: 5000,   // 5 seconds
+    socketTimeout: 10000,    // 10 seconds
 });
 
 /**
  * Verify SMTP connection
  */
 export const verifyConnection = async () => {
+    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
+    const port = process.env.SMTP_PORT || 587;
     try {
         await transporter.verify();
-        console.log('✅ SMTP Server Check: Connected successfully');
+        console.log(`✅ SMTP Server Check: Connected successfully to ${host}:${port}`);
         return true;
     } catch (error) {
         console.error('❌ SMTP Server Check: Failed');

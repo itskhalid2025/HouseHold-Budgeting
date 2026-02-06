@@ -124,21 +124,10 @@ export const register = async (req, res) => {
 
         console.log(`✅ User created: ${user.id}. Sending verification email...`);
 
-        // Send verification email with error handling
-        try {
-            await sendVerificationEmail(user, verificationToken);
-        } catch (emailError) {
-            console.error("⚠️ Failed to send verification email:", emailError.message);
-            // We still return success for registration, but warn the user
-            // In a production app, we might want to fail the registration or use a queue
-            return res.status(201).json({
-                success: true,
-                user,
-                token,
-                message: 'Registration successful, but we could not send the verification email. Please contact support or try to resend it later.',
-                warning: 'Email sending failed'
-            });
-        }
+        // Send verification email in the background (non-blocking)
+        sendVerificationEmail(user, verificationToken).catch(emailError => {
+            console.error("⚠️ Failed to send verification email in background:", emailError.message);
+        });
 
         logSuccess('authController', 'register', { userId: user.id });
         return res.status(201).json({
