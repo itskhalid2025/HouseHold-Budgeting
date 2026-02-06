@@ -320,7 +320,7 @@ export const deleteUser = async (req, res) => {
         const user = await prisma.user.findUnique({
             where: { id: userId },
             include: {
-                adminHouseholds: {
+                adminOfHouseholds: {
                     include: {
                         members: {
                             orderBy: { createdAt: 'asc' },
@@ -338,8 +338,8 @@ export const deleteUser = async (req, res) => {
         // 2. Prepare database operations
         await prisma.$transaction(async (tx) => {
             // A. Handle Owned Households (Transfer or Delete)
-            if (user.adminHouseholds && user.adminHouseholds.length > 0) {
-                for (const household of user.adminHouseholds) {
+            if (user.adminOfHouseholds && user.adminOfHouseholds.length > 0) {
+                for (const household of user.adminOfHouseholds) {
                     const otherMembers = household.members.filter(m => m.id !== userId);
 
                     if (otherMembers.length > 0) {
@@ -359,6 +359,13 @@ export const deleteUser = async (req, res) => {
                     } else {
                         // No other members - Delete the household entirely
                         console.log(`[DeleteUser] Deleting orphaned household ${household.id}`);
+
+                        // Unlink user first to prevent FK constraint error when deleting household
+                        await tx.user.update({
+                            where: { id: userId },
+                            data: { householdId: null }
+                        });
+
                         await tx.household.delete({
                             where: { id: household.id }
                         });
@@ -402,7 +409,6 @@ export const deleteUser = async (req, res) => {
         res.json({ success: true, message: 'User and associated data deleted successfully' });
 
     } catch (error) {
-        console.error('Delete User Error:', error);
         console.error('Delete User Error:', error);
         res.status(500).json({ success: false, error: 'Failed to delete user. ' + error.message });
     }
