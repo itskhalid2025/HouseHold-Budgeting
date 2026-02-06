@@ -336,4 +336,80 @@
         background-position: right 12px top 50%;
         background-size: 12px auto;
     }
+
+
+    /* Exceeded / Celebration State (Mobile) */
+    .goal-card.exceeded {
+        background: linear-gradient(135deg, #4c1d95 0%, #1e1b4b 100%) !important;
+        border: 1px solid #8b5cf6 !important;
+        /* Force border color */
+        box-shadow: 0 0 15px rgba(139, 92, 246, 0.4);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .goal-card.exceeded * {
+        color: white !important;
+        border-color: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .goal-card.exceeded .goal-type-badge {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+
+    .goal-card.exceeded .progress-track {
+        background: rgba(255, 255, 255, 0.2) !important;
+    }
+
+    .goal-card.exceeded::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image:
+            radial-gradient(circle, #f472b6 20%, transparent 20%),
+            radial-gradient(circle, #fbbf24 20%, transparent 20%),
+            radial-gradient(circle, #34d399 20%, transparent 20%);
+        background-size: 80px 80px, 60px 60px, 40px 40px;
+        background-position: 10px 10px, 40px 30px, 20px 50px;
+        opacity: 0.3;
+        pointer-events: none;
+        animation: confetti 20s linear infinite;
+        z-index: 0;
+    }
+
+    .goal-card.exceeded>* {
+        position: relative;
+        z-index: 1;
+    }
+
+    @keyframes confetti {
+        0% {
+            background-position: 10px 10px, 40px 30px, 20px 50px;
+        }
+
+        100% {
+            background-position: 10px 400px, 40px 430px, 20px 450px;
+        }
+    }
+
+    .excess-message-mobile {
+        background: rgba(139, 92, 246, 0.3);
+        color: #c4b5fd !important;
+        padding: 5px 10px;
+        border-radius: 8px;
+        font-size: 13px;
+        margin-bottom: 12px;
+        text-align: center;
+        border: 1px solid rgba(139, 92, 246, 0.5) !important;
+        font-weight: 600;
+        animation: pulse 2s infinite;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
 }

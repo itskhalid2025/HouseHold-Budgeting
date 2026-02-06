@@ -257,8 +257,11 @@ export default function SavingsMobile() {
                         const percent = target > 0 ? Math.min(100, (current / target) * 100) : 0;
                         const isComplete = percent >= 100;
 
+                        const isExceeded = current >= target && target > 0;
+                        const excessAmount = Math.max(0, current - target);
+
                         return (
-                            <MobileCard key={goal.id} className={`goal-card ${isComplete ? 'complete' : ''}`}>
+                            <MobileCard key={goal.id} className={`goal-card ${isExceeded ? 'exceeded' : ''} ${isComplete ? 'complete' : ''}`}>
                                 <div className="goal-header">
                                     <div className="goal-title">
                                         <h3>{getCategoryEmoji(goal.type, goal.name)} {goal.name}</h3>
@@ -271,6 +274,17 @@ export default function SavingsMobile() {
                                         <button className="icon-btn text-red" onClick={() => handleDelete(goal.id)}><Trash2 size={16} /></button>
                                     </div>
                                 </div>
+
+                                {isExceeded && (
+                                    <div className="excess-message-mobile">
+                                        {excessAmount > 0 && (
+                                            <span>🎉 Exceeded by {formatCurrency(excessAmount, currency)}!</span>
+                                        )}
+                                        {excessAmount == 0 && (
+                                            <span>🎉 Congratulations! You have reached your goal!</span>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="progress-section">
                                     <div className="progress-labels">
