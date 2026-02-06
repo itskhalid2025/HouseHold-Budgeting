@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Achievement {
-  id        String   @id
+  id        String   @id @default(uuid())
   userId    String   @map("user_id")
   type      String
   createdAt DateTime @default(now()) @map("created_at")
@@ -19,7 +19,7 @@ model Achievement {
 }
 
 model AdminActivityLog {
-  id           String        @id
+  id           String        @id @default(uuid())
   adminId      String        @map("admin_id")
   action       String
   targetType   String?       @map("target_type")
@@ -34,7 +34,7 @@ model AdminActivityLog {
 }
 
 model AdminInvitation {
-  id          String        @id
+  id          String        @id @default(uuid())
   email       String        @unique
   token       String        @unique
   invitedById String        @map("invited_by_id")
@@ -47,7 +47,7 @@ model AdminInvitation {
 }
 
 model AiUsageLog {
-  id          String     @id
+  id          String     @id @default(uuid())
   userId      String     @map("user_id")
   householdId String?    @map("household_id")
   type        AiLogType
@@ -64,7 +64,7 @@ model AiUsageLog {
 }
 
 model Announcement {
-  id        String    @id
+  id        String    @id @default(uuid())
   title     String
   message   String
   type      String    @default("info")
@@ -76,7 +76,7 @@ model Announcement {
 }
 
 model BlacklistedToken {
-  id        String   @id
+  id        String   @id @default(uuid())
   token     String   @unique
   expiresAt DateTime @map("expires_at")
   createdAt DateTime @default(now()) @map("created_at")
@@ -85,7 +85,7 @@ model BlacklistedToken {
 }
 
 model CustomCategory {
-  id             String       @id
+  id             String       @id @default(uuid())
   householdId    String       @map("household_id")
   name           String
   type           CategoryType
@@ -99,7 +99,7 @@ model CustomCategory {
 }
 
 model DailyInsight {
-  id        String   @id
+  id        String   @id @default(uuid())
   date      DateTime @unique @db.Date
   news      Json
   quotes    Json
@@ -110,7 +110,7 @@ model DailyInsight {
 }
 
 model Feedback {
-  id        String   @id
+  id        String   @id @default(uuid())
   userId    String   @map("user_id")
   type      String   @default("general")
   message   String
@@ -122,7 +122,7 @@ model Feedback {
 }
 
 model Goal {
-  id            String        @id
+  id            String        @id @default(uuid())
   householdId   String        @map("household_id")
   name          String
   type          GoalType
@@ -142,7 +142,7 @@ model Goal {
 }
 
 model Household {
-  id                 String             @id
+  id                 String             @id @default(uuid())
   name               String
   inviteCode         String             @unique @map("invite_code")
   adminId            String             @map("admin_id")
@@ -170,7 +170,7 @@ model Household {
 }
 
 model Income {
-  id          String          @id
+  id          String          @id @default(uuid())
   householdId String          @map("household_id")
   userId      String          @map("user_id")
   amount      Decimal         @db.Decimal(10, 2)
@@ -191,7 +191,7 @@ model Income {
 }
 
 model Invitation {
-  id             String           @id
+  id             String           @id @default(uuid())
   householdId    String           @map("household_id")
   invitedById    String           @map("invited_by_id")
   recipientEmail String?          @map("recipient_email")
@@ -211,7 +211,7 @@ model Invitation {
 }
 
 model LoanRepayment {
-  id        String   @id
+  id        String   @id @default(uuid())
   loanId    String   @map("loan_id")
   amount    Decimal  @db.Decimal(10, 2)
   date      DateTime @db.Date
@@ -224,7 +224,7 @@ model LoanRepayment {
 }
 
 model Loan {
-  id              String          @id
+  id              String          @id @default(uuid())
   householdId     String          @map("household_id")
   userId          String          @map("user_id")
   type            LoanType
@@ -245,7 +245,7 @@ model Loan {
 }
 
 model PlatformAdmin {
-  id               String             @id
+  id               String             @id @default(uuid())
   email            String             @unique
   username         String             @unique
   passwordHash     String             @map("password_hash")
@@ -268,7 +268,7 @@ model PlatformAdmin {
 }
 
 model RecurringExpense {
-  id          String             @id
+  id          String             @id @default(uuid())
   householdId String             @map("household_id")
   name        String
   amount      Decimal            @db.Decimal(10, 2)
@@ -288,7 +288,7 @@ model RecurringExpense {
 }
 
 model Report {
-  id          String                  @id
+  id          String                  @id @default(uuid())
   householdId String                  @map("household_id")
   type        String
   createdAt   DateTime                @default(now()) @map("created_at")
@@ -303,7 +303,7 @@ model Report {
 }
 
 model SplitExpense {
-  id              String           @id
+  id              String           @id @default(uuid())
   householdId     String           @map("household_id")
   transactionId   String           @map("transaction_id")
   totalAmount     Decimal          @map("total_amount") @db.Decimal(10, 2)
@@ -320,7 +320,7 @@ model SplitExpense {
 }
 
 model SplitRepayment {
-  id             String       @id
+  id             String       @id @default(uuid())
   splitExpenseId String       @map("split_expense_id")
   personName     String       @map("person_name")
   amount         Decimal      @db.Decimal(10, 2)
@@ -342,7 +342,7 @@ model SystemSetting {
 }
 
 model Transaction {
-  id            String                 @id
+  id            String                 @id @default(uuid())
   householdId   String                 @map("household_id")
   userId        String                 @map("user_id")
   amount        Decimal                @db.Decimal(10, 2)
@@ -372,7 +372,7 @@ model Transaction {
 }
 
 model User {
-  id                      String          @id
+  id                      String          @id @default(uuid())
   email                   String          @unique
   phone                   String
   passwordHash            String          @map("password_hash")
