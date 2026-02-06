@@ -9,6 +9,7 @@ import useIsMobile from './hooks/useIsMobile';
 import Navbar from './components/mobile/Navbar';
 import Sidebar from './components/desktop/Sidebar';
 import TopBar from './components/desktop/TopBar';
+import DesktopBackground from './components/desktop/DesktopBackground';
 import { SmartEntryProvider, useSmartEntry } from './context/SmartEntryContext';
 import { TourProvider } from './context/TourContext';
 import TourOverlay from './components/common/TourOverlay';
@@ -394,6 +395,7 @@ function AppContent() {
         </>
       ) : (
         <div className="app-desktop-layout">
+          <DesktopBackground />
           <GlobalSmartEntry />
           <Sidebar />
           <div className="desktop-main-wrapper">

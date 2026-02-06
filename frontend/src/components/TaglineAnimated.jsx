@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 
 export default function Tagline() {
-    const words = ["grow ", "with ", "you ! "];
+    const words = ["Grow ", "with ", "you ! "];
 
     return (
         <div
