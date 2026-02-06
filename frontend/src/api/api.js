@@ -82,6 +82,18 @@ async function handleResponse(response) {
     }
 
     if (!response.ok) {
+        // 🔒 Auto-redirect on 401 Unauthorized (Token expired/Backend restart)
+        // 🔒 Auto-redirect on 401 Unauthorized (Token expired/Backend restart)
+        // EXCLUDE login endpoints so user can actually see "Invalid Password" errors
+        const isLoginRequest = response.url.includes('/auth/login') || response.url.includes('/admin/login');
+
+        if (response.status === 401 && !isLoginRequest) {
+            console.warn('🔒 Unauthorized access detected. Redirecting to landing page...');
+            clearToken(); // Ensure we don't get into a loop
+            window.location.href = '/';
+            // Throw immediately to stop further processing
+            throw new Error('Unauthorized - Redirecting...');
+        }
         // Check for specific error codes for Events
         if (data.code && (
             data.code.startsWith('LIMIT_') ||

@@ -1,4 +1,4 @@
-// Opik Service for HouseHold Budgeting
+// Opik Service for GrowWise
 // Handles LLM observability and evaluation with Opik
 
 /**

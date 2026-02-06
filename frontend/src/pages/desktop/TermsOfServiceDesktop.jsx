@@ -31,7 +31,7 @@ function TermsOfServiceDesktop() {
                     <div className="landing-feature-card" style={{ padding: '50px' }}>
                         <h2 style={{ fontSize: '1.8rem', marginBottom: '20px' }}>1. Acceptance of Terms</h2>
                         <p style={{ marginBottom: '30px', lineHeight: '1.8' }}>
-                            By accessing and using HouseHold Budgeting, you agree to comply with and be bound by these Terms of Service.
+                            By accessing and using GrowWise, you agree to comply with and be bound by these Terms of Service.
                             If you do not agree, strictly do not use this platform.
                         </p>
 
@@ -46,7 +46,7 @@ function TermsOfServiceDesktop() {
                         <div style={{ padding: '20px', background: 'rgba(239, 68, 68, 0.1)', borderLeft: '4px solid #ef4444', borderRadius: '4px', marginBottom: '30px' }}>
                             <p style={{ lineHeight: '1.8', fontWeight: '500', color: 'var(--text-primary)' }}>
                                 <strong>DISCLAIMER:</strong> The "AI Financial Advisor" and all related features are for <strong>informational and educational purposes only</strong>.
-                                HouseHold Budgeting is <strong>not</strong> a licensed financial planner, tax advisor, or investment broker, however it will provide the information.On which if the user takes an action then the user is responsible.
+                                GrowWise is <strong>not</strong> a licensed financial planner, tax advisor, or investment broker, however it will provide the information.On which if the user takes an action then the user is responsible.
                                 <br /><br />
                                 The AI provides suggestions based on patterns, but it cannot predict market changes or personal life events.
                                 <strong>Always consult a certified professional before making significant financial decisions.</strong>
@@ -55,7 +55,7 @@ function TermsOfServiceDesktop() {
 
                         <h2 style={{ fontSize: '1.8rem', marginBottom: '20px' }}>4. Limitation of Liability</h2>
                         <p style={{ marginBottom: '30px', lineHeight: '1.8' }}>
-                            HouseHold Budgeting provides this service "as is". We are not liable for any financial losses, missed payments, or tax penalties
+                            GrowWise provides this service "as is". We are not liable for any financial losses, missed payments, or tax penalties
                             resulting from reliance on our AI tools or categorization errors.
                         </p>
 

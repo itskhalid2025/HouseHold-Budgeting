@@ -89,19 +89,31 @@ export const trackAiUsage = (requestType) => async (req, res, next) => {
         // Use User Limit OR Default if no User Limit defined
         const userLimit = userConfig.limit !== undefined ? userConfig.limit : DEFAULT_LIMITS[requestType];
 
+        // Determine Time Window based on Limit Type (Default: MONTHLY)
+        const limitType = userConfig.limitType || 'MONTHLY';
+        let startDate;
+
+        if (limitType === 'DAILY') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        } else {
+            // Default to MONTHLY
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+
         const userUsage = await prisma.aiUsageLog.count({
             where: {
                 userId: user.id,
                 type: requestType,
-                createdAt: { gte: startOfMonth }
+                createdAt: { gte: startDate }
             }
         });
 
         if (userUsage >= userLimit) {
+            const periodLabel = limitType === 'DAILY' ? 'daily' : 'monthly';
             return res.status(403).json({
                 success: false,
-                error: `Your monthly limit of ${userLimit} reached for ${requestType}.`,
-                code: 'LIMIT_REACHED_USER'
+                error: `Your ${periodLabel} limit of ${userLimit} reached for ${requestType}.`,
+                code: `LIMIT_REACHED_USER_${limitType}`
             });
         }
 

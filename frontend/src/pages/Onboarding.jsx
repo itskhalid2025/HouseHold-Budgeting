@@ -24,10 +24,10 @@ import {
     Loader2,
     CheckCircle2
 } from 'lucide-react';
-import Logo from '../assets/Logo.png';
 import { createHousehold, submitJoinRequest, getMyJoinRequestStatus } from '../api/api';
 import './Onboarding.css';
 import { useAuth } from '../context/AuthContext';
+import GrowWiseLogo from '../components/GrowWiseLogo';
 
 export default function Onboarding() {
     const navigate = useNavigate();
@@ -139,8 +139,8 @@ export default function Onboarding() {
             <div className="onboarding-content">
                 {/* Hero Section */}
                 <header className="onboarding-header">
-                    <img src={Logo} alt="Logo" className="onboarding-logo" />
-                    <h1>Welcome to HouseHold Budgeting</h1>
+                    
+                    <h1>Welcome to <GrowWiseLogo size="text-5xl" className="mb-4" /></h1>
                     <p>The AI-powered financial platform that turns your household expenses into smart insights.</p>
                 </header>
 
@@ -193,10 +193,11 @@ export default function Onboarding() {
                         <div className="section-info">
                             <div className="feature-icon"><Zap size={32} /></div>
                             <h2>Stop the Leak</h2>
-                            <p>
-                                Money slips away unnoticed when managed with traditional spreadsheets or complex apps.
-                                HouseHold Budgeting helps you identify where every cent goes, automatically categoryzing
-                                your spending and helping you plug the leaks.
+                            <p style={{ fontSize: '1.5rem' }}>
+                   Traditional budgeting and spreadsheets let money disappear without warning.
+Manual entry or bank connections expose your financial data.
+GrowWise protects your privacy while revealing every spending leak.
+Tap, speak, or take a photo—AI instantly sorts your transactions.
                             </p>
                         </div>
                     </div>
@@ -208,8 +209,8 @@ export default function Onboarding() {
                         <div className="section-info">
                             <div className="feature-icon"><Sparkles size={32} /></div>
                             <h2>AI-Powered Simplicity</h2>
-                            <p>
-                                Our HouseHold Project isn't just a database; it's an intelligent core that learns your habits.
+                            <p style={{ fontSize: '1.5rem' }}>
+                                GrowWise isn't just a database; it's an intelligent core that learns your habits.
                                 From smart transaction entry to long-term financial planning, we use Gemini AI to make
                                 budgeting as easy as having a conversation.
                             </p>
@@ -262,7 +263,7 @@ export default function Onboarding() {
                     </div>
                 </section>
 
-                
+
             </div>
 
             {/* Modals */}

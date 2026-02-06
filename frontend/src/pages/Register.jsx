@@ -18,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
 import PhoneInput from 'react-phone-input-2';
 import 'react-phone-input-2/lib/style.css';
 import './Auth.css';
-import Logo from '../assets/Logo.png';
+import GrowWiseLogo from '../components/GrowWiseLogo';
 import { Country, State, City } from 'country-state-city';
 import { Eye, EyeOff } from 'lucide-react';
 
@@ -148,7 +148,9 @@ export default function Register() {
         <div className="auth-container">
             <div className="auth-card auth-card-wide">
                 <div className="auth-header">
-                    <h1><img src={Logo} alt="Logo" className="app-logo" /></h1>
+                    <div className="flex justify-center mb-6">
+                        <GrowWiseLogo size="" style={{ fontSize: '2.5rem' }} animated={true} />
+                    </div>
                     <h2>Create Account</h2>
                     <p>Start managing your household finances</p>
                 </div>

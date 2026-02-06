@@ -81,7 +81,8 @@ export const updateUserSchema = z.object({
 
   country: z.string().max(100).optional(),
   state: z.string().max(100).optional(),
-  city: z.string().max(100).optional()
+  city: z.string().max(100).optional(),
+  cookieAcceptedAt: z.union([z.string(), z.date()]).nullable().optional()
 });
 
 /**

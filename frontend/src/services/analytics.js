@@ -1,5 +1,8 @@
 import posthog from 'posthog-js';
 
+// Expose for debugging
+window.posthog = posthog;
+
 const API_KEY = import.meta.env.VITE_POSTHOG_KEY;
 const API_HOST = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com';
 

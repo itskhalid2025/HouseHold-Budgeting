@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSmartEntry } from '../../context/SmartEntryContext';
 import { useNotification } from '../../context/NotificationContext';
 import { Plus, LogOut } from 'lucide-react';
-import Logo from '../../assets/Logo.png';
+import GrowWiseLogo from '../GrowWiseLogo';
 import './Sidebar.css';
 import {
     getHousehold
@@ -35,8 +35,8 @@ const Sidebar = () => {
     return (
         <aside className="app-sidebar">
             <div className="sidebar-header" data-tour-id="sidebar-logo">
-                <img src={Logo} alt="Logo" className="sidebar-logo" />
-                <h1 className="sidebar-title">{householdName || 'HouseHold'}</h1>
+                <GrowWiseLogo size="text-3xl" style={{ fontSize: '1.3rem' }}  className="sidebar-logo-text mb-1" />
+                {householdName && <span className="text-xs text-gray-400 font-medium tracking-wide ">{householdName}</span>}
             </div>
 
             <div className="sidebar-action">

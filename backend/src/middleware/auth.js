@@ -91,6 +91,7 @@ export const authenticate = async (req, res, next) => {
         country: true,
         state: true,
         city: true,
+        cookieAcceptedAt: true,
         createdAt: true
       }
     });

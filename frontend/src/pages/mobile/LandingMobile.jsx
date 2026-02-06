@@ -1,6 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { Sun, Moon, Sparkles, BarChart3, Brain, Mic, Image, Type, Upload, TrendingUp, Shield, Users } from 'lucide-react';
+import GrowWiseLogo from '../../components/GrowWiseLogo';
+import TaglineAnimatedMobile from '../../components/TaglineAnimatedMobile';
 import '../Landing.css';
 
 function LandingMobile() {
@@ -17,6 +19,10 @@ function LandingMobile() {
             {/* Hero Section */}
             <section className="landing-hero">
                 <div className="landing-hero-content">
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px' }}>
+                        <GrowWiseLogo size="" style={{ fontSize: '2.5rem' }} animated={true} />
+                        <TaglineAnimatedMobile />
+                    </div>
                     <h1>Take control of your money — effortlessly.</h1>
                     <p className="subtitle">
                         The world's smartest AI-powered household budgeting platform
@@ -223,7 +229,7 @@ function LandingMobile() {
                     <span onClick={() => navigate('/privacy')} style={{ cursor: 'pointer', fontWeight: '500' }}>Privacy Policy</span>
                     <span onClick={() => navigate('/terms')} style={{ cursor: 'pointer', fontWeight: '500' }}>Terms of Service</span>
                 </div>
-                <p>&copy; 2026 HouseHold Budgeting. All rights reserved.</p>
+                <p className="text-gray-400">&copy; 2025 GrowWise. All rights reserved.</p>
             </footer>
         </div>
     );

@@ -208,7 +208,7 @@ function FeaturesMobile() {
                 borderTop: '1px solid var(--border)',
                 fontSize: '0.9rem'
             }}>
-                <p>&copy; 2026 HouseHold Budgeting</p>
+                <p>&copy; 2025 GrowWise</p>
             </footer>
         </div>
     );

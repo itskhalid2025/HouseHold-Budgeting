@@ -394,3 +394,74 @@
     font-size: 14px;
     padding: 20px 0;
 }
+/* Ensure header is a positioning container */
+.mobile-header {
+    position: relative;
+    width: 100%;
+    padding: 20px 20px 10px;
+}
+
+/* FIX TOP-RIGHT TOOLBAR */
+.header-actions-fixed {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 10px;
+
+    z-index: 99;
+}
+
+/* Below the actions row */
+.header-logo {
+    margin-top: 60px;  /* pushes logo below top-right items */
+    display: flex;
+    justify-content: flex-start;
+}
+/* Remove ALL spaces on logo container */
+.header-logo {
+    margin: 0 !important;
+    padding: 0 !important;
+
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/* Remove padding from header only on the LOGO side */
+.mobile-header {
+    position: relative;
+    width: 100%;
+    padding: 0; /* remove default padding */
+    padding-top: 60px; /* keep room for buttons */
+}
+.user-greeting-row {
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;   /* keeps comma + name perfectly aligned */
+    gap: 6px;                /* space between greeting + name */
+}
+
+.user-greeting-row .greeting {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.user-greeting-row .username {
+    font-size: 20px;
+    font-weight: 700;
+    margin: 0;
+}
+.gradient-name {
+    background: linear-gradient(120deg, var(--primary-light), #818cf8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 800;
+}

@@ -17,6 +17,7 @@ import { useState, useEffect } from 'react';
 
 import { useAuth } from '../../context/AuthContext';
 import { updateHousehold, forgotPassword, updateProfile } from '../../api/api';
+import { updateConsent } from '../../services/analytics';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { CURRENCIES, getCurrencySymbol } from '../../utils/currencyUtils';
 import PhoneInput from 'react-phone-input-2';
@@ -52,6 +53,7 @@ export default function Settings() {
     });
     const [profileMsg, setProfileMsg] = useState('');
     const [profileError, setProfileError] = useState('');
+    const [cookieEnabled, setCookieEnabled] = useState(false);
 
     const [countries] = useState(Country.getAllCountries());
     const [states, setStates] = useState([]);
@@ -86,6 +88,7 @@ export default function Settings() {
                 }
             }
         }
+        setCookieEnabled(!!user.cookieAcceptedAt);
     }, [user, countries]);
 
     const handleProfileChange = (e) => {
@@ -198,6 +201,28 @@ export default function Settings() {
 
     const isOwner = user?.role === 'OWNER';
 
+    const handleCookieToggle = async () => {
+        const newValue = !cookieEnabled;
+        setCookieEnabled(newValue);
+        updateConsent(newValue);
+
+        const prefs = { analytics: newValue };
+        localStorage.setItem('cookiePreferences', JSON.stringify(prefs));
+
+        try {
+            const res = await updateProfile({ cookieAcceptedAt: newValue ? new Date() : null });
+            if (res.user) {
+                updateUser(res.user);
+            }
+            setProfileMsg(newValue ? 'Cookies enabled' : 'Cookies disabled');
+        } catch (err) {
+            console.error('Failed to update cookie preference', err);
+            setCookieEnabled(!newValue);
+            updateConsent(!newValue);
+            setProfileError('Failed to update settings');
+        }
+    };
+
     // Sidebar Navigation Item Component
     const NavItem = ({ id, icon: Icon, label }) => (
         <button
@@ -217,7 +242,8 @@ export default function Settings() {
                     <div className="sidebar-header">Preferences</div>
                     <NavItem id="profile" icon={User} label="My Profile" />
                     <NavItem id="household" icon={Home} label="Household" />
-                    
+                    <NavItem id="privacy" icon={Shield} label="Privacy" />
+
                     <NavItem id="security" icon={Shield} label="Security" />
                 </aside>
 
@@ -429,6 +455,40 @@ export default function Settings() {
                         </div>
                     )}
 
+                    {activeTab === 'privacy' && (
+                        <div className="tab-pane fade-in">
+                            <div className="section-header">
+                                <h2>Privacy & Cookies</h2>
+                                <p>Manage your data collection preferences.</p>
+                            </div>
+
+                            <div className="notification-options">
+                                <div className="toggle-row">
+                                    <div className="toggle-info">
+                                        <h4>Analytics & Performance</h4>
+                                        <p>Allow us to collect anonymous usage data to improve the app.</p>
+                                    </div>
+                                    <div className="toggle-wrapper-desktop">
+                                        <label className="switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={cookieEnabled}
+                                                onChange={handleCookieToggle}
+                                            />
+                                            <span className="slider round"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="info-box-glass">
+                                    <p>
+                                        <strong>Note:</strong> Turning this off will stop PostHog analytics tracking.
+                                        Essential settings like your theme (Dark/Light mode) are stored locally and will continue to work.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {activeTab === 'security' && (
                         <div className="tab-pane fade-in">
                             <div className="section-header">
@@ -446,7 +506,7 @@ export default function Settings() {
                                 </button>
                             </div>
 
-                            
+
 
                             <div className="danger-zone">
                                 <div className="danger-header">

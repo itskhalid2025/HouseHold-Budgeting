@@ -2,19 +2,18 @@ import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../../context/ThemeContext';
 import { ArrowRight, CheckCircle, Shield, BarChart3, Users, Zap, Menu, X, ChevronRight, Activity, Globe, DollarSign, Sun, Moon, TrendingUp, Sparkles, Brain, Mic, Image, Type, Upload } from 'lucide-react';
 import Footer from '../../components/Footer';
+import TopBar from '../../components/desktop/TopBar';
 import '../Landing.css';
 
 function LandingDesktop() {
     const navigate = useNavigate();
-    const { theme, toggleTheme } = useTheme();
+    const { theme } = useTheme();
 
     return (
         <div className="landing-page">
-            {/* Theme Toggle */}
-            <div className="landing-theme-toggle" onClick={toggleTheme}>
-                {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
-                <span>{theme === 'light' ? 'Dark' : 'Light'}</span>
-            </div>
+            <TopBar />
+
+            {/* Hero Section */}
 
             {/* Hero Section */}
             <section className="landing-hero">
@@ -47,7 +46,7 @@ function LandingDesktop() {
 
             {/* Why Use Section */}
             <section className="landing-section">
-                <h2 className="landing-section-title">Why Use Our Household Budgeting AI?</h2>
+                <h2 className="landing-section-title">Why Use GrowWise?</h2>
                 <p className="landing-section-subtitle">
                     Unlike traditional apps that only store numbers, our system thinks with you.
                     It understands spending behavior, detects patterns, and guides you with actual decision-making intelligence.

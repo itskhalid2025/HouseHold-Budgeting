@@ -1,0 +1,37 @@
+/* Keyframes for continuous flow from Left to Right (G to E) */
+@keyframes flowRight {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 200% 50%;
+    }
+}
+.gw-flow-gradient {
+    text-transform: none !important;
+}
+
+.gw-flow-gradient {
+    /* Continuous gradient: Magenta -> Blue -> Cyan -> (back to Magenta for loop) */
+    background: linear-gradient(90deg,
+            #ff00ff 0%,
+            /* Magenta */
+            #3b82f6 33%,
+            /* Blue */
+            #22d3ee 66%,
+            /* Cyan */
+            #ff00ff 100%
+            /* Magenta (Loop) */
+        );
+    background-size: 200% auto !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+
+    /* Animate seamlessly */
+    animation: flowRight 3s linear infinite;
+
+    /* Glow/Drop Shadow (Text Shadow doesn't work well with gradient text, using filter) */
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+}

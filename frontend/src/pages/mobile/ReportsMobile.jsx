@@ -305,17 +305,22 @@ export default function ReportsMobile() {
             <span>Analytics</span>
           </h1>
           <div className="header-actions">
-            <button
-              onClick={() => {
-                setHistoryOpen(true);
-                fetchHistory();
-              }}
-              className="neo-btn-icon history-btn"
-              title="View History"
-              data-tour-id="reports-history-mobile"
-            >
-              <FileText size={20} />
-            </button>
+           <button
+  onClick={() => {
+    setHistoryOpen(true);
+    fetchHistory();
+  }}
+  className="neo-btn-icon history-btn"
+  style={{
+    fontSize: "20px",
+    padding: "6px 10px",
+    background: "rgba(255,255,255,0.6)",
+    borderRadius: "12px"
+  }}
+>
+  📜
+</button>
+
             {(activeTab !== 'custom') && (
               <button
                 onClick={() => handleGenerateReport(activeTab)}

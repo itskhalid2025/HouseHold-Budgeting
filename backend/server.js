@@ -5,7 +5,7 @@
  * the Express application with required middleware, routes, and error handlers.
  * 
  * @module server
- * @author HouseHold Budgeting Team
+ * @author GrowWise Team
  * @version 1.0.0
  * @license MIT
  * 
@@ -116,7 +116,7 @@ app.use('/api/insights', insightRoutes); // Dynamic AI Insights
 // Root endpoint
 app.get('/', (req, res) => {
     res.json({
-        message: 'HouseHold Budgeting API is running 🚀',
+        message: 'GrowWise API is running 🚀',
         version: '1.0.0',
         documentation: '/api-docs',
         health: '/api/health'
@@ -202,7 +202,7 @@ async function startServer() {
 
         // Start listening
         app.listen(config.port, () => {
-            console.log(`\n🚀 HouseHold Budgeting API running on port ${config.port}`);
+            console.log(`\n🚀 GrowWise API running on port ${config.port}`);
             console.log(`📖 Health check: http://localhost:${config.port}/api/health`);
             console.log(`🧪 Test Gemini: http://localhost:${config.port}/api/test/gemini`);
             console.log(`🧪 Test Opik: http://localhost:${config.port}/api/test/opik\n`);

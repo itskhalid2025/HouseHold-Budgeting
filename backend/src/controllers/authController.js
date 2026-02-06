@@ -169,6 +169,10 @@ export const login = async (req, res) => {
                 role: true,
                 emailVerified: true,
                 phoneVerified: true,
+                country: true,
+                state: true,
+                city: true,
+                cookieAcceptedAt: true,
                 createdAt: true
             }
         });
@@ -466,6 +470,7 @@ export const updateProfile = async (req, res) => {
                 country: true,
                 state: true,
                 city: true,
+                cookieAcceptedAt: true,
                 createdAt: true
             }
         });

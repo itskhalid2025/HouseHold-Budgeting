@@ -27,6 +27,9 @@ import { navbarTourMobile, dashboardTourMobile } from '../../tourConfigs';
 
 import './DashboardMobile.css';
 
+import GrowWiseLogo from '../../components/GrowWiseLogo';
+import TaglineAnimatedMobile from '../../components/TaglineAnimatedMobile';
+
 export default function DashboardMobile() {
     const { user, currency } = useAuth();
     const { isInstalled } = useSync();
@@ -148,29 +151,60 @@ export default function DashboardMobile() {
     return (
         <div className="mobile-page dashboard-mobile">
             {/* 1. Header */}
-            <header className="mobile-header" data-tour-id="dashboard-header-mobile">
-                <div>
-                    <p className="greeting">Good {new Date().getHours() < 12 ? 'Morning' : 'Evening'},</p>
-                    <h2 className="username">{user?.firstName || 'User'}</h2>
-                </div>
-                <div className="header-actions">
-                    <RankBadge onClick={() => setShowGamification(true)} data-tour-id="dashboard-gamification-mobile" />
-                    <button
-                        className="icon-btn"
-                        onClick={() => startTour('dashboard-mobile', dashboardTourMobile)}
-                        title="Page Guide"
-                    >
-                        <HelpCircle size={24} />
-                    </button>
-                    <Link to="/settings" className="avatar-small">
-                        {(user?.firstName?.[0] || 'U').toUpperCase()}
-                        {!isInstalled && <span className="notification-dot"></span>}
-                    </Link>
-                </div>
-            </header>
+      <header 
+    className="mobile-header"
+    data-tour-id="dashboard-header-mobile"
+>
+
+    {/* TOP-RIGHT ACTIONS */}
+    <div className="header-actions-fixed">
+
+        <RankBadge
+            onClick={() => setShowGamification(true)}
+            data-tour-id="dashboard-gamification-mobile"
+        />
+
+        <button
+            className="icon-btn"
+            onClick={() => startTour("dashboard-mobile", dashboardTourMobile)}
+            title="Page Guide"
+        >
+            <HelpCircle size={20} />
+        </button>
+
+        <Link
+            to="/settings"
+            className="avatar-small"
+        >
+            {(user?.firstName?.[0] || "K").toUpperCase()}
+            {!isInstalled && <span className="notification-dot"></span>}
+        </Link>
+
+    </div>
+
+    {/* LOGO BELOW */}
+    <div className="header-logo">
+        <GrowWiseLogo size="" style={{ fontSize: "1.6rem" }} animated={true} />
+    </div>
+
+</header>
+
 
             {/* ... rest of dashboard ... */}
+            <div>
+                <TaglineAnimatedMobile className="mt-2 text-left items-start" />
+                <div className="user-greeting-row mt-2">
+    <p className="greeting">
+        Good {new Date().getHours() < 12 ? 'Morning' : 'Evening'},
+    </p>
 
+    <h2 className="username gradient-name">
+    {user?.firstName || 'User'}
+</h2>
+
+</div>
+
+            </div>
             {/* 2. Monthly Header */}
             <div className="mobile-section-header">
                 <h3>This Month's <span className="month-highlight">{new Date().toLocaleString('default', { month: 'long' })}</span> Overview</h3>

@@ -39,7 +39,13 @@ import { Search, Edit, Trash2, X, Check, Activity, MessageSquare, Zap, BarChart2
  * @property {number} reportLimit - AI Reports limit.
  * @property {boolean} chatEnabled - AI Chat enabled status.
  * @property {boolean} smartEntryEnabled - AI Smart Entry enabled status.
+ * @property {number} reportLimit - AI Reports limit.
+ * @property {boolean} chatEnabled - AI Chat enabled status.
+ * @property {boolean} smartEntryEnabled - AI Smart Entry enabled status.
  * @property {boolean} reportEnabled - AI Reports enabled status.
+ * @property {'DAILY'|'MONTHLY'} chatLimitType - AI Chat limit type.
+ * @property {'DAILY'|'MONTHLY'} smartEntryLimitType - AI Smart Entry limit type.
+ * @property {'DAILY'|'MONTHLY'} reportsLimitType - AI Reports limit type.
  */
 
 /**
@@ -65,7 +71,8 @@ const AdminUsers = () => {
     const [showGlobalModal, setShowGlobalModal] = useState(false);
     const [globalFormData, setGlobalFormData] = useState({
         chatLimit: 50, smartEntryLimit: 100, reportsLimit: 5,
-        chatEnabled: true, smartEntryEnabled: true, reportsEnabled: true
+        chatEnabled: true, smartEntryEnabled: true, reportsEnabled: true,
+        chatLimitType: 'MONTHLY', smartEntryLimitType: 'MONTHLY', reportsLimitType: 'MONTHLY'
     });
 
     const uniqueCountries = [...new Set(users.map(u => u.country || 'Unknown').filter(Boolean))].sort();
@@ -157,7 +164,10 @@ const AdminUsers = () => {
             reportsLimit: user.aiSettings?.reports?.limit ?? 5,
             chatEnabled: user.aiSettings?.chat?.enabled ?? true,
             smartEntryEnabled: user.aiSettings?.smartEntry?.enabled ?? true,
-            reportsEnabled: user.aiSettings?.reports?.enabled ?? true
+            reportsEnabled: user.aiSettings?.reports?.enabled ?? true,
+            chatLimitType: user.aiSettings?.chat?.limitType ?? 'MONTHLY',
+            smartEntryLimitType: user.aiSettings?.smartEntry?.limitType ?? 'MONTHLY',
+            reportsLimitType: user.aiSettings?.reports?.limitType ?? 'MONTHLY'
         });
         setShowEditModal(true);
     };
@@ -195,9 +205,21 @@ const AdminUsers = () => {
 
         try {
             const aiSettings = {
-                chat: { limit: parseInt(editFormData.chatLimit, 10), enabled: editFormData.chatEnabled },
-                smartEntry: { limit: parseInt(editFormData.smartEntryLimit, 10), enabled: editFormData.smartEntryEnabled },
-                reports: { limit: parseInt(editFormData.reportsLimit, 10), enabled: editFormData.reportsEnabled }
+                chat: {
+                    limit: parseInt(editFormData.chatLimit, 10),
+                    enabled: editFormData.chatEnabled,
+                    limitType: editFormData.chatLimitType
+                },
+                smartEntry: {
+                    limit: parseInt(editFormData.smartEntryLimit, 10),
+                    enabled: editFormData.smartEntryEnabled,
+                    limitType: editFormData.smartEntryLimitType
+                },
+                reports: {
+                    limit: parseInt(editFormData.reportsLimit, 10),
+                    enabled: editFormData.reportsEnabled,
+                    limitType: editFormData.reportsLimitType
+                }
             };
 
             const payload = {
@@ -233,9 +255,21 @@ const AdminUsers = () => {
 
         try {
             const aiSettings = {
-                chat: { limit: parseInt(globalFormData.chatLimit, 10), enabled: globalFormData.chatEnabled },
-                smartEntry: { limit: parseInt(globalFormData.smartEntryLimit, 10), enabled: globalFormData.smartEntryEnabled },
-                reports: { limit: parseInt(globalFormData.reportsLimit, 10), enabled: globalFormData.reportsEnabled }
+                chat: {
+                    limit: parseInt(globalFormData.chatLimit, 10),
+                    enabled: globalFormData.chatEnabled,
+                    limitType: globalFormData.chatLimitType
+                },
+                smartEntry: {
+                    limit: parseInt(globalFormData.smartEntryLimit, 10),
+                    enabled: globalFormData.smartEntryEnabled,
+                    limitType: globalFormData.smartEntryLimitType
+                },
+                reports: {
+                    limit: parseInt(globalFormData.reportsLimit, 10),
+                    enabled: globalFormData.reportsEnabled,
+                    limitType: globalFormData.reportsLimitType
+                }
             };
 
             const res = await api.updateAllUsersAiLimits(aiSettings);
@@ -594,19 +628,38 @@ const AdminUsers = () => {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="setting-limit-control">
-                                                    <label htmlFor={`${setting.key}Limit`}>Limit</label>
-                                                    <input
-                                                        type="number"
-                                                        id={`${setting.key}Limit`}
-                                                        name={`${setting.key}Limit`}
-                                                        className="setting-limit-input"
-                                                        value={editFormData[`${setting.key}Limit`] || ''}
-                                                        onChange={handleFormChange}
-                                                        disabled={!isEnabled}
-                                                        min="0"
-                                                        aria-label={`${setting.label} limit`}
-                                                    />
+                                                <div className="setting-limit-control" style={{ display: 'flex', gap: '8px', alignItems: 'end' }}>
+                                                    <div>
+                                                        <label htmlFor={`${setting.key}Limit`} style={{ fontSize: '0.8rem', color: '#888' }}>Limit</label>
+                                                        <input
+                                                            type="number"
+                                                            id={`${setting.key}Limit`}
+                                                            name={`${setting.key}Limit`}
+                                                            className="setting-limit-input"
+                                                            value={editFormData[`${setting.key}Limit`] || ''}
+                                                            onChange={handleFormChange}
+                                                            disabled={!isEnabled}
+                                                            min="0"
+                                                            aria-label={`${setting.label} limit`}
+                                                            style={{ width: '80px' }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label htmlFor={`${setting.key}LimitType`} style={{ fontSize: '0.8rem', color: '#888' }}>Period</label>
+                                                        <select
+                                                            id={`${setting.key}LimitType`}
+                                                            name={`${setting.key}LimitType`}
+                                                            className="form-input"
+                                                            value={editFormData[`${setting.key}LimitType`] || 'MONTHLY'}
+                                                            onChange={handleFormChange}
+                                                            disabled={!isEnabled}
+                                                            style={{ padding: '6px 8px', fontSize: '0.9rem', width: '100px', height: '38px', borderRadius: '6px' }}
+                                                            aria-label={`${setting.label} limit period`}
+                                                        >
+                                                            <option value="MONTHLY">Monthly</option>
+                                                            <option value="DAILY">Daily</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );
@@ -692,18 +745,36 @@ const AdminUsers = () => {
                                                         <div className="setting-description">{setting.desc}</div>
                                                     </div>
                                                 </div>
-                                                <div className="setting-limit-control">
-                                                    <label htmlFor={`global-${setting.key}Limit`}>Limit</label>
-                                                    <input
-                                                        type="number"
-                                                        id={`global-${setting.key}Limit`}
-                                                        name={`${setting.key}Limit`}
-                                                        className="setting-limit-input"
-                                                        value={globalFormData[`${setting.key}Limit`] || ''}
-                                                        onChange={handleGlobalFormChange}
-                                                        disabled={!isEnabled}
-                                                        min="0"
-                                                    />
+                                                <div className="setting-limit-control" style={{ display: 'flex', gap: '8px', alignItems: 'end' }}>
+                                                    <div>
+                                                        <label htmlFor={`global-${setting.key}Limit`} style={{ fontSize: '0.8rem', color: '#888' }}>Limit</label>
+                                                        <input
+                                                            type="number"
+                                                            id={`global-${setting.key}Limit`}
+                                                            name={`${setting.key}Limit`}
+                                                            className="setting-limit-input"
+                                                            value={globalFormData[`${setting.key}Limit`] || ''}
+                                                            onChange={handleGlobalFormChange}
+                                                            disabled={!isEnabled}
+                                                            min="0"
+                                                            style={{ width: '80px' }}
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label htmlFor={`global-${setting.key}LimitType`} style={{ fontSize: '0.8rem', color: '#888' }}>Period</label>
+                                                        <select
+                                                            id={`global-${setting.key}LimitType`}
+                                                            name={`${setting.key}LimitType`}
+                                                            className="form-input"
+                                                            value={globalFormData[`${setting.key}LimitType`] || 'MONTHLY'}
+                                                            onChange={handleGlobalFormChange}
+                                                            disabled={!isEnabled}
+                                                            style={{ padding: '6px 8px', fontSize: '0.9rem', width: '100px', height: '38px', borderRadius: '6px' }}
+                                                        >
+                                                            <option value="MONTHLY">Monthly</option>
+                                                            <option value="DAILY">Daily</option>
+                                                        </select>
+                                                    </div>
                                                 </div>
                                             </div>
                                         );

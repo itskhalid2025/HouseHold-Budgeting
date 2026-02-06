@@ -10,7 +10,7 @@
  * @requires ../api/api
  * @requires ./Login.css
  */
-import Logo from '../assets/Logo.png';
+import GrowWiseLogo from '../components/GrowWiseLogo';
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
@@ -52,7 +52,9 @@ export default function Login() {
         <div className="auth-container">
             <div className="auth-card">
                 <div className="auth-header">
-                    <h1><img src={Logo} alt="Logo" className="app-logo" /></h1>
+                    <div className="flex justify-center mb-6">
+                        <GrowWiseLogo size="" style={{ fontSize: '2.5rem' }} animated={true} />
+                    </div>
                     <h2>Welcome Back</h2>
                     <p>Sign in to manage your household budget</p>
                 </div>

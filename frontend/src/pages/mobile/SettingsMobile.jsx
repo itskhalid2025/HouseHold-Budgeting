@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useSync } from '../../context/SyncContext';
 import { updateHousehold, forgotPassword, updateProfile } from '../../api/api';
+import { updateConsent } from '../../services/analytics';
 import { CURRENCIES } from '../../utils/currencyUtils';
 import MobileCard from '../../components/mobile/MobileCard';
 import MobileButton from '../../components/mobile/MobileButton';
@@ -51,6 +52,7 @@ export default function SettingsMobile() {
     // -- Local UI State --
     const [subPage, setSubPage] = useState(null); // 'profile' | 'household' | 'notifications'
     const [msg, setMsg] = useState({ type: '', text: '' });
+    const [cookieEnabled, setCookieEnabled] = useState(false);
 
     // -- Form State --
     const [hhName, setHhName] = useState('');
@@ -95,6 +97,7 @@ export default function SettingsMobile() {
                 state: user.state || '',
                 city: user.city || ''
             });
+            setCookieEnabled(!!user.cookieAcceptedAt);
 
             if (user.country) {
                 const country = Country.getAllCountries().find(c => c.name === user.country);
@@ -206,6 +209,30 @@ export default function SettingsMobile() {
             setMsg({ type: 'success', text: 'Household updated successfully!' });
         } catch (err) {
             setMsg({ type: 'error', text: 'Update failed. Please check your connection.' });
+        }
+    };
+
+    /**
+     * Handles Cookie/Privacy Toggle
+     */
+    const handleCookieToggle = async () => {
+        const newValue = !cookieEnabled;
+        setCookieEnabled(newValue);
+        updateConsent(newValue);
+
+        // Update local storage for analytics service to pick up on reload
+        const prefs = { analytics: newValue };
+        localStorage.setItem('cookiePreferences', JSON.stringify(prefs));
+
+        try {
+            const res = await updateProfile({ cookieAcceptedAt: newValue ? new Date() : null });
+            if (res.user) updateUser(res.user);
+        } catch (err) {
+            console.error('Failed to update cookie preference', err);
+            // Revert on failure
+            setCookieEnabled(!newValue);
+            updateConsent(!newValue);
+            setMsg({ type: 'error', text: 'Failed to update settings' });
         }
     };
 
@@ -490,10 +517,57 @@ export default function SettingsMobile() {
         </section>
     );
 
+    /**
+     * Renders the Privacy sub-page.
+     */
+    const renderPrivacy = () => (
+        <section className="sub-page-container privacy-page" aria-label="Privacy Settings">
+            <header className="sub-header">
+                <button
+                    onClick={() => setSubPage(null)}
+                    className="back-btn glass-btn"
+                    aria-label="Go back to settings menu"
+                >
+                    <ChevronRight className="rotate-180" size={20} />
+                    <span>Back</span>
+                </button>
+                <h2 className="gradient-text">Privacy & Cookies</h2>
+            </header>
+
+            <div className="content-scroll">
+                <MobileCard className="vibrant-card">
+                    <div className="toggle-group">
+                        <label className="toggle-row">
+                            <div className="row-info">
+                                <span>Analytics & Cookies</span>
+                                <small>Help us improve by sharing usage data</small>
+                            </div>
+                            <div className="toggle-wrapper">
+                                <input
+                                    type="checkbox"
+                                    checked={cookieEnabled}
+                                    onChange={handleCookieToggle}
+                                    className="toggle-switch-vibrant"
+                                    aria-label="Toggle analytics"
+                                />
+                                <span className="toggle-slider"></span>
+                            </div>
+                        </label>
+                    </div>
+                    <div style={{ marginTop: '15px', fontSize: '0.85rem', opacity: 0.7, lineHeight: '1.4' }}>
+                        <p>Turning this off will stop anonymous usage tracking via PostHog.</p>
+                        <p style={{ marginTop: '8px' }}><strong>Note:</strong> Your theme preferences (Dark/Light mode) and other essential settings are stored locally and will continue to work.</p>
+                    </div>
+                </MobileCard>
+            </div>
+        </section>
+    );
+
     // -- Conditional Rendering for Sub-Pages --
     if (subPage === 'profile') return renderProfile();
     if (subPage === 'household') return renderHousehold();
     if (subPage === 'notifications') return renderNotifications();
+    if (subPage === 'privacy') return renderPrivacy();
 
     // -- Main Settings Dashboard --
     return (
@@ -569,6 +643,25 @@ export default function SettingsMobile() {
 
                 <MobileCard
                     className="menu-card vibrant-card-interactive"
+                    onClick={() => setSubPage('privacy')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Privacy Settings"
+                >
+                    <div className="menu-item">
+                        <div className="icon-bg gradient-3">
+                            <Shield size={22} className="menu-icon" />
+                        </div>
+                        <div className="menu-text-col">
+                            <span className="menu-text">Privacy Settings</span>
+                            <span className="menu-sub">Cookies & Analytics</span>
+                        </div>
+                        <ChevronRight size={20} className="menu-arrow" />
+                    </div>
+                </MobileCard>
+
+                <MobileCard
+                    className="menu-card vibrant-card-interactive"
                     onClick={() => navigate('/privacy')}
                     role="button"
                     tabIndex={0}
@@ -603,29 +696,7 @@ export default function SettingsMobile() {
                     </div>
                 </MobileCard>
 
-                <MobileCard
-                    className="menu-card vibrant-card-interactive"
-                    onClick={() => {
-                        resetAllTours();
-                        navigate('/');
-                        window.location.reload();
-                    }}
-                    role="button"
-                    tabIndex={0}
-                    aria-label="Restart Platform Guide"
-                    data-tour-id="settings-restart-guide-mobile"
-                >
-                    <div className="menu-item">
-                        <div className="icon-bg gradient-3">
-                            <RefreshCw size={22} className="menu-icon" />
-                        </div>
-                        <div className="menu-text-col">
-                            <span className="menu-text">Restart Guide</span>
-                            <span className="menu-sub">Learn about all features again</span>
-                        </div>
-                        <ChevronRight size={20} className="menu-arrow" />
-                    </div>
-                </MobileCard >
+                
             </nav >
 
             <footer className="logout-section" data-tour-id="settings-account-mobile">

@@ -29,7 +29,7 @@ function PrivacyPolicyMobile() {
                 <div className="landing-feature-card" style={{ padding: '25px 20px' }}>
                     <h2 style={{ fontSize: '1.3rem', marginBottom: '15px' }}>1. Introduction</h2>
                     <p style={{ marginBottom: '25px', lineHeight: '1.6', fontSize: '0.95rem' }}>
-                        Welcome to HouseHold Budgeting. We prioritize your privacy and are committed to protecting your personal data.
+                        Welcome to GrowWise. We prioritize your privacy and are committed to protecting your personal data.
                         This privacy policy explains how we collect, use, and safeguard your information when you use our AI-powered budgeting platform.
                     </p>
 
@@ -88,7 +88,7 @@ function PrivacyPolicyMobile() {
                 borderTop: '1px solid var(--border)',
                 fontSize: '0.9rem'
             }}>
-                <p>&copy; 2026 HouseHold Budgeting</p>
+                <p>&copy; 2025 GrowWise</p>
             </footer>
         </div>
     );

@@ -10,7 +10,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'screenshot-wide.png', 'screenshot-narrow.png'],
       manifest: {
-        name: 'HouseHold Budgeting',
+        name: 'GrowWise',
         short_name: 'HH Budget',
         description: 'Smart Household Budgeting & Financial Insights',
         theme_color: '#6366f1',
@@ -41,13 +41,13 @@ export default defineConfig({
             sizes: '1280x720',
             type: 'image/png',
             form_factor: 'wide',
-            label: 'HouseHold Budgeting Desktop Dashboard'
+            label: 'GrowWise Desktop Dashboard'
           },
           {
             src: 'screenshot-narrow.png',
             sizes: '360x640',
             type: 'image/png',
-            label: 'HouseHold Budgeting Mobile View'
+            label: 'GrowWise Mobile View'
           }
         ]
       },

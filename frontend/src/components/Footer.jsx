@@ -25,7 +25,7 @@ const Footer = ({ isMobile = false }) => {
                 <span onClick={() => navigate('/privacy')} className="footer-link">Privacy Policy</span>
                 <span onClick={() => navigate('/terms')} className="footer-link">Terms of Service</span>
             </div>
-            <p>&copy; 2026 HouseHold Budgeting. All rights reserved.</p>
+            <p className="text-gray-400">&copy; 2025 GrowWise. All rights reserved.</p>
         </footer>
     );
 };

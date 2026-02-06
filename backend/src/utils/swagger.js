@@ -1,7 +1,7 @@
 /**
  * @fileoverview Swagger API Documentation Configuration
  *
- * Configures the Swagger/OpenAPI specification for the HouseHold Budgeting API.
+ * Configures the Swagger/OpenAPI specification for the GrowWise API.
  * Defines metadata, security schemes, and route scanning paths.
  *
  * @module utils/swagger
@@ -15,9 +15,9 @@ const options = {
   definition: {
     openapi: '3.0.0',
     info: {
-      title: 'HouseHold Budgeting API',
+      title: 'GrowWise API',
       version: '1.0.0',
-      description: 'API documentation for HouseHold Budgeting application',
+      description: 'API documentation for GrowWise application',
     },
     servers: [
       {

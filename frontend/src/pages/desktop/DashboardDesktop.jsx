@@ -42,6 +42,8 @@ import {
     Trophy,
     ChevronDown
 } from 'lucide-react';
+import GrowWiseLogo from '../../components/GrowWiseLogo';
+import TaglineAnimated from '../../components/TaglineAnimated';
 import TrendLineChart from '../../components/charts/TrendLineChart';
 import usePolling from '../../hooks/usePolling';
 import useVoiceInput from '../../hooks/useVoiceInput';
@@ -380,8 +382,8 @@ export default function DashboardDesktop() {
                 <div className="left-column">
                     {/* 1. Brand Header */}
                     <div className="brand-header">
-                        <h2 className="brand-title">HouseHold Budgeting</h2>
-                        <span className="brand-subtitle">Smart Financial Management</span>
+                        <GrowWiseLogo size="" style={{ fontSize: '5rem' }} animated={true} />
+                        <TaglineAnimated className="mt-4" />
                     </div>
 
                     {/* 2. Welcome Message */}

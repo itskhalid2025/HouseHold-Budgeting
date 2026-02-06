@@ -74,7 +74,7 @@ export const sendVerificationEmail = async (user, token) => {
             </div>
             
             <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #aaa;">
-                &copy; ${new Date().getFullYear()} Household Budgeting. All rights reserved.
+                &copy; ${new Date().getFullYear()} GrowWise. All rights reserved.
             </div>
         </div>
     `;

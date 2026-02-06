@@ -1,7 +1,8 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "HouseHold Budgeting API",
+  "description": "GrowWise API",
+  "title": "GrowWise API",
   "type": "module",
   "main": "server.js",
   "scripts": {

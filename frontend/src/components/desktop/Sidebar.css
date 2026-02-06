@@ -79,8 +79,9 @@
 .sidebar-header {
     padding: 0 24px 32px;
     display: flex;
-    align-items: center;
-    gap: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
 }
 
 .sidebar-logo {

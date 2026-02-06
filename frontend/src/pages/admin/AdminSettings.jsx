@@ -4,7 +4,7 @@ import './AdminSettings.css';
 
 const AdminSettings = () => {
     const [settings, setSettings] = useState({
-        platformName: 'HouseHold Budgeting',
+        platformName: 'GrowWise',
         maintenanceMode: false,
         aiRateLimit: 50,
         enableRegistration: true

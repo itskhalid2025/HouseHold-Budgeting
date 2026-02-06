@@ -32,7 +32,7 @@ const AdminLayout = () => {
                         <div className="logo-icon">A</div>
                         <h1 className="logo-text">Admin Portal</h1>
                     </div>
-                    <p className="version-text">HouseHold Budgeting v2.0</p>
+                    <p className="version-text">GrowWise v2.0</p>
                 </div>
 
                 <nav className="sidebar-nav custom-scrollbar">
