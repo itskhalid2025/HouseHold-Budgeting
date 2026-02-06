@@ -26,7 +26,7 @@ export const createHousehold = async (req, res) => {
         const userId = req.user.id;
 
         // Check if user is already in a household
-        const existingUser = await prisma.users.findUnique({
+        const existingUser = await prisma.user.findUnique({
             where: { id: userId }
         });
 
@@ -43,7 +43,7 @@ export const createHousehold = async (req, res) => {
         let isUnique = false;
         while (!isUnique) {
             inviteCode = generateCode(8);
-            const existing = await prisma.households.findUnique({
+            const existing = await prisma.household.findUnique({
                 where: { inviteCode }
             });
             if (!existing) isUnique = true;
@@ -442,11 +442,11 @@ export const leaveHousehold = async (req, res) => {
 
                     // Transfer ownership
                     await prisma.$transaction([
-                        prisma.users.update({
+                        prisma.user.update({
                             where: { id: successor.id },
                             data: { role: 'OWNER' }
                         }),
-                        prisma.households.update({
+                        prisma.household.update({
                             where: { id: householdId },
                             data: { adminId: successor.id }
                         })
@@ -459,28 +459,28 @@ export const leaveHousehold = async (req, res) => {
         logDB('transaction', 'Multiple', { action: 'leave household and clean data' });
         await prisma.$transaction([
             // Delete user's transactions
-            prisma.transactions.deleteMany({
+            prisma.transaction.deleteMany({
                 where: {
                     userId,
                     householdId
                 }
             }),
             // Delete user's incomes
-            prisma.incomes.deleteMany({
+            prisma.income.deleteMany({
                 where: {
                     userId,
                     householdId
                 }
             }),
             // Delete any old invitations/join requests for this user & household (allows rejoining)
-            prisma.invitations.deleteMany({
+            prisma.invitation.deleteMany({
                 where: {
                     householdId,
                     recipientEmail: email
                 }
             }),
             // Update user to leave household
-            prisma.users.update({
+            prisma.user.update({
                 where: { id: userId },
                 data: {
                     householdId: null,
@@ -519,7 +519,7 @@ export const getMembers = async (req, res) => {
             });
         }
 
-        const members = await prisma.users.findMany({
+        const members = await prisma.user.findMany({
             where: { householdId },
             select: {
                 id: true,
