@@ -26,7 +26,7 @@ export const createHousehold = async (req, res) => {
         const userId = req.user.id;
 
         // Check if user is already in a household
-        const existingUser = await prisma.user.findUnique({
+        const existingUser = await prisma.users.findUnique({
             where: { id: userId }
         });
 
@@ -43,7 +43,7 @@ export const createHousehold = async (req, res) => {
         let isUnique = false;
         while (!isUnique) {
             inviteCode = generateCode(8);
-            const existing = await prisma.household.findUnique({
+            const existing = await prisma.households.findUnique({
                 where: { inviteCode }
             });
             if (!existing) isUnique = true;
@@ -432,21 +432,21 @@ export const leaveHousehold = async (req, res) => {
 
             if (otherOwnersCount === 0) {
                 // Determine successor (oldest member who is not the leaving user)
-                const successor = await prisma.user.findFirst({
+                const user = await prisma.user.findFirst({
                     where: { householdId, NOT: { id: userId } },
                     orderBy: { createdAt: 'asc' }
                 });
 
-                if (successor) {
-                    logDB('info', 'Transferring ownership', { from: userId, to: successor.id });
+                if (user) {
+                    logDB('info', 'Transferring ownership', { from: userId, to: user.id });
 
                     // Transfer ownership
                     await prisma.$transaction([
-                        prisma.user.update({
+                        prisma.users.update({
                             where: { id: successor.id },
                             data: { role: 'OWNER' }
                         }),
-                        prisma.household.update({
+                        prisma.households.update({
                             where: { id: householdId },
                             data: { adminId: successor.id }
                         })
@@ -459,28 +459,28 @@ export const leaveHousehold = async (req, res) => {
         logDB('transaction', 'Multiple', { action: 'leave household and clean data' });
         await prisma.$transaction([
             // Delete user's transactions
-            prisma.transaction.deleteMany({
+            prisma.transactions.deleteMany({
                 where: {
                     userId,
                     householdId
                 }
             }),
             // Delete user's incomes
-            prisma.income.deleteMany({
+            prisma.incomes.deleteMany({
                 where: {
                     userId,
                     householdId
                 }
             }),
             // Delete any old invitations/join requests for this user & household (allows rejoining)
-            prisma.invitation.deleteMany({
+            prisma.invitations.deleteMany({
                 where: {
                     householdId,
                     recipientEmail: email
                 }
             }),
             // Update user to leave household
-            prisma.user.update({
+            prisma.users.update({
                 where: { id: userId },
                 data: {
                     householdId: null,
@@ -519,7 +519,7 @@ export const getMembers = async (req, res) => {
             });
         }
 
-        const members = await prisma.user.findMany({
+        const members = await prisma.users.findMany({
             where: { householdId },
             select: {
                 id: true,

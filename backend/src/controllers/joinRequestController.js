@@ -46,7 +46,7 @@ export const submitJoinRequest = async (req, res) => {
 
         // Find household by invite code
         logDB('findUnique', 'Household', { inviteCode });
-        const household = await prisma.household.findUnique({
+        const household = await prisma.households.findUnique({
             where: { inviteCode: inviteCode.toUpperCase() }
         });
 
@@ -60,7 +60,7 @@ export const submitJoinRequest = async (req, res) => {
 
         // Check for ANY existing invitation/request (regardless of status)
         // Use findFirst with case-insensitive email check to ensure we find potential conflicts
-        const existingInvitation = await prisma.invitation.findFirst({
+        const existingInvitation = await prisma.invitations.findFirst({
             where: {
                 householdId: household.id,
                 recipientEmail: {
@@ -82,7 +82,7 @@ export const submitJoinRequest = async (req, res) => {
 
             // If it exists but is not pending (e.g. CANCELLED/REJECTED/Agreed), delete it so we can create a fresh one
             logDB('delete', 'Invitation', { id: existingInvitation.id });
-            await prisma.invitation.delete({
+            await prisma.invitations.delete({
                 where: { id: existingInvitation.id }
             });
         }
@@ -90,7 +90,7 @@ export const submitJoinRequest = async (req, res) => {
         // Create join request (using Invitation model)
         const token = `REQ_${Date.now()}_${userId.slice(0, 8)}_${Math.random().toString(36).substring(2, 7)}`;
         logDB('create', 'Invitation', { type: 'JOIN_REQUEST', householdId: household.id });
-        const joinRequest = await prisma.invitation.create({
+        const joinRequest = await prisma.invitations.create({
             data: {
                 householdId: household.id,
                 invitedById: household.adminId, // Set to household admin
@@ -148,7 +148,7 @@ export const getPendingRequests = async (req, res) => {
         }
 
         logDB('findMany', 'Invitation', { householdId, status: 'PENDING' });
-        const requests = await prisma.invitation.findMany({
+        const requests = await prisma.invitations.findMany({
             where: {
                 householdId,
                 status: 'PENDING',
@@ -160,7 +160,7 @@ export const getPendingRequests = async (req, res) => {
         // Enrich with user data
         const enrichedRequests = await Promise.all(
             requests.map(async (request) => {
-                const user = await prisma.user.findUnique({
+                const user = await prisma.users.findUnique({
                     where: { email: request.recipientEmail },
                     select: {
                         id: true,
@@ -222,7 +222,7 @@ export const approveRequest = async (req, res) => {
 
         // Find the request
         logDB('findUnique', 'Invitation', { id });
-        const request = await prisma.invitation.findUnique({
+        const request = await prisma.invitations.findUnique({
             where: { id }
         });
 
@@ -243,7 +243,7 @@ export const approveRequest = async (req, res) => {
         }
 
         // Find the user who made the request
-        const requester = await prisma.user.findUnique({
+        const requester = await prisma.users.findUnique({
             where: { email: request.recipientEmail }
         });
 
@@ -276,7 +276,7 @@ export const approveRequest = async (req, res) => {
                 }
             }),
             // Mark invitation as accepted
-            prisma.invitation.update({
+            prisma.invitations.update({
                 where: { id },
                 data: {
                     status: 'ACCEPTED',
@@ -319,7 +319,7 @@ export const rejectRequest = async (req, res) => {
         }
 
         logDB('findUnique', 'Invitation', { id });
-        const request = await prisma.invitation.findUnique({
+        const request = await prisma.invitations.findUnique({
             where: { id }
         });
 
@@ -340,7 +340,7 @@ export const rejectRequest = async (req, res) => {
         }
 
         logDB('update', 'Invitation', { id, status: 'CANCELLED' });
-        await prisma.invitation.update({
+        await prisma.invitations.update({
             where: { id },
             data: { status: 'CANCELLED' }
         });

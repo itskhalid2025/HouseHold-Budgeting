@@ -61,7 +61,7 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd, userIds
     }
 
     // Get income data
-    const incomes = await prisma.income.findMany({
+    const incomes = await prisma.incomes.findMany({
         where: incomeWhere
     });
 
@@ -106,7 +106,7 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd, userIds
         membersWhere.id = { in: userIds };
     }
 
-    const members = await prisma.user.findMany({
+    const members = await prisma.users.findMany({
         where: membersWhere,
         select: { id: true, firstName: true, lastName: true, role: true }
     });
@@ -268,7 +268,7 @@ async function aggregateTransactionData(householdId, dateStart, dateEnd, userIds
             if (i === 0) {
                 amount = totalSpent;
             } else {
-                const histTrans = await prisma.transaction.aggregate({
+                const histTrans = await prisma.transactions.aggregate({
                     _sum: { amount: true },
                     where: {
                         householdId,
@@ -384,7 +384,7 @@ async function generateReportInternal(householdId, reportType, dateStart, dateEn
 
         // If specific users, add context for AI
         if (userIds && userIds.length > 0) {
-            const users = await prisma.user.findMany({
+            const users = await prisma.users.findMany({
                 where: { id: { in: userIds } },
                 select: { firstName: true, lastName: true }
             });

@@ -123,7 +123,7 @@ async function addTransaction(req, res) {
 
             // Create transaction
             logDB('create', 'Transaction', { description });
-            const transaction = await prisma.transaction.create({
+            const transaction = await prisma.transactions.create({
                 data: {
                     householdId,
                     userId,
@@ -141,7 +141,7 @@ async function addTransaction(req, res) {
 
             // Update household lastModifiedAt for polling
             logDB('update', 'Household', { id: householdId });
-            await prisma.household.update({
+            await prisma.households.update({
                 where: { id: householdId },
                 data: { lastModifiedAt: new Date() }
             });
@@ -254,7 +254,7 @@ async function listTransactions(req, res) {
             // Get transactions with pagination
             logDB('findMany', 'Transaction', { householdId, page });
             const [transactions, total] = await Promise.all([
-                prisma.transaction.findMany({
+                prisma.transactions.findMany({
                     where,
                     skip,
                     take: limit,
@@ -269,11 +269,11 @@ async function listTransactions(req, res) {
                         }
                     }
                 }),
-                prisma.transaction.count({ where })
+                prisma.transactions.count({ where })
             ]);
 
             // Get household lastModifiedAt for polling
-            const household = await prisma.household.findUnique({
+            const household = await prisma.households.findUnique({
                 where: { id: householdId },
                 select: { lastModifiedAt: true }
             });
@@ -312,7 +312,7 @@ async function getTransaction(req, res) {
         const householdId = req.user.householdId;
 
         logDB('findFirst', 'Transaction', { id });
-        const transaction = await prisma.transaction.findFirst({
+        const transaction = await prisma.transactions.findFirst({
             where: {
                 id,
                 householdId,
@@ -367,7 +367,7 @@ async function updateTransaction(req, res) {
         }
 
         // Find the transaction
-        const existingTransaction = await prisma.transaction.findFirst({
+        const existingTransaction = await prisma.transactions.findFirst({
             where: {
                 id,
                 householdId,
@@ -399,7 +399,7 @@ async function updateTransaction(req, res) {
 
         // Update transaction
         logDB('update', 'Transaction', { id });
-        const transaction = await prisma.transaction.update({
+        const transaction = await prisma.transactions.update({
             where: { id },
             data: {
                 description: description || existingTransaction.description,
@@ -418,7 +418,7 @@ async function updateTransaction(req, res) {
 
         // Update household lastModifiedAt
         logDB('update', 'Household', { id: householdId });
-        await prisma.household.update({
+        await prisma.households.update({
             where: { id: householdId },
             data: { lastModifiedAt: new Date() }
         });
@@ -458,7 +458,7 @@ async function deleteTransaction(req, res) {
         }
 
         // Find the transaction
-        const existingTransaction = await prisma.transaction.findFirst({
+        const existingTransaction = await prisma.transactions.findFirst({
             where: {
                 id,
                 householdId,
@@ -469,7 +469,7 @@ async function deleteTransaction(req, res) {
         if (!existingTransaction) {
             logError('transactionController', 'deleteTransaction', new Error(`Transaction not found. ID: ${id}, HH: ${householdId}`));
             // Check if it exists but in another household or deleted
-            const techCheck = await prisma.transaction.findUnique({ where: { id } });
+            const techCheck = await prisma.transactions.findUnique({ where: { id } });
             console.log('DEBUG: 404 Investigation:', {
                 searchedId: id,
                 searchedHousehold: householdId,
@@ -507,14 +507,14 @@ async function deleteTransaction(req, res) {
 
         // Soft delete
         logDB('update', 'Transaction', { id, action: 'soft-delete' });
-        await prisma.transaction.update({
+        await prisma.transactions.update({
             where: { id },
             data: { deletedAt: new Date() }
         });
 
         // Update household lastModifiedAt
         logDB('update', 'Household', { id: householdId });
-        await prisma.household.update({
+        await prisma.households.update({
             where: { id: householdId },
             data: { lastModifiedAt: new Date() }
         });
