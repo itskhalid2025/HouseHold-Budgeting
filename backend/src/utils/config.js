@@ -54,10 +54,10 @@ const config = {
         projectName: process.env.OPIK_PROJECT_NAME || 'household-budget'
     },
 
-    // CORS
+    // CORS need no / at the end
     cors: {
         origin: (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [])
-            .concat(['http://localhost:5173', 'http://localhost:4173', 'http://localhost:5174', 'https://69863748942bb41f16bca9c7--growwise123.netlify.app/', 'https://devserver-mobile-ui--householdbudgeting.netlify.app'])
+            .concat(['http://localhost:5173', 'https://growwise-app.netlify.app', 'https://devserver-mobile-ui--householdbudgeting.netlify.app'])
             .map(url => url.trim())
             .filter(Boolean)
     }
