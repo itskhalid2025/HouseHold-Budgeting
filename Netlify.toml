@@ -1,0 +1,19 @@
+# Netlify Configuration File
+
+[build]
+  # The path to your frontend folder
+  base = "frontend"
+  
+  # The command to build your React app
+  command = "npm run build"
+  
+  # The directory that contains the finished build (usually 'dist' for Vite or 'build' for CRA)
+  publish = "frontend/dist"
+
+[[redirects]]
+  # This rule fixes the "Page Not Found" error for React Router
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
