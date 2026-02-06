@@ -2,59 +2,89 @@ import nodemailer from 'nodemailer';
 import config from '../utils/config.js';
 import { logError, logSuccess } from '../utils/controllerLogger.js';
 
-// Configure transporter
-const smtpPort = parseInt(process.env.SMTP_PORT || '587');
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: smtpPort,
-    secure: smtpPort === 465, // true for 465, false for other ports
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASS,
-    },
-    // Add timeouts to prevent hanging on slow/unresponsive SMTP servers
-    connectionTimeout: 5000, // 5 seconds
-    greetingTimeout: 5000,   // 5 seconds
-    socketTimeout: 10000,    // 10 seconds
-});
+/**
+ * Brevo API integration for sending emails
+ * This bypasses SMTP port blocking on Render.
+ */
 
 /**
- * Verify SMTP connection
+ * Verify Brevo API connection (Optional check)
  */
 export const verifyConnection = async () => {
-    const host = process.env.SMTP_HOST || 'smtp.gmail.com';
-    const port = process.env.SMTP_PORT || 587;
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) {
+        console.warn('⚠️ BREVO_API_KEY is not set. Email service will not work.');
+        return false;
+    }
+
+    // Quick check to see if API key is valid by calling the user account endpoint
     try {
-        await transporter.verify();
-        console.log(`✅ SMTP Server Check: Connected successfully to ${host}:${port}`);
-        return true;
+        const response = await fetch('https://api.brevo.com/v3/account', {
+            method: 'GET',
+            headers: {
+                'api-key': apiKey,
+                'Accept': 'application/json'
+            }
+        });
+
+        if (response.ok) {
+            console.log('✅ Brevo API Check: Connected successfully');
+            return true;
+        } else {
+            const data = await response.json();
+            console.error(`❌ Brevo API Check: Failed (${response.status}) - ${data.message || 'Unknown error'}`);
+            return false;
+        }
     } catch (error) {
-        console.error('❌ SMTP Server Check: Failed');
+        console.error('❌ Brevo API Check: Error connecting to Brevo');
         console.error(`   Error: ${error.message}`);
-        console.error('   Hint: Check SMTP_HOST, SMTP_USER, SMTP_PASS in .env');
         return false;
     }
 };
 
 /**
- * Send an email
+ * Send an email using Brevo API
  * @param {string} to - Recipient email
  * @param {string} subject - Email subject
  * @param {string} html - Email body (HTML)
  */
 export const sendEmail = async (to, subject, html) => {
+    const apiKey = process.env.BREVO_API_KEY;
+    const senderEmail = process.env.BREVO_SENDER_EMAIL || 'noreply@householdbudget.com';
+    const senderName = process.env.BREVO_SENDER_NAME || 'GrowWise';
+
+    if (!apiKey) {
+        console.error("BREVO_API_KEY is missing in .env");
+        throw new Error("Email service misconfigured");
+    }
+
     try {
-        const info = await transporter.sendMail({
-            from: process.env.SMTP_FROM || '"Household Budget" <noreply@householdbudget.com>',
-            to,
-            subject,
-            html,
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'api-key': apiKey,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                sender: { name: senderName, email: senderEmail },
+                to: [{ email: to }],
+                subject: subject,
+                htmlContent: html
+            })
         });
-        logSuccess('emailService', 'sendEmail', { messageId: info.messageId });
-        return info;
+
+        const data = await response.json();
+
+        if (response.ok) {
+            logSuccess('emailService', 'sendEmail', { messageId: data.messageId });
+            return data;
+        } else {
+            console.error(`❌ Brevo Email Failed: ${data.message || 'Unknown error'}`);
+            throw new Error(data.message || 'Failed to send email via Brevo');
+        }
     } catch (error) {
         logError('emailService', 'sendEmail', error);
-        console.error("Email send failed. Ensure SMTP_HOST, SMTP_USER, SMTP_PASS are set in .env");
         throw error;
     }
 };
@@ -70,7 +100,7 @@ export const sendVerificationEmail = async (user, token) => {
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
             <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="color: #6d28d9; margin: 0;">Household Budget</h1>
+                <h1 style="color: #6d28d9; margin: 0;">GrowWise</h1>
                 <p style="color: #666;">Welcome to the family!</p>
             </div>
             
@@ -102,7 +132,7 @@ export const sendVerificationEmail = async (user, token) => {
         </div>
     `;
 
-    return sendEmail(user.email, 'Verify your email - Household Budget', html);
+    return sendEmail(user.email, 'Verify your email - GrowWise', html);
 };
 
 /**
@@ -116,7 +146,7 @@ export const sendPasswordResetEmail = async (user, token) => {
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
             <div style="text-align: center; margin-bottom: 20px;">
-                <h1 style="color: #6d28d9; margin: 0;">Household Budget</h1>
+                <h1 style="color: #6d28d9; margin: 0;">GrowWise</h1>
             </div>
             
             <div style="background-color: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
@@ -140,5 +170,5 @@ export const sendPasswordResetEmail = async (user, token) => {
         </div>
     `;
 
-    return sendEmail(user.email, 'Reset your password - Household Budget', html);
+    return sendEmail(user.email, 'Reset your password - GrowWise', html);
 };
