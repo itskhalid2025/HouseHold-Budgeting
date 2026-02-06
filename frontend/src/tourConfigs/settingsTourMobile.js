@@ -14,12 +14,7 @@ export const settingsTourMobile = [
         description: 'Currency, timezone, and regional settings.',
         position: 'bottom'
     },
-    {
-        targetId: 'settings-theme-mobile',
-        title: 'Theme Toggle',
-        description: 'Switch between light and dark appearance.',
-        position: 'top'
-    },
+
     {
         targetId: 'settings-restart-guide-mobile',
         title: 'Tour Guide',

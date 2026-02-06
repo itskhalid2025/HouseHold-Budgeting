@@ -482,7 +482,7 @@ export default function Settings() {
                                 <div className="info-box-glass">
                                     <p>
                                         <strong>Note:</strong> Turning this off will stop PostHog analytics tracking.
-                                        Essential settings like your theme (Dark/Light mode) are stored locally and will continue to work.
+                                        Essential settings are stored locally and will continue to work.
                                     </p>
                                 </div>
                             </div>

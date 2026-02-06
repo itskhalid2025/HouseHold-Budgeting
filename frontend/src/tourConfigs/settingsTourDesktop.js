@@ -20,12 +20,7 @@ export const settingsTourDesktop = [
         description: 'Restart the interactive guide to learn about all features again.',
         position: 'top'
     },
-    {
-        targetId: 'settings-theme',
-        title: 'Theme',
-        description: 'Switch between light and dark mode in the Top Bar.',
-        position: 'left'
-    },
+
     {
         targetId: 'settings-notifications',
         title: 'Notifications',

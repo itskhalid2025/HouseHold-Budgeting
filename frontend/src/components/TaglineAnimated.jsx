@@ -21,16 +21,20 @@ export default function Tagline() {
                     fontFamily: "Inter, sans-serif",
                     display: "flex",
                     gap: "10px",
+                    whiteSpace: "nowrap",
+                    flexWrap: "nowrap",
+                    justifyContent: "center",
+                    alignItems: "center"
                 }}
             >
                 Build a habit that{" "}
                 {words.map((word, index) => (
                     <motion.span
                         key={word}
-                        initial={{ opacity: 0, filter: "blur(8px)" }}
+                        initial={{ opacity: 0, filter: "blur(.4 px)" }}
                         animate={{
                             opacity: [0, 1, 1, 0],
-                            filter: ["blur(8px)", "blur(0px)", "blur(0px)", "blur(8px)"],
+                            filter: ["blur(.2px)", "blur(.2px)", "blur(.2px)", "blur(.2px)"],
                         }}
                         transition={{
                             duration: 2.2,

@@ -34,10 +34,10 @@ export default function TaglineAnimatedMobile() {
                     {words.map((word, index) => (
                         <motion.span
                             key={word} // Using word as key as in user's example
-                            initial={{ opacity: 0, filter: "blur(8px)" }}
+                            initial={{ opacity: 0, filter: "blur(0.1px)" }}
                             animate={{
                                 opacity: [0, 1, 1, 0],
-                                filter: ["blur(8px)", "blur(0px)", "blur(0px)", "blur(8px)"],
+                                filter: ["blur(0.1px)", "blur(0px)", "blur(0px)", "blur(0.1px)"],
                             }}
                             transition={{
                                 duration: 2.2,

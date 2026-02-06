@@ -45,7 +45,7 @@ import { BudgetProvider } from './context/BudgetContext';
 import { NotificationProvider, useNotification } from './context/NotificationContext';
 import PreWarmer from './components/PreWarmer';
 import { initAnalytics } from './services/analytics';
-import LandingPage from './pages/LandingPage';
+import LandingPage from './pages/Landing/LandingPage';
 import ContactPage from './pages/ContactPage';
 import FeaturesPage from './pages/FeaturesPage';
 import PrivacyPolicyPage from './pages/PrivacyPolicyPage';

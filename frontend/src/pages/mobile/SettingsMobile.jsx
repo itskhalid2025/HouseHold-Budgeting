@@ -556,7 +556,7 @@ export default function SettingsMobile() {
                     </div>
                     <div style={{ marginTop: '15px', fontSize: '0.85rem', opacity: 0.7, lineHeight: '1.4' }}>
                         <p>Turning this off will stop anonymous usage tracking via PostHog.</p>
-                        <p style={{ marginTop: '8px' }}><strong>Note:</strong> Your theme preferences (Dark/Light mode) and other essential settings are stored locally and will continue to work.</p>
+                        <p style={{ marginTop: '8px' }}><strong>Note:</strong> Essential settings are stored locally and will continue to work.</p>
                     </div>
                 </MobileCard>
             </div>
@@ -696,7 +696,7 @@ export default function SettingsMobile() {
                     </div>
                 </MobileCard>
 
-                
+
             </nav >
 
             <footer className="logout-section" data-tour-id="settings-account-mobile">

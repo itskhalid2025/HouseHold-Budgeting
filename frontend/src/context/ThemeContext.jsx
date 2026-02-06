@@ -3,20 +3,17 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-    // Check localStorage or default to 'dark'
-    const [theme, setTheme] = useState(() => {
-        const savedTheme = localStorage.getItem('theme');
-        return savedTheme || 'dark';
-    });
+    // Enforce 'dark' theme for all users
+    const theme = 'dark';
 
     useEffect(() => {
-        // Apply theme to document element
         document.documentElement.setAttribute('data-theme', theme);
-        localStorage.setItem('theme', theme);
-    }, [theme]);
+        // We no longer need to save to localStorage as it's enforced
+    }, []);
 
     const toggleTheme = () => {
-        setTheme(prevTheme => (prevTheme === 'dark' ? 'light' : 'dark'));
+        // Theme toggling is disabled
+        console.warn('Theme toggling is disabled');
     };
 
     return (

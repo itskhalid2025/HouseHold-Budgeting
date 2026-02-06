@@ -89,14 +89,7 @@ const TopBar = () => {
                                 <RankBadge onClick={() => setShowGamification(true)} />
                             </div>
 
-                            <button
-                                className="theme-toggle-btn"
-                                onClick={toggleTheme}
-                                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                                data-tour-id="settings-theme"
-                            >
-                                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                            </button>
+
 
                             <button
                                 className="theme-toggle-btn"
@@ -129,7 +122,7 @@ const TopBar = () => {
                                         <button onClick={() => handleNavigate('household')} className="dropdown-item">
                                             Household management
                                         </button>
-                                        
+
                                         <button onClick={() => handleNavigate('household')} className="dropdown-item">
                                             Currency settings
                                         </button>
@@ -144,13 +137,7 @@ const TopBar = () => {
                     ) : (
                         /* GUEST STATE */
                         <>
-                            <button
-                                className="theme-toggle-btn"
-                                onClick={toggleTheme}
-                                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
-                            >
-                                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                            </button>
+
                             <nav className="auth-nav">
                                 <NavLink to="/login" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>Login</NavLink>
                                 <NavLink to="/register" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>Register</NavLink>

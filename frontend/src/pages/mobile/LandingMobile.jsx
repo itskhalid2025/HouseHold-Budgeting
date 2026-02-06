@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
+
 import { Sun, Moon, Sparkles, BarChart3, Brain, Mic, Image, Type, Upload, TrendingUp, Shield, Users } from 'lucide-react';
 import GrowWiseLogo from '../../components/GrowWiseLogo';
 import TaglineAnimatedMobile from '../../components/TaglineAnimatedMobile';
@@ -7,14 +7,12 @@ import '../Landing.css';
 
 function LandingMobile() {
     const navigate = useNavigate();
-    const { theme, toggleTheme } = useTheme();
+
 
     return (
         <div className="landing-page">
             {/* Theme Toggle */}
-            <div className="landing-theme-toggle" onClick={toggleTheme}>
-                {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-            </div>
+
 
             {/* Hero Section */}
             <section className="landing-hero">

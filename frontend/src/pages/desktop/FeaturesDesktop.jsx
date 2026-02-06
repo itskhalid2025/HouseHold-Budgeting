@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom';
-import { useTheme } from '../../context/ThemeContext';
+
 import { Sun, Moon, Sparkles, BarChart3, Brain, Mic, Image, Type, Upload, ArrowLeft, CheckCircle } from 'lucide-react';
 import '../Landing.css';
 
 function FeaturesDesktop() {
     const navigate = useNavigate();
-    const { theme, toggleTheme } = useTheme();
+
 
     return (
         <div className="landing-page">

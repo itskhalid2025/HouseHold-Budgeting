@@ -963,25 +963,28 @@
     .connector-line-base {
         fill: none;
         stroke: var(--border-light);
-        stroke-width: 2;
+        stroke-width: 3px;
+        /* Added units and increased width */
         stroke-linecap: round;
         opacity: 0.3;
     }
 
     .connector-line-glow {
         fill: none;
-        stroke: var(--primary);
-        stroke-width: 2;
+        stroke: #c712e3 !important;
+        /* Cyan color forced */
+        stroke-width: 3px !important;
         stroke-linecap: round;
-        stroke-dasharray: 20 150;
-        animation: flow-pulse 2s infinite linear;
-        filter: drop-shadow(0 0 8px var(--primary));
-        opacity: 0.9;
+        stroke-dasharray: 10 10 !important;
+        animation: flow-pulse 1s infinite linear !important;
+        /* Faster and forced */
+        filter: drop-shadow(0 0 8px #b506d4) !important;
+        opacity: 1 !important;
     }
 
     @keyframes flow-pulse {
         0% {
-            stroke-dashoffset: 170;
+            stroke-dashoffset: 20;
         }
 
         100% {
