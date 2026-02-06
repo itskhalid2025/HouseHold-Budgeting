@@ -42,7 +42,9 @@ export const registerSchema = z.object({
 
   country: z.string().max(100, { message: 'Country name too long' }).optional(),
   state: z.string().max(100, { message: 'State name too long' }).optional(),
-  city: z.string().max(100, { message: 'City name too long' }).optional()
+  city: z.string().max(100, { message: 'City name too long' }).optional(),
+  termsAccepted: z.union([z.boolean(), z.string().transform(val => val === 'true')]).refine(val => val === true, { message: 'Terms must be accepted' }),
+  cookieAccepted: z.union([z.boolean(), z.string().transform(val => val === 'true')]).optional()
 });
 
 /**
