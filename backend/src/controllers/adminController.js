@@ -129,7 +129,7 @@ export const getAllUsers = async (req, res) => {
                 household: {
                     select: { name: true }
                 },
-                aiLogs: {
+                aiUsageLogs: {
                     select: { type: true, createdAt: true }
                 }
             },
@@ -143,7 +143,8 @@ export const getAllUsers = async (req, res) => {
                 // Calculate Monthly Usage
                 const now = new Date();
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                const monthLogs = u.aiLogs.filter(l => new Date(l.createdAt) >= startOfMonth);
+                const logs = u.aiUsageLogs || [];
+                const monthLogs = logs.filter(l => new Date(l.createdAt) >= startOfMonth);
 
                 return {
                     id: u.id,
@@ -158,9 +159,9 @@ export const getAllUsers = async (req, res) => {
                     country: u.country,
                     aiSettings: u.aiSettings || {},
                     aiUsage: { // Lifetime
-                        chat: u.aiLogs.filter(l => l.type === 'CHAT').length,
-                        smartEntry: u.aiLogs.filter(l => l.type === 'SMART_ENTRY').length,
-                        reports: u.aiLogs.filter(l => l.type === 'REPORT').length
+                        chat: logs.filter(l => l.type === 'CHAT').length,
+                        smartEntry: logs.filter(l => l.type === 'SMART_ENTRY').length,
+                        reports: logs.filter(l => l.type === 'REPORT').length
                     },
                     aiUsageMonth: { // Current Month
                         total: monthLogs.length,
@@ -206,7 +207,7 @@ export const getAllHouseholds = async (req, res) => {
                 _count: {
                     select: { members: true }
                 },
-                aiLogs: {
+                aiUsageLogs: {
                     select: { type: true, createdAt: true } // Added createdAt
                 }
             },
@@ -218,14 +219,15 @@ export const getAllHouseholds = async (req, res) => {
             count: households.length,
             households: households.map(h => {
                 // Calculate Granular Usage
-                const chatCount = h.aiLogs.filter(l => l.type === 'CHAT').length;
-                const smartEntryCount = h.aiLogs.filter(l => l.type === 'SMART_ENTRY').length;
-                const reportCount = h.aiLogs.filter(l => l.type === 'REPORT').length;
+                const logs = h.aiUsageLogs || [];
+                const chatCount = logs.filter(l => l.type === 'CHAT').length;
+                const smartEntryCount = logs.filter(l => l.type === 'SMART_ENTRY').length;
+                const reportCount = logs.filter(l => l.type === 'REPORT').length;
 
                 // Calculate Monthly Usage
                 const now = new Date();
                 const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-                const monthLogs = h.aiLogs.filter(l => new Date(l.createdAt) >= startOfMonth);
+                const monthLogs = logs.filter(l => new Date(l.createdAt) >= startOfMonth);
 
                 return {
                     id: h.id,
