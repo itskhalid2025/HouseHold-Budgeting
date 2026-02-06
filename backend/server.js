@@ -200,6 +200,10 @@ async function startServer() {
         // Initialize Schedulers
         initScheduler();
 
+        // Import SMTP verification
+        const { verifyConnection } = await import('./src/services/emailService.js');
+        verifyConnection(); // Run asynchronously without blocking server start
+
         // Start listening
         app.listen(config.port, () => {
             console.log(`\n🚀 GrowWise API running on port ${config.port}`);

@@ -119,11 +119,26 @@ export const register = async (req, res) => {
             }
         });
 
-        // Send verification email
-        await sendVerificationEmail(user, verificationToken);
-
-        // Generate JWT
+        // Generate JWT first so it's available for response even if email fails
         const token = generateToken(user);
+
+        console.log(`✅ User created: ${user.id}. Sending verification email...`);
+
+        // Send verification email with error handling
+        try {
+            await sendVerificationEmail(user, verificationToken);
+        } catch (emailError) {
+            console.error("⚠️ Failed to send verification email:", emailError.message);
+            // We still return success for registration, but warn the user
+            // In a production app, we might want to fail the registration or use a queue
+            return res.status(201).json({
+                success: true,
+                user,
+                token,
+                message: 'Registration successful, but we could not send the verification email. Please contact support or try to resend it later.',
+                warning: 'Email sending failed'
+            });
+        }
 
         logSuccess('authController', 'register', { userId: user.id });
         return res.status(201).json({
@@ -135,9 +150,11 @@ export const register = async (req, res) => {
 
     } catch (error) {
         logError('authController', 'register', error);
+        console.error("❌ Registration Error Details:", error); // Explicit console log
         return res.status(500).json({
             success: false,
-            error: 'Failed to register user'
+            error: 'Failed to register user',
+            details: error.message // Return potential details for debugging (suppress in PROD normally)
         });
     }
 };

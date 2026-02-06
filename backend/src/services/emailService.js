@@ -14,6 +14,22 @@ const transporter = nodemailer.createTransport({
 });
 
 /**
+ * Verify SMTP connection
+ */
+export const verifyConnection = async () => {
+    try {
+        await transporter.verify();
+        console.log('✅ SMTP Server Check: Connected successfully');
+        return true;
+    } catch (error) {
+        console.error('❌ SMTP Server Check: Failed');
+        console.error(`   Error: ${error.message}`);
+        console.error('   Hint: Check SMTP_HOST, SMTP_USER, SMTP_PASS in .env');
+        return false;
+    }
+};
+
+/**
  * Send an email
  * @param {string} to - Recipient email
  * @param {string} subject - Email subject
