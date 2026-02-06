@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 
 export default function TaglineAnimatedMobile() {
-    const words = ["grow ", "with ", "you ! "];
+    const words = ["grow ", "with ", "you  "];
 
     return (
         <div
@@ -34,10 +34,10 @@ export default function TaglineAnimatedMobile() {
                     {words.map((word, index) => (
                         <motion.span
                             key={word} // Using word as key as in user's example
-                            initial={{ opacity: 0, filter: "blur(0.1px)" }}
+                            initial={{ opacity: 0, filter: "blur(0px)" }}
                             animate={{
                                 opacity: [0, 1, 1, 0],
-                                filter: ["blur(0.1px)", "blur(0px)", "blur(0px)", "blur(0.1px)"],
+                                filter: ["blur(0px)", "blur(0px)", "blur(0px)", "blur(0px)"],
                             }}
                             transition={{
                                 duration: 2.2,
@@ -51,7 +51,7 @@ export default function TaglineAnimatedMobile() {
                                 fontWeight: 600,
                                 color: "#4ff3ff",
                                 textShadow:
-                                    "0 0 6px #4ff3ff, 0 0 14px #3ad7e8, 0 0 24px #22bcd1",
+                                    "0 0 4px #4ff3ff, 0 0 10px #3ad7e8", // Reduced shadow
                                 display: "inline-block",
                                 marginRight: "4px",
                             }}

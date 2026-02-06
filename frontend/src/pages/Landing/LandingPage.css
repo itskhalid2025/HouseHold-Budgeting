@@ -7,7 +7,8 @@
     min-height: 100vh;
     width: 100%;
     overflow-x: hidden;
-    background: #000000;
+    background: transparent;
+    /* Made transparent to show starfield */
     color: #ffffff;
     transition: background 0.3s ease, color 0.3s ease;
     position: relative;
@@ -197,7 +198,7 @@
 }
 
 /* ============================================
-   HERO SECTION - ENHANCED
+   HERO SECTION - FULLY TRANSPARENT BACKGROUND
    ============================================ */
 
 .landing-hero {
@@ -210,29 +211,12 @@
     padding: 140px 30px 100px;
     position: relative;
     overflow: hidden;
+    background: transparent !important;
 }
 
-/* Stronger gradient overlay */
+/* Hero overlay completely removed for transparent background */
 .landing-hero::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(180deg,
-            rgba(99, 102, 241, 0.15) 0%,
-            rgba(0, 0, 0, 0.3) 50%,
-            rgba(0, 0, 0, 0.6) 100%);
-    pointer-events: none;
-    z-index: 0;
-}
-
-[data-theme="light"] .landing-hero::before {
-    background: linear-gradient(180deg,
-            rgba(255, 255, 255, 0.7) 0%,
-            rgba(255, 255, 255, 0.4) 50%,
-            rgba(255, 255, 255, 0.2) 100%);
+    display: none;
 }
 
 .landing-hero-content {

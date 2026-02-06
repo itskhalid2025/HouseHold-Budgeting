@@ -44,7 +44,7 @@ export default function TaglineSequential({ isMobile }) {
         fontStyle: "italic",
         fontWeight: 600,
         color: "#4ff3ff",
-        textShadow: "0 0 6px #4ff3ff, 0 0 14px #3ad7e8, 0 0 24px #22bcd1",
+        textShadow: "0 0 4px #4ff3ff, 0 0 10px #3ad7e8", // Reduced shadow
     };
 
     return (
@@ -52,7 +52,7 @@ export default function TaglineSequential({ isMobile }) {
             {words.map((wordObj, index) => (
                 <motion.span
                     key={index}
-                    initial={{ opacity: 0, y: 10, filter: "blur(5px)" }}
+                    initial={{ opacity: 0, y: 10, filter: "blur(2px)" }} // Reduced blur
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                     transition={{
                         delay: index * 1.0, // 1 second gap between each word

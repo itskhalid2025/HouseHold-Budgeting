@@ -35,7 +35,7 @@ const Sidebar = () => {
     return (
         <aside className="app-sidebar">
             <div className="sidebar-header" data-tour-id="sidebar-logo">
-                <GrowWiseLogo size="text-3xl" style={{ fontSize: '1.3rem' }}  className="sidebar-logo-text mb-1" />
+                <GrowWiseLogo size="text-3xl" style={{ fontSize: '1.3rem', textTransform: 'none' }} className="sidebar-logo-text mb-1" />
                 {householdName && <span className="text-xs text-gray-400 font-medium tracking-wide ">{householdName}</span>}
             </div>
 
