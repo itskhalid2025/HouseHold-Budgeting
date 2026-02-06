@@ -382,6 +382,7 @@ export const deleteUser = async (req, res) => {
             await tx.income.deleteMany({ where: { userId } });
             await tx.loan.deleteMany({ where: { userId } });
             await tx.feedback.deleteMany({ where: { userId } });
+            await tx.achievement.deleteMany({ where: { userId } });
 
             // Goals where user is creator
             await tx.goal.updateMany({
@@ -402,7 +403,8 @@ export const deleteUser = async (req, res) => {
 
     } catch (error) {
         console.error('Delete User Error:', error);
-        res.status(500).json({ success: false, error: 'Failed to delete user. Ensure they are not the sole admin of a shared household.' });
+        console.error('Delete User Error:', error);
+        res.status(500).json({ success: false, error: 'Failed to delete user. ' + error.message });
     }
 };
 
