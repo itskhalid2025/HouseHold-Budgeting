@@ -9,6 +9,10 @@
 
 // API Configuration
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
+console.log('🚀 API_BASE_URL (api.js):', API_BASE_URL); // DEBUG
+
+console.log('🚀 API_BASE_URL:', API_BASE_URL); // DEBUG: Check endpoint
+
 
 // Request tracking for "Waking up" notification
 let activeRequests = 0;

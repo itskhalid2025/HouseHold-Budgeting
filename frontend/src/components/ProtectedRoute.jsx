@@ -52,6 +52,15 @@ export function PublicRoute({ children }) {
     const location = useLocation();
     const [isTimeout, setIsTimeout] = useState(false);
 
+    console.log('🛡️ PublicRoute Check:', {
+        path: location.pathname,
+        loading,
+        isAuthenticated,
+        isTimeout,
+        userHousehold: user?.householdId
+    });
+
+
     // Safety timeout: if loading takes too long (e.g. backend down),
     // show content anyway to prevent white screen.
     useEffect(() => {
