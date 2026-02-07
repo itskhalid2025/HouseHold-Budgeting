@@ -9,6 +9,7 @@
  * @requires ../context/AuthContext
  */
 
+import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -49,8 +50,21 @@ export function ProtectedRoute({ children }) {
 export function PublicRoute({ children }) {
     const { isAuthenticated, user, loading } = useAuth();
     const location = useLocation();
+    const [isTimeout, setIsTimeout] = useState(false);
 
-    if (loading) {
+    // Safety timeout: if loading takes too long (e.g. backend down),
+    // show content anyway to prevent white screen.
+    useEffect(() => {
+        let timer;
+        if (loading) {
+            timer = setTimeout(() => {
+                setIsTimeout(true);
+            }, 2000); // 2 seconds max loading for public routes
+        }
+        return () => clearTimeout(timer);
+    }, [loading]);
+
+    if (loading && !isTimeout) {
         return (
             <div className="loading-container">
                 <div className="loading-spinner"></div>

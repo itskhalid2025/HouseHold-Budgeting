@@ -349,14 +349,22 @@ function AppContent() {
   }
 
   // Landing page - no sidebar/navbar
-  const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'].includes(location.pathname);
+  // Normalize path by removing trailing slash (unless it's root '/')
+  const normalizedPath = location.pathname.endsWith('/') && location.pathname.length > 1
+    ? location.pathname.slice(0, -1)
+    : location.pathname;
+
+  const isAuthPage = ['/login', '/register', '/forgot-password', '/verify-email', '/reset-password'].some(path =>
+    normalizedPath === path || normalizedPath.startsWith(path + '/')
+  );
 
   if (isLandingPage || isAuthPage) {
     return (
       <div className="app">
         <ServerStatus />
         {isAuthPage && !isMobile && <DesktopBackground />}
-        <main className="app-main">
+        {/* Add zIndex: 1 to ensure content sits above canvas */}
+        <main className="app-main" style={{ position: 'relative', zIndex: 1 }}>
           <AppRoutes />
         </main>
       </div>
