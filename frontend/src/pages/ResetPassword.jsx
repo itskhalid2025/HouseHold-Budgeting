@@ -9,8 +9,14 @@ export default function ResetPassword() {
     const navigate = useNavigate();
     const token = searchParams.get('token');
 
+    // DEBUG: Extensive logging for Vercel issue
+    console.log('🔑 ResetPassword Component MOUNTED');
+    console.log('📍 URL:', window.location.href);
+    console.log('🎟️ Token from URL:', token);
+
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+
     const [status, setStatus] = useState('idle'); // idle, loading, success, error
     const [message, setMessage] = useState('');
 
@@ -69,8 +75,10 @@ export default function ResetPassword() {
     }
 
     return (
-        <div className="auth-container">
+        <div className="auth-container" style={{ border: '2px solid red' }}>
+            {/* DEBUG: Red border to see if container exists but is hidden */}
             <div className="auth-card">
+
                 <div className="auth-header">
                     <h1><img src={Logo} alt="Logo" className="app-logo" /></h1>
                     <h2>Reset Password</h2>

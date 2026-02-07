@@ -58,7 +58,7 @@ const config = {
     cors: {
         origin: (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [])
             .concat(['http://localhost:5173', 'https://growwise-app.netlify.app', 'https://devserver-mobile-ui--growwise-app.netlify.app'])
-            .map(url => url.trim())
+            .map(url => url.trim().replace(/\/$/, ''))
             .filter(Boolean)
     }
 };
