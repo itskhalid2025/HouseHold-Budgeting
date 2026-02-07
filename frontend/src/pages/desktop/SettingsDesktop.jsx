@@ -53,6 +53,7 @@ export default function Settings() {
     });
     const [profileMsg, setProfileMsg] = useState('');
     const [profileError, setProfileError] = useState('');
+    const [securityMsg, setSecurityMsg] = useState('');
     const [cookieEnabled, setCookieEnabled] = useState(false);
 
     const [countries] = useState(Country.getAllCountries());
@@ -159,11 +160,12 @@ export default function Settings() {
 
     const handleForgotPassword = async () => {
         if (!user?.email) return;
+        setSecurityMsg('');
         try {
             await forgotPassword(user.email);
-            setProfileMsg(`Password reset email sent to ${user.email}`);
+            setSecurityMsg(`Password reset email sent to ${user.email}`);
         } catch (err) {
-            setProfileMsg('Failed to send reset email');
+            setSecurityMsg('Failed to send reset email');
         }
     };
 
@@ -504,6 +506,7 @@ export default function Settings() {
                                 <button className="btn-secondary" onClick={handleForgotPassword}>
                                     Send Reset Link
                                 </button>
+                                {securityMsg && <div className="success-msg" style={{ marginTop: '10px' }}>{securityMsg}</div>}
                             </div>
 
 
