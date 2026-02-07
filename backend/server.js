@@ -67,6 +67,9 @@ import { authenticate } from './src/middleware/auth.js';
 /** @type {express.Application} Express application instance */
 const app = express();
 
+// Trust Render's proxy for express-rate-limit
+app.set('trust proxy', 1);
+
 /** @type {PrismaClient} Prisma ORM client for database operations */
 const prisma = new PrismaClient();
 
