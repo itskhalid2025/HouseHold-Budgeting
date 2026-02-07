@@ -6,7 +6,8 @@ import { z } from 'zod';
  */
 
 // Phone number regex for E.164 format (+1234567890)
-const phoneRegex = /^\+[1-9]\d{1,14}$/;
+// Phone number regex: allows optional +, digits, spaces, dashes, parentheses and dots
+const phoneRegex = /^\+?[0-9\s\-()\.]{7,20}$/;
 
 // Password validation: min 8 chars, 1 uppercase, 1 lowercase, 1 number
 const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
@@ -205,10 +206,10 @@ export const validate = (schema) => {
       if (error instanceof z.ZodError) {
         console.error('❌ Zod Validation Error:', JSON.stringify(error.format(), null, 2));
         // Format validation errors for user-friendly response
-        // Safety check for error.errors
-        const errorList = error.errors || [];
+        // Use error.issues as the primary source of details
+        const issues = error.issues || error.errors || [];
 
-        const errors = errorList.map(err => ({
+        const errors = issues.map(err => ({
           field: err.path ? err.path.join('.') : 'unknown',
           message: err.message
         }));

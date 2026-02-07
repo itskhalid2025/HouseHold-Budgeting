@@ -42,6 +42,7 @@ export default function Register() {
         stateCode: ''
     });
     const [error, setError] = useState('');
+    const [fieldErrors, setFieldErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const [success, setSuccess] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -53,6 +54,15 @@ export default function Register() {
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value }));
+
+        // Clear field error when user starts typing
+        if (fieldErrors[name]) {
+            setFieldErrors(prev => {
+                const newErrors = { ...prev };
+                delete newErrors[name];
+                return newErrors;
+            });
+        }
 
         if (name === 'country') {
             const country = countries.find(c => c.name === value);
@@ -86,6 +96,7 @@ export default function Register() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setFieldErrors({});
 
         if (formData.password !== formData.confirmPassword) {
             setError('Passwords do not match');
@@ -101,12 +112,23 @@ export default function Register() {
 
         try {
             const { confirmPassword, ...registerData } = formData;
+
+            // Sanitize phone number: remove spaces, dashes, parentheses, and dots
+            // This ensures it matches the backend regex even if Safari auto-fills with formatting
+            registerData.phone = registerData.phone.replace(/[\s\(\)\-\.]/g, '');
+
             // The API might return token/user, but we ignore it for now as email needs verification
             await registerApi(registerData);
             setSuccess(true);
         } catch (err) {
             if (err.validationErrors && Array.isArray(err.validationErrors)) {
-                setError(err.validationErrors.map(e => e.message).join('. '));
+                // Map validation errors to their respective fields
+                const fieldErrs = {};
+                err.validationErrors.forEach(e => {
+                    fieldErrs[e.field] = e.message;
+                });
+                setFieldErrors(fieldErrs);
+                setError('Please correct the highlighted errors below.');
             } else {
                 setError(err.message || 'Registration failed');
             }
@@ -170,6 +192,7 @@ export default function Register() {
                                 placeholder="John"
                                 required
                             />
+                            {fieldErrors.firstName && <span className="field-error">{fieldErrors.firstName}</span>}
                         </div>
                         <div className="form-group">
                             <label htmlFor="lastName">Last Name</label>
@@ -182,6 +205,7 @@ export default function Register() {
                                 placeholder="Doe"
                                 required
                             />
+                            {fieldErrors.lastName && <span className="field-error">{fieldErrors.lastName}</span>}
                         </div>
                     </div>
 
@@ -196,6 +220,7 @@ export default function Register() {
                             placeholder="you@example.com"
                             required
                         />
+                        {fieldErrors.email && <span className="field-error">{fieldErrors.email}</span>}
                     </div>
 
                     <div className="form-group">
@@ -203,7 +228,10 @@ export default function Register() {
                         <PhoneInput
                             country={'us'}
                             value={formData.phone}
-                            onChange={(phone) => setFormData({ ...formData, phone: '+' + phone })}
+                            onChange={(phone) => {
+                                setFormData({ ...formData, phone: '+' + phone });
+                                if (fieldErrors.phone) setFieldErrors(prev => ({ ...prev, phone: '' }));
+                            }}
                             inputProps={{
                                 name: 'phone',
                                 required: true,
@@ -214,6 +242,7 @@ export default function Register() {
                             buttonClass="phone-input-button"
                             preferredCountries={['us', 'gb', 'in', 'ca']}
                         />
+                        {fieldErrors.phone && <span className="field-error">{fieldErrors.phone}</span>}
                     </div>
 
                     <div className="form-row">
@@ -237,6 +266,7 @@ export default function Register() {
                                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                                 </button>
                             </div>
+                            {fieldErrors.password && <span className="field-error">{fieldErrors.password}</span>}
                         </div>
                         <div className="form-group">
                             <label htmlFor="confirmPassword">Confirm Password</label>
@@ -314,13 +344,17 @@ export default function Register() {
                             <input
                                 type="checkbox"
                                 checked={formData.termsAccepted}
-                                onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
+                                onChange={(e) => {
+                                    setFormData({ ...formData, termsAccepted: e.target.checked });
+                                    if (fieldErrors.termsAccepted) setFieldErrors(prev => ({ ...prev, termsAccepted: '' }));
+                                }}
                                 required
                             />
                             <span>
                                 I agree to the <Link to="/terms" target="_blank">Terms of Service</Link> and <Link to="/privacy" target="_blank">Privacy Policy</Link>
                             </span>
                         </label>
+                        {fieldErrors.termsAccepted && <span className="field-error">{fieldErrors.termsAccepted}</span>}
                     </div>
 
                     <div className="form-group checkbox-group">

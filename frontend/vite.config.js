@@ -11,8 +11,8 @@ export default defineConfig({
       includeAssets: ['favicon.ico', 'pwa-192x192.png', 'pwa-512x512.png', 'screenshot-wide.png', 'screenshot-narrow.png'],
       manifest: {
         name: 'GrowWise',
-        short_name: 'HH Budget',
-        description: 'Smart Household Budgeting & Financial Insights',
+        short_name: 'GrowWise',
+        description: 'Smart AI money tracking with effortless entry, deep insights, and personalized savings advice have this ',
         theme_color: '#6366f1',
         background_color: '#ffffff',
         display: 'standalone',
