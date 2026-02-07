@@ -12,10 +12,9 @@
  */
 
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import config from '../utils/config.js';
 
-const prisma = new PrismaClient();
 
 /**
  * Authentication middleware
@@ -37,6 +36,24 @@ export const authenticate = async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
+
+    // Check Blacklist
+    let blacklisted = null;
+    try {
+      blacklisted = await prisma.blacklistedToken.findUnique({
+        where: { token }
+      });
+    } catch (err) {
+      console.error('Blacklist check failed:', err);
+      // If table doesn't exist yet (migration pending), ignore and compare token only
+    }
+
+    if (blacklisted) {
+      return res.status(401).json({
+        success: false,
+        error: 'Session expired or logged out'
+      });
+    }
 
     // Verify token
     let decoded;
@@ -71,6 +88,10 @@ export const authenticate = async (req, res, next) => {
         role: true,
         emailVerified: true,
         phoneVerified: true,
+        country: true,
+        state: true,
+        city: true,
+        cookieAcceptedAt: true,
         createdAt: true
       }
     });
@@ -133,6 +154,9 @@ export const optionalAuth = async (req, res, next) => {
           role: true,
           emailVerified: true,
           phoneVerified: true,
+          country: true,
+          state: true,
+          city: true,
           createdAt: true
         }
       });

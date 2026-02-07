@@ -15,11 +15,12 @@
  * Phase 4: Transaction & Income Tracking
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import { traceOperation } from '../services/opikService.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
+import { updateUserGamification } from '../services/gamificationService.js';
+import { updateTransactionEmbedding } from '../utils/embeddingUtils.js';
 
-const prisma = new PrismaClient();
 
 /**
  * @swagger
@@ -61,9 +62,35 @@ async function addTransaction(req, res) {
         logEntry('transactionController', 'addTransaction', req.body);
         try {
             const { description, amount, date, merchant, category, subcategory, type } = req.body;
-            const userId = req.user.id;
+            let userId = req.user.id;
             const householdId = req.user.householdId;
             const userRole = req.user.role;
+
+            console.log('DEBUG: addTransaction', { bodyUserId: req.body.userId, sessionUserId: userId });
+
+            // Allow assigning to another user in the same household
+            if (req.body.userId && req.body.userId !== userId) {
+                console.log('DEBUG: Attempting to override user');
+                // Verify the target user is in the household
+                const targetUser = await prisma.user.findFirst({
+                    where: {
+                        id: req.body.userId,
+                        householdId: householdId
+                    }
+                });
+
+                if (!targetUser) {
+                    console.log('DEBUG: Target user not found');
+                    return res.status(400).json({
+                        success: false,
+                        error: 'Target user not found in your household'
+                    });
+                }
+                userId = req.body.userId;
+                console.log('DEBUG: User overridden to', userId);
+            } else {
+                console.log('DEBUG: No user override, using session user');
+            }
 
             // VIEWER cannot add transactions
             if (userRole === 'VIEWER') {
@@ -91,7 +118,7 @@ async function addTransaction(req, res) {
 
             if (!category) {
                 finalCategory = 'Uncategorized';
-                finalType = 'NEED';
+                // Do not override user-provided type here
             }
 
             // Create transaction
@@ -119,10 +146,32 @@ async function addTransaction(req, res) {
                 data: { lastModifiedAt: new Date() }
             });
 
+            // RAG: Generate embedding in background
+            updateTransactionEmbedding(transaction.id, { description, category: finalCategory, merchant });
+
+            // ... (inside addTransaction, after success)
             logSuccess('transactionController', 'addTransaction', { id: transaction.id });
+
+            // GAMIFICATION HOOK: Update streak/XP
+            let gamificationResult = null;
+            try {
+                // Determine if this was Manual (15 XP) or Smart (10 XP)
+                // If aiCategorized is true, it came from Smart Entry.
+                const actionType = aiCategorized ? 'SMART_ENTRY' : 'MANUAL_ENTRY';
+
+                gamificationResult = await updateUserGamification(userId, actionType);
+
+                if (gamificationResult?.streakUpdated) {
+                    console.log(`Gamification: Streak updated for user ${userId} via ${actionType}`);
+                }
+            } catch (err) {
+                console.error("Gamification Error:", err);
+            }
+
             res.status(201).json({
                 success: true,
                 transaction,
+                gamification: gamificationResult, // Send back specific flags like streakUpdated, xpGained
                 householdLastModified: new Date().toISOString()
             });
 
@@ -184,6 +233,9 @@ async function listTransactions(req, res) {
             // Type filter (NEED/WANT)
             if (req.query.type) {
                 where.type = req.query.type;
+            } else {
+                // Default: Exclude SAVINGS unless explicitly requested
+                where.type = { not: 'SAVINGS' };
             }
 
             // User filter (who logged it)
@@ -361,6 +413,9 @@ async function updateTransaction(req, res) {
             }
         });
 
+        // RAG: Update embedding in background
+        updateTransactionEmbedding(id, { description, category, merchant });
+
         // Update household lastModifiedAt
         logDB('update', 'Household', { id: householdId });
         await prisma.household.update({
@@ -412,8 +467,19 @@ async function deleteTransaction(req, res) {
         });
 
         if (!existingTransaction) {
-            logError('transactionController', 'deleteTransaction', new Error('Not found'));
-            return res.status(404).json({ success: false, error: 'Transaction not found' });
+            logError('transactionController', 'deleteTransaction', new Error(`Transaction not found. ID: ${id}, HH: ${householdId}`));
+            // Check if it exists but in another household or deleted
+            const techCheck = await prisma.transaction.findUnique({ where: { id } });
+            console.log('DEBUG: 404 Investigation:', {
+                searchedId: id,
+                searchedHousehold: householdId,
+                foundRecord: techCheck ? {
+                    id: techCheck.id,
+                    householdId: techCheck.householdId,
+                    deletedAt: techCheck.deletedAt
+                } : 'NULL'
+            });
+            return res.status(404).json({ success: false, error: 'Transaction not found or access denied' });
         }
 
         // Check permissions: Owner can delete all, Editor can only delete own
@@ -425,6 +491,17 @@ async function deleteTransaction(req, res) {
             return res.status(403).json({
                 success: false,
                 error: 'You can only delete transactions you created'
+            });
+        }
+
+        // GOAL SYNC: If transaction is linked to a goal, decrease the goal amount
+        if (existingTransaction.goalId) {
+            logDB('update', 'Goal', { id: existingTransaction.goalId, action: 'decrement' });
+            await prisma.goal.update({
+                where: { id: existingTransaction.goalId },
+                data: {
+                    currentAmount: { decrement: existingTransaction.amount }
+                }
             });
         }
 
@@ -480,15 +557,23 @@ async function getTransactionSummary(req, res) {
         const endDate = req.query.endDate ? new Date(req.query.endDate) : endOfMonth;
 
         // Aggregate transactions
-        logDB('aggregate', 'Transaction', { householdId, range: { startDate, endDate } });
-        const [totalSpent, byCategory, byType] = await Promise.all([
+        const filterWhere = {
+            householdId,
+            deletedAt: null,
+            date: { gte: startDate, lte: endDate },
+            type: { not: 'SAVINGS' }
+        };
+
+        // Apply userId filter if provided
+        if (req.query.userId) {
+            filterWhere.userId = req.query.userId;
+        }
+
+        logDB('aggregate', 'Transaction', { householdId, range: { startDate, endDate }, userId: req.query.userId });
+        const [totalSpent, byCategory, byType, byUserRaw, members] = await Promise.all([
             // Total spent
             prisma.transaction.aggregate({
-                where: {
-                    householdId,
-                    deletedAt: null,
-                    date: { gte: startDate, lte: endDate }
-                },
+                where: filterWhere,
                 _sum: { amount: true },
                 _count: true
             }),
@@ -496,11 +581,7 @@ async function getTransactionSummary(req, res) {
             // By category
             prisma.transaction.groupBy({
                 by: ['category'],
-                where: {
-                    householdId,
-                    deletedAt: null,
-                    date: { gte: startDate, lte: endDate }
-                },
+                where: filterWhere,
                 _sum: { amount: true },
                 _count: true
             }),
@@ -508,15 +589,39 @@ async function getTransactionSummary(req, res) {
             // By type (NEED/WANT)
             prisma.transaction.groupBy({
                 by: ['type'],
+                where: filterWhere,
+                _sum: { amount: true },
+                _count: true
+            }),
+
+            // By User Breakdown (Always for the whole household)
+            prisma.transaction.groupBy({
+                by: ['userId'],
                 where: {
                     householdId,
                     deletedAt: null,
-                    date: { gte: startDate, lte: endDate }
+                    date: { gte: startDate, lte: endDate },
+                    type: { not: 'SAVINGS' }
                 },
-                _sum: { amount: true },
-                _count: true
+                _sum: { amount: true }
+            }),
+
+            // Get member names
+            prisma.user.findMany({
+                where: { householdId },
+                select: { id: true, firstName: true, lastName: true }
             })
         ]);
+
+        // Map user names to the breakdown
+        const byUser = members.map(m => {
+            const userStats = byUserRaw.find(u => u.userId === m.id);
+            return {
+                userId: m.id,
+                name: `${m.firstName} ${m.lastName}`.trim(),
+                total: userStats?._sum.amount || 0
+            };
+        }).sort((a, b) => b.total - a.total);
 
         logSuccess('transactionController', 'getTransactionSummary', { totalSpent: totalSpent._sum.amount });
         res.json({
@@ -534,7 +639,8 @@ async function getTransactionSummary(req, res) {
                     type: t.type,
                     total: t._sum.amount,
                     count: t._count
-                }))
+                })),
+                byUser: byUser
             }
         });
 

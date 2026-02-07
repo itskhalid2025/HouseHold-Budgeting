@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document provides a comprehensive explanation of the database schema for the HouseHold Budgeting application. The database uses **PostgreSQL** with **Prisma ORM** and consists of **12 tables** that manage users, households, financial transactions, incomes, invitations, savings goals, recurring expenses, loans, and bill splits.
+This document provides a comprehensive explanation of the database schema for the HouseHold Budgeting application. The database uses **PostgreSQL** with **Prisma ORM** and consists of **20 tables** that manage users, households, financial transactions, incomes, invitations, savings goals, recurring expenses, loans, bill splits, reports, admin/system features, and AI usage tracking.
 
 
 ---
@@ -19,7 +19,7 @@ The `users` table stores all user account information, authentication credential
 |------------|------|-------------|-------------|
 | `id` | UUID | PRIMARY KEY, Default: auto-generated | Unique identifier for each user |
 | `email` | String | UNIQUE, REQUIRED | User's email address for login and notifications |
-| `phone` | String | UNIQUE, REQUIRED | User's phone number for login and 2FA |
+| `phone` | String | REQUIRED | User's phone number for login and 2FA |
 | `password_hash` | String | REQUIRED | Bcrypt-hashed password (never stored in plain text) |
 | `first_name` | String | REQUIRED | User's first/given name |
 | `last_name` | String | REQUIRED | User's last/family name |
@@ -28,19 +28,36 @@ The `users` table stores all user account information, authentication credential
 | `timezone` | String | Default: 'UTC' | User's timezone for date/time display |
 | `notification_preferences` | JSON | Default: {} | User preferences for email/push notifications |
 | `household_id` | UUID | FOREIGN KEY, NULLABLE | Reference to the household this user belongs to |
-| `role` | Enum (Role) | Default: VIEWER | User's role within their household (ADMIN, EDITOR, VIEWER) |
+| `role` | Enum (Role) | Default: VIEWER | User's role within their household (OWNER, EDITOR, VIEWER) |
 | `email_verified` | Boolean | Default: false | Whether the user has verified their email |
 | `phone_verified` | Boolean | Default: false | Whether the user has verified their phone |
 | `reset_token` | String | NULLABLE | Token for password reset (temporary) |
 | `reset_token_expiry` | DateTime | NULLABLE | When the reset token expires |
+| `verification_token` | String | NULLABLE | Token for email/phone verification |
+| `verification_token_expiry` | DateTime | NULLABLE | Expiry for verification token |
 | `created_at` | DateTime | Default: now() | When the user account was created |
 | `updated_at` | DateTime | Auto-updated | Last time the user record was modified |
+| `is_ai_restricted` | Boolean | Default: false | If user is banned from using AI features |
+| `ai_request_count` | Int | Default: 0 | Total number of AI requests made |
+| `ai_token_count` | Int | Default: 0 | Total AI tokens consumed (cost tracking) |
+| `country` | String | NULLABLE | User's country (e.g., 'India', 'USA') |
+| `last_ip` | String | NULLABLE | IP address of last login |
+| `ai_settings` | JSON | NULLABLE | Granular AI settings {chat, smartEntry} |
+| `current_streak` | Int | Default: 0 | Current daily streak count |
+| `longest_streak` | Int | Default: 0 | Best streak achieved |
+| `total_points` | Int | Default: 0 | Total gamification XP |
+| `last_log_date` | DateTime | NULLABLE | Last time user performed a streakable action |
+| `rank_tier` | String | Default: 'NOVICE' | Current rank (NOVICE, APPRENTICE, etc.) |
+| `rank_progress` | Int | Default: 0 | Progress towards next rank (0-100) |
+| `city` | String | NULLABLE | User's city for local leaderboards |
+| `state` | String | NULLABLE | User's state/region for local leaderboards |
 
 #### Purpose:
 - **Authentication**: Stores login credentials (email/phone + password)
 - **Profile Management**: User's personal information
 - **Household Membership**: Links user to their household
 - **Permissions**: Role-based access control within household
+- **AI Control**: Tracks usage and imposes limits
 
 ---
 
@@ -56,6 +73,11 @@ The `households` table represents a group of users sharing financial tracking (e
 | `name` | String | REQUIRED | Name of the household (e.g., "Smith Family") |
 | `invite_code` | String | UNIQUE, REQUIRED | Unique code for inviting new members |
 | `admin_id` | UUID | FOREIGN KEY, REQUIRED | Reference to the user who is the household admin |
+| `currency` | String | Default: 'USD' | Default currency for the household |
+| `is_ai_restricted` | Boolean | Default: false | Level of AI restriction for the household |
+| `ai_request_count` | Int | Default: 0 | Total AI requests for the household |
+| `ai_settings` | JSON | NULLABLE | Granular AI settings {chat, smartEntry} |
+| `country` | String | NULLABLE | Household location context |
 | `last_modified_at` | DateTime | Default: now() | Last time any data in the household was changed |
 | `created_at` | DateTime | Default: now() | When the household was created |
 
@@ -83,7 +105,7 @@ The `transactions` table stores all expenses logged by household members.
 | `description` | String | REQUIRED | What was purchased (e.g., "Groceries for week") |
 | `category` | String | REQUIRED | Main category (e.g., "Food", "Transportation") |
 | `subcategory` | String | NULLABLE | More specific category (e.g., "Groceries", "Gas") |
-| `type` | Enum (TransactionType) | REQUIRED | NEED (essential) or WANT (discretionary) |
+| `type` | Enum (TransactionType) | REQUIRED | NEED, WANT, or SAVINGS |
 | `date` | Date | REQUIRED | When the transaction occurred |
 | `ai_categorized` | Boolean | Default: false | Whether AI suggested the category |
 | `confidence` | Float | NULLABLE | AI's confidence score (0.0 to 1.0) |
@@ -91,6 +113,7 @@ The `transactions` table stores all expenses logged by household members.
 | `deleted_at` | DateTime | NULLABLE | Soft delete timestamp (for recovery) |
 | `created_at` | DateTime | Default: now() | When the transaction was logged |
 | `updated_at` | DateTime | Auto-updated | Last time the transaction was edited |
+| `goal_id` | UUID | FOREIGN KEY, NULLABLE | Linked savings goal (if SAVINGS type) |
 
 #### Indexes:
 - `(household_id, date)` - Fast queries for household transactions by date
@@ -150,7 +173,7 @@ The `invitations` table manages household member invitations.
 | `invited_by_id` | UUID | FOREIGN KEY, REQUIRED | Which user sent the invitation |
 | `recipient_email` | String | NULLABLE | Email address of person being invited |
 | `recipient_phone` | String | NULLABLE | Phone number of person being invited |
-| `role` | Enum (Role) | REQUIRED | What role the invited user will have (ADMIN, EDITOR, VIEWER) |
+| `role` | Enum (Role) | REQUIRED | What role the invited user will have (OWNER, EDITOR, VIEWER) |
 | `token` | String | UNIQUE, REQUIRED | Unique token for accepting the invitation |
 | `status` | Enum (InvitationStatus) | Default: PENDING | PENDING, ACCEPTED, EXPIRED, or CANCELLED |
 | `expires_at` | DateTime | REQUIRED | When the invitation expires (e.g., 7 days) |
@@ -187,6 +210,7 @@ The `goals` table tracks household savings goals.
 | `is_active` | Boolean | Default: true | Whether the goal is still being tracked |
 | `created_at` | DateTime | Default: now() | When the goal was created |
 | `updated_at` | DateTime | Auto-updated | Last time the goal was updated |
+| `created_by_id` | UUID | FOREIGN KEY, NULLABLE | User who created the goal |
 
 #### Indexes:
 - `(household_id, is_active)` - Fast queries for active household goals
@@ -210,7 +234,7 @@ The `custom_categories` table stores user-created expense categories.
 | `id` | UUID | PRIMARY KEY | Unique identifier |
 | `household_id` | UUID | FOREIGN KEY, REQUIRED | Which household this category belongs to |
 | `name` | String | REQUIRED | Category name (e.g., "Maid Salary") |
-| `type` | String | REQUIRED | NEEDS, WANTS, or SAVINGS |
+| `type` | Enum (CategoryType) | REQUIRED | NEEDS, WANTS, or SAVINGS |
 | `parent_category` | String | NULLABLE | For grouping under existing categories |
 | `is_active` | Boolean | Default: true | Whether category is active |
 | `created_at` | DateTime | Default: now() | When category was created |
@@ -235,7 +259,7 @@ The `recurring_expenses` table tracks regular recurring payments like maid salar
 | `amount` | Decimal(10,2) | REQUIRED | Expected amount per period |
 | `category` | String | REQUIRED | Expense category |
 | `subcategory` | String | NULLABLE | Subcategory |
-| `frequency` | Enum | REQUIRED | DAILY, WEEKLY, MONTHLY, YEARLY |
+| `frequency` | Enum (RecurringFrequency) | REQUIRED | DAILY, WEEKLY, MONTHLY, YEARLY |
 | `skip_dates` | JSON | Default: [] | Array of dates when expense was skipped |
 | `is_active` | Boolean | Default: true | Whether recurring expense is active |
 | `start_date` | DateTime | REQUIRED | When recurring started |
@@ -261,7 +285,7 @@ The `loans` table tracks money lent to or borrowed from others.
 | `id` | UUID | PRIMARY KEY | Unique identifier |
 | `household_id` | UUID | FOREIGN KEY, REQUIRED | Which household |
 | `user_id` | UUID | FOREIGN KEY, REQUIRED | Who logged the loan |
-| `type` | Enum | REQUIRED | LENT (you gave) or BORROWED (you owe) |
+| `type` | Enum (LoanType) | REQUIRED | LENT (you gave) or BORROWED (you owe) |
 | `person_name` | String | REQUIRED | Person you lent to / borrowed from |
 | `principal_amount` | Decimal(10,2) | REQUIRED | Original loan amount |
 | `remaining_amount` | Decimal(10,2) | REQUIRED | What's left to repay |
@@ -349,6 +373,180 @@ The `split_repayments` table tracks when split expense participants pay back.
 
 ---
 
+### 13. **reports** Table
+
+The `reports` table stores generated financial reports (PDF/JSON) for households.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier for each report |
+| `household_id` | UUID | FOREIGN KEY, REQUIRED | Which household this report belongs to |
+| `type` | String | REQUIRED | Report type (e.g., "MONTHLY_SUMMARY", "TAX") |
+| `content` | JSON | REQUIRED | The report data structure or file link |
+| `date_start` | Date | REQUIRED | Start date of the report period |
+| `date_end` | Date | REQUIRED | End date of the report period |
+| `created_at` | DateTime | Default: now() | When the report was generated |
+
+#### Purpose:
+- **Historical Records**: Keep snapshots of financial health
+- **Downloadable Content**: Store generated report data
+
+---
+
+### 14. **platform_admins** Table
+
+The `platform_admins` table stores accounts for super-admins who manage the SaaS platform.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `email` | String | UNIQUE, REQUIRED | Admin email |
+| `username` | String | UNIQUE, REQUIRED | Key username |
+| `password_hash` | String | REQUIRED | Hashed password |
+| `first_name` | String | REQUIRED | First name |
+| `last_name` | String | REQUIRED | Last name |
+| `admin_level` | Enum (AdminLevel) | Default: STANDARD | Permissions level |
+| `is_super_admin` | Boolean | Default: false | Root access flag |
+| `is_active` | Boolean | Default: true | Account status |
+| `created_at` | DateTime | Default: now() | Account creation |
+| `two_factor_enabled` | Boolean | Default: false | 2FA status |
+
+#### Purpose:
+- **System Management**: Manage users, households, and system settings
+- **Customer Support**: Assist users with issues
+
+---
+
+### 15. **admin_invitations** Table
+
+Manage invitations for new platform administrators.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `email` | String | UNIQUE, REQUIRED | Invitee email |
+| `token` | String | UNIQUE, REQUIRED | Signup token |
+| `invited_by_id` | UUID | FOREIGN KEY | Who sent the invite |
+| `expires_at` | DateTime | REQUIRED | Expiration time |
+| `used_at` | DateTime | NULLABLE | When used |
+
+---
+
+### 16. **admin_activity_logs** Table
+
+Audit trail for all platform admin actions.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `admin_id` | UUID | FOREIGN KEY | Who performed the action |
+| `action` | String | REQUIRED | Action name (e.g., "BAN_USER") |
+| `target_type` | String | NULLABLE | "User", "Household" |
+| `target_id` | String | NULLABLE | affected ID |
+| `details` | JSON | NULLABLE | Changes made |
+| `ip_address` | String | NULLABLE | Origin IP |
+| `created_at` | DateTime | Default: now() | Timestamp |
+
+---
+
+### 17. **announcements** Table
+
+System-wide announcements shown to users.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `title` | String | REQUIRED | Headline |
+| `message` | String | REQUIRED | Content |
+| `type` | String | Default: "info" | Warning, Critical, Info |
+| `is_active` | Boolean | Default: true | Visibility |
+| `expires_at` | DateTime | NULLABLE | Auto-hide date |
+
+---
+
+### 18. **system_settings** Table
+
+Global configuration for the platform.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `key` | String | PRIMARY KEY | Setting key (e.g., "maintenance_mode") |
+| `value` | String | REQUIRED | Setting value |
+| `description` | String | NULLABLE | What this controls |
+
+---
+
+### 19. **feedback** Table
+
+User submitted feedback and bug reports.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `user_id` | UUID | FOREIGN KEY | Submitter |
+| `type` | String | Default: "general" | Bug, Feature, General |
+| `message` | String | REQUIRED | The feedback |
+| `status` | String | Default: "pending" | Reviewed, Resolved |
+
+---
+
+### 20. **ai_usage_logs** Table
+
+Tracks every AI interaction for quotas and reporting.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `user_id` | UUID | FOREIGN KEY | Who used the AI |
+| `household_id` | UUID | FOREIGN KEY, NULLABLE | Household context |
+| `type` | Enum (AiLogType) | REQUIRED | CHAT, SMART_ENTRY, REPORT |
+| `tokens` | Int | Default: 0 | Number of tokens consumed |
+| `country` | String | NULLABLE | Country of request origin |
+| `created_at` | DateTime | Default: now() | Timestamp |
+
+#### Purpose:
+- **Usage Tracking**: Monitor API costs and limits
+- **Quotas**: Enforce daily/monthly limits per user/household
+- **Analytics**: Analyze feature popularity (Chat vs Smart Entry)
+
+---
+
+### 21. **achievements** Table (NEW)
+
+The `achievements` table stores earned badges and milestones for users.
+
+#### Columns:
+
+| Column Name | Type | Constraints | Description |
+|------------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `user_id` | UUID | FOREIGN KEY | Who earned the achievement |
+| `type` | String | REQUIRED | Badge type (e.g., "STREAK_7", "SAVER_MASTER") |
+| `created_at` | DateTime | Default: now() | When earned |
+
+#### Purpose:
+- **Gamification**: Reward user behavior
+- **History**: Permanent record of unlocked milestones
+- **Display**: Show off badges in profile/hub
+
+---
+
 ## Enumerations (Enums)
 
 
@@ -357,7 +555,7 @@ Defines user permissions within a household.
 
 ```prisma
 enum Role {
-  ADMIN    // Full control: manage members, settings, all data
+  OWNER    // Full control: manage members, settings, all data
   EDITOR   // Can add/edit transactions, income, goals
   VIEWER   // Read-only access to household data
 }
@@ -370,6 +568,7 @@ Categorizes expenses as essential or discretionary.
 enum TransactionType {
   NEED     // Essential expenses (rent, groceries, utilities)
   WANT     // Discretionary spending (entertainment, dining out)
+  SAVINGS  // Transfers to savings or investments
 }
 ```
 
@@ -419,6 +618,61 @@ enum GoalType {
   SINKING_FUND    // Saving for planned purchase
   DEBT_PAYOFF     // Paying down debt
   LONG_TERM       // Retirement, house down payment
+}
+```
+
+### LoanType
+Categorizes loan direction.
+
+```prisma
+enum LoanType {
+  LENT         // You gave money
+  BORROWED     // You received money
+}
+```
+
+### RecurringFrequency
+Defines how often expenses recur.
+
+```prisma
+enum RecurringFrequency {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+```
+
+### CategoryType
+For custom categories.
+
+```prisma
+enum CategoryType {
+  NEEDS
+  WANTS
+  SAVINGS
+}
+```
+
+### AdminLevel
+For platform admin permissions.
+
+```prisma
+enum AdminLevel {
+  STANDARD       // Regular admin
+  MODERATOR      // Can moderate content
+  ADMINISTRATOR  // Super admin capabilities
+}
+```
+
+### AiLogType
+Types of AI interactions.
+
+```prisma
+enum AiLogType {
+  CHAT
+  SMART_ENTRY
+  REPORT
 }
 ```
 

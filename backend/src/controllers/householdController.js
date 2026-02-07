@@ -10,12 +10,10 @@
  * @requires ../utils/generateCode
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import { generateCode } from '../utils/generateCode.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
-
-const prisma = new PrismaClient();
 
 /**
  * Create a new household
@@ -59,7 +57,8 @@ export const createHousehold = async (req, res) => {
                 data: {
                     name,
                     inviteCode,
-                    adminId: userId
+                    adminId: userId,
+                    country: existingUser.country // Inherit creator's country
                 }
             });
 
@@ -427,16 +426,32 @@ export const leaveHousehold = async (req, res) => {
 
         // If OWNER is leaving and there are others...
         if (role === 'OWNER') {
-            const otherOwners = await prisma.user.count({
+            const otherOwnersCount = await prisma.user.count({
                 where: { householdId, role: 'OWNER', NOT: { id: userId } }
             });
 
-            if (otherOwners === 0) {
-                logError('householdController', 'leaveHousehold', new Error('Only admin cannot leave'));
-                return res.status(400).json({
-                    success: false,
-                    error: 'You are the only Admin. Please promote another member to Admin before leaving.'
+            if (otherOwnersCount === 0) {
+                // Determine successor (oldest member who is not the leaving user)
+                const user = await prisma.user.findFirst({
+                    where: { householdId, NOT: { id: userId } },
+                    orderBy: { createdAt: 'asc' }
                 });
+
+                if (user) {
+                    logDB('info', 'Transferring ownership', { from: userId, to: user.id });
+
+                    // Transfer ownership
+                    await prisma.$transaction([
+                        prisma.user.update({
+                            where: { id: successor.id },
+                            data: { role: 'OWNER' }
+                        }),
+                        prisma.household.update({
+                            where: { id: householdId },
+                            data: { adminId: successor.id }
+                        })
+                    ]);
+                }
             }
         }
 
@@ -485,6 +500,48 @@ export const leaveHousehold = async (req, res) => {
         return res.status(500).json({
             success: false,
             error: 'Failed to leave household'
+        });
+    }
+};
+/**
+ * Get household members list
+ * GET /api/households/members
+ */
+export const getMembers = async (req, res) => {
+    logEntry('householdController', 'getMembers');
+    try {
+        const { householdId } = req.user;
+
+        if (!householdId) {
+            return res.status(400).json({
+                success: false,
+                error: 'You are not a member of any household'
+            });
+        }
+
+        const members = await prisma.user.findMany({
+            where: { householdId },
+            select: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                email: true,
+                role: true,
+                avatarUrl: true
+            }
+        });
+
+        logSuccess('householdController', 'getMembers', { count: members.length });
+        return res.status(200).json({
+            success: true,
+            members
+        });
+
+    } catch (error) {
+        logError('householdController', 'getMembers', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to fetch household members'
         });
     }
 };

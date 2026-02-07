@@ -14,10 +14,8 @@
 
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { PrismaClient } from '@prisma/client';
 import config from '../utils/config.js';
-
-const prisma = new PrismaClient();
+import prisma from './db.js';
 
 /**
  * Admin Authentication Service

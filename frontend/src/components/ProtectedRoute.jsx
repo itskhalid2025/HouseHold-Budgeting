@@ -9,6 +9,7 @@
  * @requires ../context/AuthContext
  */
 
+import { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -17,7 +18,7 @@ import { useAuth } from '../context/AuthContext';
  * Redirects to login if user is not authenticated
  */
 export function ProtectedRoute({ children }) {
-    const { isAuthenticated, loading } = useAuth();
+    const { isAuthenticated, user, loading } = useAuth();
     const location = useLocation();
 
     if (loading) {
@@ -34,6 +35,11 @@ export function ProtectedRoute({ children }) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
+    // NEW: Force new users to join/create a household via Onboarding
+    if (!user?.householdId && location.pathname !== '/onboarding') {
+        return <Navigate to="/onboarding" replace />;
+    }
+
     return children;
 }
 
@@ -42,10 +48,23 @@ export function ProtectedRoute({ children }) {
  * Redirects to dashboard if user is already authenticated
  */
 export function PublicRoute({ children }) {
-    const { isAuthenticated, loading } = useAuth();
+    const { isAuthenticated, user, loading } = useAuth();
     const location = useLocation();
+    const [isTimeout, setIsTimeout] = useState(false);
 
-    if (loading) {
+    // Safety timeout: if loading takes too long (e.g. backend down),
+    // show content anyway to prevent white screen.
+    useEffect(() => {
+        let timer;
+        if (loading) {
+            timer = setTimeout(() => {
+                setIsTimeout(true);
+            }, 2000); // 2 seconds max loading for public routes
+        }
+        return () => clearTimeout(timer);
+    }, [loading]);
+
+    if (loading && !isTimeout) {
         return (
             <div className="loading-container">
                 <div className="loading-spinner"></div>
@@ -54,8 +73,14 @@ export function PublicRoute({ children }) {
     }
 
     if (isAuthenticated) {
-        // Redirect to the page they were trying to access, or dashboard
-        const from = location.state?.from?.pathname || '/';
+        // Redirect logic:
+        // 1. If no household, go to /onboarding (Priority 1)
+        // 2. Else go to where they tried to go, or dashboard
+        if (!user?.householdId) {
+            return <Navigate to="/onboarding" replace />;
+        }
+
+        const from = location.state?.from?.pathname || '/dashboard';
         return <Navigate to={from} replace />;
     }
 

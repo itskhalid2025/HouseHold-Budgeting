@@ -5,7 +5,7 @@
  * the Express application with required middleware, routes, and error handlers.
  * 
  * @module server
- * @author HouseHold Budgeting Team
+ * @author GrowWise Team
  * @version 1.0.0
  * @license MIT
  * 
@@ -53,6 +53,9 @@ import joinRequestRoutes from './src/routes/joinRequests.js';
 import smartRoutes from './src/routes/smartRoutes.js';
 import reportsRoutes from './src/routes/reports.js';
 import advisorRoutes from './src/routes/advisor.js';
+import gamificationRoutes from './src/routes/gamificationRoutes.js';
+import insightRoutes from './src/routes/insights.js';
+import { initScheduler } from './src/utils/scheduler.js';
 
 // Middleware imports
 import { authenticate } from './src/middleware/auth.js';
@@ -71,7 +74,10 @@ const prisma = new PrismaClient();
 app.use(helmet({
     contentSecurityPolicy: false, // HELMET blocks Swagger UI by default, disable CSP for dev
 }));
-app.use(cors({ origin: config.cors.origin }));
+app.use(cors({
+    origin: config.cors.origin,
+    exposedHeaders: ['X-AI-Warning']
+}));
 app.use(express.json());
 
 app.use(morgan('dev'));
@@ -79,9 +85,22 @@ app.use(morgan('dev'));
 // Swagger Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
+import rateLimit from 'express-rate-limit';
+
+// ...
+
+// Rate Limiter for Auth Routes
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 10, // Limit each IP to 10 requests per window
+    message: { error: 'Too many attempts, please try again after 15 minutes' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Routes
 app.use('/api/admin', adminRoutes);
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes); // Remove global limiter here
 app.use('/api/households', authenticate, householdRoutes);
 app.use('/api/invitations', invitationRoutes);
 app.use('/api/transactions', transactionRoutes);
@@ -91,6 +110,18 @@ app.use('/api/join-requests', joinRequestRoutes);
 app.use('/api/smart', authenticate, smartRoutes);
 app.use('/api/reports', reportsRoutes); // Phase 6: AI Reports
 app.use('/api/advisor', advisorRoutes); // Phase 6: AI Advisor
+app.use('/api/gamification', authenticate, gamificationRoutes); // Phase 7: Gamification
+app.use('/api/insights', insightRoutes); // Dynamic AI Insights
+
+// Root endpoint
+app.get('/', (req, res) => {
+    res.json({
+        message: 'GrowWise API is running 🚀',
+        version: '1.0.0',
+        documentation: '/api-docs',
+        health: '/api/health'
+    });
+});
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -166,9 +197,16 @@ async function startServer() {
         await prisma.$connect();
         console.log('✅ Database connected');
 
+        // Initialize Schedulers
+        initScheduler();
+
+        // Import SMTP verification
+        const { verifyConnection } = await import('./src/services/emailService.js');
+        verifyConnection(); // Run asynchronously without blocking server start
+
         // Start listening
         app.listen(config.port, () => {
-            console.log(`\n🚀 HouseHold Budgeting API running on port ${config.port}`);
+            console.log(`\n🚀 GrowWise API running on port ${config.port}`);
             console.log(`📖 Health check: http://localhost:${config.port}/api/health`);
             console.log(`🧪 Test Gemini: http://localhost:${config.port}/api/test/gemini`);
             console.log(`🧪 Test Opik: http://localhost:${config.port}/api/test/opik\n`);

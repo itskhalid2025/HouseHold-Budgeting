@@ -1,0 +1,14 @@
+{
+    "screen_id": "0826af8e903e46ef998a6b31e848c56d",
+    "project_id": "6352551569990525816",
+    "title": "Analytical Budget Reports Dashboard",
+    "platform": "DESKTOP",
+    "theme": "Dark (Deep Navy + Monospaced Fonts)",
+    "features": [
+        "3-Column Dense Grid",
+        "Pinned Filter Bar",
+        "Cash Flow Area Chart",
+        "Dense Transaction Table",
+        "Technical Grid Lines"
+    ]
+}

@@ -6,9 +6,26 @@ import { generateJSON } from '../services/geminiService.js';
  * @param {string} text - The raw text input (can contain multiple entries)
  * @returns {Promise<Object[]>} - Array of structured entries
  */
-export async function categorizeEntry(text) {
+export async function categorizeEntry(inputPayload) {
     return traceOperation('categorizeEntry', async () => {
         try {
+            // Handle both object wrapper and raw string (backward compatibility)
+            const rawText = typeof inputPayload === 'string' ? inputPayload : (inputPayload.text || '');
+
+            const audioData = typeof inputPayload === 'object' ? inputPayload.audio : null;
+            // 'media' is an array of { data: base64, mimeType: string }
+            const mediaItems = typeof inputPayload === 'object' ? inputPayload.media : null;
+
+            // Backward compatibility for single image
+            if (!mediaItems && typeof inputPayload === 'object' && inputPayload.image) {
+                // If single image passed old way, wrap it
+                // We'll normalize this in controller but good for safety
+            }
+
+            const isAudio = !!audioData;
+            const hasMedia = mediaItems && mediaItems.length > 0;
+            const inputLabel = isAudio ? "Audio Input" : hasMedia ? `Image/PDF Input (${mediaItems.length} files)` : "Text Input";
+
             // Provide current date context for relative date parsing
             const now = new Date();
             const currentDate = now.toISOString().split('T')[0]; // YYYY-MM-DD
@@ -18,7 +35,7 @@ export async function categorizeEntry(text) {
 
             console.log('📅 Date Context:', { currentDate, currentYear, currentMonth, currentDay });
 
-            const prompt = `
+            const systemInstruction = `
                 You are a financial categorization expert for a household budgeting app.
                 
                 **IMPORTANT CONTEXT**:
@@ -26,11 +43,22 @@ export async function categorizeEntry(text) {
                 - Current Year: ${currentYear}
                 - Current Month: ${currentMonth}
                 - Current Day: ${currentDay}
+                - Users may speak in ANY language (English, Hindi, Hinglish, Spanish, etc.).
+                - You must TRANSLATE and INTERPRET the meaning to extract financial details.
+                
+                **Input Text**: "${!isAudio && !hasMedia ? rawText : '(Media Files provided)'}"
 
-                Analyze the following input text and extract ALL financial entries mentioned.
-                The user may mention MULTIPLE transactions in one message.
+                **Image/PDF Analysis Rules (CRITICAL)**:
+                 - If images/PDFs are provided, treat them as RECEIPTS, INVOICES, BILLS, or SALARY SLIPS.
+                 - **Multiple Files**: Analyze ALL provided pages together. They may be part of the same bill or separate bills.
+                 - **Merchant & Date**: Extract the Merchant Name and Date (use 'today' if missing).
+                 - **Itemization (CRITICAL)**: If the receipt lists multiple items, **DO NOT** just output the total. You must **SPLIT** the receipt into individual line items IF they belong to different categories or types (Need vs Want).
+                   - **Example**: A Walmart receipt has Eggs (Need/Food), Water (Need/Food), and a Lobster (Want/Dining).
+                   - **Action**: Create 3 separate entries.
+                   - **Shared Data**: All 3 entries share the same Date and Merchant (Description).
+                 - **Tax/Tip**: If splitting, distribute tax/tip proportionally or add it to the largest item.
+                 - **Blurry Images**: If individual items are unreadable, fall back to the **Total Amount** as a single entry.
 
-                **Input Text**: "${text}"
 
                 **Date Parsing Rules** (CRITICAL):
                 - "yesterday" → ${new Date(now - 86400000).toISOString().split('T')[0]}
@@ -71,9 +99,12 @@ export async function categorizeEntry(text) {
                    - Health (Gym, Barber, Salon, Wellness)
 
                    **IF SAVINGS**:
-                   - Emergency Fund
-                   - Long-Term (Investments, Education)
-                   - Sinking Funds (Car, Holiday, Vacation)
+                   - Category: "Emergency Fund", "Sinking Funds", "Debt Payoff", "Long-Term"
+                   - **SUBCATEGORY (CRITICAL)**: You MUST extract the specific name of the goal if mentioned.
+                     - Input: "saved for house" -> Subcategory: "House"
+                     - Input: "put money in car fund" -> Subcategory: "Car"
+                     - Input: "saving for holiday" -> Subcategory: "Holiday"
+                     - Input: "invested in stocks" -> Subcategory: "Stocks"
 
                 3. **Multiple Entries**:
                    - If the user provides multiple items (separated by "then", "and", commas, or new lines), extract EACH as a separate entry.
@@ -91,7 +122,8 @@ export async function categorizeEntry(text) {
                             "category": string,
                             "subcategory": string | null,
                             "date": "YYYY-MM-DD",
-                            "confidence": number (0-1)
+                            "confidence": number (0-1),
+                            "merchant": string | null
                         }
                     ]
                 }
@@ -114,9 +146,66 @@ export async function categorizeEntry(text) {
                 ]}
             `;
 
-            console.log('🤖 [AI Prompt Preview]:', prompt.substring(0, 300) + '...');
+            let parts = [{ text: systemInstruction }];
 
-            const data = await generateJSON(prompt, null, { maxTokens: 4096 });
+
+            if (isAudio) {
+                parts.push({
+                    inlineData: {
+                        mimeType: 'audio/webm', // Opus/Vorbis usually
+                        data: audioData
+                    }
+                });
+                parts.push({ text: "\n\nAnalyze the audio above and extract the transactions." });
+            }
+
+            if (hasMedia) {
+                mediaItems.forEach((item, index) => {
+                    parts.push({
+                        inlineData: {
+                            mimeType: item.mimeType || 'image/jpeg',
+                            data: item.data
+                        }
+                    });
+                    parts.push({ text: `\n[File ${index + 1}]` });
+                });
+                parts.push({ text: "\n\nAnalyze the images/PDFs above (Receipts, Bills, Salary Slips, or any financial document) and extract the transactions/items (Income, Expenses, or Savings) as per the Itemization Rules." });
+            }
+
+            console.log('🤖 [AI Request] Type:', isAudio ? 'Audio (Multimodal)' : hasMedia ? `Media (${mediaItems.length})` : 'Text Only');
+
+            const MAX_RETRIES = 4;
+            let data;
+            let lastError;
+
+            for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                    const isRetry = attempt > 1;
+                    if (isRetry) console.log(`🔄 [Categorization] Retry Attempt ${attempt}/${MAX_RETRIES}...`);
+
+                    data = await generateJSON(parts, null, {
+                        maxTokens: 4096,
+                        useBackup: isRetry, // Use backup keys on retry
+                        title: isRetry ? `Categorization (Retry #${attempt})` : 'Categorization'
+                    });
+
+                    // If successful, break format
+                    console.log(`✅ [Categorization] Success on attempt ${attempt}`);
+                    lastError = null;
+                    break;
+                } catch (err) {
+                    console.error(`❌ [Categorization] Attempt ${attempt} failed: ${err.message}`);
+                    lastError = err;
+                    if (attempt < MAX_RETRIES) {
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
+                }
+            }
+
+            if (!data) {
+                throw lastError || new Error('All categorization attempts failed');
+            }
+
             console.log('🤖 AI Categorization Result:', JSON.stringify(data, null, 2));
 
             // Ensure we always return the entries array
@@ -128,5 +217,5 @@ export async function categorizeEntry(text) {
             console.error('Categorization error:', error);
             throw error;
         }
-    }, { input: text });
+    }, { input: inputPayload });
 }

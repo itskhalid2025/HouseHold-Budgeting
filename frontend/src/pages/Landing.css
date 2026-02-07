@@ -1,0 +1,546 @@
+/* ============================================
+   LANDING PAGE STYLES
+   Professional, modern design with glassmorphism
+   ============================================ */
+
+.landing-page {
+    min-height: 100vh;
+    width: 100%;
+    overflow-x: hidden;
+    background: var(--background);
+    color: var(--text);
+    transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================
+   THEME TOGGLE (Top Right)
+   ============================================ */
+
+.landing-theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.landing-theme-toggle:hover {
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.landing-theme-toggle svg {
+    width: 20px;
+    height: 20px;
+    color: var(--text);
+}
+
+/* ============================================
+   HERO SECTION
+   ============================================ */
+
+.landing-hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 80px 20px 60px;
+    position: relative;
+    background: linear-gradient(135deg,
+            var(--primary-light, #667eea) 0%,
+            var(--primary, #6366f1) 50%,
+            var(--primary-dark, #4f46e5) 100%);
+    overflow: hidden;
+}
+
+[data-theme="dark"] .landing-hero {
+    background: linear-gradient(135deg,
+            #1a1a2e 0%,
+            #16213e 50%,
+            #0f3460 100%);
+}
+
+.landing-hero::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse"><path d="M 100 0 L 0 0 0 100" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></pattern></defs><rect width="100%" height="100%" fill="url(%23grid)"/></svg>');
+    opacity: 0.3;
+}
+
+.landing-hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.landing-hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4rem);
+    font-weight: 800;
+    margin-bottom: 20px;
+    color: white;
+    line-height: 1.2;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.landing-hero .subtitle {
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.95);
+    font-weight: 500;
+    line-height: 1.6;
+}
+
+.landing-hero .description {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    margin-bottom: 30px;
+    color: rgba(255, 255, 255, 0.85);
+    line-height: 1.8;
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.landing-hero-features {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 40px;
+    font-size: clamp(0.95rem, 2vw, 1.1rem);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.landing-hero-features span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.landing-cta-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 18px 40px;
+    font-size: 1.2rem;
+    font-weight: 600;
+    background: white;
+    color: var(--primary);
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    text-decoration: none;
+}
+
+.landing-cta-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   SECTIONS
+   ============================================ */
+
+.landing-section {
+    padding: 80px 20px;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.landing-section-title {
+    font-size: clamp(2rem, 4vw, 2.5rem);
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 20px;
+    color: var(--text);
+}
+
+.landing-section-subtitle {
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    text-align: center;
+    margin-bottom: 60px;
+    color: var(--text-secondary);
+    max-width: 700px;
+    margin-left: auto;
+    margin-right: auto;
+    line-height: 1.6;
+}
+
+/* ============================================
+   AI FEATURES GRID
+   ============================================ */
+
+.landing-features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.landing-feature-card {
+    background: var(--card-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 30px;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    animation: fadeInUp 0.6s ease-out;
+    animation-fill-mode: both;
+}
+
+.landing-feature-card:nth-child(1) {
+    animation-delay: 0.1s;
+}
+
+.landing-feature-card:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.landing-feature-card:nth-child(3) {
+    animation-delay: 0.3s;
+}
+
+.landing-feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 12px 30px rgba(99, 102, 241, 0.15);
+    border-color: var(--primary);
+}
+
+.landing-feature-icon {
+    width: 60px;
+    height: 60px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark, #4f46e5));
+    border-radius: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    font-size: 2rem;
+}
+
+.landing-feature-card h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--text);
+}
+
+.landing-feature-card p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.landing-feature-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.landing-feature-list li {
+    padding: 8px 0;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.95rem;
+}
+
+.landing-feature-list li::before {
+    content: '✓';
+    color: var(--primary);
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+/* ============================================
+   BENEFITS SECTION
+   ============================================ */
+
+.landing-benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.landing-benefit-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    padding: 30px 25px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.landing-benefit-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.landing-benefit-item .icon {
+    font-size: 2.5rem;
+    margin-bottom: 15px;
+}
+
+.landing-benefit-item h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text);
+}
+
+.landing-benefit-item p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+/* ============================================
+   FINAL CTA SECTION
+   ============================================ */
+
+.landing-cta-section {
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark, #4f46e5));
+    padding: 80px 20px;
+    text-align: center;
+    margin-top: 60px;
+}
+
+[data-theme="dark"] .landing-cta-section {
+    background: linear-gradient(135deg, #1a1a2e, #0f3460);
+}
+
+.landing-cta-section h2 {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 700;
+    color: white;
+    margin-bottom: 20px;
+}
+
+.landing-cta-section p {
+    font-size: clamp(1rem, 2vw, 1.3rem);
+    color: rgba(255, 255, 255, 0.9);
+    margin-bottom: 40px;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.landing-cta-buttons {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.landing-cta-button {
+    padding: 16px 35px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.landing-cta-button.primary {
+    background: white;
+    color: var(--primary);
+    border: 2px solid white;
+}
+
+.landing-cta-button.primary:hover {
+    background: transparent;
+    color: white;
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.landing-cta-button.secondary {
+    background: transparent;
+    color: white;
+    border: 2px solid white;
+}
+
+.landing-cta-button.secondary:hover {
+    background: white;
+    color: var(--primary);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* ============================================
+   MOBILE RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+    .landing-hero {
+        padding: 60px 15px 40px;
+        min-height: 90vh;
+    }
+
+    .landing-section {
+        padding: 60px 15px;
+    }
+
+    .landing-features-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .landing-benefits-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .landing-cta-buttons {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .landing-cta-button {
+        width: 100%;
+        max-width: 300px;
+        margin: 0 auto;
+    }
+
+    .landing-theme-toggle {
+        top: 15px;
+        right: 15px;
+        padding: 8px 15px;
+    }
+
+    .landing-hero-features {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* ============================================
+   THEME VARIABLES
+   ============================================ */
+
+[data-theme="light"] {
+    --card-bg: rgba(255, 255, 255, 0.8);
+    --border: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --card-bg: rgba(255, 255, 255, 0.05);
+    --border: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   FOOTER STYLES
+   ============================================ */
+
+/* ============================================
+   FOOTER STYLES
+   ============================================ */
+
+.footer-container {
+    padding: 20px;
+    text-align: center;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+    background: var(--bg-glass);
+    /* Ensure glassmorphism */
+    backdrop-filter: blur(10px);
+    width: 100%;
+
+    /* Constant on screen logic */
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    z-index: 1000;
+}
+
+.footer-links {
+    display: flex;
+    gap: 30px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.footer-link {
+    cursor: pointer;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all 0.3s ease;
+    position: relative;
+    font-size: 0.95rem;
+}
+
+.footer-link:hover {
+    color: var(--primary);
+    transform: translateY(-2px);
+}
+
+.footer-link::after {
+    content: '';
+    position: absolute;
+    width: 0;
+    height: 2px;
+    bottom: -4px;
+    left: 0;
+    background-color: var(--primary);
+    transition: width 0.3s ease;
+}
+
+.footer-link:hover::after {
+    width: 100%;
+}

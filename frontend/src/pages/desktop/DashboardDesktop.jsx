@@ -1,0 +1,682 @@
+/**
+ * @fileoverview Dashboard Page
+ *
+ * Displays an overview of household financial statistics, including income, expenses, and savings.
+ * Utilises API calls to fetch transaction summary, monthly income, and goal data, and updates via polling.
+ *
+ * @module pages/Dashboard
+ * @requires react
+ * @requires ../api/api
+ * @requires ../hooks/usePolling
+ * @requires ../context/AuthContext
+ * @requires ../utils/currencyUtils
+ * @requires ./Dashboard.css
+ */
+
+import React, { useState, useEffect } from 'react';
+import {
+    getTransactionSummary,
+    getMonthlyIncomeTotal,
+    getGoalSummary,
+    parseVoiceInput,
+    getTransactions,
+    analyzeImage,
+    getDailyInsight,
+    getGamificationStatus
+} from '../../api/api';
+
+import {
+    Upload,
+    FileText,
+    Image as ImageIcon,
+    ChevronLeft,
+    ChevronRight,
+    TrendingUp,
+    Newspaper,
+    Lightbulb,
+    Flame,
+    Award,
+    Shield,
+    Star,
+    Crown,
+    Trophy,
+    ChevronDown
+} from 'lucide-react';
+import GrowWiseLogo from '../../components/GrowWiseLogo';
+import TaglineAnimated from '../../components/TaglineAnimated';
+import TrendLineChart from '../../components/charts/TrendLineChart';
+import usePolling from '../../hooks/usePolling';
+import useVoiceInput from '../../hooks/useVoiceInput';
+import { useAuth } from '../../context/AuthContext';
+import { formatCurrency } from '../../utils/currencyUtils';
+import { formatDate, getUserColor } from '../../utils/formatting';
+import { getCategoryEmoji } from '../../utils/categoryIcons';
+import { triggerConfetti } from '../../utils/confetti';
+import { useTour } from '../../context/TourContext';
+import { sidebarTourDesktop, dashboardTourDesktop } from '../../tourConfigs';
+import GamificationHubDesktop from '../../components/gamification/GamificationHubDesktop';
+import BreakdownModal from '../../components/common/BreakdownModal';
+import './DashboardDesktop.css';
+
+// --- MOCK DATA FOR CARDS ---
+const KNOWLEDGE_CARDS = [
+    { id: 1, title: "The 50/30/20 Rule", text: "Allocate 50% of income to needs, 30% to wants, and 20% to savings for a balanced budget." },
+    { id: 2, title: "Emergency Fund", text: "Aim to save 3-6 months of living expenses to protect yourself from unexpected financial setbacks." },
+    { id: 3, title: "Compound Interest", text: "Start investing early. Compound interest allows your money to grow exponentially over time." },
+    { id: 4, title: "Debt Snowball", text: "Pay off your smallest debts first to build momentum while making minimum payments on larger ones." }
+];
+
+const NEWS_CARDS = [
+    { id: 1, title: "Market Update", text: "Global markets show resilience as tech sector rallies.", source: "FinDaily", time: "2h ago" },
+    { id: 2, title: "Crypto Trends", text: "Major cryptocurrencies see a slight correction after monthly highs.", source: "CryptoWatch", time: "4h ago" },
+    { id: 3, title: "Housing Market", text: "Interest rates stabilize, leading to increased activity in the housing sector.", source: "RealtyNews", time: "6h ago" },
+    { id: 4, title: "Savings Rates", text: "High-yield savings accounts are offering competitive rates this quarter.", source: "BankRate", time: "8h ago" }
+];
+
+const RANK_ICONS = {
+    'NOVICE': Shield,
+    'APPRENTICE': Star,
+    'PRO': Shield,
+    'MASTER': Crown,
+    'LEGEND': Trophy
+};
+
+const RANK_COLORS = {
+    'NOVICE': '#cd7f32',
+    'APPRENTICE': '#fbbf24',
+    'PRO': '#94a3b8',
+    'MASTER': '#facc15',
+    'LEGEND': '#06b6d4'
+};
+
+export default function DashboardDesktop() {
+    const { user, currency } = useAuth(); // Got user for welcome message
+    const [stats, setStats] = useState({
+        income: 0,
+        expenses: 0,
+        savings: 0,
+        totalSaved: 0,
+        monthlySaved: 0,
+        incomeBreakdown: [],
+        expensesBreakdown: [],
+        savingsBreakdown: []
+    });
+    const [breakdownModal, setBreakdownModal] = useState({
+        isOpen: false,
+        title: '',
+        type: '',
+        data: []
+    });
+    const [expandedCard, setExpandedCard] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [gamificationData, setGamificationData] = useState(null);
+
+    const [recentTransactions, setRecentTransactions] = useState([]);
+    const [trendData, setTrendData] = useState([]);
+
+    // --- CAROUSEL STATES ---
+    const [knowledgeCards, setKnowledgeCards] = useState(KNOWLEDGE_CARDS);
+    const [newsCards, setNewsCards] = useState(NEWS_CARDS);
+    const [knowledgeIndex, setKnowledgeIndex] = useState(0);
+    const [newsIndex, setNewsIndex] = useState(0);
+
+    // Auto-slide News & Wisdom every 10 seconds
+    useEffect(() => {
+        if (newsCards.length <= 1 && knowledgeCards.length <= 1) return;
+
+        const interval = setInterval(() => {
+            if (newsCards.length > 1) {
+                setNewsIndex(prev => (prev + 1) % newsCards.length);
+            }
+            if (knowledgeCards.length > 1) {
+                setKnowledgeIndex(prev => (prev + 1) % knowledgeCards.length);
+            }
+        }, 10000);
+        return () => clearInterval(interval);
+    }, [newsCards.length, knowledgeCards.length]);
+
+    const nextKnowledge = () => setKnowledgeIndex(prev => (prev + 1) % knowledgeCards.length);
+    const prevKnowledge = () => setKnowledgeIndex(prev => (prev - 1 + knowledgeCards.length) % knowledgeCards.length);
+
+    const nextNews = () => setNewsIndex(prev => (prev + 1) % newsCards.length);
+    const prevNews = () => setNewsIndex(prev => (prev - 1 + newsCards.length) % newsCards.length);
+
+    async function fetchDashboardData() {
+        try {
+            // Only set loading on initial fetch if empty
+            if (stats.income === 0 && stats.expenses === 0 && loading) setLoading(true);
+
+            // Fetch data in parallel
+            const [transactionSummary, incomeData, goalData, recentTxns, allTxns, dailyInsight, gamificationStatus] = await Promise.all([
+                getTransactionSummary(),
+                getMonthlyIncomeTotal(),
+                getGoalSummary(),
+                getTransactions({ limit: 5 }), // Recent 5
+                getTransactions({ limit: 100 }), // For trend
+                getDailyInsight().catch(() => null), // Fallback to null if fails
+                getGamificationStatus().catch(() => null)
+            ]);
+
+            if (dailyInsight && dailyInsight.success && dailyInsight.data) {
+                if (dailyInsight.data.news) setNewsCards(dailyInsight.data.news);
+                if (dailyInsight.data.quotes) setKnowledgeCards(dailyInsight.data.quotes);
+            }
+
+            if (gamificationStatus && gamificationStatus.success) {
+                setGamificationData(gamificationStatus.data);
+            }
+
+            const totalExpenses = transactionSummary.summary?.totalSpent || 0;
+            const totalIncome = incomeData.monthlyTotal || 0;
+            const savings = totalIncome - totalExpenses;
+            const totalSaved = goalData.totalSaved || 0;
+            const monthlySaved = goalData.monthlySaved || 0;
+
+            setStats({
+                income: totalIncome,
+                expenses: totalExpenses,
+                savings: savings,
+                totalSaved: totalSaved,
+                monthlySaved: monthlySaved,
+                incomeBreakdown: incomeData.byUser || [],
+                expensesBreakdown: transactionSummary.summary?.byUser || [],
+                savingsBreakdown: goalData.byUser || []
+            });
+
+            setRecentTransactions(recentTxns.transactions || []);
+
+            // Calculate daily spending for trend
+            const dailyMap = {};
+            const today = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().split('T')[0];
+                dailyMap[dateStr] = 0;
+            }
+
+            if (allTxns.transactions) {
+                allTxns.transactions.forEach(t => {
+                    if (!t.date || t.amount === undefined || t.amount === null) return;
+                    const d = t.date.split('T')[0];
+                    if (dailyMap[d] !== undefined) {
+                        const amount = Math.abs(parseFloat(t.amount));
+                        if (!isNaN(amount)) dailyMap[d] += amount;
+                    }
+                });
+            }
+
+            const chartData = Object.keys(dailyMap).map(date => ({
+                date: new Date(date).toLocaleDateString(undefined, { weekday: 'short' }),
+                amount: Math.round(dailyMap[date])
+            }));
+
+            setTrendData(chartData);
+
+        } catch (err) {
+            console.error('Error fetching dashboard data:', err);
+            setError('Failed to load dashboard data');
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const [showVoiceModal, setShowVoiceModal] = useState(false);
+    const [showTextModal, setShowTextModal] = useState(false);
+    const [showGamificationHub, setShowGamificationHub] = useState(false);
+    const [textInput, setTextInput] = useState('');
+
+    const {
+        isListening,
+        audioBlob,
+        startListening,
+        stopListening,
+        resetTranscript,
+        isSupported
+    } = useVoiceInput();
+
+    useEffect(() => {
+        fetchDashboardData();
+    }, []);
+
+    // Tour auto-trigger for first-time users
+    const { startTour, hasCompletedTour, isTourActive } = useTour();
+
+    useEffect(() => {
+        // Don't trigger if already in a tour or still loading
+        if (loading || isTourActive) return;
+
+        // Small delay to ensure DOM is ready
+        const timer = setTimeout(() => {
+            // First trigger sidebar tour, then dashboard tour
+            if (!hasCompletedTour('navigation-desktop')) {
+                startTour('navigation-desktop', sidebarTourDesktop);
+            } else if (!hasCompletedTour('dashboard-desktop')) {
+                startTour('dashboard-desktop', dashboardTourDesktop);
+            }
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [loading, isTourActive, hasCompletedTour, startTour]);
+
+    // Generic handler for both Voice and Text
+    const processSmartEntry = async (inputPayload) => {
+        try {
+            const parsed = await parseVoiceInput(inputPayload);
+
+            if (parsed.isCreated) {
+                setShowVoiceModal(false);
+                setShowTextModal(false);
+                resetTranscript();
+                setTextInput('');
+                fetchDashboardData();
+                triggerConfetti();
+
+                const today = new Date().toLocaleDateString();
+                if (parsed.count && parsed.count > 1) {
+                    const entryList = parsed.entries.map((e, i) =>
+                        `${i + 1}. ${e.classification.description}: $${e.record.amount}`
+                    ).join('\n');
+                    alert(`✅ Successfully added ${parsed.count} transactions on ${today}!\n\n${entryList}\n\nTotal: $${parsed.amount}`);
+                } else {
+                    alert(`✅ Successfully added on ${today}!\n\nCreated ${parsed.type || 'Record'}: ${parsed.description} ($${parsed.amount})`);
+                }
+            } else {
+                alert("Could not automatically create record. Please try again.");
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Failed to process entry: ' + err.message);
+        }
+    };
+
+    // DRAG & DROP
+    const [isDragging, setIsDragging] = useState(false);
+    const [analyzingImage, setAnalyzingImage] = useState(false);
+
+    const handleDragOver = (e) => { e.preventDefault(); setIsDragging(true); };
+    const handleDragLeave = (e) => { e.preventDefault(); setIsDragging(false); };
+    const handleDrop = async (e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        const files = Array.from(e.dataTransfer.files);
+        if (files.length > 0) handleImageAnalysis(files);
+    };
+    const handleFileSelect = (e) => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) handleImageAnalysis(files);
+    };
+
+    const handleImageAnalysis = async (files) => {
+        if (!files || files.length === 0) return;
+        const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'application/pdf'];
+        const validFiles = files.filter(f => validTypes.includes(f.type) || f.type.startsWith('image/'));
+
+        if (validFiles.length === 0) {
+            alert("Please upload valid image files (JPG, PNG) or PDFs.");
+            return;
+        }
+
+        setAnalyzingImage(true);
+        try {
+            const result = await analyzeImage(validFiles);
+            if (result.success || result.isCreated) {
+                const count = result.count || 1;
+                const total = result.amount || result.record?.amount || 0;
+                alert(`✅ Successfully analyzed ${validFiles.length} file(s)!\nMatched ${count} transaction(s) totaling ${formatCurrency(total, currency)}.`);
+                fetchDashboardData();
+            } else {
+                alert("Analysis complete but no transactions were confidently extracted.");
+            }
+        } catch (err) {
+            console.error("Image analysis failed:", err);
+            alert("Failed to analyze files: " + err.message);
+        } finally {
+            setAnalyzingImage(false);
+        }
+    };
+
+    const handleTextSubmit = (e) => {
+        e.preventDefault();
+        if (!textInput.trim()) return;
+        processSmartEntry(textInput);
+    };
+
+    usePolling(fetchDashboardData, 10000);
+
+    if (loading) return <div className="loading-center">Loading Dashboard...</div>;
+
+    return (
+        <div className="dashboard-container">
+            {/* Header / Gamification Stats - Clickable to open hub */}
+            <div className="dashboard-top-bar">
+                {gamificationData ? (
+                    <div className="header-gamification-stats" onClick={() => setShowGamificationHub(true)}>
+                        <div className="streak-badge-mini">
+                            <Flame size={20} className="flame-icon-mini" />
+                            <span className="streak-count-mini">{gamificationData.currentStreak || 0}</span>
+                        </div>
+                        <div className="exp-badge-mini">
+                            <Star size={16} className="exp-icon-mini" />
+                            <span>{gamificationData.totalPoints?.toLocaleString() || 0} XP</span>
+                        </div>
+                        <div className="rank-badge-mini" style={{ color: RANK_COLORS[gamificationData.rankTier] || '#94a3b8' }}>
+                            {(() => {
+                                const Icon = RANK_ICONS[gamificationData.rankTier] || Shield;
+                                return <Icon size={16} fill={`${RANK_COLORS[gamificationData.rankTier]}20`} />;
+                            })()}
+                            <span>{gamificationData.rankTier || 'NOVICE'}</span>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="header-gamification-stats loading">
+                        <Award size={20} className="pulse" />
+                        <span>Loading Status...</span>
+                    </div>
+                )}
+            </div>
+
+            <div className="dashboard-grid-layout">
+                {/* --- LEFT COLUMN --- */}
+                <div className="left-column">
+                    {/* 1. Brand Header */}
+                    <div className="brand-header">
+                        <GrowWiseLogo size="" style={{ fontSize: '5rem' }} animated={true} />
+                        <TaglineAnimated className="mt-4" />
+                    </div>
+
+                    {/* 2. Welcome Message */}
+                    <div className="welcome-card" data-tour-id="dashboard-welcome">
+                        <h1>
+                            Welcome back, <span className="highlight-name">{user?.firstName || 'User'}</span>! 👋
+                        </h1>
+                        <p>Here's your financial overview for today.</p>
+                    </div>
+
+                    {/* 2. Branched Stats Section */}
+                    <div className="branched-stats-container">
+                        <div className="month-header-centered">
+                            <h3>This Month's <span className="month-highlight">{new Date().toLocaleString('default', { month: 'long' })}</span> Overview</h3>
+                        </div>
+
+                        <div className="branch-connectors">
+                            <svg className="branch-svg" viewBox="0 0 100 60" preserveAspectRatio="none">
+                                {/* Left Branch */}
+                                <path d="M50,0 C50,25 16.6,25 16.6,60" className="connector-line-base" />
+                                <path d="M50,0 C50,25 16.6,25 16.6,60" className="connector-line-glow branch-1" />
+
+                                {/* Center Branch */}
+                                <path d="M50,0 L50,60" className="connector-line-base" />
+                                <path d="M50,0 L50,60" className="connector-line-glow branch-2" />
+
+                                {/* Right Branch */}
+                                <path d="M50,0 C50,25 83.3,25 83.3,60" className="connector-line-base" />
+                                <path d="M50,0 C50,25 83.3,25 83.3,60" className="connector-line-glow branch-3" />
+                            </svg>
+                        </div>
+
+                        {/* 3. Stat Cards */}
+                        <div className="stats-row" style={{ alignItems: 'flex-start' }} data-tour-id="dashboard-stats-income">
+                            {/* Income Card */}
+                            <div
+                                className={`stat-card-mini clickable ${expandedCard === 'income' ? 'expanded' : ''}`}
+                                data-tour-id="dashboard-stats-income"
+                                onClick={() => setExpandedCard(expandedCard === 'income' ? null : 'income')}
+                            >
+                                <div className="stat-main-content">
+                                    <div className="stat-icon income">💰</div>
+                                    <div className="stat-info">
+                                        <span className="label">Income</span>
+                                        <span className="value">{formatCurrency(stats.income, currency)}</span>
+                                    </div>
+                                    <ChevronDown className={`stat-expand-icon ${expandedCard === 'income' ? 'rotate' : ''}`} size={20} />
+                                </div>
+
+                                {expandedCard === 'income' && (
+                                    <div className="stat-breakdown-list">
+                                        {stats.incomeBreakdown.map((item, idx) => {
+                                            const amount = Number(item.amount || item.total || 0);
+                                            const percent = stats.income > 0 ? (amount / stats.income) * 100 : 0;
+                                            return (
+                                                <div key={idx} className="breakdown-item-wrapper">
+                                                    <div className="breakdown-item">
+                                                        <span className="user">{item.name || 'Unknown'}</span>
+                                                        <span className="amount">{formatCurrency(amount, currency)}</span>
+                                                    </div>
+                                                    <div className="breakdown-progress-bg">
+                                                        <div className="breakdown-progress-fill income" style={{ width: `${Math.min(percent, 100)}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {stats.incomeBreakdown.length === 0 && <div className="no-data">No data available</div>}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Expenses Card */}
+                            <div
+                                className={`stat-card-mini clickable ${expandedCard === 'expenses' ? 'expanded' : ''}`}
+                                data-tour-id="dashboard-stats-expenses"
+                                onClick={() => setExpandedCard(expandedCard === 'expenses' ? null : 'expenses')}
+                            >
+                                <div className="stat-main-content">
+                                    <div className="stat-icon expense">💸</div>
+                                    <div className="stat-info">
+                                        <span className="label">Expenses</span>
+                                        <span className="value">{formatCurrency(stats.expenses, currency)}</span>
+                                    </div>
+                                    <ChevronDown className={`stat-expand-icon ${expandedCard === 'expenses' ? 'rotate' : ''}`} size={20} />
+                                </div>
+
+                                {expandedCard === 'expenses' && (
+                                    <div className="stat-breakdown-list">
+                                        {stats.expensesBreakdown.map((item, idx) => {
+                                            const amount = Number(item.amount || item.total || 0);
+                                            const percent = stats.expenses > 0 ? (amount / stats.expenses) * 100 : 0;
+                                            return (
+                                                <div key={idx} className="breakdown-item-wrapper">
+                                                    <div className="breakdown-item">
+                                                        <span className="user">{item.name || 'Unknown'}</span>
+                                                        <span className="amount">{formatCurrency(amount, currency)}</span>
+                                                    </div>
+                                                    <div className="breakdown-progress-bg">
+                                                        <div className="breakdown-progress-fill expense" style={{ width: `${Math.min(percent, 100)}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {stats.expensesBreakdown.length === 0 && <div className="no-data">No data available</div>}
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Savings Card */}
+                            <div
+                                className={`stat-card-mini clickable ${expandedCard === 'savings' ? 'expanded' : ''}`}
+                                data-tour-id="dashboard-stats-balance"
+                                onClick={() => setExpandedCard(expandedCard === 'savings' ? null : 'savings')}
+                            >
+                                <div className="stat-main-content">
+                                    <div className="stat-icon savings">🐷</div>
+                                    <div className="stat-info">
+                                        <span className="label">Savings</span>
+                                        <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
+                                    </div>
+                                    <ChevronDown className={`stat-expand-icon ${expandedCard === 'savings' ? 'rotate' : ''}`} size={20} />
+                                </div>
+
+                                {expandedCard === 'savings' && (
+                                    <div className="stat-breakdown-list">
+                                        {stats.savingsBreakdown.map((item, idx) => {
+                                            const amount = Number(item.amount || item.total || 0);
+                                            const percent = stats.monthlySaved > 0 ? (amount / stats.monthlySaved) * 100 : 0;
+                                            return (
+                                                <div key={idx} className="breakdown-item-wrapper">
+                                                    <div className="breakdown-item">
+                                                        <span className="user">{item.name || 'Unknown'}</span>
+                                                        <span className="amount">{formatCurrency(amount, currency)}</span>
+                                                    </div>
+                                                    <div className="breakdown-progress-bg">
+                                                        <div className="breakdown-progress-fill savings" style={{ width: `${Math.min(percent, 100)}%` }}></div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                        {stats.savingsBreakdown.length === 0 && <div className="no-data">No data available</div>}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 3. Knowledge Cards (Manual Slide) */}
+                    <div className="info-card-container">
+                        <div className="card-header">
+                            <h3><Lightbulb size={18} className="icon-yellow" /> Financial Wisdom</h3>
+                            <div className="card-controls">
+                                <button onClick={prevKnowledge}><ChevronLeft size={16} /></button>
+                                <button onClick={nextKnowledge}><ChevronRight size={16} /></button>
+                            </div>
+                        </div>
+                        <div key={knowledgeIndex} className="sliding-card-content knowledge-card animate-fade-in">
+                            <h4>{knowledgeCards[knowledgeIndex]?.title || knowledgeCards[knowledgeIndex]?.headline}</h4>
+                            <p>{knowledgeCards[knowledgeIndex]?.text || knowledgeCards[knowledgeIndex]?.summary}</p>
+
+                            <div className="card-footer-flex">
+
+                                {/* Progress Bar Animation */}
+                                <div className="progress-bar-container mini">
+                                    <div key={knowledgeIndex} className="progress-bar-fill"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 4. Financial News (Auto 10s) */}
+                    <div className="info-card-container">
+                        <div className="card-header">
+                            <h3><Newspaper size={18} className="icon-blue" /> Financial News</h3>
+                            <div className="card-controls-group">
+                                <div className="live-badge-wrapper">
+                                    <span className="live-badge">LIVE</span>
+                                </div>
+                                <div className="card-controls">
+                                    <button onClick={prevNews}><ChevronLeft size={16} /></button>
+                                    <button onClick={nextNews}><ChevronRight size={16} /></button>
+                                </div>
+                            </div>
+                        </div>
+                        <div key={newsIndex} className="sliding-card-content news-card animate-fade-in">
+                            <div className="news-meta">
+                                <span className="news-source">{newsCards[newsIndex]?.category || newsCards[newsIndex]?.source || 'News'}</span>
+                                <span className="news-time">{newsCards[newsIndex]?.link ? <a href={newsCards[newsIndex].link} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--primary-light)', textDecoration: 'underline' }}>Read More</a> : 'Today'}</span>
+                            </div>
+                            <h4>{newsCards[newsIndex]?.headline || newsCards[newsIndex]?.title}</h4>
+                            <p>{newsCards[newsIndex]?.summary || newsCards[newsIndex]?.text}</p>
+                            {/* Progress Bar Animation (Pure CSS or JS driven, simple JS reset here) */}
+                            <div className="progress-bar-container">
+                                <div key={newsIndex} className="progress-bar-fill"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* --- RIGHT COLUMN --- */}
+                <div className="right-column">
+                    {/* 1. Chart */}
+                    <div className="dashboard-card chart-section" data-tour-id="dashboard-chart">
+                        <div className="card-header">
+                            <h3>Weekly Spending Trend</h3>
+                        </div>
+                        <div className="chart-wrapper">
+                            <TrendLineChart data={trendData} />
+                        </div>
+                    </div>
+
+                    {/* 2. Recent Transactions */}
+                    <div className="dashboard-card recent-transactions" data-tour-id="dashboard-recent-transactions">
+                        <div className="card-header">
+                            <h3>Recent Transactions</h3>
+                            <button className="view-all-link" onClick={() => window.location.href = '/transactions'}>View All</button>
+                        </div>
+                        <div className="transaction-list-compact">
+                            {recentTransactions.length > 0 ? (
+                                recentTransactions.map(txn => (
+                                    <div key={txn.id} className="txn-item-compact">
+                                        <div className="txn-icon">{getCategoryEmoji(txn.category, txn.subcategory)}</div>
+                                        <div className="txn-details">
+                                            <span className="txn-desc">{txn.description}</span>
+                                            <div className="txn-meta">
+                                                <span className="txn-date">{formatDate(txn.date)}</span>
+                                                {(txn.user || txn.userName) && (
+                                                    <span
+                                                        className="txn-user-pill"
+                                                        style={{ backgroundColor: getUserColor(txn.userName || txn.user?.firstName || 'Me') }}
+                                                    >
+                                                        {txn.userName || txn.user?.firstName || 'Me'}
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <span className={`txn-amount ${txn.amount > 0 ? 'pos' : 'neg'}`}>
+                                            {formatCurrency(Math.abs(txn.amount), currency)}
+                                        </span>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="empty-text">No recent transactions</p>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* MODALS REUSED */}
+            {showVoiceModal && (
+                <div className="modal-overlay" onClick={() => { stopListening(); setShowVoiceModal(false); }}>
+                    <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
+                        <h3>Smart Voice Entry</h3>
+                        {!audioBlob ? (
+                            <>
+                                <div className={`mic-container ${isListening ? 'listening' : ''}`}>
+                                    <div className="mic-icon">🎤</div>
+                                </div>
+                                <p>{isListening ? 'Listening...' : 'Tap start...'}</p>
+                                <div className="voice-controls"><button className="btn-primary" onClick={startListening}>{isListening ? 'Stop' : 'Start'}</button></div>
+                            </>
+                        ) : (
+                            <div className="voice-controls"><button className="btn-success" onClick={() => processSmartEntry(audioBlob)}>Process</button></div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {showTextModal && (
+                <div className="modal-overlay" onClick={() => setShowTextModal(false)}>
+                    <div className="modal voice-modal" onClick={e => e.stopPropagation()}>
+                        <form onSubmit={handleTextSubmit}>
+                            <textarea className="smart-text-input" value={textInput} onChange={e => setTextInput(e.target.value)} placeholder="Type transaction..." autoFocus />
+                            <div className="voice-controls"><button type="submit" className="btn-success">Process</button></div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            <BreakdownModal
+                isOpen={breakdownModal.isOpen}
+                onClose={() => setBreakdownModal({ ...breakdownModal, isOpen: false })}
+                title={breakdownModal.title}
+                type={breakdownModal.type}
+                data={breakdownModal.data}
+                currency={currency}
+            />
+
+            <GamificationHubDesktop
+                isOpen={showGamificationHub}
+                onClose={() => setShowGamificationHub(false)}
+            />
+        </div>
+    );
+}

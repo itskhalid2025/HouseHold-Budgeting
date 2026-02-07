@@ -17,11 +17,14 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import config from '../utils/config.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
+import { sendVerificationEmail, sendPasswordResetEmail } from '../services/emailService.js';
+import { updateUserGamification } from '../services/gamificationService.js';
+import { getCountryFromIp } from '../services/geoService.js';
+import { Country } from 'country-state-city';
 
-const prisma = new PrismaClient();
 
 /**
  * Generate JWT token
@@ -50,7 +53,15 @@ const generateToken = (user) => {
 export const register = async (req, res) => {
     logEntry('authController', 'register', { email: req.body.email, phone: req.body.phone });
     try {
-        const { email, phone, password, firstName, lastName, currency } = req.body;
+        const { email, phone, password, firstName, lastName, currency, country, state, city, termsAccepted } = req.body;
+
+        // Security: Enforce Terms Acceptance on Backend
+        if (termsAccepted !== true && termsAccepted !== 'true') {
+            return res.status(400).json({
+                success: false,
+                error: 'You must accept the Terms of Service and Privacy Policy to register.'
+            });
+        }
 
         // Check if email already exists
         const existingEmail = await prisma.user.findUnique({
@@ -64,20 +75,14 @@ export const register = async (req, res) => {
             });
         }
 
-        // Check if phone already exists
-        const existingPhone = await prisma.user.findUnique({
-            where: { phone }
-        });
 
-        if (existingPhone) {
-            return res.status(400).json({
-                success: false,
-                error: 'Phone number already registered'
-            });
-        }
 
         // Hash password
         const passwordHash = await bcrypt.hash(password, 12);
+
+        // Generate verification token
+        const verificationToken = crypto.randomBytes(32).toString('hex');
+        const verificationTokenExpiry = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes
 
         // Create user
         logDB('create', 'User', { email });
@@ -89,7 +94,17 @@ export const register = async (req, res) => {
                 firstName,
                 lastName,
                 currency: currency || 'USD',
-                role: 'VIEWER' // Default role
+                role: 'VIEWER', // Default role
+                verificationToken,
+                verificationTokenExpiry,
+                emailVerified: false,
+                country,
+                state,
+                city,
+                // Capture consent timestamps
+                termsAcceptedAt: req.body.termsAccepted ? new Date() : undefined,
+                privacyAcceptedAt: req.body.termsAccepted ? new Date() : undefined,
+                cookieAcceptedAt: req.body.cookieAccepted ? new Date() : undefined
             },
             select: {
                 id: true,
@@ -104,21 +119,31 @@ export const register = async (req, res) => {
             }
         });
 
-        // Generate JWT
+        // Generate JWT first so it's available for response even if email fails
         const token = generateToken(user);
+
+        console.log(`✅ User created: ${user.id}. Sending verification email...`);
+
+        // Send verification email in the background (non-blocking)
+        sendVerificationEmail(user, verificationToken).catch(emailError => {
+            console.error("⚠️ Failed to send verification email in background:", emailError.message);
+        });
 
         logSuccess('authController', 'register', { userId: user.id });
         return res.status(201).json({
             success: true,
             user,
-            token
+            token,
+            message: 'Registration successful. Please check your email to verify your account.'
         });
 
     } catch (error) {
         logError('authController', 'register', error);
+        console.error("❌ Registration Error Details:", error); // Explicit console log
         return res.status(500).json({
             success: false,
-            error: 'Failed to register user'
+            error: 'Failed to register user',
+            details: error.message // Return potential details for debugging (suppress in PROD normally)
         });
     }
 };
@@ -150,6 +175,10 @@ export const login = async (req, res) => {
                 role: true,
                 emailVerified: true,
                 phoneVerified: true,
+                country: true,
+                state: true,
+                city: true,
+                cookieAcceptedAt: true,
                 createdAt: true
             }
         });
@@ -174,11 +203,23 @@ export const login = async (req, res) => {
             });
         }
 
+        if (!user.emailVerified) {
+            logError('authController', 'login', new Error('Email not verified'));
+            return res.status(403).json({
+                success: false,
+                error: 'Email not verified. Please check your inbox.',
+                code: 'EMAIL_NOT_VERIFIED'
+            });
+        }
+
         // Remove passwordHash from response
         const { passwordHash, ...userWithoutPassword } = user;
 
         // Generate JWT
         const token = generateToken(user);
+
+        // GAMIFICATION: Award Login XP (5 pts)
+        updateUserGamification(user.id, 'LOGIN').catch(err => console.error("Gamification Login Error:", err));
 
         logSuccess('authController', 'login', { userId: user.id });
         return res.status(200).json({
@@ -204,11 +245,45 @@ export const login = async (req, res) => {
 export const me = async (req, res) => {
     logEntry('authController', 'me', { userId: req.user?.id });
     try {
-        // User is already attached by authenticate middleware
-        logSuccess('authController', 'me', { userId: req.user?.id });
+        let user = req.user;
+
+        // Auto-detect country if missing (satisfies "show his country first")
+        if (!user.country) {
+            const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+            const countryCode = getCountryFromIp(ip);
+
+            if (countryCode && countryCode !== 'Local') {
+                const countryObj = Country.getCountryByCode(countryCode);
+                if (countryObj) {
+                    logDB('update (auto-detect)', 'User', { id: user.id, country: countryObj.name });
+                    user = await prisma.user.update({
+                        where: { id: user.id },
+                        data: { country: countryObj.name },
+                        select: {
+                            id: true,
+                            email: true,
+                            phone: true,
+                            firstName: true,
+                            lastName: true,
+                            currency: true,
+                            avatarUrl: true,
+                            timezone: true,
+                            householdId: true,
+                            role: true,
+                            country: true,
+                            state: true,
+                            city: true,
+                            createdAt: true
+                        }
+                    });
+                }
+            }
+        }
+
+        logSuccess('authController', 'me', { userId: user.id });
         return res.status(200).json({
             success: true,
-            user: req.user
+            user
         });
     } catch (error) {
         logError('authController', 'me', error);
@@ -227,8 +302,22 @@ export const me = async (req, res) => {
 export const logout = async (req, res) => {
     logEntry('authController', 'logout', { userId: req.user?.id });
     try {
-        // In a stateless JWT system, logout is handled client-side by discarding the token
-        // Optional: implement token blacklisting if needed
+        const token = req.headers.authorization?.split(' ')[1];
+
+        if (token) {
+            // Blacklist the token with 24h expiry (timestamp based)
+            // JWT expiry is usually less than 24h, but we ensure cleanup
+            const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+            await prisma.blacklistedToken.create({
+                data: {
+                    token,
+                    expiresAt
+                }
+            });
+            logDB('create', 'BlacklistedToken', { token: '***' });
+        }
+
         logSuccess('authController', 'logout');
         return res.status(200).json({
             success: true,
@@ -281,7 +370,8 @@ export const forgotPassword = async (req, res) => {
             }
         });
 
-        // TODO: Send email with reset link
+        // Send email with reset link
+        await sendPasswordResetEmail(user, resetToken);
         logSuccess('authController', 'forgotPassword', { email });
 
         return res.status(200).json({
@@ -354,5 +444,100 @@ export const resetPassword = async (req, res) => {
             success: false,
             error: 'Failed to reset password'
         });
+    }
+};
+
+/**
+ * Update user profile
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+export const updateProfile = async (req, res) => {
+    logEntry('authController', 'updateProfile', { userId: req.user.id });
+    try {
+        const userId = req.user.id;
+        const updateData = req.body;
+
+        logDB('update', 'User', { id: userId, ...updateData });
+        const updatedUser = await prisma.user.update({
+            where: { id: userId },
+            data: updateData,
+            select: {
+                id: true,
+                email: true,
+                phone: true,
+                firstName: true,
+                lastName: true,
+                currency: true,
+                avatarUrl: true,
+                timezone: true,
+                householdId: true,
+                role: true,
+                country: true,
+                state: true,
+                city: true,
+                cookieAcceptedAt: true,
+                createdAt: true
+            }
+        });
+
+        logSuccess('authController', 'updateProfile', { userId });
+        return res.status(200).json({
+            success: true,
+            user: updatedUser,
+            message: 'Profile updated successfully'
+        });
+
+    } catch (error) {
+        logError('authController', 'updateProfile', error);
+        return res.status(500).json({
+            success: false,
+            error: 'Failed to update profile'
+        });
+    }
+};
+
+/**
+ * Verify email with token
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+export const verifyEmail = async (req, res) => {
+    logEntry('authController', 'verifyEmail', { token: req.query.token });
+    try {
+        const { token } = req.query;
+
+        if (!token) {
+            return res.status(400).json({ success: false, error: 'Token is required' });
+        }
+
+        const user = await prisma.user.findFirst({
+            where: {
+                verificationToken: token,
+                verificationTokenExpiry: {
+                    gt: new Date()
+                }
+            }
+        });
+
+        if (!user) {
+            return res.status(400).json({ success: false, error: 'Invalid or expired verification token' });
+        }
+
+        await prisma.user.update({
+            where: { id: user.id },
+            data: {
+                emailVerified: true,
+                verificationToken: null,
+                verificationTokenExpiry: null
+            }
+        });
+
+        logSuccess('authController', 'verifyEmail', { userId: user.id });
+        res.json({ success: true, message: 'Email verified successfully' });
+
+    } catch (error) {
+        logError('authController', 'verifyEmail', error);
+        res.status(500).json({ success: false, error: 'Failed to verify email' });
     }
 };

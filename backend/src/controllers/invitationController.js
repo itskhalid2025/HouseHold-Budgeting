@@ -9,12 +9,11 @@
  * @requires ../utils/generateCode
  */
 
-import { PrismaClient } from '@prisma/client';
+import jwt from 'jsonwebtoken';
+import prisma from '../services/db.js';
 import { generateToken } from '../utils/generateCode.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
-
-const prisma = new PrismaClient();
 
 /**
  * Send an invitation to join the household

@@ -1,0 +1,14 @@
+{
+    "screen_id": "700c4e7de4424fa9ba4704c611dbc919",
+    "project_id": "6352551569990525816",
+    "title": "Personalized Financial Feed",
+    "platform": "MOBILE",
+    "theme": "Dark (Deep Navy + Big Cards)",
+    "features": [
+        "Feed-like Scrollability",
+        "Personalized Greeting Header",
+        "Horizontal Scroll Member Strip",
+        "Material 3 Card Styling",
+        "Focus on Readability"
+    ]
+}

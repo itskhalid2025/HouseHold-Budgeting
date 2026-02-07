@@ -1,19 +1,12 @@
-/**
- * @fileoverview Configuration Service
- *
- * Centralised management of environment variables, database URLs,
- * JWT secrets, and third‑party service API keys (Gemini, Opik).
- * Includes configuration validation logic.
- *
- * @module utils/config
- * @requires dotenv
- */
-
 import dotenv from 'dotenv';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-// Load environment variables
-dotenv.config();
+// Load environment variables from the backend root (.env is two levels up from src/utils)
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const config = {
     // Server
@@ -25,7 +18,7 @@ const config = {
 
     // JWT
     jwt: {
-        secret: process.env.JWT_SECRET || 'default-secret-change-in-production',
+        secret: process.env.JWT_SECRET || 'default-secret^(,?).change-in-production-noone@canHack$$',
         expiresIn: process.env.JWT_EXPIRES_IN || '7d'
     },
 
@@ -34,9 +27,25 @@ const config = {
         apiKeys: [
             process.env.GEMINI_API_KEY,
             process.env.GEMINI_API_KEY2,
-            process.env.GEMINI_API_KEY3
+            process.env.GEMINI_API_KEY3,
+            process.env.GEMINI_API_KEY4,
+            process.env.GEMINI_API_KEY5,
+            process.env.GEMINI_API_KEY6,
+            process.env.GEMINI_API_KEY7,
+            process.env.GEMINI_API_KEY8,
+            process.env.GEMINI_API_KEY9,
+            process.env.GEMINI_API_KEY10
         ].filter(Boolean),
-        model: 'gemini-2.5-flash'
+        model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+        // Array of backup models to try in order
+        backupModels: [
+            process.env.GEMINI_MODEL2,
+            process.env.GEMINI_MODEL3,
+            process.env.GEMINI_MODEL4,
+            process.env.GEMINI_MODEL5
+        ].filter(Boolean),
+        embeddingModel: process.env.GEMINI_EMBEDDING_MODEL || 'models/gemini-embedding-001',
+        embeddingModelBackup: process.env.GEMINI_EMBEDDING_MODEL_BACKUP || 'text-embedding-004'
     },
 
     // Opik Observability
@@ -45,12 +54,12 @@ const config = {
         projectName: process.env.OPIK_PROJECT_NAME || 'household-budget'
     },
 
-    // CORS
+    // CORS need no / at the end
     cors: {
-        origin: [
-            process.env.FRONTEND_URL || 'http://localhost:5173',
-            'http://localhost:5174'
-        ]
+        origin: (process.env.FRONTEND_URL ? process.env.FRONTEND_URL.split(',') : [])
+            .concat(['http://localhost:5173', 'https://growwise-app.netlify.app', 'https://devserver-mobile-ui--growwise-app.netlify.app'])
+            .map(url => url.trim())
+            .filter(Boolean)
     }
 };
 
@@ -67,8 +76,8 @@ export function validateConfig() {
     const missing = required.filter(key => !process.env[key]);
 
     // Check for at least one Gemini key
-    if (!process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY2 && !process.env.GEMINI_API_KEY3) {
-        missing.push('GEMINI_API_KEY (or GEMINI_API_KEY2/3)');
+    if (!process.env.GEMINI_API_KEY && !process.env.GEMINI_API_KEY2 && !process.env.GEMINI_API_KEY3 && !process.env.GEMINI_API_KEY4) {
+        missing.push('GEMINI_API_KEY (or multiple backup keys)');
     }
 
     if (missing.length > 0) {

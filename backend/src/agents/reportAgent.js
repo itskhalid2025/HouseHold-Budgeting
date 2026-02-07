@@ -25,15 +25,32 @@ export async function generateReport(aggregatedData) {
         try {
             const {
                 totalSpent,
+                // ... (rest of function body)
                 totalIncome,
                 totalSaved,
                 byCategory,
                 byType,
                 byUser,
-                comparedToLastPeriod,
+                history, // Get history
                 dateRange,
                 reportType
             } = aggregatedData;
+
+            // COMPATIBILITY FIX: Calculate comparedToLastPeriod from history if missing
+            let comparedToLastPeriod = aggregatedData.comparedToLastPeriod;
+            if (!comparedToLastPeriod) {
+                if (history && history.length >= 2) {
+                    const current = history[history.length - 1].amount;
+                    const prev = history[history.length - 2].amount;
+                    const changeVal = prev > 0 ? ((current - prev) / prev) * 100 : 0;
+                    comparedToLastPeriod = {
+                        change: changeVal.toFixed(1),
+                        direction: changeVal > 0 ? 'increased' : changeVal < 0 ? 'decreased' : 'stable'
+                    };
+                } else {
+                    comparedToLastPeriod = { change: 0, direction: 'stable' };
+                }
+            }
 
             // Calculate savings rate
             const savingsRate = totalIncome > 0
@@ -46,23 +63,24 @@ export async function generateReport(aggregatedData) {
 **Report Period**: ${dateRange.start} to ${dateRange.end} (${reportType})
 
 **Financial Summary**:
-- Total Income: $${totalIncome}
-- Total Spent: $${totalSpent}
-- Total Saved: $${totalSaved}
+- Currency: ${aggregatedData.currency || 'USD'}
+- Total Income: ${aggregatedData.currencySymbol}${totalIncome}
+- Total Spent: ${aggregatedData.currencySymbol}${totalSpent}
+- Total Saved: ${aggregatedData.currencySymbol}${totalSaved}
 - Savings Rate: ${savingsRate}%
 
 **Spending by Type**:
-- NEEDS: $${byType?.NEED || 0} (${totalSpent > 0 ? ((byType?.NEED || 0) / totalSpent * 100).toFixed(1) : 0}%)
-- WANTS: $${byType?.WANT || 0} (${totalSpent > 0 ? ((byType?.WANT || 0) / totalSpent * 100).toFixed(1) : 0}%)
-- SAVINGS: $${byType?.SAVINGS || 0} (${totalSpent > 0 ? ((byType?.SAVINGS || 0) / totalSpent * 100).toFixed(1) : 0}%)
+- NEEDS: ${aggregatedData.currencySymbol}${byType?.NEED || 0} (${totalSpent > 0 ? ((byType?.NEED || 0) / totalSpent * 100).toFixed(1) : 0}%)
+- WANTS: ${aggregatedData.currencySymbol}${byType?.WANT || 0} (${totalSpent > 0 ? ((byType?.WANT || 0) / totalSpent * 100).toFixed(1) : 0}%)
+- SAVINGS: ${aggregatedData.currencySymbol}${byType?.SAVINGS || 0} (${totalSpent > 0 ? ((byType?.SAVINGS || 0) / totalSpent * 100).toFixed(1) : 0}%)
 
 **Top 5 Spending Categories**:
 ${byCategory.slice(0, 5).map((cat, i) =>
-                `${i + 1}. ${cat.category}: $${cat.amount} (${cat.type})`
+                `${i + 1}. ${cat.category}: ${aggregatedData.currencySymbol}${cat.amount} (${cat.type})`
             ).join('\n')}
 
 **Household Members**:
-${byUser.map(u => `- ${u.name} (${u.role}): Income $${u.income}, Spent $${u.spent} (Needs: $${u.needs}, Wants: $${u.wants}, Savings: $${u.savings})`).join('\n')}
+${byUser.map(u => `- ${u.name} (${u.role}): Income ${aggregatedData.currencySymbol}${u.income}, Spent ${aggregatedData.currencySymbol}${u.spent} (Needs: ${aggregatedData.currencySymbol}${u.needs}, Wants: ${aggregatedData.currencySymbol}${u.wants}, Savings: ${aggregatedData.currencySymbol}${u.savings})`).join('\n')}
 
 **Compared to Last Period**:
 - Change: ${comparedToLastPeriod.change >= 0 ? '+' : ''}${comparedToLastPeriod.change}%
@@ -87,10 +105,40 @@ Generate a financial report in VALID JSON format with these exact fields:
 2. Be conversational but professional
 3. Focus on actionable insights, not just restating numbers
 4. If spending decreased, celebrate it! If increased, be constructive
-5. Make recommendations specific (e.g., "Reduce dining by $100" not "spend less")`;
+5. Make recommendations specific (e.g., "Reduce dining by ${aggregatedData.currencySymbol}100" not "spend less")
+6. ALWAYS use the currency symbol "${aggregatedData.currencySymbol}" (e.g. ${aggregatedData.currencySymbol}100) and NEVER use the code (e.g. ${aggregatedData.currency}100).`;
 
-            // Call Gemini API
-            const reportContent = await generateJSON(prompt, null, { maxTokens: 4096 });
+            // Call Gemini API with Retry Logic
+            let reportContent;
+            let lastError;
+            const MAX_RETRIES = 4;
+
+            for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+                try {
+                    const isRetry = attempt > 1;
+                    if (isRetry) console.log(`🔄 [ReportAgent] Retry Attempt ${attempt}/${MAX_RETRIES}...`);
+
+                    reportContent = await generateJSON(prompt, null, {
+                        maxTokens: 4096,
+                        useBackup: isRetry,
+                        title: isRetry ? `Report Generation (Retry #${attempt})` : 'Report Generation'
+                    });
+
+                    console.log(`✅ [ReportAgent] Success on attempt ${attempt}`);
+                    lastError = null;
+                    break;
+                } catch (err) {
+                    console.error(`❌ [ReportAgent] Attempt ${attempt} failed: ${err.message}`);
+                    lastError = err;
+                    if (attempt < MAX_RETRIES) {
+                        await new Promise(r => setTimeout(r, 1000));
+                    }
+                }
+            }
+
+            if (!reportContent) {
+                throw lastError || new Error('All report generation attempts failed');
+            }
 
             // Add chart data configurations
             reportContent.charts = [
@@ -117,8 +165,11 @@ Generate a financial report in VALID JSON format with these exact fields:
                 },
                 {
                     type: 'bar',
-                    title: 'This Period vs Last Period',
-                    data: [
+                    title: 'Period Comparison',
+                    data: (history && history.length > 0) ? history.map(h => ({
+                        period: h.period,
+                        amount: h.amount
+                    })) : [
                         {
                             period: 'Last Period',
                             amount: Math.round(totalSpent / (1 + parseFloat(comparedToLastPeriod.change) / 100))

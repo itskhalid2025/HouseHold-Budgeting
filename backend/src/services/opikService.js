@@ -1,4 +1,4 @@
-// Opik Service for HouseHold Budgeting
+// Opik Service for GrowWise
 // Handles LLM observability and evaluation with Opik
 
 /**
@@ -12,6 +12,7 @@
  */
 
 import { Opik } from 'opik';
+import config from '../utils/config.js';
 
 // Initialize Opik client
 const opik = new Opik({
@@ -22,46 +23,148 @@ const opik = new Opik({
 /**
  * Trace an AI operation
  * @param {string} name - Operation name
- * @param {function} fn - Function to execute
+ * @param {function} fn - Function to execute (receives current span/trace)
  * @param {object} metadata - Additional metadata
  * @returns {Promise<any>} - Function result
  */
 export async function traceOperation(name, fn, metadata = {}) {
-    const trace = opik.trace({
-        name,
-        metadata: {
-            ...metadata,
-            timestamp: new Date().toISOString()
+    let trace;
+    const startTime = Date.now();
+
+    // 1. Start Trace (Fail Safe)
+    try {
+        trace = opik.trace({
+            name,
+            metadata: {
+                ...metadata,
+                project: 'household-budgeting',
+                timestamp: new Date().toISOString()
+            }
+        });
+    } catch (traceError) {
+        console.warn(`⚠️ Opik Tracing Failed (Start): ${traceError.message}`);
+        // trace is undefined, code continues
+    }
+
+    // 2. Execute Function
+    try {
+        // Pass the trace object (or null) to the function
+        const result = await fn(trace);
+
+        // 3. Update Trace on Success (Fail Safe)
+        if (trace) {
+            try {
+                trace.update({
+                    output: (typeof result === 'string' ? result : (JSON.stringify(result) || String(result))).substring(0, 5000),
+                    metadata: {
+                        latency: Date.now() - startTime,
+                        success: true
+                    }
+                });
+            } catch (updateError) {
+                console.warn(`⚠️ Opik Tracing Failed (Update Success): ${updateError.message}`);
+            }
         }
-    });
+
+        return result;
+
+    } catch (error) {
+        // 4. Update Trace on Error (Fail Safe)
+        if (trace) {
+            try {
+                trace.update({
+                    output: `Error: ${error.message}`,
+                    metadata: {
+                        error: error.message,
+                        latency: Date.now() - startTime,
+                        success: false
+                    }
+                });
+            } catch (updateError) {
+                console.warn(`⚠️ Opik Tracing Failed (Update Error): ${updateError.message}`);
+            }
+        }
+
+        // Always re-throw the actual application error
+        throw error;
+
+    } finally {
+        // 5. End Trace (Fail Safe)
+        if (trace) {
+            try {
+                await trace.end();
+            } catch (endError) {
+                console.warn(`⚠️ Opik Tracing Failed (End): ${endError.message}`);
+            }
+        }
+    }
+}
+
+/**
+ * Create a sub-span for an operation
+ * @param {object} parent - Parent trace or span
+ * @param {string} name - Span name
+ * @param {function} fn - Function to execute
+ * @param {object} metadata - Additional metadata
+ * @returns {Promise<any>}
+ */
+export async function traceSpan(parent, name, fn, metadata = {}) {
+    if (!parent || typeof parent.span !== 'function') {
+        return fn();
+    }
+
+    let span;
+    try {
+        span = parent.span({
+            name,
+            metadata: {
+                ...metadata,
+                timestamp: new Date().toISOString()
+            }
+        });
+    } catch (startError) {
+        console.warn(`⚠️ Opik Span Failed (Start): ${startError.message}`);
+        return fn();
+    }
 
     const startTime = Date.now();
 
     try {
-        const result = await fn();
+        const result = await fn(span);
 
-        trace.update({
-            output: typeof result === 'string' ? result.substring(0, 500) : JSON.stringify(result).substring(0, 500),
-            metadata: {
-                latency: Date.now() - startTime,
-                success: true
-            }
-        });
+        try {
+            span.update({
+                output: (typeof result === 'string' ? result : (JSON.stringify(result) || String(result))).substring(0, 1000),
+                metadata: {
+                    latency: Date.now() - startTime,
+                    success: true
+                }
+            });
+        } catch (updateError) {
+            console.warn(`⚠️ Opik Span Failed (Update Success): ${updateError.message}`);
+        }
 
         return result;
     } catch (error) {
-        trace.update({
-            output: `Error: ${error.message}`,
-            metadata: {
-                error: error.message,
-                latency: Date.now() - startTime,
-                success: false
-            }
-        });
-
+        try {
+            span.update({
+                output: `Error: ${error.message}`,
+                metadata: {
+                    error: error.message,
+                    latency: Date.now() - startTime,
+                    success: false
+                }
+            });
+        } catch (updateError) {
+            console.warn(`⚠️ Opik Span Failed (Update Error): ${updateError.message}`);
+        }
         throw error;
     } finally {
-        trace.end();
+        try {
+            span.end();
+        } catch (endError) {
+            console.warn(`⚠️ Opik Span Failed (End): ${endError.message}`);
+        }
     }
 }
 
@@ -70,16 +173,18 @@ export async function traceOperation(name, fn, metadata = {}) {
  * @param {object} params - Categorization parameters
  */
 export async function logCategorization({ input, output, confidence }) {
-    opik.log({
+    const trace = opik.trace({
         name: 'transaction_categorization',
         input,
         output,
         metadata: {
             confidence,
-            model: 'gemini-2.5-flash',
-            feature: 'categorization'
+            model: config.gemini.model,
+            feature: 'categorization',
+            timestamp: new Date().toISOString()
         }
     });
+    trace.end();
 }
 
 /**
@@ -87,16 +192,18 @@ export async function logCategorization({ input, output, confidence }) {
  * @param {object} params - Report parameters
  */
 export async function logReport({ type, input, output }) {
-    opik.log({
+    const trace = opik.trace({
         name: 'report_generation',
         input: { type, ...input },
         output,
         metadata: {
             reportType: type,
-            model: 'gemini-2.5-flash',
-            feature: 'reporting'
+            model: config.gemini.model,
+            feature: 'reporting',
+            timestamp: new Date().toISOString()
         }
     });
+    trace.end();
 }
 
 /**
@@ -105,13 +212,14 @@ export async function logReport({ type, input, output }) {
  */
 export async function testConnection() {
     try {
-        // Simple test log
-        opik.log({
+        // Simple test trace
+        const trace = opik.trace({
             name: 'connection_test',
             input: 'test',
             output: 'success',
             metadata: { test: true }
         });
+        trace.end();
 
         return {
             success: true,

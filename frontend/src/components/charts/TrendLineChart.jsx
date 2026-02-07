@@ -1,6 +1,11 @@
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, CartesianGrid } from 'recharts';
+import { useAuth } from '../../context/AuthContext';
+import { getCurrencySymbol } from '../../utils/currencyUtils';
 
 export default function TrendLineChart({ data }) {
+    const { currency } = useAuth();
+    const currencySymbol = getCurrencySymbol(currency);
+
     if (!data || data.length === 0) {
         return (
             <div className="no-data">
@@ -24,10 +29,10 @@ export default function TrendLineChart({ data }) {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fill: '#94a3b8', fontSize: 12 }}
-                    tickFormatter={(value) => `$${value}`}
+                    tickFormatter={(value) => `${currencySymbol}${value}`}
                 />
                 <Tooltip
-                    formatter={(value) => [`$${value}`, 'Spent']}
+                    formatter={(value) => [`${currencySymbol}${value}`, 'Spent']}
                     contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', borderRadius: '8px', color: '#fff' }}
                     itemStyle={{ color: '#fff' }}
                     cursor={{ stroke: 'rgba(255, 255, 255, 0.2)' }}

@@ -8,7 +8,7 @@
   command = "npm run build"
   
   # The directory that contains the finished build (usually 'dist' for Vite or 'build' for CRA)
-  publish = "frontend/dist"
+  publish = "dist"
 
 [[redirects]]
   # This rule fixes the "Page Not Found" error for React Router

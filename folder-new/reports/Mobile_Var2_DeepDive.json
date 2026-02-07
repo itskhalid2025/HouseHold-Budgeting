@@ -1,0 +1,14 @@
+{
+    "screen_id": "e05ab01bec2040a2808839c6c5f2c6b9",
+    "project_id": "6352551569990525816",
+    "title": "Analytical Mobile Deep Dive Report",
+    "platform": "MOBILE",
+    "theme": "Dark (Deep Navy + Compact List)",
+    "features": [
+        "Sticky Filter Bar (Week/Month/Year)",
+        "Category Sparklines",
+        "Compact Member Rows",
+        "Dense Transaction Grid",
+        "High Data Density"
+    ]
+}

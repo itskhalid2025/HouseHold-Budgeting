@@ -1,0 +1,818 @@
+/**
+ * CYBERPUNK GLASS MOBILE THEME
+ * @desc High-tech, neon-infused styles with glassmorphism and scanlines.
+ */
+
+:root {
+    --cyber-bg: #05050a;
+    --cyber-panel: rgba(10, 10, 20, 0.6);
+    --cyber-panel-border: rgba(0, 243, 255, 0.2);
+
+    --neon-cyan: #00f3ff;
+    --neon-pink: #bc13fe;
+    --neon-green: #0aff00;
+    --neon-red: #ff2a2a;
+
+    --glass-blur: blur(20px);
+    --font-display: 'Courier New', Courier, monospace;
+    --font-ui: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+.cyber-root {
+    min-height: 100vh;
+    background-color: var(--cyber-bg);
+    color: #e0e0e0;
+    font-family: var(--font-ui);
+    padding: 20px 16px 100px;
+    position: relative;
+    overflow-x: hidden;
+    isolation: isolate;
+}
+
+/* -- Background Effects -- */
+.cyber-grid-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        linear-gradient(rgba(0, 243, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 243, 255, 0.03) 1px, transparent 1px);
+    background-size: 30px 30px;
+    z-index: -2;
+    pointer-events: none;
+}
+
+.cyber-glow-orb {
+    position: fixed;
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    filter: blur(100px);
+    z-index: -1;
+    opacity: 0.2;
+}
+
+.cyber-glow-orb.top-right {
+    top: -100px;
+    right: -100px;
+    background: var(--neon-cyan);
+    animation: orb-pulse 8s infinite alternate;
+}
+
+.cyber-glow-orb.bottom-left {
+    bottom: -50px;
+    left: -100px;
+    background: var(--neon-pink);
+    animation: orb-pulse 10s infinite alternate-reverse;
+}
+
+@keyframes orb-pulse {
+    0% {
+        transform: scale(1);
+        opacity: 0.2;
+    }
+
+    100% {
+        transform: scale(1.2);
+        opacity: 0.3;
+    }
+}
+
+/* -- Loading Screen -- */
+.cyber-loading-screen {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--cyber-bg);
+    color: var(--neon-cyan);
+}
+
+.cyber-spinner-core {
+    position: relative;
+    width: 80px;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 24px;
+}
+
+.spinner-ring {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 2px solid transparent;
+    border-top-color: var(--neon-cyan);
+    border-right-color: var(--neon-cyan);
+    border-radius: 50%;
+    animation: cyber-spin 1.5s linear infinite;
+}
+
+.spinner-ring.inner {
+    width: 60%;
+    height: 60%;
+    border-top-color: var(--neon-pink);
+    border-right-color: transparent;
+    animation: cyber-spin 1s linear infinite reverse;
+}
+
+.loading-text {
+    font-family: var(--font-display);
+    letter-spacing: 2px;
+    font-size: 12px;
+    animation: blink 2s infinite;
+}
+
+/* -- Typography & Utilities -- */
+.glitch-text {
+    position: relative;
+    color: #fff;
+    font-family: var(--font-display);
+}
+
+.cyber-title {
+    font-family: var(--font-display);
+    font-size: 24px;
+    background: linear-gradient(90deg, #fff, var(--neon-cyan));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin: 16px 0;
+    letter-spacing: -1px;
+    font-weight: 800;
+}
+
+.cyber-subtitle {
+    color: #8b9bb4;
+    font-size: 14px;
+    max-width: 80%;
+    margin: 0 auto;
+}
+
+/* -- Header Panel -- */
+.cyber-glass-panel {
+    background: var(--cyber-panel);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--cyber-panel-border);
+    position: relative;
+    padding: 20px;
+    margin-top: 20px;
+    margin-bottom: 24px;
+    /* Angled Corners via clip-path */
+    clip-path: polygon(15px 0, 100% 0,
+            100% calc(100% - 15px),
+            calc(100% - 15px) 100%,
+            0 100%, 0 15px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.panel-decoration {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--neon-cyan);
+    opacity: 0.5;
+}
+
+.panel-decoration.top-left {
+    top: 0;
+    left: 0;
+    border-right: none;
+    border-bottom: none;
+}
+
+.panel-decoration.bottom-right {
+    bottom: 0;
+    right: 0;
+    border-top: none;
+    border-left: none;
+}
+
+.header-core {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.avatar-hex {
+    width: 56px;
+    height: 64px;
+    background: var(--neon-cyan);
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2px;
+}
+
+.hex-inner {
+    background: #000;
+    width: 100%;
+    height: 100%;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--neon-cyan);
+    font-weight: 800;
+    font-size: 24px;
+}
+
+.header-meta h1 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.meta-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--neon-green);
+    margin-top: 4px;
+    font-family: var(--font-display);
+}
+
+.cyber-invite-terminal {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.cyber-invite-terminal:active {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 243, 255, 0.1);
+}
+
+.terminal-label {
+    font-size: 9px;
+    color: #64748b;
+    font-family: var(--font-display);
+    margin-bottom: 4px;
+}
+
+.terminal-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.code-text {
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 18px;
+    letter-spacing: 2px;
+}
+
+.header-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px dashed rgba(255, 255, 255, 0.1);
+    padding-top: 16px;
+}
+
+.cyber-role-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 6px 12px;
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.cyber-icon-btn {
+    background: transparent;
+    border: 1px solid transparent;
+    color: #64748b;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.cyber-icon-btn.danger:hover {
+    color: var(--neon-red);
+    background: rgba(255, 42, 42, 0.1);
+    border-color: var(--neon-red);
+}
+
+/* -- Buttons -- */
+.cyber-btn {
+    position: relative;
+    border: none;
+    outline: none;
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 14px;
+    padding: 14px 24px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.2s var(--ease-out-expo);
+    overflow: hidden;
+    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+}
+
+.cyber-btn.full-width {
+    width: 100%;
+}
+
+.cyber-btn.mt-4 {
+    margin-top: 24px;
+}
+
+.cyber-btn.primary-neon {
+    background: var(--neon-cyan);
+    color: #000;
+    box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+}
+
+.cyber-btn.primary-neon:active {
+    transform: scale(0.98);
+    box-shadow: 0 0 5px rgba(0, 243, 255, 0.6);
+}
+
+.cyber-btn.secondary-glass {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: var(--neon-cyan);
+    backdrop-filter: blur(5px);
+}
+
+.cyber-btn.danger {
+    background: var(--neon-red);
+    color: #fff;
+    box-shadow: 0 0 15px rgba(255, 42, 42, 0.4);
+}
+
+.cyber-btn.outline-danger {
+    background: transparent;
+    border: 1px solid var(--neon-red);
+    color: var(--neon-red);
+}
+
+.btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    z-index: 2;
+}
+
+/* -- Inputs -- */
+.cyber-form-group {
+    margin-bottom: 20px;
+}
+
+.cyber-label {
+    display: block;
+    font-size: 10px;
+    color: var(--neon-cyan);
+    margin-bottom: 8px;
+    font-family: var(--font-display);
+    letter-spacing: 1px;
+}
+
+.cyber-input-wrapper {
+    position: relative;
+}
+
+.cyber-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    border: none;
+    border-bottom: 2px solid #333;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 18px;
+    padding: 12px 0;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.cyber-input:focus {
+    border-color: var(--neon-cyan);
+}
+
+.cyber-input:focus+.input-border-fx {
+    width: 100%;
+    opacity: 1;
+}
+
+.input-border-fx {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: var(--neon-cyan);
+    transition: width 0.4s ease;
+    box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+/* -- Section Styles -- */
+.cyber-section {
+    margin-bottom: 32px;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    padding-left: 8px;
+    border-left: 3px solid var(--neon-pink);
+}
+
+.section-title {
+    font-size: 14px;
+    color: #fff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.cyber-counter {
+    background: var(--neon-pink);
+    color: #fff;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    box-shadow: 0 0 10px rgba(188, 19, 254, 0.5);
+}
+
+/* -- Lists & Cards -- */
+.cyber-list-container {
+    background: var(--cyber-panel);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+    overflow: hidden;
+}
+
+.cyber-member-row {
+    padding: 16px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cyber-member-row:last-child {
+    border-bottom: none;
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #222, #333);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: #fff;
+}
+
+.member-avatar-container {
+    position: relative;
+}
+
+.admin-indicator {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: var(--neon-cyan);
+    color: #000;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid #000;
+}
+
+.member-details {
+    flex: 1;
+}
+
+.member-name {
+    font-weight: 600;
+    color: #f0f0f0;
+    font-size: 15px;
+}
+
+.you-tag {
+    background: rgba(255, 255, 255, 0.1);
+    font-size: 9px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin-left: 6px;
+    color: #aaa;
+}
+
+.member-role {
+    display: block;
+    font-size: 11px;
+    margin-top: 2px;
+    text-transform: uppercase;
+    font-family: var(--font-display);
+}
+
+.member-role.viewer {
+    color: #64748b;
+}
+
+.member-role.editor {
+    color: var(--neon-cyan);
+    text-shadow: 0 0 5px rgba(0, 243, 255, 0.3);
+}
+
+.cyber-edit-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #aaa;
+    padding: 8px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.cyber-request-card {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.req-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.req-name {
+    font-weight: bold;
+    font-size: 14px;
+    color: #fff;
+}
+
+.req-email {
+    font-size: 11px;
+    color: #888;
+}
+
+.req-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.cyber-mini-btn {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.cyber-mini-btn.success {
+    background: rgba(10, 255, 0, 0.2);
+    color: var(--neon-green);
+}
+
+.cyber-mini-btn.danger {
+    background: rgba(255, 42, 42, 0.2);
+    color: var(--neon-red);
+}
+
+/* -- Modals -- */
+.cyber-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(5px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 20px;
+}
+
+.cyber-modal-container {
+    background: #0a0a12;
+    border: 1px solid var(--neon-cyan);
+    box-shadow: 0 0 40px rgba(0, 243, 255, 0.2);
+    width: 100%;
+    max-width: 400px;
+    position: relative;
+    clip-path: polygon(0 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%);
+    animation: modal-enter 0.3s var(--ease-out-expo);
+}
+
+.cyber-modal-header {
+    padding: 16px;
+    border-bottom: 1px solid rgba(0, 243, 255, 0.3);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(0, 243, 255, 0.05);
+}
+
+.cyber-modal-header h2 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--neon-cyan);
+    font-family: var(--font-display);
+    letter-spacing: 2px;
+}
+
+.cyber-close-btn {
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+}
+
+.cyber-modal-body {
+    padding: 24px;
+}
+
+.role-selection-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin: 20px 0;
+}
+
+.role-option {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #fff;
+    /* Ensure text is visible */
+}
+
+/* Default style for buttons without variant */
+.cyber-btn:not(.primary-neon):not(.danger):not(.secondary-glass):not(.outline-danger) {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.role-option.active {
+    border-color: var(--neon-cyan);
+    background: rgba(0, 243, 255, 0.05);
+    box-shadow: inset 0 0 15px rgba(0, 243, 255, 0.1);
+}
+
+.role-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.role-text strong {
+    display: block;
+    color: #fff;
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.role-text span {
+    font-size: 10px;
+    color: #888;
+}
+
+.warning-text {
+    color: #ffaaaa;
+    font-size: 14px;
+    text-align: center;
+    line-height: 1.5;
+    margin: 16px 0 24px;
+}
+
+.cyber-alert-content {
+    text-align: center;
+}
+
+.alert-icon-wrapper {
+    color: var(--neon-red);
+    margin-bottom: 16px;
+}
+
+/* -- Animations -- */
+@keyframes cyber-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes modal-enter {
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+}
+
+/* -- Empty State -- */
+.cyber-hero-section {
+    text-align: center;
+    margin-bottom: 40px;
+    padding-top: 40px;
+}
+
+.hero-hologram {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--neon-pink);
+}
+
+.holo-circle {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border: 1px dashed var(--neon-pink);
+    border-radius: 50%;
+    animation: cyber-spin 10s linear infinite;
+}
+
+.cyber-actions-grid {
+    display: grid;
+    gap: 16px;
+}
+
+.status-text {
+    color: var(--neon-pink);
+    font-size: 14px;
+    margin: 0;
+}
+
+.status-detail {
+    font-size: 12px;
+    color: #aaa;
+    margin: 4px 0 0;
+}

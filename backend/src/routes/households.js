@@ -19,7 +19,9 @@ import {
     updateHousehold,
     updateMemberRole,
     removeMember,
-    leaveHousehold
+
+    leaveHousehold,
+    getMembers
 } from '../controllers/householdController.js';
 import {
     validate,
@@ -76,6 +78,7 @@ const router = Router();
 router.post('/', validate(createHouseholdSchema), createHousehold);
 router.get('/', getHousehold);
 router.put('/', validate(updateHouseholdSchema), updateHousehold);
+router.get('/members', getMembers);
 
 /**
  * @swagger

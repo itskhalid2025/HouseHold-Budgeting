@@ -14,10 +14,8 @@
  * @requires @prisma/client
  */
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../services/db.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
-
-const prisma = new PrismaClient();
 
 /**
  * Submit a join request using household invite code
@@ -60,24 +58,37 @@ export const submitJoinRequest = async (req, res) => {
             });
         }
 
-        // Check if there's already a pending request
-        const existingRequest = await prisma.invitation.findFirst({
+        // Check for ANY existing invitation/request (regardless of status)
+        // Use findFirst with case-insensitive email check to ensure we find potential conflicts
+        const existingInvitation = await prisma.invitation.findFirst({
             where: {
                 householdId: household.id,
-                recipientEmail: req.user.email,
-                status: 'PENDING'
+                recipientEmail: {
+                    equals: req.user.email,
+                    mode: 'insensitive'
+                }
             }
         });
 
-        if (existingRequest) {
-            logError('joinRequestController', 'submitJoinRequest', new Error('Duplicate request'));
-            return res.status(400).json({
-                success: false,
-                error: 'You already have a pending request for this household'
+        if (existingInvitation) {
+            // If pending, block
+            if (existingInvitation.status === 'PENDING') {
+                logError('joinRequestController', 'submitJoinRequest', new Error('Duplicate request'));
+                return res.status(400).json({
+                    success: false,
+                    error: 'You already have a pending request for this household'
+                });
+            }
+
+            // If it exists but is not pending (e.g. CANCELLED/REJECTED/Agreed), delete it so we can create a fresh one
+            logDB('delete', 'Invitation', { id: existingInvitation.id });
+            await prisma.invitation.delete({
+                where: { id: existingInvitation.id }
             });
         }
 
         // Create join request (using Invitation model)
+        const token = `REQ_${Date.now()}_${userId.slice(0, 8)}_${Math.random().toString(36).substring(2, 7)}`;
         logDB('create', 'Invitation', { type: 'JOIN_REQUEST', householdId: household.id });
         const joinRequest = await prisma.invitation.create({
             data: {
@@ -85,7 +96,7 @@ export const submitJoinRequest = async (req, res) => {
                 invitedById: household.adminId, // Set to household admin
                 recipientEmail: req.user.email,
                 role: 'VIEWER', // Default, owner will set actual role on approval
-                token: `REQ_${Date.now()}_${userId.slice(0, 8)}`, // Unique token
+                token: token, // Unique random token
                 status: 'PENDING',
                 expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
             }

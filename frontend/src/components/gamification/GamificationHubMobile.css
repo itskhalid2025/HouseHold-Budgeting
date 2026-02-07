@@ -1,0 +1,611 @@
+/* =========================== */
+/* MAIN SHEET BASE */
+/* =========================== */
+
+.gamification-sheet-mobile {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 86vh;
+    background: #0f172a;
+    border-radius: 18px 18px 0 0;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.slide-up-anim {
+    animation: slideUpMobile 0.35s ease-out;
+}
+
+@keyframes slideUpMobile {
+    from {
+        transform: translateY(100%);
+    }
+
+    to {
+        transform: translateY(0);
+    }
+}
+
+.sheet-handle-bar {
+    height: 28px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sheet-handle {
+    width: 38px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 3px;
+}
+
+/* =========================== */
+/* HEADER */
+/* =========================== */
+
+.mobile-hub-header {
+    display: flex;
+    justify-content: center;
+    padding: 10px 20px;
+    position: relative;
+}
+
+.mobile-hub-header h2 {
+    color: #fff;
+    text-align: center;
+}
+
+.close-btn-mobile {
+    background: none;
+    border: none;
+    color: #cbd5e1;
+    position: absolute;
+    right: 20px;
+    top: 10px;
+    padding: 0;
+}
+
+/* =========================== */
+/* TABS */
+/* =========================== */
+
+.mobile-tabs {
+    display: flex;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.m-tab-btn {
+    flex: 1;
+    padding: 12px 0;
+    font-size: 0.9rem;
+    background: none;
+    border: none;
+    color: #64748b;
+}
+
+.m-tab-btn.active {
+    color: #facc15;
+    font-weight: 700;
+    border-bottom: 2px solid #facc15;
+}
+
+/* =========================== */
+/* MAIN CONTENT */
+/* =========================== */
+
+.mobile-hub-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px 18px 30px;
+}
+
+/* =========================== */
+/* HERO RANK CARD */
+/* =========================== */
+
+.rank-hero-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 18px;
+}
+
+.rank-card-header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.hero-icon {
+    filter: drop-shadow(0 0 12px currentColor);
+}
+
+.hero-rank-info h1 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.hero-xp-val {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #cbd5e1;
+}
+
+.hero-prog-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+    margin-bottom: 6px;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.hero-track {
+    height: 6px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.hero-fill {
+    height: 100%;
+    border-radius: 4px;
+    box-shadow: 0 0 10px currentColor;
+}
+
+.hero-footer-text {
+    margin-top: 8px;
+    color: #64748b;
+    font-size: 0.75rem;
+    font-style: italic;
+}
+
+/* =========================== */
+/* Section Header */
+/* =========================== */
+
+.section-header-line {
+    display: flex;
+    justify-content: center;
+    margin: 18px 0 8px;
+    position: relative;
+}
+
+.section-header-line span {
+    background: #0f172a;
+    padding: 0 10px;
+    color: #e2e8f0;
+}
+
+
+/* =========================== */
+/* BADGE JOURNEY */
+/* =========================== */
+
+.horizontal-journey-container {
+    position: relative;
+    padding: 20px 0;
+}
+
+.journey-track-base {
+    position: absolute;
+    left: 15px;
+    right: 15px;
+    top: 48px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+}
+
+.journey-nodes-scroll {
+    display: flex;
+    justify-content: space-between;
+    position: relative;
+    z-index: 2;
+}
+
+.h-node {
+    text-align: center;
+    opacity: 0.55;
+    min-width: 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.h-node.passed {
+    opacity: 1;
+}
+
+.h-node-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    margin-bottom: 6px;
+}
+
+.h-badge-check {
+    position: absolute;
+    bottom: -3px;
+    right: -3px;
+    width: 16px;
+    height: 16px;
+    background: #22c55e;
+    border-radius: 50%;
+    color: white;
+    font-size: 0.65rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.h-node-dot {
+    width: 16px;
+    height: 16px;
+    margin: 6px auto;
+    background: #334155;
+    border-radius: 50%;
+}
+
+.h-node.passed .h-node-dot {
+    background: #facc15;
+    box-shadow: 0 0 8px #facc15;
+}
+
+.h-node-label-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+}
+
+.h-node-label {
+    font-size: 0.65rem;
+    color: #64748b;
+    font-weight: bold;
+}
+
+.h-node-xp {
+    font-size: 0.55rem;
+    color: #475569;
+    font-weight: bold;
+}
+
+.h-node.passed .h-node-label {
+    color: #facc15;
+}
+
+.h-node.passed .h-node-xp {
+    color: #94a3b8;
+}
+
+/* =========================== */
+/* DAILY LOGIN STREAK (7-DAY) */
+/* =========================== */
+
+.streak-section {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 16px;
+}
+
+.streak-visuals {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+/* Flame containers */
+.streak-flame {
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    transition: 0.3s;
+    color: #475569;
+}
+
+/* Pink flames (Day 1–3) */
+.streak-flame.pink {
+    color: #e879f9;
+}
+
+.streak-day.completed .streak-flame.pink {
+    filter: drop-shadow(0 0 8px #e879f9);
+}
+
+/* White flames (Day 4–7) */
+.streak-flame.white {
+    color: #e2e8f0;
+}
+
+.streak-day.completed .streak-flame.white {
+    filter: drop-shadow(0 0 8px #f0f9ff);
+}
+
+/* Checkmark */
+.streak-check {
+    position: absolute;
+    bottom: -3px;
+    right: -2px;
+    width: 14px;
+    height: 14px;
+    background: #22c55e;
+    color: white;
+    font-size: 0.7rem;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* Streak dots */
+.streak-dot {
+    width: 12px;
+    height: 12px;
+    background: #334155;
+    border-radius: 50%;
+    margin-top: 6px;
+}
+
+.streak-day.completed .streak-dot {
+    background: #facc15;
+    box-shadow: 0 0 8px #facc15;
+}
+
+/* Labels */
+.streak-label {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    margin-top: 4px;
+    /* Added spacing */
+}
+
+.streak-day.completed .streak-label {
+    color: #fff;
+}
+
+/* Footer Msg */
+.streak-footer-msg {
+    text-align: center;
+    color: #facc15;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin-top: 10px;
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.3);
+}
+
+.streak-day {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.today-date-header {
+    text-align: center;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin: 0 0 15px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+}
+
+/* Leaderboard Filters */
+.mobile-lb-filters {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 10px 0;
+    margin-bottom: 10px;
+    scrollbar-width: none;
+    /* Hide scrollbar Firefox */
+}
+
+.mobile-lb-filters::-webkit-scrollbar {
+    display: none;
+    /* Hide scrollbar Chrome/Safari */
+}
+
+.m-lb-filter-btn {
+    flex: 0 0 auto;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.m-lb-filter-btn.active {
+    background: #facc15;
+    color: #0f172a;
+    border-color: #facc15;
+}
+
+.m-lb-filter-btn:disabled {
+    opacity: 0.3;
+}
+
+.lb-header-text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 5px;
+}
+
+/* =========================== */
+/* LEADERBOARD LIST */
+/* =========================== */
+
+.mobile-lb-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.m-lb-row {
+    display: flex;
+    align-items: center;
+    padding: 14px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    gap: 12px;
+}
+
+.m-lb-row.me {
+    background: rgba(250, 204, 21, 0.08);
+    border-color: rgba(250, 204, 21, 0.3);
+}
+
+.m-lb-num {
+    width: 28px;
+    font-weight: 800;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: center;
+}
+
+.m-lb-rank {
+    width: 20px;
+    display: flex;
+    justify-content: center;
+}
+
+.m-lb-avatar {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #334155, #1e293b);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: #fff;
+    font-size: 0.85rem;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.m-lb-user {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.m-lb-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.m-lb-name {
+    font-weight: 600;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.lb-name-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.lb-badge-right {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 1px 6px;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.lb-tier-text-small {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    text-transform: uppercase;
+    font-weight: 700;
+}
+
+.m-lb-pts {
+    font-weight: 700;
+    color: #facc15;
+    font-size: 1rem;
+}
+
+/* Leaderboard Loading & Empty States */
+.lb-mini-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    gap: 12px;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+.pulse-loader-small {
+    width: 24px;
+    height: 24px;
+    border: 2px solid rgba(250, 204, 21, 0.2);
+    border-top-color: #facc15;
+    border-radius: 50%;
+    animation: spin-mini 0.8s linear infinite;
+}
+
+@keyframes spin-mini {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.lb-empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 30px;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+    margin-top: 10px;
+}
+
+.lb-empty-state .empty-icon {
+    color: #475569;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.lb-empty-state p {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.95rem;
+    margin: 0 0 4px 0;
+}
+
+.lb-empty-state span {
+    color: #64748b;
+    font-size: 0.8rem;
+}

@@ -24,21 +24,21 @@
   /* rough estimate header+footer */
   padding: 20px;
   width: 100%;
+  position: relative;
+  z-index: 10;
 }
 
 .auth-card {
-  background: rgba(30, 30, 40, 0.6);
+  background: var(--bg-glass);
   /* Slightly darker/more opaque base */
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border-radius: 24px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border-light);
   padding: 48px;
   width: 100%;
   max-width: 420px;
-  box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow: var(--shadow-lg);
   /* Inner shimmer */
   transition: transform 0.3s ease;
 }
@@ -59,7 +59,7 @@
 }
 
 .auth-header h2 {
-  color: #fff;
+  color: var(--text-primary);
   font-size: 28px;
   font-weight: 700;
   margin-bottom: 10px;
@@ -67,7 +67,7 @@
 }
 
 .auth-header p {
-  color: rgba(255, 255, 255, 0.6);
+  color: var(--text-secondary);
   font-size: 15px;
   line-height: 1.5;
 }
@@ -99,7 +99,7 @@
 }
 
 .form-group label {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 500;
   margin-left: 4px;
@@ -107,11 +107,11 @@
 
 .form-group input,
 .form-group select {
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--bg-hover);
+  border: 1px solid var(--border-light);
   border-radius: 12px;
   padding: 16px 18px;
-  color: #fff;
+  color: var(--text-primary);
   font-size: 16px;
   transition: all 0.2s ease;
   width: 100%;
@@ -124,14 +124,38 @@
 .form-group input:focus,
 .form-group select:focus {
   outline: none;
-  border-color: #8b5cf6;
-  background: rgba(0, 0, 0, 0.3);
+  border-color: var(--primary);
+  background: var(--bg-active);
   box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
 }
 
 .form-row {
   display: flex;
   gap: 16px;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  transition: color 0.2s ease;
+}
+
+.password-toggle-btn:hover {
+  color: var(--primary);
 }
 
 .auth-button {
@@ -174,8 +198,7 @@
 }
 
 .auth-links a {
-  color: rgba(255, 255, 255, 0.6);
-  ;
+  color: var(--text-secondary);
   text-decoration: none;
   transition: color 0.2s ease;
 }
@@ -210,5 +233,164 @@
   .form-row {
     flex-direction: column;
     gap: 24px;
+  }
+}
+
+/* Phone Input Customization to match Dark Theme */
+.phone-input-container {
+  width: 100% !important;
+}
+
+.phone-input-field {
+  width: 100% !important;
+  height: 52px !important;
+  background: var(--bg-hover) !important;
+  border: 1px solid var(--border-light) !important;
+  border-radius: 12px !important;
+  padding-left: 58px !important;
+  /* Make room for flag */
+  color: var(--text-primary) !important;
+  font-size: 16px !important;
+  transition: all 0.2s ease !important;
+}
+
+.phone-input-field:focus {
+  outline: none !important;
+  border-color: var(--primary) !important;
+  background: var(--bg-active) !important;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15) !important;
+}
+
+.phone-input-button {
+  background: transparent !important;
+  border: none !important;
+  border-right: 1px solid var(--border-light) !important;
+  border-radius: 12px 0 0 12px !important;
+  padding-left: 8px !important;
+}
+
+.phone-input-button:hover,
+.phone-input-button:focus {
+  background: var(--bg-hover) !important;
+}
+
+.react-tel-input .country-list {
+  background-color: var(--bg-secondary) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-medium) !important;
+  border-radius: 12px !important;
+  box-shadow: var(--shadow-lg) !important;
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) var(--bg-secondary);
+}
+
+.react-tel-input .country-list .country:hover {
+  background-color: var(--bg-hover) !important;
+}
+
+.react-tel-input .country-list .country.highlight {
+  background-color: var(--bg-active) !important;
+}
+
+.react-tel-input .selected-flag:hover,
+.react-tel-input .open .selected-flag {
+  background-color: var(--bg-hover) !important;
+}
+
+.auth-status-message {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.status-icon {
+  font-size: 64px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-text {
+  font-size: 18px;
+  line-height: 1.6;
+  margin-bottom: 12px;
+}
+
+.status-text.success {
+  color: #34d399;
+}
+
+.status-text.error {
+  color: #f87171;
+}
+
+.redirect-notice {
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-top: 8px;
+}
+
+/* Animations */
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  50% {
+    transform: scale(1.1);
+    opacity: 0.7;
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pulse {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+.success-animation {
+  animation: bounceIn 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.error-animation {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: translatey(-100px);
+    opacity: 0;
+  }
+
+  60% {
+    transform: translatey(20px);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translatey(0);
+  }
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-10px);
+  }
+
+  75% {
+    transform: translateX(10px);
   }
 }

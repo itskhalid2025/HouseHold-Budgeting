@@ -1,0 +1,14 @@
+{
+    "screen_id": "fd327e4b42af4ea59a22747f412da78b",
+    "project_id": "6352551569990525816",
+    "title": "Current State Mobile Report",
+    "platform": "MOBILE",
+    "theme": "Dark (Deep Navy)",
+    "features": [
+        "Stats Grid",
+        "AI Insights Section",
+        "Spending Pie Chart",
+        "Trends Bar Chart",
+        "Member Breakdown with Progress Bars"
+    ]
+}

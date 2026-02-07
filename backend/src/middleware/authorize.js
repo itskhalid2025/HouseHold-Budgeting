@@ -5,9 +5,10 @@
  * household membership verification, and cross‑household access permissions.
  *
  * @module middleware/authorize
- * @requires @prisma/client
+ * @requires ../services/db
  */
 
+import prisma from '../services/db.js';
 
 /**
  * Authorization middleware factory
@@ -92,10 +93,6 @@ export const requireHouseholdAccess = (paramName = 'householdId') => {
 
     // Check if user is the household admin (for admin privileges)
     if (req.user.role === 'OWNER') {
-      // Additional check: verify they're admin of the requested household
-      const { PrismaClient } = await import('@prisma/client');
-      const prisma = new PrismaClient();
-
       const household = await prisma.household.findUnique({
         where: { id: requestedHouseholdId },
         select: { adminId: true }

@@ -1,0 +1,39 @@
+/* Keyframes for left-to-right flow animation */
+@keyframes shineFlow {
+    0% {
+        background-position: 0% 50%;
+    }
+
+    100% {
+        background-position: 200% 50%;
+    }
+}
+
+/* Flowing neon gradient text */
+.gw-flow-gradient {
+    /* Seamless cycling gradient: Purple -> Blue -> Cyan -> Purple */
+    background: linear-gradient(90deg,
+            #ff00ff,
+            #3b82f6,
+            #22d3ee,
+            #ff00ff);
+
+    background-size: 200% auto;
+
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+
+    display: inline-block;
+
+    /* Flow animation: Moves the background from left to right.
+       Use !important to override any reduced-motion defaults */
+    animation: shineFlow 3s linear infinite !important;
+
+    /* Static glow to maintain readability and neon look */
+    filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+
+    /* Performance */
+    will-change: background-position;
+}

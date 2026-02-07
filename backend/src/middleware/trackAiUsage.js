@@ -1,0 +1,171 @@
+import prisma from '../services/db.js';
+import { getCountryFromIp } from '../services/geoService.js';
+import { Country } from 'country-state-city';
+import { logDB } from '../utils/controllerLogger.js';
+
+// Default Limits
+const DEFAULT_LIMITS = {
+    CHAT: 50,
+    SMART_ENTRY: 100,
+    REPORT: 5
+};
+
+/**
+ * Middleware to track AI usage, enforce granular quotas, and log location.
+ * @param {string} requestType - 'CHAT', 'SMART_ENTRY', 'REPORT'
+ */
+export const trackAiUsage = (requestType) => async (req, res, next) => {
+    try {
+        // Fetch User with Household settings
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.id },
+            include: { household: true }
+        });
+
+        if (!user) return res.status(401).json({ success: false, error: 'Unauthorized' });
+
+        // --- 1. Global Restrictions ---
+
+        // A. User Level Block
+        if (user.isAiRestricted) {
+            return res.status(403).json({
+                success: false,
+                error: 'Your AI access has been restricted.',
+                code: 'USER_RESTRICTED'
+            });
+        }
+
+        // B. Household Level Block
+        if (user.household && user.household.isAiRestricted) {
+            return res.status(403).json({
+                success: false,
+                error: 'Household AI access is restricted.',
+                code: 'HOUSEHOLD_RESTRICTED'
+            });
+        }
+
+        // --- 2. Determine Configuration ---
+        let settingKey;
+        if (requestType === 'SMART_ENTRY') settingKey = 'smartEntry';
+        else if (requestType === 'REPORT') settingKey = 'reports'; // Frontend saves as 'reports' (plural)
+        else settingKey = requestType.toLowerCase();
+
+        // Parse Settings (User & Household)
+        let userSettings = user.aiSettings || {};
+        if (typeof userSettings === 'string') userSettings = JSON.parse(userSettings);
+
+        let householdSettings = user.household?.aiSettings || {};
+        if (typeof householdSettings === 'string') householdSettings = JSON.parse(householdSettings);
+
+        const userConfig = userSettings?.[settingKey] || {};
+        const householdConfig = householdSettings?.[settingKey] || {};
+
+        // --- 3. Check Granular 'Enabled' Status ---
+
+        // Household disable overrides User enable
+        if (user.household && householdConfig.enabled === false) {
+            return res.status(403).json({
+                success: false,
+                error: `${requestType} is disabled for this household.`,
+                code: 'FEATURE_DISABLED_HOUSEHOLD'
+            });
+        }
+
+        if (userConfig.enabled === false) {
+            return res.status(403).json({
+                success: false,
+                error: `${requestType} is disabled for your account.`,
+                code: 'FEATURE_DISABLED_USER'
+            });
+        }
+
+        // --- 4. Enforce Limits (Quotas) ---
+        // Household limits removed as per V2 requirement. Only User limits apply.
+
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+        // B. User Personal Limit
+        // Use User Limit OR Default if no User Limit defined
+        const userLimit = userConfig.limit !== undefined ? userConfig.limit : DEFAULT_LIMITS[requestType];
+
+        // Determine Time Window based on Limit Type (Default: MONTHLY)
+        const limitType = userConfig.limitType || 'MONTHLY';
+        let startDate;
+
+        if (limitType === 'DAILY') {
+            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        } else {
+            // Default to MONTHLY
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+        }
+
+        const userUsage = await prisma.aiUsageLog.count({
+            where: {
+                userId: user.id,
+                type: requestType,
+                createdAt: { gte: startDate }
+            }
+        });
+
+        if (userUsage >= userLimit) {
+            const periodLabel = limitType === 'DAILY' ? 'daily' : 'monthly';
+            return res.status(403).json({
+                success: false,
+                error: `Your ${periodLabel} limit of ${userLimit} reached for ${requestType}.`,
+                code: `LIMIT_REACHED_USER_${limitType}`
+            });
+        }
+
+        // --- 5. Warning Headers ---
+        // (Prioritize lowest remaining)
+        const remainingUser = userLimit - userUsage;
+
+        if (remainingUser <= 3) {
+            res.setHeader('X-AI-Warning', `${remainingUser} ${requestType} uses remaining.`);
+        }
+
+
+        // --- 6. Log Location & Sync ---
+        const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+        const resolvedCountryCode = getCountryFromIp(ip);
+
+        // Convert code to Full Name for consistency with registration
+        let resolvedCountry = resolvedCountryCode;
+        if (resolvedCountryCode && resolvedCountryCode.length === 2) {
+            const countryObj = Country.getCountryByCode(resolvedCountryCode);
+            if (countryObj) resolvedCountry = countryObj.name;
+        }
+
+        // Always update last IP
+        if (user.lastIp !== ip) {
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { lastIp: ip }
+            }).catch(err => console.error('IP Update Error:', err));
+        }
+
+        // Only update Country if NOT already set by user (Respect User Choice)
+        if (resolvedCountry && !user.country) {
+            // Update User
+            await prisma.user.update({
+                where: { id: user.id },
+                data: { country: resolvedCountry }
+            }).catch(err => console.error('Loc Update Error:', err));
+
+            // Sync to Household
+            if (user.householdId) {
+                await prisma.household.update({
+                    where: { id: user.householdId },
+                    data: { country: resolvedCountry }
+                }).catch(err => console.error('Household Loc Update Error:', err));
+            }
+        }
+
+        next();
+
+    } catch (error) {
+        console.error('AI Tracking Middleware Error:', error);
+        res.status(500).json({ success: false, error: 'AI Service Error' });
+    }
+};

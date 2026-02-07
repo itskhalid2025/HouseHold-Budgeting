@@ -1,7 +1,7 @@
 // Seed file with realistic test data
 // Run with: node prisma/seed.js
 
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, AdminLevel } from '@prisma/client';
 import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -42,6 +42,26 @@ async function main() {
     await prisma.user.updateMany({ data: { householdId: null } });
     await prisma.household.deleteMany({});
     await prisma.user.deleteMany({});
+
+    // =====================================================
+    // 0. CREATE PLATFORM ADMIN
+    // =====================================================
+    console.log('\n🛡️ Creating Platform Admin...');
+    const adminPassword = await bcrypt.hash('HouseHold@@2026', 10);
+    await prisma.platformAdmin.deleteMany({ where: { email: 'khalidacsform@gmail.com' } }); // Ensure clean slate
+    await prisma.platformAdmin.create({
+        data: {
+            email: 'khalidacsform@gmail.com',
+            username: 'admin',
+            passwordHash: adminPassword,
+            firstName: 'Khalid',
+            lastName: 'Admin',
+            adminLevel: AdminLevel.SUPER_ADMIN,
+            isSuperAdmin: true,
+            isActive: true
+        }
+    });
+    console.log('  ✅ Admin created: khalidacsform@gmail.com');
 
     // =====================================================
     // 1. CREATE 7 USERS

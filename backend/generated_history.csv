@@ -1,0 +1,245 @@
+Date,User,Type,Category,Amount,Description,Kind
+2025-12-01,John,INCOME,Salary,5000,Monthly Salary,Income
+2025-12-01,John,INCOME,Freelance,1200,Freelance Project,Income
+2025-12-01,Jane,INCOME,Salary,5000,Monthly Salary,Income
+2025-12-01,Jane,INCOME,Rent,1200,Rental Income,Income
+2025-12-01,John,DEBT,Loan,5000,Home Improvement,Loan
+2025-12-01,John,NEED,Healthcare,30,Healthcare - General,Transaction
+2025-12-01,John,NEED,Transportation,150,Transportation - Fuel,Transaction
+2025-12-01,John,SAVINGS,Investments,157,Weekly Transfer,Transaction
+2025-12-01,Jane,WANT,Dining & Entertainment,59,Dining & Entertainment - Restaurants,Transaction
+2025-12-01,Jane,NEED,Transportation,87,Transportation - Fuel,Transaction
+2025-12-01,Jane,NEED,Healthcare,38,Healthcare - General,Transaction
+2025-12-01,Jane,SAVINGS,Investments,202,Weekly Transfer,Transaction
+2025-12-02,John,NEED,Transportation,126,Transportation - Transit,Transaction
+2025-12-02,John,NEED,Utilities,93,Utilities - Electric,Transaction
+2025-12-02,John,NEED,Childcare,148,Childcare - General,Transaction
+2025-12-02,Jane,NEED,Healthcare,100,Healthcare - General,Transaction
+2025-12-02,Jane,NEED,Childcare,116,Childcare - General,Transaction
+2025-12-03,John,WANT,Shopping,47,Shopping - Gadgets,Transaction
+2025-12-03,John,NEED,Utilities,79,Utilities - Internet,Transaction
+2025-12-03,Jane,WANT,Dining & Entertainment,73,Dining & Entertainment - Restaurants,Transaction
+2025-12-04,John,NEED,Childcare,76,Childcare - General,Transaction
+2025-12-04,John,WANT,Health,48,Health - General,Transaction
+2025-12-04,John,WANT,Gifts,53,Gifts - General,Transaction
+2025-12-04,Jane,NEED,Housing,62,Housing - General,Transaction
+2025-12-04,Jane,NEED,Childcare,88,Childcare - General,Transaction
+2025-12-05,John,WANT,Shopping,26,Shopping - Gadgets,Transaction
+2025-12-05,Jane,NEED,Food,49,Food - Supplies,Transaction
+2025-12-05,Jane,WANT,Gifts,28,Gifts - General,Transaction
+2025-12-06,John,NEED,Childcare,148,Childcare - General,Transaction
+2025-12-06,John,WANT,Shopping,29,Shopping - Clothing,Transaction
+2025-12-06,John,NEED,Utilities,99,Utilities - Electric,Transaction
+2025-12-06,Jane,NEED,Housing,22,Housing - General,Transaction
+2025-12-07,John,NEED,Healthcare,81,Healthcare - General,Transaction
+2025-12-07,Jane,NEED,Housing,80,Housing - General,Transaction
+2025-12-07,Jane,NEED,Utilities,115,Utilities - Water,Transaction
+2025-12-08,John,WANT,Shopping,16,Shopping - Clothing,Transaction
+2025-12-08,John,WANT,Dining & Entertainment,72,Dining & Entertainment - Restaurants,Transaction
+2025-12-08,John,NEED,Transportation,23,Transportation - Fuel,Transaction
+2025-12-08,John,SAVINGS,Investments,223,Weekly Transfer,Transaction
+2025-12-08,Jane,NEED,Utilities,114,Utilities - Electric,Transaction
+2025-12-08,Jane,NEED,Healthcare,55,Healthcare - General,Transaction
+2025-12-08,Jane,SAVINGS,Investments,268,Weekly Transfer,Transaction
+2025-12-09,John,NEED,Transportation,42,Transportation - Transit,Transaction
+2025-12-09,Jane,NEED,Food,37,Food - Supplies,Transaction
+2025-12-09,Jane,WANT,Gifts,62,Gifts - General,Transaction
+2025-12-09,Jane,NEED,Childcare,50,Childcare - General,Transaction
+2025-12-10,John,NEED,Utilities,120,Utilities - Water,Transaction
+2025-12-10,Jane,NEED,Healthcare,148,Healthcare - General,Transaction
+2025-12-10,Jane,WANT,Dining & Entertainment,79,Dining & Entertainment - Movies,Transaction
+2025-12-11,John,WANT,Travel,35,Travel - General,Transaction
+2025-12-11,Jane,NEED,Transportation,143,Transportation - Transit,Transaction
+2025-12-12,John,NEED,Healthcare,33,Healthcare - General,Transaction
+2025-12-12,John,WANT,Gifts,65,Gifts - General,Transaction
+2025-12-12,Jane,WANT,Gifts,14,Gifts - General,Transaction
+2025-12-13,John,NEED,Healthcare,149,Healthcare - General,Transaction
+2025-12-13,John,WANT,Shopping,62,Shopping - Gadgets,Transaction
+2025-12-13,John,NEED,Childcare,28,Childcare - General,Transaction
+2025-12-13,Jane,NEED,Utilities,124,Utilities - Water,Transaction
+2025-12-13,Jane,WANT,Dining & Entertainment,28,Dining & Entertainment - Hobbies,Transaction
+2025-12-14,John,WANT,Dining & Entertainment,23,Dining & Entertainment - Restaurants,Transaction
+2025-12-14,Jane,WANT,Shopping,67,Shopping - Clothing,Transaction
+2025-12-14,Jane,NEED,Utilities,50,Utilities - Water,Transaction
+2025-12-14,Jane,WANT,Health,50,Health - General,Transaction
+2025-12-15,John,NEED,Utilities,28,Utilities - Internet,Transaction
+2025-12-15,John,SAVINGS,Investments,193,Weekly Transfer,Transaction
+2025-12-15,Jane,WANT,Gifts,80,Gifts - General,Transaction
+2025-12-15,Jane,WANT,Shopping,16,Shopping - Gadgets,Transaction
+2025-12-15,Jane,SAVINGS,Investments,156,Weekly Transfer,Transaction
+2025-12-16,John,NEED,Childcare,107,Childcare - General,Transaction
+2025-12-16,John,WANT,Dining & Entertainment,26,Dining & Entertainment - Movies,Transaction
+2025-12-16,John,WANT,Health,25,Health - General,Transaction
+2025-12-16,Jane,NEED,Healthcare,128,Healthcare - General,Transaction
+2025-12-16,Jane,WANT,Health,61,Health - General,Transaction
+2025-12-17,John,WANT,Dining & Entertainment,78,Dining & Entertainment - Hobbies,Transaction
+2025-12-17,John,NEED,Food,33,Food - Supplies,Transaction
+2025-12-17,John,WANT,Gifts,13,Gifts - General,Transaction
+2025-12-17,Jane,NEED,Food,102,Food - Supplies,Transaction
+2025-12-18,John,NEED,Healthcare,102,Healthcare - General,Transaction
+2025-12-18,John,NEED,Utilities,108,Utilities - Internet,Transaction
+2025-12-18,Jane,NEED,Healthcare,41,Healthcare - General,Transaction
+2025-12-19,John,NEED,Transportation,119,Transportation - Fuel,Transaction
+2025-12-19,John,NEED,Housing,52,Housing - General,Transaction
+2025-12-19,John,NEED,Healthcare,94,Healthcare - General,Transaction
+2025-12-19,Jane,WANT,Shopping,44,Shopping - Clothing,Transaction
+2025-12-20,John,NEED,Healthcare,112,Healthcare - General,Transaction
+2025-12-20,Jane,NEED,Housing,108,Housing - General,Transaction
+2025-12-21,John,WANT,Shopping,31,Shopping - Clothing,Transaction
+2025-12-21,John,NEED,Childcare,54,Childcare - General,Transaction
+2025-12-21,John,NEED,Childcare,122,Childcare - General,Transaction
+2025-12-21,Jane,NEED,Childcare,22,Childcare - General,Transaction
+2025-12-21,Jane,WANT,Health,75,Health - General,Transaction
+2025-12-21,Jane,NEED,Housing,114,Housing - General,Transaction
+2025-12-22,John,NEED,Childcare,122,Childcare - General,Transaction
+2025-12-22,John,NEED,Utilities,135,Utilities - Water,Transaction
+2025-12-22,John,WANT,Health,13,Health - General,Transaction
+2025-12-22,John,SAVINGS,Investments,251,Weekly Transfer,Transaction
+2025-12-22,Jane,NEED,Healthcare,103,Healthcare - General,Transaction
+2025-12-22,Jane,NEED,Food,115,Food - Supplies,Transaction
+2025-12-22,Jane,WANT,Shopping,34,Shopping - Gadgets,Transaction
+2025-12-22,Jane,SAVINGS,Investments,129,Weekly Transfer,Transaction
+2025-12-23,John,NEED,Transportation,80,Transportation - Transit,Transaction
+2025-12-23,John,WANT,Travel,26,Travel - General,Transaction
+2025-12-23,John,NEED,Transportation,85,Transportation - Fuel,Transaction
+2025-12-23,Jane,NEED,Childcare,114,Childcare - General,Transaction
+2025-12-24,John,WANT,Shopping,23,Shopping - Gadgets,Transaction
+2025-12-24,John,WANT,Dining & Entertainment,26,Dining & Entertainment - Hobbies,Transaction
+2025-12-24,Jane,NEED,Housing,110,Housing - General,Transaction
+2025-12-24,Jane,WANT,Health,34,Health - General,Transaction
+2025-12-24,Jane,WANT,Travel,53,Travel - General,Transaction
+2025-12-25,John,WANT,Shopping,57,Shopping - Clothing,Transaction
+2025-12-25,John,NEED,Food,99,Food - Groceries,Transaction
+2025-12-25,Jane,NEED,Childcare,101,Childcare - General,Transaction
+2025-12-26,John,WANT,Health,76,Health - General,Transaction
+2025-12-26,John,NEED,Transportation,43,Transportation - Fuel,Transaction
+2025-12-26,Jane,NEED,Housing,103,Housing - General,Transaction
+2025-12-26,Jane,WANT,Dining & Entertainment,67,Dining & Entertainment - Hobbies,Transaction
+2025-12-26,Jane,NEED,Transportation,38,Transportation - Transit,Transaction
+2025-12-27,John,NEED,Utilities,93,Utilities - Electric,Transaction
+2025-12-27,John,WANT,Travel,10,Travel - General,Transaction
+2025-12-27,Jane,WANT,Health,38,Health - General,Transaction
+2025-12-28,John,NEED,Food,29,Food - Groceries,Transaction
+2025-12-28,John,NEED,Housing,81,Housing - General,Transaction
+2025-12-28,John,WANT,Travel,49,Travel - General,Transaction
+2025-12-28,Jane,NEED,Food,66,Food - Supplies,Transaction
+2025-12-29,John,NEED,Childcare,131,Childcare - General,Transaction
+2025-12-29,John,WANT,Shopping,16,Shopping - Gadgets,Transaction
+2025-12-29,John,NEED,Housing,52,Housing - General,Transaction
+2025-12-29,John,SAVINGS,Investments,263,Weekly Transfer,Transaction
+2025-12-29,Jane,NEED,Healthcare,38,Healthcare - General,Transaction
+2025-12-29,Jane,SAVINGS,Investments,231,Weekly Transfer,Transaction
+2025-12-30,John,NEED,Housing,127,Housing - General,Transaction
+2025-12-30,John,WANT,Gifts,16,Gifts - General,Transaction
+2025-12-30,John,WANT,Health,48,Health - General,Transaction
+2025-12-30,Jane,WANT,Health,13,Health - General,Transaction
+2025-12-31,John,NEED,Transportation,92,Transportation - Fuel,Transaction
+2025-12-31,Jane,WANT,Health,32,Health - General,Transaction
+2025-12-31,Jane,NEED,Healthcare,101,Healthcare - General,Transaction
+2025-12-31,Jane,NEED,Childcare,132,Childcare - General,Transaction
+2026-01-01,John,WANT,Health,45,Health - General,Transaction
+2026-01-01,John,WANT,Health,43,Health - General,Transaction
+2026-01-01,Jane,NEED,Utilities,42,Utilities - Electric,Transaction
+2026-01-01,Jane,WANT,Health,17,Health - General,Transaction
+2026-01-01,Jane,WANT,Gifts,42,Gifts - General,Transaction
+2026-01-02,John,NEED,Utilities,56,Utilities - Internet,Transaction
+2026-01-02,John,WANT,Shopping,19,Shopping - Gadgets,Transaction
+2026-01-02,Jane,WANT,Dining & Entertainment,30,Dining & Entertainment - Hobbies,Transaction
+2026-01-02,Jane,WANT,Shopping,51,Shopping - Clothing,Transaction
+2026-01-03,John,WANT,Dining & Entertainment,12,Dining & Entertainment - Restaurants,Transaction
+2026-01-03,John,NEED,Childcare,66,Childcare - General,Transaction
+2026-01-03,Jane,WANT,Travel,10,Travel - General,Transaction
+2026-01-04,John,WANT,Shopping,35,Shopping - Clothing,Transaction
+2026-01-04,Jane,NEED,Housing,39,Housing - General,Transaction
+2026-01-04,Jane,NEED,Childcare,118,Childcare - General,Transaction
+2026-01-05,John,NEED,Healthcare,73,Healthcare - General,Transaction
+2026-01-05,John,SAVINGS,Investments,222,Weekly Transfer,Transaction
+2026-01-05,Jane,WANT,Dining & Entertainment,47,Dining & Entertainment - Movies,Transaction
+2026-01-05,Jane,SAVINGS,Investments,104,Weekly Transfer,Transaction
+2026-01-06,John,NEED,Transportation,63,Transportation - Transit,Transaction
+2026-01-06,John,NEED,Childcare,140,Childcare - General,Transaction
+2026-01-06,Jane,NEED,Housing,83,Housing - General,Transaction
+2026-01-06,Jane,NEED,Housing,135,Housing - General,Transaction
+2026-01-07,John,NEED,Transportation,142,Transportation - Fuel,Transaction
+2026-01-07,John,WANT,Health,30,Health - General,Transaction
+2026-01-07,John,WANT,Travel,35,Travel - General,Transaction
+2026-01-07,Jane,NEED,Childcare,117,Childcare - General,Transaction
+2026-01-07,Jane,NEED,Transportation,91,Transportation - Transit,Transaction
+2026-01-07,Jane,NEED,Transportation,112,Transportation - Fuel,Transaction
+2026-01-08,John,WANT,Gifts,37,Gifts - General,Transaction
+2026-01-08,John,NEED,Food,83,Food - Groceries,Transaction
+2026-01-08,John,NEED,Housing,59,Housing - General,Transaction
+2026-01-08,Jane,NEED,Childcare,63,Childcare - General,Transaction
+2026-01-09,John,NEED,Childcare,131,Childcare - General,Transaction
+2026-01-09,John,WANT,Travel,26,Travel - General,Transaction
+2026-01-09,Jane,NEED,Childcare,137,Childcare - General,Transaction
+2026-01-10,John,WANT,Travel,11,Travel - General,Transaction
+2026-01-10,John,WANT,Gifts,63,Gifts - General,Transaction
+2026-01-10,John,NEED,Childcare,124,Childcare - General,Transaction
+2026-01-10,Jane,WANT,Travel,59,Travel - General,Transaction
+2026-01-10,Jane,NEED,Food,92,Food - Supplies,Transaction
+2026-01-10,Jane,WANT,Dining & Entertainment,65,Dining & Entertainment - Hobbies,Transaction
+2026-01-11,John,NEED,Food,51,Food - Groceries,Transaction
+2026-01-11,John,NEED,Utilities,35,Utilities - Internet,Transaction
+2026-01-11,Jane,WANT,Health,22,Health - General,Transaction
+2026-01-11,Jane,WANT,Travel,40,Travel - General,Transaction
+2026-01-11,Jane,NEED,Transportation,91,Transportation - Transit,Transaction
+2026-01-12,John,NEED,Housing,70,Housing - General,Transaction
+2026-01-12,John,SAVINGS,Investments,123,Weekly Transfer,Transaction
+2026-01-12,Jane,NEED,Food,117,Food - Supplies,Transaction
+2026-01-12,Jane,WANT,Shopping,11,Shopping - Gadgets,Transaction
+2026-01-12,Jane,WANT,Dining & Entertainment,32,Dining & Entertainment - Hobbies,Transaction
+2026-01-12,Jane,SAVINGS,Investments,131,Weekly Transfer,Transaction
+2026-01-13,John,NEED,Transportation,75,Transportation - Fuel,Transaction
+2026-01-13,John,WANT,Health,34,Health - General,Transaction
+2026-01-13,John,WANT,Gifts,27,Gifts - General,Transaction
+2026-01-13,Jane,NEED,Transportation,133,Transportation - Fuel,Transaction
+2026-01-13,Jane,NEED,Transportation,139,Transportation - Transit,Transaction
+2026-01-14,John,WANT,Shopping,21,Shopping - Clothing,Transaction
+2026-01-14,John,WANT,Travel,46,Travel - General,Transaction
+2026-01-14,John,NEED,Housing,59,Housing - General,Transaction
+2026-01-14,Jane,NEED,Childcare,146,Childcare - General,Transaction
+2026-01-15,John,WANT,Travel,22,Travel - General,Transaction
+2026-01-15,John,NEED,Housing,65,Housing - General,Transaction
+2026-01-15,John,WANT,Dining & Entertainment,49,Dining & Entertainment - Hobbies,Transaction
+2026-01-15,Jane,NEED,Food,125,Food - Supplies,Transaction
+2026-01-15,Jane,WANT,Dining & Entertainment,22,Dining & Entertainment - Movies,Transaction
+2026-01-15,Jane,NEED,Food,32,Food - Supplies,Transaction
+2026-01-16,John,NEED,Transportation,135,Transportation - Fuel,Transaction
+2026-01-16,John,WANT,Travel,18,Travel - General,Transaction
+2026-01-16,Jane,NEED,Transportation,70,Transportation - Transit,Transaction
+2026-01-16,Jane,NEED,Housing,86,Housing - General,Transaction
+2026-01-17,John,NEED,Utilities,35,Utilities - Water,Transaction
+2026-01-17,John,WANT,Dining & Entertainment,74,Dining & Entertainment - Restaurants,Transaction
+2026-01-17,Jane,NEED,Housing,78,Housing - General,Transaction
+2026-01-17,Jane,NEED,Housing,63,Housing - General,Transaction
+2026-01-17,Jane,WANT,Dining & Entertainment,39,Dining & Entertainment - Restaurants,Transaction
+2026-01-18,John,NEED,Food,136,Food - Groceries,Transaction
+2026-01-18,Jane,WANT,Health,18,Health - General,Transaction
+2026-01-18,Jane,WANT,Dining & Entertainment,47,Dining & Entertainment - Restaurants,Transaction
+2026-01-19,John,NEED,Food,54,Food - Supplies,Transaction
+2026-01-19,John,WANT,Shopping,57,Shopping - Clothing,Transaction
+2026-01-19,John,NEED,Housing,132,Housing - General,Transaction
+2026-01-19,John,SAVINGS,Investments,238,Weekly Transfer,Transaction
+2026-01-19,Jane,WANT,Shopping,58,Shopping - Gadgets,Transaction
+2026-01-19,Jane,SAVINGS,Investments,212,Weekly Transfer,Transaction
+2026-01-20,John,WANT,Dining & Entertainment,30,Dining & Entertainment - Movies,Transaction
+2026-01-20,John,WANT,Dining & Entertainment,32,Dining & Entertainment - Hobbies,Transaction
+2026-01-20,Jane,NEED,Food,135,Food - Groceries,Transaction
+2026-01-20,Jane,NEED,Transportation,133,Transportation - Transit,Transaction
+2026-01-20,Jane,WANT,Shopping,12,Shopping - Gadgets,Transaction
+2026-01-21,John,NEED,Transportation,125,Transportation - Fuel,Transaction
+2026-01-21,John,NEED,Childcare,119,Childcare - General,Transaction
+2026-01-21,John,WANT,Health,29,Health - General,Transaction
+2026-01-21,Jane,NEED,Utilities,120,Utilities - Water,Transaction
+2026-01-21,Jane,NEED,Transportation,128,Transportation - Transit,Transaction
+2026-01-22,John,WANT,Gifts,79,Gifts - General,Transaction
+2026-01-22,John,WANT,Dining & Entertainment,70,Dining & Entertainment - Hobbies,Transaction
+2026-01-22,John,NEED,Food,100,Food - Groceries,Transaction
+2026-01-22,Jane,NEED,Healthcare,103,Healthcare - General,Transaction
+2026-01-23,John,WANT,Shopping,54,Shopping - Clothing,Transaction
+2026-01-23,John,NEED,Healthcare,39,Healthcare - General,Transaction
+2026-01-23,John,WANT,Dining & Entertainment,61,Dining & Entertainment - Hobbies,Transaction
+2026-01-23,Jane,NEED,Childcare,77,Childcare - General,Transaction
+2026-01-23,Jane,WANT,Shopping,32,Shopping - Gadgets,Transaction
+2026-01-23,Jane,WANT,Health,70,Health - General,Transaction

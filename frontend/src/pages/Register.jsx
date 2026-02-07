@@ -11,11 +11,16 @@
  * @requires ./Auth.css
  */
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { register as registerApi } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import PhoneInput from 'react-phone-input-2';
+import 'react-phone-input-2/lib/style.css';
 import './Auth.css';
+import GrowWiseLogo from '../components/GrowWiseLogo';
+import { Country, State, City } from 'country-state-city';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -25,15 +30,57 @@ export default function Register() {
         confirmPassword: '',
         firstName: '',
         lastName: '',
-        currency: 'USD'
+        currency: 'USD',
+        country: '',
+        state: '',
+        city: '',
+        termsAccepted: false,
+        cookieAccepted: false
+    });
+    const [locationCodes, setLocationCodes] = useState({
+        countryCode: '',
+        stateCode: ''
     });
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
-    const { login } = useAuth();
-    const navigate = useNavigate();
+    const [success, setSuccess] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
+
+    const [countries] = useState(Country.getAllCountries());
+    const [states, setStates] = useState([]);
+    const [cities, setCities] = useState([]);
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        setFormData(prev => ({ ...prev, [name]: value }));
+
+        if (name === 'country') {
+            const country = countries.find(c => c.name === value);
+            if (country) {
+                setLocationCodes(prev => ({ ...prev, countryCode: country.isoCode, stateCode: '' }));
+                setStates(State.getStatesOfCountry(country.isoCode));
+                setCities([]);
+                setFormData(prev => ({ ...prev, state: '', city: '' }));
+            } else {
+                setLocationCodes({ countryCode: '', stateCode: '' });
+                setStates([]);
+                setCities([]);
+                setFormData(prev => ({ ...prev, state: '', city: '' }));
+            }
+        }
+
+        if (name === 'state') {
+            const state = states.find(s => s.name === value);
+            if (state) {
+                setLocationCodes(prev => ({ ...prev, stateCode: state.isoCode }));
+                setCities(City.getCitiesOfState(locationCodes.countryCode, state.isoCode));
+                setFormData(prev => ({ ...prev, city: '' }));
+            } else {
+                setLocationCodes(prev => ({ ...prev, stateCode: '' }));
+                setCities([]);
+                setFormData(prev => ({ ...prev, city: '' }));
+            }
+        }
     };
 
     const handleSubmit = async (e) => {
@@ -45,25 +92,65 @@ export default function Register() {
             return;
         }
 
+        if (!formData.termsAccepted) {
+            setError('You must agree to the Terms and Privacy Policy');
+            return;
+        }
+
         setLoading(true);
 
         try {
             const { confirmPassword, ...registerData } = formData;
-            const data = await registerApi(registerData);
-            login(data.user, data.token);
-            navigate('/');
+            // The API might return token/user, but we ignore it for now as email needs verification
+            await registerApi(registerData);
+            setSuccess(true);
         } catch (err) {
-            setError(err.message || 'Registration failed');
+            if (err.validationErrors && Array.isArray(err.validationErrors)) {
+                setError(err.validationErrors.map(e => e.message).join('. '));
+            } else {
+                setError(err.message || 'Registration failed');
+            }
         } finally {
             setLoading(false);
         }
     };
 
+    if (success) {
+        return (
+            <div className="auth-page">
+                <div className="auth-container">
+                    <div className="auth-card">
+                        <div className="auth-header">
+                            <h1 style={{ fontSize: '3rem', marginBottom: '1rem' }}>📩</h1>
+                            <h2>Verify Your Email</h2>
+                            <p>We've sent a verification link to <strong>{formData.email}</strong></p>
+                        </div>
+
+                        <div className="auth-status-message" style={{ textAlign: 'center' }}>
+                            <p style={{ marginBottom: '20px', lineHeight: '1.5', color: 'var(--text-secondary)' }}>
+                                Please check your inbox and click the link to activate your account.
+                                The link is valid for 30 minutes.
+                            </p>
+
+                            <div className="auth-links">
+                                <Link to="/login" className="btn-primary" style={{ textDecoration: 'none', display: 'inline-block' }}>
+                                    Back to Login
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="auth-container">
             <div className="auth-card auth-card-wide">
                 <div className="auth-header">
-                    <h1>🏠</h1>
+                    <div className="flex justify-center mb-6">
+                        <GrowWiseLogo size="" style={{ fontSize: '2.5rem' }} animated={true} />
+                    </div>
                     <h2>Create Account</h2>
                     <p>Start managing your household finances</p>
                 </div>
@@ -112,42 +199,58 @@ export default function Register() {
                     </div>
 
                     <div className="form-group">
-                        <label htmlFor="phone">Phone (E.164 format)</label>
-                        <input
-                            type="tel"
-                            id="phone"
-                            name="phone"
+                        <label htmlFor="phone">Phone Number</label>
+                        <PhoneInput
+                            country={'us'}
                             value={formData.phone}
-                            onChange={handleChange}
-                            placeholder="+1234567890"
-                            required
+                            onChange={(phone) => setFormData({ ...formData, phone: '+' + phone })}
+                            inputProps={{
+                                name: 'phone',
+                                required: true,
+                                autoFocus: false
+                            }}
+                            containerClass="phone-input-container"
+                            inputClass="phone-input-field"
+                            buttonClass="phone-input-button"
+                            preferredCountries={['us', 'gb', 'in', 'ca']}
                         />
                     </div>
 
                     <div className="form-row">
                         <div className="form-group">
                             <label htmlFor="password">Password</label>
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                placeholder="Min 8 chars, 1 upper, 1 number"
-                                required
-                            />
+                            <div className="password-input-wrapper">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    placeholder="Min 8 chars, 1 upper, 1 number"
+                                    required
+                                />
+                                <button
+                                    type="button"
+                                    className="password-toggle-btn"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                                </button>
+                            </div>
                         </div>
                         <div className="form-group">
                             <label htmlFor="confirmPassword">Confirm Password</label>
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                placeholder="••••••••"
-                                required
-                            />
+                            <div className="password-input-wrapper">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    placeholder="••••••••"
+                                    required
+                                />
+                            </div>
                         </div>
                     </div>
 
@@ -161,6 +264,78 @@ export default function Register() {
                         </select>
                     </div>
 
+                    <div className="form-group">
+                        <label htmlFor="country">Country</label>
+                        <select id="country" name="country" value={formData.country} onChange={handleChange} required>
+                            <option value="">Select Country</option>
+                            {countries.map(c => (
+                                <option key={c.isoCode} value={c.name}>{c.name}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="form-row">
+                        <div className="form-group">
+                            <label htmlFor="state">State / Province</label>
+                            <select
+                                id="state"
+                                name="state"
+                                value={formData.state}
+                                onChange={handleChange}
+                                disabled={!formData.country}
+                                required
+                            >
+                                <option value="">Select State</option>
+                                {states.map(s => (
+                                    <option key={s.isoCode} value={s.name}>{s.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="form-group">
+                            <label htmlFor="city">City</label>
+                            <select
+                                id="city"
+                                name="city"
+                                value={formData.city}
+                                onChange={handleChange}
+                                disabled={!formData.state}
+                                required
+                            >
+                                <option value="">Select City</option>
+                                {cities.map(c => (
+                                    <option key={c.name} value={c.name}>{c.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={formData.termsAccepted}
+                                onChange={(e) => setFormData({ ...formData, termsAccepted: e.target.checked })}
+                                required
+                            />
+                            <span>
+                                I agree to the <Link to="/terms" target="_blank">Terms of Service</Link> and <Link to="/privacy" target="_blank">Privacy Policy</Link>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div className="form-group checkbox-group">
+                        <label className="checkbox-label">
+                            <input
+                                type="checkbox"
+                                checked={formData.cookieAccepted}
+                                onChange={(e) => setFormData({ ...formData, cookieAccepted: e.target.checked })}
+                            />
+                            <span>
+                                I consent to the use of <Link to="/cookie-policy" target="_blank">Cookies</Link> (Optional)
+                            </span>
+                        </label>
+                    </div>
+
                     <button type="submit" className="auth-button" disabled={loading}>
                         {loading ? 'Creating account...' : 'Create Account'}
                     </button>
@@ -170,7 +345,7 @@ export default function Register() {
                     <span>Already have an account?</span>
                     <Link to="/login">Sign in</Link>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 }

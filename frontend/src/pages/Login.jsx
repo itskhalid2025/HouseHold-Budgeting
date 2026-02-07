@@ -10,11 +10,13 @@
  * @requires ../api/api
  * @requires ./Login.css
  */
+import GrowWiseLogo from '../components/GrowWiseLogo';
 
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { login as loginApi } from '../api/api';
 import { useAuth } from '../context/AuthContext';
+import { Eye, EyeOff } from 'lucide-react';
 import './Auth.css';
 
 export default function Login() {
@@ -22,6 +24,7 @@ export default function Login() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showPassword, setShowPassword] = useState(false);
     const { login } = useAuth();
     const navigate = useNavigate();
 
@@ -35,7 +38,11 @@ export default function Login() {
             login(data.user, data.token);
             navigate('/');
         } catch (err) {
-            setError(err.message || 'Login failed');
+            if (err.response?.data?.code === 'EMAIL_NOT_VERIFIED') {
+                setError('Please verify your email address to login. Check your inbox.');
+            } else {
+                setError(err.message || 'Login failed');
+            }
         } finally {
             setLoading(false);
         }
@@ -45,7 +52,9 @@ export default function Login() {
         <div className="auth-container">
             <div className="auth-card">
                 <div className="auth-header">
-                    <h1>🏠</h1>
+                    <div className="flex justify-center mb-6">
+                        <GrowWiseLogo size="" style={{ fontSize: '2.5rem' }} animated={true} />
+                    </div>
                     <h2>Welcome Back</h2>
                     <p>Sign in to manage your household budget</p>
                 </div>
@@ -67,14 +76,24 @@ export default function Login() {
 
                     <div className="form-group">
                         <label htmlFor="password">Password</label>
-                        <input
-                            type="password"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            placeholder="••••••••"
-                            required
-                        />
+                        <div className="password-input-wrapper">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                id="password"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                placeholder="••••••••"
+                                required
+                            />
+                            <button
+                                type="button"
+                                className="password-toggle-btn"
+                                onClick={() => setShowPassword(!showPassword)}
+                                aria-label={showPassword ? "Hide password" : "Show password"}
+                            >
+                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" className="auth-button" disabled={loading}>
