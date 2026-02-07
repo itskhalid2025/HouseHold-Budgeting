@@ -349,10 +349,13 @@ function AppContent() {
   }
 
   // Landing page - no sidebar/navbar
-  if (isLandingPage) {
+  const isAuthPage = ['/login', '/register', '/forgot-password', '/reset-password', '/verify-email'].includes(location.pathname);
+
+  if (isLandingPage || isAuthPage) {
     return (
       <div className="app">
         <ServerStatus />
+        {isAuthPage && !isMobile && <DesktopBackground />}
         <main className="app-main">
           <AppRoutes />
         </main>
