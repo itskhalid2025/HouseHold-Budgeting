@@ -125,14 +125,6 @@ const frontendPath = path.join(__dirname, '../../frontend/dist');
 
 app.use(express.static(frontendPath));
 
-// Handle React Router deep links
-app.get('/:path*', (req, res, next) => {
-    if (req.path.startsWith('/api/')) return next();
-    res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
-        if (err) next();
-    });
-});
-
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
     try {
