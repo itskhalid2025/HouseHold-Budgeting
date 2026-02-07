@@ -349,13 +349,13 @@ function AppContent() {
   }
 
   // Landing page - no sidebar/navbar
-  // Normalize path by removing trailing slash (unless it's root '/')
-  const normalizedPath = location.pathname.endsWith('/') && location.pathname.length > 1
-    ? location.pathname.slice(0, -1)
-    : location.pathname;
+  // Normalize path by collapsing multiple slashes and removing trailing slash (unless root)
+  const normalizedPath = location.pathname
+    .replace(/\/+/g, '/') // Collapse multiple slashes (e.g. //reset-password -> /reset-password)
+    .replace(/\/$/, '') || '/'; // Remove trailing slash, ensure at least /
 
   const isAuthPage = ['/login', '/register', '/forgot-password', '/verify-email', '/reset-password'].some(path =>
-    normalizedPath === path || normalizedPath.startsWith(path + '/')
+    normalizedPath === path || (normalizedPath.startsWith(path + '/') && path !== '/')
   );
 
   if (isLandingPage || isAuthPage) {
@@ -501,15 +501,33 @@ function AppRoutes() {
           <ForgotPassword />
         </PublicRoute>
       } />
-      <Route path="/verify-email" element={
-        <PublicRoute>
-          <VerifyEmail />
-        </PublicRoute>
-      } />
-      <Route path="/reset-password" element={
-        <PublicRoute>
-          <ResetPassword />
-        </PublicRoute>
+      <Route path="/verify-email" element={<VerifyEmail />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
+
+      {/* Catch-all 404 Route */}
+      <Route path="*" element={
+        <div style={{
+          height: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'white',
+          textAlign: 'center',
+          padding: '20px'
+        }}>
+          <h1 style={{ fontSize: '4rem', marginBottom: '1rem' }}>404</h1>
+          <p style={{ fontSize: '1.5rem', marginBottom: '2rem' }}>Oops! This page doesn't exist.</p>
+          <NavLink to="/" style={{
+            color: 'var(--primary-color, #6366f1)',
+            textDecoration: 'none',
+            padding: '10px 20px',
+            border: '1px solid var(--primary-color, #6366f1)',
+            borderRadius: '8px'
+          }}>
+            Go Home
+          </NavLink>
+        </div>
       } />
     </Routes>
   );

@@ -95,7 +95,8 @@ export const sendEmail = async (to, subject, html) => {
  * @param {string} token 
  */
 export const sendVerificationEmail = async (user, token) => {
-    const verificationUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/verify-email?token=${token}`;
+    const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+    const verificationUrl = `${baseUrl}/verify-email?token=${token}`;
 
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">
@@ -141,7 +142,8 @@ export const sendVerificationEmail = async (user, token) => {
  * @param {string} token 
  */
 export const sendPasswordResetEmail = async (user, token) => {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:5173'}/reset-password?token=${token}`;
+    const baseUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
+    const resetUrl = `${baseUrl}/reset-password?token=${token}`;
 
     const html = `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 10px;">

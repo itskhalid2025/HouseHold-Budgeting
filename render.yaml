@@ -2,7 +2,7 @@ services:
   # Frontend - Static Site
   - type: static
     name: growwise
-    rootDir: frontend
+    rootDir: HouseHold-Budgeting/frontend
     buildCommand: npm install && npm run build
     staticPublishPath: ./dist
     routes:
