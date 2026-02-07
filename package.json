@@ -1,1 +1,11 @@
-{}
+{
+    "name": "household-budgeting-root",
+    "version": "1.0.0",
+    "description": "Root package for unified deployment",
+    "scripts": {
+        "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install",
+        "build:frontend": "cd frontend && npm run build",
+        "start": "cd backend && npm start",
+        "deploy": "npm run build:frontend && npm run start"
+    }
+}

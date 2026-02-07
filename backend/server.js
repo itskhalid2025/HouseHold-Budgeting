@@ -40,6 +40,8 @@ import { testConnection as testGemini } from './src/services/geminiService.js';
 import { testConnection as testOpik } from './src/services/opikService.js';
 import swaggerUi from 'swagger-ui-express';
 import { specs } from './src/utils/swagger.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Route imports
 import adminRoutes from './src/routes/adminRoutes.js';
@@ -116,13 +118,18 @@ app.use('/api/advisor', advisorRoutes); // Phase 6: AI Advisor
 app.use('/api/gamification', authenticate, gamificationRoutes); // Phase 7: Gamification
 app.use('/api/insights', insightRoutes); // Dynamic AI Insights
 
-// Root endpoint
-app.get('/', (req, res) => {
-    res.json({
-        message: 'GrowWise API is running 🚀',
-        version: '1.0.0',
-        documentation: '/api-docs',
-        health: '/api/health'
+// Serve Frontend Static Files (Production)
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const frontendPath = path.join(__dirname, '../../frontend/dist');
+
+app.use(express.static(frontendPath));
+
+// Handle React Router deep links
+app.get('*', (req, res, next) => {
+    if (req.path.startsWith('/api/')) return next();
+    res.sendFile(path.join(frontendPath, 'index.html'), (err) => {
+        if (err) next();
     });
 });
 

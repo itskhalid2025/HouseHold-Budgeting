@@ -286,6 +286,17 @@ function AppContent() {
   const isAdminRoute = location.pathname.startsWith('/admin');
   const isLandingPage = location.pathname === '/';
   const { openSmartEntry } = useSmartEntry();
+  const navigate = useNavigate();
+
+  // URL Normalization Fix: Redirect //path to /path
+  useEffect(() => {
+    if (location.pathname.includes('//')) {
+      const cleanPath = location.pathname.replace(/\/+/g, '/');
+      console.log('🔄 Normalizing malformed URL:', location.pathname, '->', cleanPath);
+      navigate(cleanPath + location.search, { replace: true });
+    }
+  }, [location.pathname, location.search, navigate]);
+
   const [isDragging, setIsDragging] = useState(false);
   const dragCounter = useRef(0);
 
