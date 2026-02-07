@@ -55,7 +55,7 @@ export default function TaglineSequential({ isMobile }) {
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                     transition={{
                         delay: index * 1.0,
-                        duration: 0.8,
+                        duration: 0.4,
                         ease: "easeOut"
                     }}
                     style={{

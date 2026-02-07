@@ -21,7 +21,7 @@ function LogoIntro({ onComplete, isMobile }) {
     useEffect(() => {
         const timer = setTimeout(() => {
             onComplete();
-        }, 9000);
+        }, 6000);
         return () => clearTimeout(timer);
     }, [onComplete]);
 
@@ -68,7 +68,7 @@ function LogoIntro({ onComplete, isMobile }) {
                         rotateY: 0
                     }}
                     transition={{
-                        duration: 1.5,
+                        duration: 1.0,
                         ease: [0.34, 1.56, 0.64, 1]
                     }}
                 >
@@ -84,7 +84,7 @@ function LogoIntro({ onComplete, isMobile }) {
                     className="logo-intro-tagline"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 1.8, duration: 0.8 }}
+                    transition={{ delay: 0.8, duration: 0.8 }}
                 >
                     <TaglineSequential isMobile={isMobile} />
                 </motion.div>
