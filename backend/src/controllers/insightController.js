@@ -102,24 +102,57 @@ export const getSmartInsights = async (req, res) => {
         }
 
         try {
-            // Check if "Smart Insight Notifications" is disabled in user preferences
+            // 1. Fetch User Prefs
             const user = await prisma.user.findUnique({
                 where: { id: userId },
                 select: { notificationPreferences: true }
             });
 
-            // Default to true if not set
             const preferences = user.notificationPreferences || {};
             if (preferences.smartInsights === false) {
                 return res.status(200).json({
                     success: true,
-                    data: {
-                        disabled: true,
-                        message: "Smart Insights are turned off in settings"
-                    }
+                    data: { disabled: true, message: "Smart Insights are turned off" }
                 });
             }
 
+            // 2. Fetch Current 7-Day Stats for Change Detection
+            const sevenDaysAgo = new Date();
+            sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+            const txns = await prisma.transaction.findMany({
+                where: {
+                    householdId,
+                    date: { gte: sevenDaysAgo },
+                    deletedAt: null
+                },
+                select: { amount: true }
+            });
+
+            const currentCount = txns.length;
+            const currentSpent = txns.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+
+            // 3. Check Cache
+            const cache = await prisma.smartInsight.findUnique({
+                where: { householdId }
+            });
+
+            const TWELVE_HOURS = 12 * 60 * 60 * 1000;
+            const isExpired = cache && (new Date() - new Date(cache.updatedAt) > TWELVE_HOURS);
+            const hasChanged = !cache ||
+                cache.transactionCount !== currentCount ||
+                Number(cache.totalSpent) !== currentSpent;
+
+            if (cache && !isExpired && !hasChanged) {
+                logSuccess('insightController', 'getSmartInsights (CACHED)');
+                return res.status(200).json({
+                    success: true,
+                    data: cache.content
+                });
+            }
+
+            // 4. Regenerate if needed
+            console.log(hasChanged ? '🔄 Data change detected. Regenerating insights...' : '⏰ Cache expired. Regenerating insights...');
             const result = await generateSmartWeeklyInsights(userId, householdId);
 
             if (!result.success) {
@@ -129,7 +162,24 @@ export const getSmartInsights = async (req, res) => {
                 });
             }
 
-            logSuccess('insightController', 'getSmartInsights');
+            // 5. Update Cache
+            await prisma.smartInsight.upsert({
+                where: { householdId },
+                update: {
+                    content: result.data,
+                    transactionCount: currentCount,
+                    totalSpent: currentSpent,
+                    updatedAt: new Date()
+                },
+                create: {
+                    householdId,
+                    content: result.data,
+                    transactionCount: currentCount,
+                    totalSpent: currentSpent
+                }
+            });
+
+            logSuccess('insightController', 'getSmartInsights (FRESH)');
             return res.status(200).json({
                 success: true,
                 data: result.data

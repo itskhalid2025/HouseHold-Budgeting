@@ -184,7 +184,11 @@ Generate EXACTLY 4 insight cards, each with a specific theme.
         logSuccess('smartInsightAgent', 'generateSmartWeeklyInsights');
         return {
             success: true,
-            data: result
+            data: result,
+            metadata: {
+                transactionCount: sevenDayTxns.length,
+                totalSpent: weeklySpent
+            }
         };
 
     } catch (error) {
