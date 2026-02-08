@@ -40,7 +40,7 @@ import AdminRegister from './pages/admin/AdminRegister';
 import AdminSettings from './pages/admin/AdminSettings';
 import SystemStatus from './pages/admin/dashboard/SystemStatus';
 import Onboarding from './pages/Onboarding';
-import { SyncProvider } from './context/SyncContext';
+import { SyncProvider, useSync } from './context/SyncContext';
 import { BudgetProvider } from './context/BudgetContext';
 import { NotificationProvider, useNotification } from './context/NotificationContext';
 import PreWarmer from './components/PreWarmer';

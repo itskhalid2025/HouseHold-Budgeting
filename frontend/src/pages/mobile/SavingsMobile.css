@@ -160,6 +160,8 @@
     .goal-actions {
         display: flex;
         gap: 8px;
+        flex-shrink: 0;
+        margin-left: 12px;
     }
 
     .icon-btn {
