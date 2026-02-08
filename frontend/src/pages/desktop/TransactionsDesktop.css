@@ -76,7 +76,37 @@
         /* lighter red */
     }
 
-    /* Mobile Responsive */
+    /* Mobile Responsive - Expanded to include tablets */
+    @media (max-width: 1100px) {
+        .transactions-page {
+            padding: 24px !important;
+            /* Override large desktop padding */
+        }
+
+        .transaction-card {
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .txn-left-group {
+            flex: 1 1 100%;
+            /* Full width on smaller screens */
+            margin-bottom: 8px;
+        }
+
+        .txn-center {
+            order: 2;
+            /* Move AI badge to end or specific spot */
+            flex: 0 0 auto;
+        }
+
+        .txn-right-group {
+            flex: 1 1 auto;
+            align-items: flex-end;
+            order: 3;
+        }
+    }
+
     @media (max-width: 600px) {
         .transaction-summary-card {
             flex-direction: column;
@@ -89,6 +119,8 @@
         padding: 24px 60px 80px 40px;
         width: 100%;
         max-width: 100%;
+        box-sizing: border-box;
+        /* Ensure padding doesn't overflow width */
     }
 
     .filters-bar {

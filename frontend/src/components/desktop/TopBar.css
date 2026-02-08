@@ -49,3 +49,10 @@
     top: calc(100% + 10px);
     right: 0;
 }
+
+@media (max-width: 1024px) {
+    .top-bar-branding {
+        display: none !important;
+        /* Hide top branding on smaller screens as it duplicates sidebar/mobile nav */
+    }
+}

@@ -382,7 +382,7 @@ export default function DashboardDesktop() {
                 <div className="left-column">
                     {/* 1. Brand Header */}
                     <div className="brand-header">
-                        <GrowWiseLogo size="" style={{ fontSize: '5rem' }} animated={true} />
+                        <GrowWiseLogo size="" style={{ fontSize: 'clamp(3rem, 6vw, 5rem)' }} animated={true} />
                         <TaglineAnimated className="mt-4" />
                     </div>
 

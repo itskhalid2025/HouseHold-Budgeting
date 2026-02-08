@@ -132,18 +132,18 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
                 <div className="smart-menu-grid">
                     <div className="smart-option-btn voice" onClick={() => setMode('voice')}>
                         <div className="option-icon"><Mic size={24} /></div>
-                        <span>Voice</span>
-                        <span className="option-desc">Natural Language</span>
+                        <span>Voice </span>
+                        <span className="option-desc"> Natural Language</span>
                     </div>
                     <div className="smart-option-btn camera" onClick={() => setMode('image')}>
                         <div className="option-icon"><Camera size={24} /></div>
-                        <span>Scan</span>
-                        <span className="option-desc">Receipt / Invoice</span>
+                        <span>Snap </span>
+                        <span className="option-desc"> Receipt / Invoice</span>
                     </div>
                     <div className="smart-option-btn text" onClick={() => setMode('text')}>
                         <div className="option-icon"><Keyboard size={24} /></div>
-                        <span>Text</span>
-                        <span className="option-desc">Type Manual</span>
+                        <span>Text </span>
+                        <span className="option-desc"> Type Manual</span>
                     </div>
                 </div>
             )}

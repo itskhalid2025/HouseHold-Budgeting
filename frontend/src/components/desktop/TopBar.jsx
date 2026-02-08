@@ -3,7 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useTour } from '../../context/TourContext';
-import { Sun, Moon, HelpCircle } from 'lucide-react';
+import { Sun, Moon, HelpCircle, Menu, X } from 'lucide-react';
 import RankBadge from '../gamification/RankBadge';
 import GamificationHubDesktop from '../gamification/GamificationHubDesktop';
 import RewardAnimation from '../gamification/RewardAnimation';
@@ -23,7 +23,7 @@ import {
 } from '../../tourConfigs';
 import './TopBar.css';
 
-const TopBar = () => {
+const TopBar = ({ toggleSidebar }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const { startTour } = useTour();
@@ -71,6 +71,16 @@ const TopBar = () => {
     return (
         <header className="top-bar">
             <div className="top-bar-content">
+                {/* MENU TOGGLE - FAR LEFT */}
+                <button
+                    className="sidebar-toggle-btn"
+                    onClick={toggleSidebar}
+                    title="Toggle Sidebar"
+                    data-tour-id="sidebar-toggle"
+                >
+                    <Menu size={24} />
+                </button>
+
                 {/* BRANDING - LEFT SIDE */}
                 <div className="top-bar-branding" style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
                     <GrowWiseLogo size="" style={{ fontSize: '2rem' }} animated={true} />

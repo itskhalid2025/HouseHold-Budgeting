@@ -8,6 +8,7 @@
         min-height: 100vh;
         max-width: none;
         /* Truly full width available */
+        box-sizing: border-box;
     }
 
     .dashboard-top-bar {
@@ -17,12 +18,13 @@
         margin-bottom: 24px;
     }
 
+    /* .dashboard-grid-layout - Re-added for compatibility */
     .dashboard-grid-layout {
         display: grid;
-        grid-template-columns: 65% 35%;
-        /* 65/35 Split */
+        grid-template-columns: 1.8fr 1fr;
         gap: 24px;
-        align-items: start;
+        width: 100%;
+        max-width: 100%;
     }
 
     .left-column,
@@ -30,6 +32,24 @@
         display: flex;
         flex-direction: column;
         gap: 24px;
+        min-width: 0;
+    }
+
+    /* On larger screens, we might want to hint that left column is wider if using grid-template-columns */
+    /* But since we switched to responsive-grid (auto-fit), we let them be equal or span. */
+    /* To maintain the 65/35 look on large screens, we can add a specific override */
+    @media (min-width: 1200px) {
+        .responsive-grid {
+            grid-template-columns: 2fr 1fr;
+            /* Force 2:1 split on wide screens */
+        }
+    }
+
+    /* Stack on smaller desktops/tablets if needed */
+    @media (max-width: 1100px) {
+        .dashboard-grid-layout {
+            grid-template-columns: 1fr;
+        }
     }
 
     /* --- Header Gamification Stats --- */

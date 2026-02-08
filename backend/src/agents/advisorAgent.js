@@ -344,6 +344,7 @@ Your response MUST follow this exact structure:
     <ul>
       <li><strong style="color: #3b82f6">Dec 15</strong>: ₹1,450 at Swiggy - <strong style="color: #ef4444">Highest single-day</strong> food delivery expense</li>
       <li><strong style="color: #3b82f6">Week of Dec 18-24</strong>: ₹3,200 total dining expenses - <strong style="color: #f59e0b">2x your weekly average</strong></li>
+      <li><strong style="color: #eab308">Khalid</strong> spent <strong style="color: #3b82f6">₹1,200</strong> on Tech, while <strong style="color: #eab308">Vaibhavi</strong> spent <strong style="color: #3b82f6">₹500</strong></li>
       <li><strong style="color: #10b981">Good news</strong>: Your grocery spending stayed within budget at ₹4,500</li>
     </ul>
 
@@ -452,6 +453,12 @@ Before returning your response, verify:
     □ Advice is specific and actionable, not generic
     □ Currency symbol ${householdData.currencySymbol} is used throughout
     □ All HTML tags are properly closed
+
+    **MEMBER AWARENESS (NEW)**:
+    • If the RAG data shows "Spending by Member", USE IT!
+    • Acknowledge who spent what (e.g., "Khalid spent ₹500 on Food, while Vaibhavi spent ₹200")
+    • If the user asks about a specific person, focus on their transactions
+    • If comparing members, highlight the differences clearly
 
     Now generate your response following ALL requirements above.`;
 

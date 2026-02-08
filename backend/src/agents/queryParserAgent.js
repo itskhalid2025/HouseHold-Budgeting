@@ -52,6 +52,18 @@ User Timezone: ${timezone}
 User Location: ${city}, ${country}
 
 ═══════════════════════════════════════════════════════════════
+👥 HOUSEHOLD MEMBERS (NEW - CRITICAL)
+═══════════════════════════════════════════════════════════════
+
+If the user mentions specific people (e.g., "Khalid", "Vaibhavi", "Dad", "Mom"), extract them into the "members" filter.
+Examples:
+  • "How much did Khalid spend?" → members: ["Khalid"]
+  • "Vaibhavi's food expenses" → members: ["Vaibhavi"], categories: ["Food"]
+  • "Compare Khalid and Vaibhavi" → members: ["Khalid", "Vaibhavi"], intent: "comparison"
+
+If NO specific person is mentioned, leave "members" empty (implies ALL household members).
+
+═══════════════════════════════════════════════════════════════
 🏷️  USER'S ACTUAL CATEGORIES (EXACT MATCHING REQUIRED)
 ═══════════════════════════════════════════════════════════════
 
@@ -467,7 +479,8 @@ You MUST return ONLY valid JSON with this EXACT structure (no markdown, no backt
     "categories": ["Exact Category Name 1", "Exact Category Name 2"],
     "types": ["NEED" | "WANT" | "SAVING"],
     "merchants": ["Merchant1", "Merchant2"],
-    "descriptionKeywords": ["keyword1", "keyword2"]
+    "descriptionKeywords": ["keyword1", "keyword2"],
+    "members": ["Name1", "Name2"]
   },
   "visualization": {
     "chartType": "bar" | "pie" | "line" | null,
@@ -570,7 +583,8 @@ Now analyze this query and return the structured JSON metadata following ALL rul
           categories: [],
           types: [],
           merchants: [],
-          descriptionKeywords: []
+          descriptionKeywords: [],
+          members: []
         },
         visualization: { chartType: null, groupBy: null, xAxisLabels: null, title: null },
         grounding: { enabled: false, searchQuery: null, useLocation: false },
@@ -624,7 +638,8 @@ Now analyze this query and return the structured JSON metadata following ALL rul
           categories: result.filters?.categories || [],
           types: normalizedTypes,
           merchants: result.filters?.merchants || [],
-          descriptionKeywords: result.filters?.descriptionKeywords || []
+          descriptionKeywords: result.filters?.descriptionKeywords || [],
+          members: result.filters?.members || []
         },
         visualization: {
           chartType: result.visualization?.chartType || null,

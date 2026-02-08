@@ -16,7 +16,7 @@ export default function Tagline() {
             <h2
                 style={{
                     color: "white",
-                    fontSize: "2.5rem",
+                    fontSize: "clamp(1.5rem, 4vw, 2.5rem)",
                     fontWeight: 400,
                     fontFamily: "Inter, sans-serif",
                     display: "flex",

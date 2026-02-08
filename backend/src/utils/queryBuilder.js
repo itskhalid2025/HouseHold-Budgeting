@@ -28,26 +28,26 @@ export async function queryTransactions(householdId, parsedQuery) {
     const conditions = [];
 
     // Date range
-    conditions.push(`date >= '${dateRange.start}'::date`);
-    conditions.push(`date <= '${dateRange.end}'::date`);
+    conditions.push(`t.date >= '${dateRange.start}'::date`);
+    conditions.push(`t.date <= '${dateRange.end}'::date`);
 
     // Categories filter (exact match)
     if (filters.categories && filters.categories.length > 0) {
         const categoryList = filters.categories.map(c => `'${c.replace(/'/g, "''")}'`).join(', ');
-        conditions.push(`category IN (${categoryList})`);
+        conditions.push(`t.category IN (${categoryList})`);
     }
 
     // Types filter (NEED/WANT/SAVING)
     if (filters.types && filters.types.length > 0) {
         const typeList = filters.types.map(t => `'${t}'`).join(', ');
-        conditions.push(`type IN (${typeList})`);
+        conditions.push(`t.type IN (${typeList})`);
     }
 
     // Merchants filter - IMPROVED: Use ILIKE for case-insensitive partial matching
     if (filters.merchants && filters.merchants.length > 0) {
         const merchantConditions = filters.merchants.map(merchant => {
             const escaped = merchant.replace(/'/g, "''");
-            return `(merchant ILIKE '%${escaped}%' OR description ILIKE '%${escaped}%')`;
+            return `(t.merchant ILIKE '%${escaped}%' OR t.description ILIKE '%${escaped}%')`;
         });
         conditions.push(`(${merchantConditions.join(' OR ')})`);
     }
@@ -56,21 +56,62 @@ export async function queryTransactions(householdId, parsedQuery) {
     if (filters.descriptionKeywords && filters.descriptionKeywords.length > 0) {
         const keywordConditions = filters.descriptionKeywords.map(keyword => {
             const escaped = keyword.replace(/'/g, "''");
-            return `description ILIKE '%${escaped}%'`;
+            return `t.description ILIKE '%${escaped}%'`;
         });
         conditions.push(`(${keywordConditions.join(' OR ')})`);
     }
 
-    const whereClause = conditions.length > 0
-        ? `WHERE household_id = '${householdId}' AND deleted_at IS NULL AND ${conditions.join(' AND ')}`
-        : `WHERE household_id = '${householdId}' AND deleted_at IS NULL`;
+    // 👥 Members filter (NEW)
+    if (filters.members && filters.members.length > 0) {
+        const memberConditions = filters.members.map(member => {
+            const escaped = member.replace(/'/g, "''");
+            return `u.first_name ILIKE '%${escaped}%'`;
+        });
+        conditions.push(`(${memberConditions.join(' OR ')})`);
+    }
 
+    const whereClause = conditions.length > 0
+        ? `WHERE t.household_id = '${householdId}' AND t.deleted_at IS NULL AND ${conditions.join(' AND ')}`
+        : `WHERE t.household_id = '${householdId}' AND t.deleted_at IS NULL`;
+
+    // 🔢 Dynamic Limit Calculation
+    // Default: 500 (increased from 200)
+    // Long-term (>90 days): 1000
+    // Specific search (Entity + Long-term): 2000 (to capture full history)
+
+    const dateStart = new Date(dateRange.start);
+    const dateEnd = new Date(dateRange.end);
+    const daysDiff = (dateEnd - dateStart) / (1000 * 60 * 60 * 24);
+
+    let limit = 500; // Base limit
+
+    if (daysDiff > 90) {
+        limit = 1000; // Increase for > 3 months
+    }
+
+    // If searching for specific Merchant, Category, or Item over long period, maximize limit
+    const hasSpecificFilters = (filters.merchants?.length > 0) || (filters.categories?.length > 0) || (filters.descriptionKeywords?.length > 0);
+    if (daysDiff > 90 && hasSpecificFilters) {
+        limit = 2000; // Maximize for "Amazon last 3 years" type queries
+    }
+
+    console.log(`📊 Query Config: Range=${daysDiff.toFixed(0)} days, Specific=${hasSpecificFilters}, Limit=${limit}`);
+
+    // Updated query with JOIN to fetch user name
     const query = `
-    SELECT amount, category, date, description, merchant, type
-    FROM transactions
+    SELECT 
+      t.amount, 
+      t.category, 
+      t.date, 
+      t.description, 
+      t.merchant, 
+      t.type,
+      u.first_name as user_name
+    FROM transactions t
+    LEFT JOIN users u ON t.user_id = u.id
     ${whereClause}
-    ORDER BY date DESC
-    LIMIT 200
+    ORDER BY t.date DESC
+    LIMIT ${limit}
   `;
 
     console.log('🔧 SQL Query:', query.replace(/\s+/g, ' ').trim());
@@ -107,6 +148,7 @@ export function buildRAGContext(transactions, parsedQuery, currencySymbol) {
   • Types Filter: ${parsedQuery.filters.types.join(', ') || 'All types'}
   • Merchants Filter: ${parsedQuery.filters.merchants.join(', ') || 'All merchants'}
   • Description Keywords: ${parsedQuery.filters.descriptionKeywords?.join(', ') || 'None'}
+  • Members Filter: ${parsedQuery.filters.members?.join(', ') || 'All members'}
 
 **What This Means**: No transactions match the specified criteria in this time period.
 
@@ -149,6 +191,16 @@ export function buildRAGContext(transactions, parsedQuery, currencySymbol) {
     const topMerchants = Object.entries(merchantTotals)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5);
+
+    // 👥 Group by Member (NEW)
+    const memberTotals = {};
+    transactions.forEach(t => {
+        const member = t.user_name || 'Unknown User';
+        memberTotals[member] = (memberTotals[member] || 0) + Math.abs(parseFloat(t.amount) || 0);
+    });
+
+    const topMembers = Object.entries(memberTotals)
+        .sort((a, b) => b[1] - a[1]);
 
     // 🆕 Calculate time-based insights for long-term queries
     const dateRangeMs = new Date(parsedQuery.dateRange.end) - new Date(parsedQuery.dateRange.start);
@@ -206,7 +258,8 @@ export function buildRAGContext(transactions, parsedQuery, currencySymbol) {
         const formattedDate = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
         const dayOfWeek = date.toLocaleDateString('en-US', { weekday: 'short' });
 
-        return `  ${idx + 1}. ${formattedDate} (${dayOfWeek}): ${currencySymbol}${Math.abs(parseFloat(t.amount)).toFixed(2)} at ${t.merchant || 'Unknown'} - ${t.description || 'No description'} [${t.category || 'Uncategorized'}]`;
+        // Include user name in the transaction line
+        return `  ${idx + 1}. ${formattedDate} (${dayOfWeek}) by ${t.user_name || 'Unknown'}: ${currencySymbol}${Math.abs(parseFloat(t.amount)).toFixed(2)} at ${t.merchant || 'Unknown'} - ${t.description || 'No description'} [${t.category || 'Uncategorized'}]`;
     }).join('\n');
 
     // 🆕 Analysis hints section for advisor
@@ -231,6 +284,7 @@ ${parsedQuery.analysisHints.map((hint, i) => `  ${i + 1}. ${hint}`).join('\n')}
   • Days Covered: ${dateRangeDays}
   • Filters Applied: ${parsedQuery.filters.categories.length > 0 ? parsedQuery.filters.categories.join(', ') : 'All categories'}
   • Merchants: ${parsedQuery.filters.merchants.join(', ') || 'All'}
+  • Members: ${parsedQuery.filters.members?.join(', ') || 'All'}
   • Description Search: ${parsedQuery.filters.descriptionKeywords?.join(', ') || 'None'}
   • Transaction Count: ${transactions.length}
 
@@ -246,6 +300,9 @@ ${topCategories.map(([cat, amount], i) => `  ${i + 1}. ${cat}: ${currencySymbol}
 **Top Merchants**:
 ${topMerchants.map(([merch, amount], i) => `  ${i + 1}. ${merch}: ${currencySymbol}${amount.toFixed(2)}`).join('\n')}
 
+**Spending by Member**:
+${topMembers.map(([member, amount], i) => `  ${i + 1}. ${member}: ${currencySymbol}${amount.toFixed(2)} (${totalAmount > 0 ? ((amount / totalAmount) * 100).toFixed(1) : 0}%)`).join('\n')}
+
 **Detailed Transactions** (showing up to ${showCount}):
 ${transactionList}
 
@@ -254,6 +311,8 @@ ${hintsSection}
 **Instructions for Your Response**:
   ✓ Use ONLY this transaction data in your analysis
   ✓ Reference specific transactions with dates, amounts, and merchants
+  ✓ **Mention WHO made the purchase when relevant ("Khalid spent...", "Vaibhavi bought...")**
+  ✓ **Compare spending between members if requested or if notable differences exist**
   ✓ Calculate accurate totals and patterns from this data
   ✓ For long-term queries: Analyze trends, price changes, consistency
   ✓ For item queries: List all matching items with details

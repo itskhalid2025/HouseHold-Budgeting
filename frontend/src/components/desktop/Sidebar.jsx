@@ -3,14 +3,14 @@ import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useSmartEntry } from '../../context/SmartEntryContext';
 import { useNotification } from '../../context/NotificationContext';
-import { Plus, LogOut } from 'lucide-react';
+import { Plus, LogOut, X } from 'lucide-react';
 import GrowWiseLogo from '../GrowWiseLogo';
 import './Sidebar.css';
 import {
     getHousehold
 } from '../../api/api';
 
-const Sidebar = () => {
+const Sidebar = ({ isOpen, onClose }) => {
     const { isAuthenticated, user, logout } = useAuth();
     const { openSmartEntry } = useSmartEntry();
     const { requestCount } = useNotification();
@@ -33,9 +33,14 @@ const Sidebar = () => {
     if (!isAuthenticated) return null;
 
     return (
-        <aside className="app-sidebar">
+        <aside className={`app-sidebar ${isOpen ? 'open' : ''}`}>
             <div className="sidebar-header" data-tour-id="sidebar-logo">
-                <GrowWiseLogo size="text-3xl" style={{ fontSize: '1.3rem', textTransform: 'none' }} className="sidebar-logo-text mb-1" />
+                <div className="sidebar-header-top">
+                    <GrowWiseLogo size="text-3xl" style={{ fontSize: '1.3rem', textTransform: 'none' }} className="sidebar-logo-text mb-1" />
+                    <button className="sidebar-close-btn" onClick={onClose}>
+                        <X size={20} />
+                    </button>
+                </div>
                 {householdName && <span className="text-xs text-gray-400 font-medium tracking-wide ">{householdName}</span>}
             </div>
 

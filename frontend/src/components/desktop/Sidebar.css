@@ -1,94 +1,128 @@
+/* Sidebar Toggle Button (TopBar) */
+.sidebar-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.2s;
+    margin-right: 10px;
+}
+
+.sidebar-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme='light'] .sidebar-toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+/* Sidebar Drawer Overlay */
 .app-sidebar {
+    position: fixed;
+    top: 0;
+    left: -280px;
+    /* Start hidden */
     width: 260px;
-    background: rgba(255, 255, 255, 0.85);
-    /* Slightly more opaque for sidebar */
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border-right: 1px solid rgba(255, 255, 255, 0.3);
+    height: 100vh;
+    z-index: 10000;
+    /* Above everything */
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.2);
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     flex-direction: column;
     padding: 24px 0;
-    height: 100vh;
-    box-shadow: 4px 0 24px rgba(0, 0, 0, 0.02);
-    position: sticky;
-    /* Fix for scrolling gap */
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    flex-shrink: 0;
+    min-width: 260px;
+}
+
+.app-sidebar.open {
+    left: 0;
+}
+
+[data-theme='dark'] .app-sidebar {
+    background: rgba(17, 24, 39, 0.95);
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* Backdrop */
+.sidebar-backdrop {
+    position: fixed;
     top: 0;
-    z-index: 1002;
-    /* Above footer */
-    transition: background 0.3s ease, border-right 0.3s ease;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 9999;
+    animation: fadeIn 0.3s ease;
 }
 
-/* Logout Button Redesign - High Visibility Glass */
-.logout-btn-glass {
-    width: calc(100% - 48px);
-    /* Full width minus margin */
-    margin: auto 24px 24px;
-    /* Push to bottom, side margins, bottom margin */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+/* Header Adjustments for Close Button */
+.sidebar-header-top {
     display: flex;
-    flex-direction: row;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 14px 24px;
-    background: rgba(220, 38, 38, 0.15);
-    /* Stronger red background */
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    border: 1px solid rgba(220, 38, 38, 0.4);
-    /* clearer border */
-    border-radius: 100px;
-    /* Full pill shape */
-    color: #fca5a5;
-    /* Light red text for dark mode contrast */
-    font-weight: 700;
-    /* Bold text */
-    font-size: 1rem;
+    justify-content: space-between;
+    width: 100%;
+    margin-bottom: 5px;
+}
+
+.sidebar-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-}
-
-.logout-btn-glass:hover {
-    background: rgba(220, 38, 38, 0.8);
-    /* Solid red on hover for clarity */
-    border-color: #dc2626;
-    color: white;
-    /* White text on hover */
-    box-shadow: 0 8px 25px rgba(220, 38, 38, 0.4);
-    transform: translateY(-2px);
-}
-
-.logout-btn-glass:active {
-    transform: translateY(0);
-}
-
-/* Icon Styling */
-.logout-btn-glass .icon-box {
+    padding: 4px;
+    border-radius: 4px;
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: all 0.2s;
 }
 
-/* Text Styling */
-.logout-btn-glass span {
-    font-weight: 600;
+.sidebar-close-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--text-primary);
 }
 
+[data-theme='dark'] .sidebar-close-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+/* Sidebar Components */
 .sidebar-header {
     padding: 0 24px 32px;
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .sidebar-logo {
     width: 36px;
     height: 36px;
     object-fit: contain;
-    /* drop-shadow: 0 2px 4px rgba(99, 102, 241, 0.2); */
 }
 
 .sidebar-title {
@@ -99,11 +133,25 @@
     margin: 0;
     background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
     -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+[data-theme='dark'] .sidebar-title {
+    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
 }
 
 .sidebar-action {
     padding: 0 20px 24px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .new-entry-btn {
@@ -129,10 +177,6 @@
     box-shadow: 0 6px 16px rgba(79, 70, 229, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
 
-.new-entry-btn:active {
-    transform: translateY(0);
-}
-
 .sidebar-nav {
     flex: 1;
     display: flex;
@@ -140,6 +184,8 @@
     padding: 0 12px;
     gap: 4px;
     overflow-y: auto;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .sidebar-link {
@@ -154,12 +200,10 @@
     font-size: 0.95rem;
     transition: all 0.2s ease;
     position: relative;
-    /* For badge positioning */
 }
 
 .sidebar-link:hover {
     background: rgba(99, 102, 241, 0.08);
-    /* Light indigo tint */
     color: #4f46e5;
 }
 
@@ -167,6 +211,15 @@
     background: linear-gradient(90deg, rgba(99, 102, 241, 0.12) 0%, rgba(99, 102, 241, 0.06) 100%);
     color: #4f46e5;
     font-weight: 600;
+}
+
+[data-theme='dark'] .sidebar-link {
+    color: #94a3b8;
+}
+
+[data-theme='dark'] .sidebar-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
 }
 
 .sidebar-link .icon {
@@ -199,43 +252,103 @@
     box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2);
 }
 
-/* Dark Mode Logic */
-[data-theme='dark'] .app-sidebar {
-    background: rgba(17, 24, 39, 0.7);
-    /* Darker, more glass-like */
-    border-right: 1px solid rgba(255, 255, 255, 0.08);
+.logout-btn-glass {
+    width: calc(100% - 48px);
+    margin: auto 24px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 14px 24px;
+    background: rgba(220, 38, 38, 0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(220, 38, 38, 0.4);
+    border-radius: 100px;
+    color: #fca5a5;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
-[data-theme='dark'] .sidebar-title {
-    background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+.logout-btn-glass:hover {
+    background: #dc2626;
+    color: white;
+    transform: translateY(-2px);
 }
 
-[data-theme='dark'] .sidebar-link {
-    color: #94a3b8;
+/* Ensure main content doesn't shift */
+.app-desktop-layout {
+    display: block;
+    /* Remove flex to stop sidebar from taking space in DOM flow */
+    position: relative;
+    width: 100%;
 }
 
-[data-theme='dark'] .sidebar-link:hover {
-    background: rgba(255, 255, 255, 0.05);
-    /* Subtle white overlay */
-    color: #e2e8f0;
+.desktop-main-wrapper {
+    width: 100%;
+    transition: none;
+    /* Content stays full width always */
 }
 
-[data-theme='dark'] .sidebar-link.active {
-    background: rgba(99, 102, 241, 0.15);
-    /* More visible active state in dark */
-    color: #818cf8;
-    /* Lighter indigo for text */
-}
+/* Override responsive media query from previous implementation */
+@media (max-width: 1100px) {
+    .app-sidebar {
+        width: 260px;
+        min-width: 260px;
+        left: -280px;
+        align-items: stretch;
+    }
 
-[data-theme='dark'] .sidebar-link .icon {
-    opacity: 0.6;
-}
+    .app-sidebar.open {
+        left: 0;
+    }
 
-[data-theme='dark'] .sidebar-link:hover .icon,
-[data-theme='dark'] .sidebar-link.active .icon {
-    opacity: 1;
-    filter: none;
-    /* Icons usually look fine in dark mode without grayscale */
+    .sidebar-title,
+    .sidebar-link span,
+    .logout-btn-glass span,
+    .new-entry-btn span,
+    .sidebar-header .text-xs {
+        display: inline !important;
+        /* Restore text labels */
+    }
+
+    .sidebar-header {
+        padding: 0 24px 32px;
+        align-items: flex-start;
+    }
+
+    .sidebar-action {
+        padding: 0 20px 24px;
+    }
+
+    .new-entry-btn {
+        width: 100%;
+        height: auto;
+        border-radius: 12px;
+        padding: 12px;
+    }
+
+    .sidebar-nav {
+        padding: 0 12px;
+        align-items: stretch;
+    }
+
+    .sidebar-link {
+        width: 100%;
+        height: auto;
+        justify-content: flex-start;
+        padding: 12px 16px;
+    }
+
+    .logout-btn-glass {
+        width: calc(100% - 48px);
+        height: auto;
+        border-radius: 100px;
+        margin: auto 24px 24px;
+        padding: 14px 24px;
+    }
 }

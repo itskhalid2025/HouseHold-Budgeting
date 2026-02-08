@@ -288,6 +288,16 @@ function AppContent() {
   const { openSmartEntry } = useSmartEntry();
   const navigate = useNavigate();
 
+  // Sidebar toggle state for desktop
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
+
+  // Close sidebar on location change
+  useEffect(() => {
+    setIsSidebarOpen(false);
+  }, [location.pathname]);
+
   // URL Normalization Fix: Redirect //path to /path
   useEffect(() => {
     if (location.pathname.includes('//')) {
@@ -419,9 +429,10 @@ function AppContent() {
         <div className="app-desktop-layout">
           <DesktopBackground />
           <GlobalSmartEntry />
-          <Sidebar />
+          <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
+          {isSidebarOpen && <div className="sidebar-backdrop" onClick={closeSidebar}></div>}
           <div className="desktop-main-wrapper">
-            <TopBar />
+            <TopBar toggleSidebar={toggleSidebar} />
             <main className="app-main" style={{ paddingBottom: '100px' }}> {/* Add padding for fixed footer */}
               <AppRoutes />
             </main>
