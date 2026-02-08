@@ -10,6 +10,7 @@
 
 import prisma from '../services/db.js';
 import { generateDailyInsight } from '../agents/dailyInsightAgent.js';
+import { generateSmartWeeklyInsights } from '../agents/smartInsightAgent.js';
 import { logEntry, logSuccess, logError, logDB } from '../utils/controllerLogger.js';
 
 import { traceOperation } from '../services/opikService.js';
@@ -83,6 +84,68 @@ export const getDailyInsight = async (req, res) => {
     });
 };
 
+/**
+ * Get smart weekly insights for the user
+ * @param {Object} req - Express request
+ * @param {Object} res - Express response
+ */
+export const getSmartInsights = async (req, res) => {
+    return traceOperation('insightController.getSmartInsights', async () => {
+        const { id: userId, householdId } = req.user;
+        logEntry('insightController', 'getSmartInsights', { userId, householdId });
+
+        if (!householdId) {
+            return res.status(400).json({
+                success: false,
+                error: 'User must belong to a household to get smart insights'
+            });
+        }
+
+        try {
+            // Check if "Smart Insight Notifications" is disabled in user preferences
+            const user = await prisma.user.findUnique({
+                where: { id: userId },
+                select: { notificationPreferences: true }
+            });
+
+            // Default to true if not set
+            const preferences = user.notificationPreferences || {};
+            if (preferences.smartInsights === false) {
+                return res.status(200).json({
+                    success: true,
+                    data: {
+                        disabled: true,
+                        message: "Smart Insights are turned off in settings"
+                    }
+                });
+            }
+
+            const result = await generateSmartWeeklyInsights(userId, householdId);
+
+            if (!result.success) {
+                return res.status(500).json({
+                    success: false,
+                    error: result.error || 'Failed to generate smart insights'
+                });
+            }
+
+            logSuccess('insightController', 'getSmartInsights');
+            return res.status(200).json({
+                success: true,
+                data: result.data
+            });
+
+        } catch (error) {
+            logError('insightController', 'getSmartInsights', error);
+            return res.status(500).json({
+                success: false,
+                error: 'Failed to fetch smart insights'
+            });
+        }
+    });
+};
+
 export default {
-    getDailyInsight
+    getDailyInsight,
+    getSmartInsights
 };

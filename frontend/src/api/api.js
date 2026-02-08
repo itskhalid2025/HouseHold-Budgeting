@@ -951,6 +951,17 @@ export async function getDailyInsight() {
     return handleResponse(response);
 }
 
+/**
+ * Get personalized smart financial insights and recommendations
+ * @returns {Promise<Object>}
+ */
+export async function getSmartInsights() {
+    const response = await trackedFetch(`${API_BASE_URL}/insights/smart`, {
+        headers: authHeaders()
+    });
+    return handleResponse(response);
+}
+
 export async function getLeaderboard(type = 'global', scope = 'country') {
     console.log('🏆 Fetching leaderboard:', type, scope);
     const response = await trackedFetch(`${API_BASE_URL}/gamification/leaderboard?type=${type}&scope=${scope}`, {

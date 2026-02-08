@@ -22,8 +22,10 @@ import {
     getTransactions,
     analyzeImage,
     getDailyInsight,
+    getSmartInsights,
     getGamificationStatus
 } from '../../api/api';
+import InsightHeroCard from '../../components/dashboard/InsightHeroCard';
 
 import {
     Upload,
@@ -114,6 +116,8 @@ export default function DashboardDesktop() {
 
     const [recentTransactions, setRecentTransactions] = useState([]);
     const [trendData, setTrendData] = useState([]);
+    const [smartInsight, setSmartInsight] = useState(null);
+    const [insightsLoading, setInsightsLoading] = useState(true);
 
     // --- CAROUSEL STATES ---
     const [knowledgeCards, setKnowledgeCards] = useState(KNOWLEDGE_CARDS);
@@ -148,15 +152,21 @@ export default function DashboardDesktop() {
             if (stats.income === 0 && stats.expenses === 0 && loading) setLoading(true);
 
             // Fetch data in parallel
-            const [transactionSummary, incomeData, goalData, recentTxns, allTxns, dailyInsight, gamificationStatus] = await Promise.all([
+            const [transactionSummary, incomeData, goalData, recentTxns, allTxns, dailyInsight, gamificationStatus, smartInsightsData] = await Promise.all([
                 getTransactionSummary(),
                 getMonthlyIncomeTotal(),
                 getGoalSummary(),
                 getTransactions({ limit: 5 }), // Recent 5
                 getTransactions({ limit: 100 }), // For trend
                 getDailyInsight().catch(() => null), // Fallback to null if fails
-                getGamificationStatus().catch(() => null)
+                getGamificationStatus().catch(() => null),
+                getSmartInsights().catch(() => null)
             ]);
+
+            if (smartInsightsData && smartInsightsData.success) {
+                setSmartInsight(smartInsightsData.data);
+            }
+            setInsightsLoading(false);
 
             if (dailyInsight && dailyInsight.success && dailyInsight.data) {
                 if (dailyInsight.data.news) setNewsCards(dailyInsight.data.news);
@@ -385,6 +395,11 @@ export default function DashboardDesktop() {
                         <GrowWiseLogo size="" style={{ fontSize: 'clamp(3rem, 6vw, 5rem)' }} animated={true} />
                         <TaglineAnimated className="mt-4" />
                     </div>
+
+                    <InsightHeroCard
+                        insight={smartInsight}
+                        loading={insightsLoading}
+                    />
 
                     {/* 2. Welcome Message */}
                     <div className="welcome-card" data-tour-id="dashboard-welcome">

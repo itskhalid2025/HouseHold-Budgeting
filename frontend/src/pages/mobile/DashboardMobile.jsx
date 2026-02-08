@@ -3,8 +3,10 @@ import {
     getTransactionSummary,
     getMonthlyIncomeTotal,
     getGoalSummary,
-    getTransactions
+    getTransactions,
+    getSmartInsights
 } from '../../api/api';
+import InsightHeroCard from '../../components/dashboard/InsightHeroCard';
 import { useAuth } from '../../context/AuthContext';
 import usePolling from '../../hooks/usePolling';
 import { formatCurrency } from '../../utils/currencyUtils';
@@ -54,6 +56,8 @@ export default function DashboardMobile() {
     });
     const [trendData, setTrendData] = useState([]);
     const [recentTransactions, setRecentTransactions] = useState([]);
+    const [smartInsight, setSmartInsight] = useState(null);
+    const [insightsLoading, setInsightsLoading] = useState(true);
     const [loading, setLoading] = useState(true);
 
     // Data Fetching
@@ -61,13 +65,19 @@ export default function DashboardMobile() {
         try {
             if (stats.income === 0) setLoading(true);
 
-            const [transactionSummary, incomeData, goalData, recentTxns, allTxns] = await Promise.all([
+            const [transactionSummary, incomeData, goalData, recentTxns, allTxns, smartInsightsData] = await Promise.all([
                 getTransactionSummary(),
                 getMonthlyIncomeTotal(),
                 getGoalSummary(),
                 getTransactions({ limit: 5 }),
-                getTransactions({ limit: 100 })
+                getTransactions({ limit: 100 }),
+                getSmartInsights().catch(() => null)
             ]);
+
+            if (smartInsightsData && smartInsightsData.success) {
+                setSmartInsight(smartInsightsData.data);
+            }
+            setInsightsLoading(false);
 
             const totalExpenses = transactionSummary.summary?.totalSpent || 0;
             const totalIncome = incomeData.monthlyTotal || 0;
@@ -151,58 +161,66 @@ export default function DashboardMobile() {
     return (
         <div className="mobile-page dashboard-mobile">
             {/* 1. Header */}
-      <header 
-    className="mobile-header"
-    data-tour-id="dashboard-header-mobile"
->
+            <header
+                className="mobile-header"
+                data-tour-id="dashboard-header-mobile"
+            >
 
-    {/* TOP-RIGHT ACTIONS */}
-    <div className="header-actions-fixed">
+                {/* TOP-RIGHT ACTIONS */}
+                <div className="header-actions-fixed">
 
-        <RankBadge
-            onClick={() => setShowGamification(true)}
-            data-tour-id="dashboard-gamification-mobile"
-        />
+                    <RankBadge
+                        onClick={() => setShowGamification(true)}
+                        data-tour-id="dashboard-gamification-mobile"
+                    />
 
-        <button
-            className="icon-btn"
-            onClick={() => startTour("dashboard-mobile", dashboardTourMobile)}
-            title="Page Guide"
-        >
-            <HelpCircle size={20} />
-        </button>
+                    <button
+                        className="icon-btn"
+                        onClick={() => startTour("dashboard-mobile", dashboardTourMobile)}
+                        title="Page Guide"
+                    >
+                        <HelpCircle size={20} />
+                    </button>
 
-        <Link
-            to="/settings"
-            className="avatar-small"
-        >
-            {(user?.firstName?.[0] || "K").toUpperCase()}
-            {!isInstalled && <span className="notification-dot"></span>}
-        </Link>
+                    <Link
+                        to="/settings"
+                        className="avatar-small"
+                    >
+                        {(user?.firstName?.[0] || "K").toUpperCase()}
+                        {!isInstalled && <span className="notification-dot"></span>}
+                    </Link>
 
-    </div>
+                </div>
 
-    {/* LOGO BELOW */}
-    <div className="header-logo">
-        <GrowWiseLogo size="" style={{ fontSize: "1.6rem" }} animated={true} />
-    </div>
+                {/* LOGO BELOW */}
+                <div className="header-logo">
+                    <GrowWiseLogo size="" style={{ fontSize: "1.6rem" }} animated={true} />
+                </div>
 
-</header>
+            </header>
 
 
             {/* ... rest of dashboard ... */}
             <div>
                 <TaglineAnimatedMobile className="mt-2 text-left items-start" />
+
+                <div className="mt-4 px-4">
+                    <InsightHeroCard
+                        insight={smartInsight}
+                        loading={insightsLoading}
+                    />
+                </div>
+
                 <div className="user-greeting-row mt-2">
-    <p className="greeting">
-        Good {new Date().getHours() < 12 ? 'Morning' : 'Evening'},
-    </p>
+                    <p className="greeting">
+                        Good {new Date().getHours() < 12 ? 'Morning' : 'Evening'},
+                    </p>
 
-    <h2 className="username gradient-name">
-    {user?.firstName || 'User'}
-</h2>
+                    <h2 className="username gradient-name">
+                        {user?.firstName || 'User'}
+                    </h2>
 
-</div>
+                </div>
 
             </div>
             {/* 2. Monthly Header */}

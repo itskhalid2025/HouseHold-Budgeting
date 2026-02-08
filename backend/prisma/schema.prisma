@@ -109,6 +109,19 @@ model DailyInsight {
   @@map("daily_insights")
 }
 
+model SmartInsight {
+  id               String   @id @default(uuid())
+  householdId      String   @unique @map("household_id")
+  content          Json
+  transactionCount Int      @map("transaction_count")
+  totalSpent       Decimal  @map("total_spent") @db.Decimal(12, 2)
+  createdAt        DateTime @default(now()) @map("created_at")
+  updatedAt        DateTime @updatedAt @map("updated_at")
+  household        Household @relation(fields: [householdId], references: [id], onDelete: Cascade)
+
+  @@map("smart_insights")
+}
+
 model Feedback {
   id        String   @id @default(uuid())
   userId    String   @map("user_id")
@@ -165,6 +178,7 @@ model Household {
   splitExpenses      SplitExpense[]
   transactions       Transaction[]
   members            User[]             @relation("HouseholdMembers")
+  smartInsight       SmartInsight?
 
   @@map("households")
 }

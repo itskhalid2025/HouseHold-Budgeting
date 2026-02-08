@@ -236,6 +236,25 @@ export default function SettingsMobile() {
         }
     };
 
+    /**
+     * Handles notification preference toggles
+     */
+    const handleNotifToggle = async (key) => {
+        const currentPrefs = user?.notificationPreferences || {};
+        const newPrefs = {
+            ...currentPrefs,
+            [key]: currentPrefs[key] === undefined ? false : !currentPrefs[key]
+        };
+
+        try {
+            const res = await updateProfile({ notificationPreferences: newPrefs });
+            if (res.user) updateUser(res.user);
+        } catch (err) {
+            console.error('Failed to update notification preference', err);
+            setMsg({ type: 'error', text: 'Failed to update alert settings' });
+        }
+    };
+
     // -- Render Sub-Pages --
 
     /**
@@ -471,51 +490,76 @@ export default function SettingsMobile() {
     /**
      * Renders the Notifications sub-page.
      */
-    const renderNotifications = () => (
-        <section className="sub-page-container notifications-page" aria-label="Notifications">
-            <header className="sub-header">
-                <button
-                    onClick={() => setSubPage(null)}
-                    className="back-btn glass-btn"
-                    aria-label="Go back to settings menu"
-                >
-                    <ChevronRight className="rotate-180" size={20} />
-                    <span>Back</span>
-                </button>
-                <h2 className="gradient-text">Alerts</h2>
-            </header>
+    const renderNotifications = () => {
+        const prefs = user?.notificationPreferences || {};
+        // Default smartInsights to true if it does not exist
+        const isSmartOn = prefs.smartInsights !== false;
 
-            <div className="content-scroll">
-                <MobileCard className="vibrant-card">
-                    <div className="toggle-group">
-                        <label className="toggle-row">
-                            <div className="row-info">
-                                <span>Email Alerts</span>
-                                <small>Weekly summaries & updates</small>
-                            </div>
-                            <div className="toggle-wrapper">
-                                <input type="checkbox" defaultChecked className="toggle-switch-vibrant" aria-label="Toggle email alerts" />
-                                <span className="toggle-slider"></span>
-                            </div>
-                        </label>
+        return (
+            <section className="sub-page-container notifications-page" aria-label="Notifications">
+                <header className="sub-header">
+                    <button
+                        onClick={() => setSubPage(null)}
+                        className="back-btn glass-btn"
+                        aria-label="Go back to settings menu"
+                    >
+                        <ChevronRight className="rotate-180" size={20} />
+                        <span>Back</span>
+                    </button>
+                    <h2 className="gradient-text">Alerts</h2>
+                </header>
 
-                        <div className="divider-gradient" />
+                <div className="content-scroll">
+                    <MobileCard className="vibrant-card">
+                        <div className="toggle-group">
+                            <label className="toggle-row">
+                                <div className="row-info">
+                                    <span>Weekly Smart Insights</span>
+                                    <small>AI analysis & budget predictions</small>
+                                </div>
+                                <div className="toggle-wrapper">
+                                    <input
+                                        type="checkbox"
+                                        checked={isSmartOn}
+                                        onChange={() => handleNotifToggle('smartInsights')}
+                                        className="toggle-switch-vibrant"
+                                        aria-label="Toggle smart insights"
+                                    />
+                                    <span className="toggle-slider"></span>
+                                </div>
+                            </label>
 
-                        <label className="toggle-row">
-                            <div className="row-info">
-                                <span>Push Notifications</span>
-                                <small>Real-time activity</small>
-                            </div>
-                            <div className="toggle-wrapper">
-                                <input type="checkbox" defaultChecked className="toggle-switch-vibrant" aria-label="Toggle push notifications" />
-                                <span className="toggle-slider"></span>
-                            </div>
-                        </label>
-                    </div>
-                </MobileCard>
-            </div>
-        </section>
-    );
+                            <div className="divider-gradient" />
+
+                            <label className="toggle-row">
+                                <div className="row-info">
+                                    <span>Email Alerts</span>
+                                    <small>Weekly summaries & updates</small>
+                                </div>
+                                <div className="toggle-wrapper">
+                                    <input type="checkbox" defaultChecked className="toggle-switch-vibrant" aria-label="Toggle email alerts" />
+                                    <span className="toggle-slider"></span>
+                                </div>
+                            </label>
+
+                            <div className="divider-gradient" />
+
+                            <label className="toggle-row">
+                                <div className="row-info">
+                                    <span>Push Notifications</span>
+                                    <small>Real-time activity</small>
+                                </div>
+                                <div className="toggle-wrapper">
+                                    <input type="checkbox" defaultChecked className="toggle-switch-vibrant" aria-label="Toggle push notifications" />
+                                    <span className="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+                    </MobileCard>
+                </div>
+            </section>
+        );
+    };
 
     /**
      * Renders the Privacy sub-page.
@@ -596,6 +640,22 @@ export default function SettingsMobile() {
                             <User size={22} className="menu-icon" />
                         </div>
                         <span className="menu-text">Profile & Account</span>
+                        <ChevronRight size={20} className="menu-arrow" />
+                    </div>
+                </MobileCard>
+
+                <MobileCard
+                    className="menu-card vibrant-card-interactive"
+                    onClick={() => setSubPage('notifications')}
+                    role="button"
+                    tabIndex={0}
+                    aria-label="Open Notification Settings"
+                >
+                    <div className="menu-item">
+                        <div className="icon-bg gradient-4">
+                            <Bell size={22} className="menu-icon" />
+                        </div>
+                        <span className="menu-text">Notifications</span>
                         <ChevronRight size={20} className="menu-arrow" />
                     </div>
                 </MobileCard>

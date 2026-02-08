@@ -225,6 +225,25 @@ export default function Settings() {
         }
     };
 
+    const handleNotifToggle = async (key) => {
+        const currentPrefs = user?.notificationPreferences || {};
+        const newPrefs = {
+            ...currentPrefs,
+            ...{ [key]: currentPrefs[key] === undefined ? false : !currentPrefs[key] }
+        };
+
+        setLoading(true);
+        try {
+            const res = await updateProfile({ notificationPreferences: newPrefs });
+            if (res.user) updateUser(res.user);
+        } catch (err) {
+            console.error('Failed to update notification preference', err);
+            setProfileError('Failed to update alert settings');
+        } finally {
+            setLoading(false);
+        }
+    };
+
     // Sidebar Navigation Item Component
     const NavItem = ({ id, icon: Icon, label }) => (
         <button
@@ -244,6 +263,7 @@ export default function Settings() {
                     <div className="sidebar-header">Preferences</div>
                     <NavItem id="profile" icon={User} label="My Profile" />
                     <NavItem id="household" icon={Home} label="Household" />
+                    <NavItem id="notifications" icon={Bell} label="Notifications" />
                     <NavItem id="privacy" icon={Shield} label="Privacy" />
 
                     <NavItem id="security" icon={Shield} label="Security" />
@@ -439,6 +459,22 @@ export default function Settings() {
                                 <p>Customize how and when you want to be alerted.</p>
                             </div>
                             <div className="notification-options">
+                                <div className="toggle-row">
+                                    <div className="toggle-info">
+                                        <h4>Weekly Smart Insights</h4>
+                                        <p>AI-powered spending analysis and budget predictions.</p>
+                                    </div>
+                                    <div className="toggle-wrapper-desktop">
+                                        <label className="switch">
+                                            <input
+                                                type="checkbox"
+                                                checked={user?.notificationPreferences?.smartInsights !== false}
+                                                onChange={() => handleNotifToggle('smartInsights')}
+                                            />
+                                            <span className="slider round"></span>
+                                        </label>
+                                    </div>
+                                </div>
                                 <div className="toggle-row">
                                     <div className="toggle-info">
                                         <h4>Email Notifications</h4>
