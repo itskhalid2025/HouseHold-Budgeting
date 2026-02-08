@@ -241,7 +241,7 @@ export default function DashboardMobile() {
             <div className="summary-scroll" data-tour-id="dashboard-stats-mobile">
                 {/* Income */}
                 <div
-                    className={`summary - card income ${expandedCard === 'income' ? 'expanded' : ''} `}
+                    className={`summary-card income ${expandedCard === 'income' ? 'expanded' : ''}`}
                     data-tour-id="dashboard-stats-income-mobile"
                     onClick={() => setExpandedCard(expandedCard === 'income' ? null : 'income')}
                 >
@@ -250,7 +250,7 @@ export default function DashboardMobile() {
                             <span className="label">Income</span>
                             <span className="value">{formatCurrency(stats.income, currency)}</span>
                         </div>
-                        <ChevronDown className={`expand - icon ${expandedCard === 'income' ? 'rotate' : ''} `} size={20} />
+                        <ChevronDown className={`expand-icon ${expandedCard === 'income' ? 'rotate' : ''}`} size={20} />
                     </div>
 
                     {expandedCard === 'income' && (
@@ -277,7 +277,7 @@ export default function DashboardMobile() {
 
                 {/* Expenses */}
                 <div
-                    className={`summary - card expense ${expandedCard === 'expenses' ? 'expanded' : ''} `}
+                    className={`summary-card expense ${expandedCard === 'expenses' ? 'expanded' : ''}`}
                     data-tour-id="dashboard-stats-expenses-mobile"
                     onClick={() => setExpandedCard(expandedCard === 'expenses' ? null : 'expenses')}
                 >
@@ -286,7 +286,7 @@ export default function DashboardMobile() {
                             <span className="label">Expenses</span>
                             <span className="value">{formatCurrency(stats.expenses, currency)}</span>
                         </div>
-                        <ChevronDown className={`expand - icon ${expandedCard === 'expenses' ? 'rotate' : ''} `} size={20} />
+                        <ChevronDown className={`expand-icon ${expandedCard === 'expenses' ? 'rotate' : ''}`} size={20} />
                     </div>
 
                     {expandedCard === 'expenses' && (
@@ -313,7 +313,7 @@ export default function DashboardMobile() {
 
                 {/* Savings */}
                 <div
-                    className={`summary - card savings ${expandedCard === 'savings' ? 'expanded' : ''} `}
+                    className={`summary-card savings ${expandedCard === 'savings' ? 'expanded' : ''}`}
                     data-tour-id="dashboard-stats-balance-mobile"
                     onClick={() => setExpandedCard(expandedCard === 'savings' ? null : 'savings')}
                 >
@@ -322,7 +322,7 @@ export default function DashboardMobile() {
                             <span className="label">Savings</span>
                             <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
                         </div>
-                        <ChevronDown className={`expand - icon ${expandedCard === 'savings' ? 'rotate' : ''} `} size={20} />
+                        <ChevronDown className={`expand-icon ${expandedCard === 'savings' ? 'rotate' : ''}`} size={20} />
                     </div>
 
                     {expandedCard === 'savings' && (
@@ -388,7 +388,7 @@ export default function DashboardMobile() {
                                         <span className="txn-date">{formatDate(txn.date)}</span>
                                     </div>
                                 </div>
-                                <span className={`txn - amount ${txn.type?.toLowerCase()} `}>
+                                <span className={`txn-amount ${txn.type?.toLowerCase()}`}>
                                     {formatCurrency(-parseFloat(txn.amount), currency)}
                                 </span>
                             </div>

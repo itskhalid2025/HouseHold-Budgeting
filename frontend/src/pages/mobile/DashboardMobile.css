@@ -118,28 +118,59 @@
 }
 
 .summary-card {
-    min-width: 160px;
-    /* max-width: 200px; Remove max-width for better expansion */
+    min-width: 170px;
     flex: 0 0 auto;
-    background: var(--bg-card);
-    border: 1px solid var(--border-light);
-    border-radius: 16px;
-    padding: 16px;
+    background: rgba(30, 41, 59, 0.6);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 18px;
     scroll-snap-align: start;
     display: flex;
     flex-direction: column;
-    /* gap: 8px; Removed fixed gap */
-    transition: all 0.3s ease;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
 }
 
 .summary-card.expanded {
     min-width: 280px;
-    /* Widen when expanded */
     background: var(--bg-elevated);
     border-color: var(--primary);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
     z-index: 10;
-    /* Bring to front */
+}
+
+/* Color accents - Backgrounds and Borders */
+.summary-card.income {
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.summary-card.income.expanded {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: var(--success);
+}
+
+.summary-card.expense {
+    background: rgba(239, 68, 68, 0.08);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.summary-card.expense.expanded {
+    background: rgba(239, 68, 68, 0.12);
+    border-color: var(--danger);
+}
+
+.summary-card.savings {
+    background: rgba(99, 102, 241, 0.08);
+    border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.summary-card.savings.expanded {
+    background: rgba(99, 102, 241, 0.12);
+    border-color: var(--primary);
 }
 
 .summary-header {
@@ -233,15 +264,15 @@
 }
 
 .progress-fill.income {
-    background: var(--success);
+    background: linear-gradient(90deg, #10b981, #34d399);
 }
 
 .progress-fill.expense {
-    background: var(--danger);
+    background: linear-gradient(90deg, #ef4444, #f87171);
 }
 
 .progress-fill.savings {
-    background: var(--primary);
+    background: linear-gradient(90deg, #6366f1, #818cf8);
 }
 
 @keyframes fadeIn {
