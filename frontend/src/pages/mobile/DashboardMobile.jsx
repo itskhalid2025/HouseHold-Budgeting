@@ -19,7 +19,6 @@ import ChatbotButton from '../../components/mobile/ChatbotButton';
 import { useSync } from '../../context/SyncContext';
 
 // Mobile Components
-// Mobile Components
 import MobileCard from '../../components/mobile/MobileCard';
 import RankBadge from '../../components/gamification/RankBadge';
 import GamificationHubMobile from '../../components/gamification/GamificationHubMobile';
@@ -31,12 +30,17 @@ import './DashboardMobile.css';
 
 import GrowWiseLogo from '../../components/GrowWiseLogo';
 import TaglineAnimatedMobile from '../../components/TaglineAnimatedMobile';
+import { requestNotificationPermission, notifySmartInsight } from '../../utils/notificationService';
 
 export default function DashboardMobile() {
     const { user, currency } = useAuth();
     const { isInstalled } = useSync();
 
-    // State
+    useEffect(() => {
+        requestNotificationPermission();
+    }, []);
+
+    // ... existing state ...
     const [showGamification, setShowGamification] = useState(false);
     const [expandedCard, setExpandedCard] = useState(null);
     const [stats, setStats] = useState({
@@ -76,6 +80,11 @@ export default function DashboardMobile() {
 
             if (smartInsightsData && smartInsightsData.success) {
                 setSmartInsight(smartInsightsData.data);
+
+                // Trigger native notification for critical insights
+                if (smartInsightsData.data && !smartInsightsData.data.disabled) {
+                    notifySmartInsight(smartInsightsData.data);
+                }
             }
             setInsightsLoading(false);
 
@@ -232,7 +241,7 @@ export default function DashboardMobile() {
             <div className="summary-scroll" data-tour-id="dashboard-stats-mobile">
                 {/* Income */}
                 <div
-                    className={`summary-card income ${expandedCard === 'income' ? 'expanded' : ''}`}
+                    className={`summary - card income ${expandedCard === 'income' ? 'expanded' : ''} `}
                     data-tour-id="dashboard-stats-income-mobile"
                     onClick={() => setExpandedCard(expandedCard === 'income' ? null : 'income')}
                 >
@@ -241,7 +250,7 @@ export default function DashboardMobile() {
                             <span className="label">Income</span>
                             <span className="value">{formatCurrency(stats.income, currency)}</span>
                         </div>
-                        <ChevronDown className={`expand-icon ${expandedCard === 'income' ? 'rotate' : ''}`} size={20} />
+                        <ChevronDown className={`expand - icon ${expandedCard === 'income' ? 'rotate' : ''} `} size={20} />
                     </div>
 
                     {expandedCard === 'income' && (
@@ -256,7 +265,7 @@ export default function DashboardMobile() {
                                             <span className="amt">{formatCurrency(amount, currency)}</span>
                                         </div>
                                         <div className="progress-bg">
-                                            <div className="progress-fill income" style={{ width: `${percent}%` }}></div>
+                                            <div className="progress-fill income" style={{ width: `${percent}% ` }}></div>
                                         </div>
                                     </div>
                                 );
@@ -268,7 +277,7 @@ export default function DashboardMobile() {
 
                 {/* Expenses */}
                 <div
-                    className={`summary-card expense ${expandedCard === 'expenses' ? 'expanded' : ''}`}
+                    className={`summary - card expense ${expandedCard === 'expenses' ? 'expanded' : ''} `}
                     data-tour-id="dashboard-stats-expenses-mobile"
                     onClick={() => setExpandedCard(expandedCard === 'expenses' ? null : 'expenses')}
                 >
@@ -277,7 +286,7 @@ export default function DashboardMobile() {
                             <span className="label">Expenses</span>
                             <span className="value">{formatCurrency(stats.expenses, currency)}</span>
                         </div>
-                        <ChevronDown className={`expand-icon ${expandedCard === 'expenses' ? 'rotate' : ''}`} size={20} />
+                        <ChevronDown className={`expand - icon ${expandedCard === 'expenses' ? 'rotate' : ''} `} size={20} />
                     </div>
 
                     {expandedCard === 'expenses' && (
@@ -292,7 +301,7 @@ export default function DashboardMobile() {
                                             <span className="amt">{formatCurrency(amount, currency)}</span>
                                         </div>
                                         <div className="progress-bg">
-                                            <div className="progress-fill expense" style={{ width: `${percent}%` }}></div>
+                                            <div className="progress-fill expense" style={{ width: `${percent}% ` }}></div>
                                         </div>
                                     </div>
                                 );
@@ -304,7 +313,7 @@ export default function DashboardMobile() {
 
                 {/* Savings */}
                 <div
-                    className={`summary-card savings ${expandedCard === 'savings' ? 'expanded' : ''}`}
+                    className={`summary - card savings ${expandedCard === 'savings' ? 'expanded' : ''} `}
                     data-tour-id="dashboard-stats-balance-mobile"
                     onClick={() => setExpandedCard(expandedCard === 'savings' ? null : 'savings')}
                 >
@@ -313,7 +322,7 @@ export default function DashboardMobile() {
                             <span className="label">Savings</span>
                             <span className="value">{formatCurrency(stats.monthlySaved, currency)}</span>
                         </div>
-                        <ChevronDown className={`expand-icon ${expandedCard === 'savings' ? 'rotate' : ''}`} size={20} />
+                        <ChevronDown className={`expand - icon ${expandedCard === 'savings' ? 'rotate' : ''} `} size={20} />
                     </div>
 
                     {expandedCard === 'savings' && (
@@ -328,7 +337,7 @@ export default function DashboardMobile() {
                                             <span className="amt">{formatCurrency(amount, currency)}</span>
                                         </div>
                                         <div className="progress-bg">
-                                            <div className="progress-fill savings" style={{ width: `${percent}%` }}></div>
+                                            <div className="progress-fill savings" style={{ width: `${percent}% ` }}></div>
                                         </div>
                                     </div>
                                 );
@@ -379,7 +388,7 @@ export default function DashboardMobile() {
                                         <span className="txn-date">{formatDate(txn.date)}</span>
                                     </div>
                                 </div>
-                                <span className={`txn-amount ${txn.type?.toLowerCase()}`}>
+                                <span className={`txn - amount ${txn.type?.toLowerCase()} `}>
                                     {formatCurrency(-parseFloat(txn.amount), currency)}
                                 </span>
                             </div>

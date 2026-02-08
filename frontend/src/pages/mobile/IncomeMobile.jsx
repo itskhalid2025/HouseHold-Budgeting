@@ -187,7 +187,7 @@ export default function IncomeMobile() {
                 </div>
                 <div className="total-badge">
                     <div className="summary-left">
-                        <span>{filters.userId === user?.id ? 'My Monthly:' : 'Household Monthly:'}</span>
+                        <span>{filters.userId === user?.id ? 'Monthly Income (Me):' : 'Monthly Income:'}</span>
                         <strong>{formatCurrency(monthlyStats.total, currency)}</strong>
                     </div>
                     <button

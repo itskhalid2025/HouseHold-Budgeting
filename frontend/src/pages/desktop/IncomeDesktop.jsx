@@ -217,7 +217,7 @@ export default function Income() {
                 {/* Summary Stats */}
                 <div className="income-summary-card" data-tour-id="income-summary">
                     <div className="summary-left">
-                        <h3>{filters.userId === user?.id ? 'My Monthly Income' : 'Total Monthly Income'}</h3>
+                        <h3>{filters.userId === user?.id ? 'Monthly Income (Me)' : 'Monthly Income'}</h3>
                         <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal earnings' : 'Estimated based on active sources'}</p>
                     </div>
                     <div className="summary-center">

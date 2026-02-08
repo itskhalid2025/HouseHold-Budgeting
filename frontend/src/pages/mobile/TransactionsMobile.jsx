@@ -312,7 +312,7 @@ function SpendingTab() {
                 {/* Expense Tracker Card */}
                 <div className="spending-summary-card" data-tour-id="transactions-summary-mobile">
                     <div className="summary-left">
-                        <div className="summary-label">{filters.userId === user?.id ? 'My Spending' : 'Household Spent'}</div>
+                        <div className="summary-label">{filters.userId === user?.id ? 'Spent This Month (Me)' : 'Spent This Month'}</div>
                         <div className="summary-amount">{formatCurrency(stats.totalExpenses, currency)}</div>
                     </div>
                     <button

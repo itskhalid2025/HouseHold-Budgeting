@@ -258,7 +258,7 @@ export default function TransactionsDesktop() {
                 {/* Summary Card */}
                 <div className="transaction-summary-card" data-tour-id="transactions-summary">
                     <div className="summary-left">
-                        <h3>{filters.userId === user?.id ? 'My Monthly Expenses' : 'Total Monthly Expenses'}</h3>
+                        <h3>{filters.userId === user?.id ? 'Expenses This Month (Me)' : 'Expenses This Month'}</h3>
                         <p className="summary-subtitle">{filters.userId === user?.id ? 'Personal spending' : 'Includes all household spending'}</p>
                     </div>
                     <div className="summary-center">

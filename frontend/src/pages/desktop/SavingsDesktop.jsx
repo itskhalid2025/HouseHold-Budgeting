@@ -140,7 +140,8 @@ export default function Savings() {
         if (!window.confirm('Are you sure you want to delete this savings goal?')) return;
         try {
             await deleteGoal(id);
-            fetchData();
+            await fetchData();
+            if (expandedGoalId === id) setExpandedGoalId(null);
         } catch (err) {
             setError(err.message);
         }
@@ -150,8 +151,8 @@ export default function Savings() {
         if (!window.confirm('Remove this contribution?')) return;
         try {
             await deleteTransaction(txnId);
-            // We need to refresh data to update goal total
-            fetchData();
+            // We need to refresh data to update goal total and summary
+            await fetchData();
         } catch (err) {
             setError(err.message);
         }

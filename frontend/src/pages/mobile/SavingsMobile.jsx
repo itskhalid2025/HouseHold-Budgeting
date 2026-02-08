@@ -117,7 +117,9 @@ export default function SavingsMobile() {
         if (!window.confirm("Delete this goal?")) return;
         try {
             await deleteGoal(id);
-            fetchData();
+            await fetchData(); // Force re-fetch all goals and summary
+            setActiveModal(null);
+            setSelectedGoal(null); // Clear selected goal if it was deleted
         } catch (err) { setError(err.message); }
     };
 
@@ -165,11 +167,12 @@ export default function SavingsMobile() {
         if (!window.confirm("Remove this contribution?")) return;
         try {
             await deleteTransaction(txnId);
-            fetchData();
-            // Refresh local selected goal history if needed
+            await fetchData(); // Refresh totals
+            // Refresh local selected goal history
             const updatedGoals = await getGoals();
-            const updatedGoal = updatedGoals.goals.find(g => g.id === selectedGoal.id);
+            const updatedGoal = updatedGoals.goals.find(g => g.id === (selectedGoal?.id || goalId));
             if (updatedGoal) setSelectedGoal(updatedGoal);
+            else setSelectedGoal(null);
         } catch (err) { setError(err.message); }
     };
 

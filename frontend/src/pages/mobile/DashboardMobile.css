@@ -206,6 +206,10 @@
 
 .breakdown-row .name {
     color: var(--text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 150px;
 }
 
 .breakdown-row .amt {
@@ -364,6 +368,10 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
     flex-shrink: 0;
     border: 1.5px solid rgba(255, 255, 255, 0.2);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
 }
 
 .txn-date {
@@ -394,6 +402,7 @@
     font-size: 14px;
     padding: 20px 0;
 }
+
 /* Ensure header is a positioning container */
 .mobile-header {
     position: relative;
@@ -419,10 +428,12 @@
 
 /* Below the actions row */
 .header-logo {
-    margin-top: 60px;  /* pushes logo below top-right items */
+    margin-top: 60px;
+    /* pushes logo below top-right items */
     display: flex;
     justify-content: flex-start;
 }
+
 /* Remove ALL spaces on logo container */
 .header-logo {
     margin: 0 !important;
@@ -437,14 +448,19 @@
 .mobile-header {
     position: relative;
     width: 100%;
-    padding: 0; /* remove default padding */
-    padding-top: 60px; /* keep room for buttons */
+    padding: 0;
+    /* remove default padding */
+    padding-top: 60px;
+    /* keep room for buttons */
 }
+
 .user-greeting-row {
     display: flex;
     flex-direction: row;
-    align-items: baseline;   /* keeps comma + name perfectly aligned */
-    gap: 6px;                /* space between greeting + name */
+    align-items: baseline;
+    /* keeps comma + name perfectly aligned */
+    gap: 6px;
+    /* space between greeting + name */
 }
 
 .user-greeting-row .greeting {
@@ -458,6 +474,7 @@
     font-weight: 700;
     margin: 0;
 }
+
 .gradient-name {
     background: linear-gradient(120deg, var(--primary-light), #818cf8);
     -webkit-background-clip: text;

@@ -1,5 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import toast from 'react-hot-toast';
+import { registerSW } from 'virtual:pwa-register';
 
 const SyncContext = createContext();
 
@@ -15,10 +14,26 @@ export const SyncProvider = ({ children }) => {
     const [deferredPrompt, setDeferredPrompt] = useState(null);
     const [isInstallable, setIsInstallable] = useState(false);
     const [isInstalled, setIsInstalled] = useState(window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true);
+    const [needRefresh, setNeedRefresh] = useState(false);
+    const [updateServiceWorker, setUpdateServiceWorker] = useState(null);
 
     useEffect(() => {
         console.log('PWA: Initial State - isInstalled:', isInstalled);
         console.log('PWA: Browser Supports beforeinstallprompt:', 'onbeforeinstallprompt' in window);
+
+        // Register Service Worker for updates
+        if ('serviceWorker' in navigator) {
+            const updateSW = registerSW({
+                onNeedRefresh() {
+                    console.log('PWA: New content available!');
+                    setNeedRefresh(true);
+                    setUpdateServiceWorker(() => updateSW);
+                },
+                onOfflineReady() {
+                    console.log('PWA: App is ready for offline use.');
+                },
+            });
+        }
     }, []);
 
     useEffect(() => {
@@ -102,6 +117,12 @@ export const SyncProvider = ({ children }) => {
         setSyncQueue([]);
     };
 
+    const updateApp = () => {
+        if (updateServiceWorker) {
+            updateServiceWorker(true);
+        }
+    };
+
     return (
         <SyncContext.Provider value={{
             isOnline,
@@ -111,7 +132,9 @@ export const SyncProvider = ({ children }) => {
             clearQueue,
             isInstallable,
             isInstalled,
-            installApp
+            installApp,
+            needRefresh,
+            updateApp
         }}>
             {children}
         </SyncContext.Provider>

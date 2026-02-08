@@ -278,6 +278,53 @@ function AiLimitNotification({ isMobile }) {
   );
 }
 
+// PWA Notification (Install & Update)
+function PWANotification() {
+  const { isInstallable, isInstalled, installApp, needRefresh, updateApp } = useSync();
+  const [dismissed, setDismissed] = useState(false);
+
+  if (dismissed) return null;
+
+  // Handle Updates
+  if (needRefresh) {
+    return (
+      <div className="pwa-banner">
+        <div className="pwa-banner-content">
+          <div className="pwa-banner-icon">🚀</div>
+          <div className="pwa-banner-text">
+            <strong>Update Available</strong>
+            <p>New features are ready for GrowWise.</p>
+          </div>
+        </div>
+        <div className="pwa-banner-actions">
+          <button className="pwa-banner-btn primary" onClick={updateApp}>Update Now</button>
+        </div>
+      </div>
+    );
+  }
+
+  // Handle Installation (Mobile focus)
+  if (isInstallable && !isInstalled) {
+    return (
+      <div className="pwa-banner">
+        <div className="pwa-banner-content">
+          <div className="pwa-banner-icon">📲</div>
+          <div className="pwa-banner-text">
+            <strong>Install GrowWise</strong>
+            <p>Add to your home screen for the best experience.</p>
+          </div>
+        </div>
+        <div className="pwa-banner-actions">
+          <button className="pwa-banner-btn secondary" onClick={() => setDismissed(true)}>Later</button>
+          <button className="pwa-banner-btn primary" onClick={installApp}>Install</button>
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
+
 import GlobalSmartEntry from './components/mobile/GlobalSmartEntry';
 
 function AppContent() {
@@ -416,6 +463,7 @@ function AppContent() {
       <AINotification />
       <AiLimitNotification isMobile={isMobile} />
       <JoinRequestNotification />
+      <PWANotification />
 
       {isMobile ? (
         <>
