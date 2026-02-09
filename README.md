@@ -104,7 +104,7 @@ To ensure 99.9% accuracy and transparency in our AI operations, we use **Opik by
 | **AI Report** | `reportAgent.generateReport` | Mathematical correctness of insights vs database totals. |
 | **AI Advisor** | `advisorAgent.getFinancialAdvice` | RAG context retrieval quality and grounding status. |
 
-*Developers can view these traces in the [Opik Dashboard](https://www.comet.com/opik/) to see exactly how Gemini processes each request. Each feature is traced using specific wrappers to capture latency, token usage, and accuracy scores.*
+
 
 ---
 
