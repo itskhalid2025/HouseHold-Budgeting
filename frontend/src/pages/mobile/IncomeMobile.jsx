@@ -72,7 +72,13 @@ export default function IncomeMobile() {
         }).catch(err => console.error('Failed to load members:', err));
     }, []);
 
-    usePolling(fetchData, 10000);
+    usePolling(fetchData, 5000);
+
+    useEffect(() => {
+        const handleUpdate = () => fetchData();
+        window.addEventListener('income-updated', handleUpdate);
+        return () => window.removeEventListener('income-updated', handleUpdate);
+    }, [filters.userId]);
 
     // Initial Load
     useEffect(() => {

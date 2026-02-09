@@ -63,6 +63,12 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
             const result = await parseVoiceInput(input);
             if (result.success || result.isCreated) {
                 triggerConfetti();
+
+                // Trigger immediate UI refresh
+                window.dispatchEvent(new CustomEvent('transaction-updated'));
+                window.dispatchEvent(new CustomEvent('income-updated'));
+                window.dispatchEvent(new CustomEvent('goal-updated'));
+
                 if (result.gamification?.streakUpdated) {
                     window.dispatchEvent(new CustomEvent('trigger-reward', { detail: { type: 'STREAK' } }));
                 }
@@ -87,6 +93,12 @@ export default function GlobalSmartEntry({ onEntryComplete }) {
             const result = await analyzeImage(Array.from(fileList));
             if (result.success || result.isCreated) {
                 triggerConfetti();
+
+                // Trigger immediate UI refresh
+                window.dispatchEvent(new CustomEvent('transaction-updated'));
+                window.dispatchEvent(new CustomEvent('income-updated'));
+                window.dispatchEvent(new CustomEvent('goal-updated'));
+
                 if (result.gamification?.streakUpdated) {
                     window.dispatchEvent(new CustomEvent('trigger-reward', { detail: { type: 'STREAK' } }));
                 }

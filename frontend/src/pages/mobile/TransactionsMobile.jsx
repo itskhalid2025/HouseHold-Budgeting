@@ -170,7 +170,13 @@ function SpendingTab() {
         }).catch(err => console.error('Failed to load members:', err));
     }, []);
 
-    const { refetch } = usePolling(fetchTransactions, 10000, isOnline, [page, filters]);
+    const { refetch } = usePolling(fetchTransactions, 5000, isOnline, [page, filters]);
+
+    useEffect(() => {
+        const handleUpdate = () => fetchTransactions();
+        window.addEventListener('transaction-updated', handleUpdate);
+        return () => window.removeEventListener('transaction-updated', handleUpdate);
+    }, [page, filters]);
 
     useEffect(() => {
         if (isOnline) {

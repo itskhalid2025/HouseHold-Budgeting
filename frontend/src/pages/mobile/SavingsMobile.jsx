@@ -86,7 +86,13 @@ export default function SavingsMobile() {
     };
 
     useEffect(() => { fetchData(); }, [filters.userId]);
-    usePolling(fetchData, 15000);
+    usePolling(fetchData, 5000);
+
+    useEffect(() => {
+        const handleUpdate = () => fetchData();
+        window.addEventListener('goal-updated', handleUpdate);
+        return () => window.removeEventListener('goal-updated', handleUpdate);
+    }, [filters.userId]);
 
     // Auto-trigger tour for first-time users
     useAutoTour('savings-mobile', savingsTourMobile, loading);

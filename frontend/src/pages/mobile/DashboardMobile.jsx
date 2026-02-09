@@ -136,7 +136,7 @@ export default function DashboardMobile() {
         }
     }
 
-    usePolling(fetchDashboardData, 10000);
+    usePolling(fetchDashboardData, 5000);
 
     useEffect(() => {
         fetchDashboardData();
@@ -144,7 +144,13 @@ export default function DashboardMobile() {
         // Listen for global updates (e.g. from Smart Entry)
         const handleUpdate = () => fetchDashboardData();
         window.addEventListener('transaction-updated', handleUpdate);
-        return () => window.removeEventListener('transaction-updated', handleUpdate);
+        window.addEventListener('income-updated', handleUpdate);
+        window.addEventListener('goal-updated', handleUpdate);
+        return () => {
+            window.removeEventListener('transaction-updated', handleUpdate);
+            window.removeEventListener('income-updated', handleUpdate);
+            window.removeEventListener('goal-updated', handleUpdate);
+        };
     }, []);
 
     // Tour auto-trigger for first-time mobile users
