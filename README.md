@@ -1,6 +1,6 @@
 # 🏠 GrowWise: HouseHold Budgeting
 
-### 🌐 [Live Demo (GrowWise)](https://growwise-p20f.onrender.com/)
+### 🌐 [Live Demo (GrowWise)](https://growwise-p20f.onrender.com/) | 📽️ [Pitch Deck (Canva)](https://www.canva.com/design/DAHA0JWOt2o/pzPPXtMrbZH78aUnqaHiZQ/view?utm_content=DAHA0JWOt2o&utm_campaign=designshare&utm_medium=link2&utm_source=uniquelinks&utlId=hde23891ab9)
 
 ![GrowWise Logo](./images/logo.png)
 
