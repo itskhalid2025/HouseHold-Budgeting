@@ -622,7 +622,11 @@ export default function DashboardDesktop() {
                                     <div key={txn.id} className="txn-item-compact">
                                         <div className="txn-icon">{getCategoryEmoji(txn.category, txn.subcategory)}</div>
                                         <div className="txn-details">
-                                            <span className="txn-desc">{txn.description}</span>
+                                            <span className="txn-desc">
+                                                {txn.description.length > 18
+                                                    ? txn.description.substring(0, 15) + "..."
+                                                    : txn.description}
+                                            </span>
                                             <div className="txn-meta">
                                                 <span className="txn-date">{formatDate(txn.date)}</span>
                                                 {(txn.user || txn.userName) && (

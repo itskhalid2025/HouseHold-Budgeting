@@ -383,7 +383,11 @@ export default function DashboardMobile() {
                                     {getCategoryEmoji(txn.category, txn.subcategory)}
                                 </div>
                                 <div className="txn-info">
-                                    <p className="txn-desc">{txn.description}</p>
+                                    <p className="txn-desc">
+                                        {txn.description.length > 18
+                                            ? txn.description.substring(0, 15) + "..."
+                                            : txn.description}
+                                    </p>
                                     <div className="txn-meta-row">
                                         <span
                                             className="txn-user-pill"
