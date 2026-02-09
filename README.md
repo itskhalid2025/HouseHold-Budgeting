@@ -1,86 +1,118 @@
-<div align="center">
-  <img src="frontend/src/assets/Logo.png" alt="GrowWise Logo" width="120" />
-  <h1>GrowWise</h1>
-  <h3>✨ Smart Finance for Smarter Living ✨</h3>
-  <p><b>AI-Powered Financial Clarity for the Whole Household</b></p>
+# 🏠 GrowWise: HouseHold Budgeting
 
-  [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-  [![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-  [![React](https://img.shields.io/badge/React-18-blue.svg)](https://reactjs.org/)
-  [![Gemini AI](https://img.shields.io/badge/AI-Gemini_2.5-orange.svg)](https://deepmind.google/technologies/gemini/)
-</div>
+### 🌐 [Live Demo (GrowWise)](https://growwise-p20f.onrender.com/)
+
+![GrowWise Logo](./images/logo.png)
 
 ---
 
-## 📋 Project Summary
+## 🚀 1. Problem Statement
 
-**GrowWise** (formerly HouseHold Budgeting) is a production-ready collaborative application designed to revolutionize family finance. By leveraging modern AI, it automates the tedious parts of money management—categorization, analysis, and prediction—allowing you to focus on your long-term wealth.
+Managing household finances shouldn't be a second full-time job. Traditional budgeting fails because:
 
-The core philosophy is **"Dopamine-Driven Discipline"**: Combining friction-less expense logging (Voice/Text/Receipts) with game-mechanics and proactive AI insights to ensure you stay on track.
-
----
-
-## ✨ Key Features
-
-### 🚀 1. Smart Weekly Insights & Predictions
-The **Smart Insight Agent** acts as your proactive financial guardrail, appearing prominently on your dashboard with adaptive glassmorphic UI.
-- **Budget Burnout Prediction**: Predicts your "broke date" based on current spending velocity.
-- **Overspending Alerts**: Detects category-specific spikes (e.g., "You spent 40% more on Groceries this week").
-- **Localized Savings**: Uses Google Places grounding to suggest cheaper local markets and alternatives based on your current city.
-- **Smart 12h Cache**: High-performance caching with intelligent invalidation (refreshes instantly if new transactions are detected).
-
-### 🎮 2. Gamification Prestige System
-Transform budgeting into a daily habit through our advanced reward engine.
-- **XP & Rank Tiers**: Progress from **Novice** to **Legend** based on your financial discipline.
-- **Daily Streaks**: Maintain logging streaks to multiply your XP rewards.
-- **Rocket Ceremony**: Unlock major milestones with animated rocket launches and confetti celebrations.
-- **City Leaderboards**: Compete with others in your locality to see who is the smartest saver.
-
-### 🤖 3. Multi-Agent AI Architecture
-Powered by **Google Gemini 2.5**, our system understands financial context with human-like reasoning.
-
-#### 🎙️ Smart Entry (Multimodal Logging)
-*Zero-friction data entry to ensure you never miss a transaction.*
-- **Voice Commands**: Just tap and say *"Spend ₹1500 on dinner at Olive Garden"* or *"Log 500 for gas"*.
-- **Natural Language Text**: Type like you talk. *"I gave 2000 to John for rent"* → The AI identifies the loan, category, and person automatically.
-- **Receipt & Invoice Scanning**: Snap a photo or upload a PDF. Our multimodal engine extracts Merchant, Date, Tax, and Items with precision, mapping them to your budget categories.
-
-#### 📊 Automated AI Reports
-*Your personal financial storyteller.*
-- **Weekly Spend Summaries**: A digestible recap of your week, highlighting where you saved and where you "leaked" money.
-- **Deep-Dive Monthly Analysis**: Beautifully formatted reports that compare month-over-month performance.
-- **Natural Language Querying**: Ask your dashboard anything. *"How much did I spend on Swiggy last month vs this month?"* → The AI generates a custom chart and explanation instantly.
-
-### 🏠 4. Collaborative Household Management
-Designed for families, roommates, and couples.
-- **Shared Visibility**: A unified view of household finances while maintaining individual privacy.
-- **Role-Based Access**: Manage members as Admin, Editor, or Viewer.
-- **Sync Everywhere**: Real-time cross-platform sync across Desktop and Mobile PWA.
+*   **Tracking is Exhausting**: Most people struggle to maintain the habit of manually noting every expense, whether on paper or in basic apps.
+*   **Manual Tools Lack Insights**: Notes, spreadsheets, and simple apps fail to show clear spending patterns, categories, or long-term trends.
+*   **Privacy Concerns**: Many users hesitate to give financial apps direct access to their bank accounts, limiting the adoption of semi-automated tools.
+*   **Multi-Person Chaos**: Couples, roommates, and families find it difficult to combine expenses, categorize them (essential vs luxury), and manage multiple income sources/savings goals together.
 
 ---
 
-## 🛠 Tech Stack & Observability
+## 💡 2. Why is this a Big Concern?
 
-- **Frontend**: React 18, Vite, Lucide Icons, Glassmorphism CSS System.
-- **Backend**: Node.js, Express, Prisma ORM.
-- **Database**: PostgreSQL (Supabase/Neon).
-- **AI Engine**: Google Gemini 2.5 (Pro/Flash).
-- **Observability**: **Opik by Comet** for real-time LLM tracing, evaluation, and quality monitoring.
+Financial transparency is the foundation of a healthy household. Ignoring the details leads to:
 
----
-
-## 🌍 Why is this needed in day-to-day life?
-
-1.  **Invisible Spending**: Data makes hidden leaks undeniable.
-2.  **Subscription Overload**: Centralized management to kill unused services.
-3.  **Inflation Awareness**: Data-driven purchasing power protection.
-4.  **Mental Load**: Automation frees your mind from the stress of balance tracking.
-5.  **Family Harmony**: Shared transparency removes money-related friction.
+*   **"Money Leaks"**: Daily tracking reveals small, frequent purchases (like morning coffees or forgotten subscriptions) that can quietly drain hundreds of dollars annually.
+*   **Supports Shared Goals**: Without shared tracking, partners aren't aligned on priorities like saving for a home, a child's education, or an emergency fund.
+*   **Prevents Debt Spirals**: By not knowing exactly how much you can afford *before* you spend, it's easy to rely on credit cards, leading to high-interest debt accumulation.
+*   **Financial Stress**: Replacing "where did my paycheck go?" with a clear sense of control and confidence is vital for mental well-being and relationship harmony.
 
 ---
 
-## 📞 Contact
+## ✨ 3. The Solution: GrowWise
 
-**Mohammed Khalid**
-- Email: [itskhalid.25@gmail.com](mailto:itskhalid.25@gmail.com)
-- Project Link: [GitHub Repository](https://github.com/itskhalid2025/HouseHold-Budgeting)
+GrowWise is an **AI-native collaborative budgeting platform** designed to turn financial tracking from a chore into a seamless, insights-driven experience.
+
+*   **Effortless Multi-Person Management**: Built for individuals, couples, and full households with shared visibility and role-based permissions.
+*   **Proactive Privacy**: Native-first tracking that doesn't require bank syncing, giving you full control over your data while maintaining smart automation.
+*   **AI-Powered Intelligence**: Leverage Google Gemini to categorize, analyze, and advise on your finances in real-time.
+*   **Gamified Habit Building**: Using psychological triggers to make budgeting consistent and fun.
+
+---
+
+## 🎮 4. Gamification: Budgeting as a Habit
+
+We've integrated game mechanics to ensure you stay committed to your financial goals:
+
+*   **Streaks & XP**: Gain Experience Points (XP) for every expense added, weekly review completed, or advisor chat. Build streaks to show off your consistency.
+*   **Global Rankings**: See how your household compares to the community in saving efficiency (with full privacy).
+*   **Challenges**: Join weekly or monthly savings challenges to reach targets faster.
+
+| Global Leaderboard | Personal Streaks |
+| :---: | :---: |
+| ![Leaderboard](./images/leaderboard.png) | ![Streak](./images/streak.png) |
+
+---
+
+## 📱 5. About the Platform
+
+GrowWise is a modern **Progressive Web App (PWA)**, offering the best of web and mobile:
+
+*   **Cross-Platform**: Works perfectly on Desktop, Tablet, and Smartphone.
+*   **Native Experience**: Install GrowWise to your home screen for a full-screen, app-like experience with fast loading and offline capabilities.
+*   **Real-time Sync**: Changes made by one household member are instantly reflected for everyone else.
+
+---
+
+## 🧠 6. AI Features (Functional & Technical)
+
+Our AI suite, powered by **Google Gemini**, acts as your private financial secretary.
+
+### 🎙️ Smart Entry (Multi-Modal Logging)
+Stop typing, start talking. Log expenses via voice, text, or a snap of a receipt.
+*   **How to use**: Tap the "+" button or microphone icon and say *"Spent 50 dollars on groceries at Walmart"* or upload a photo of your receipt.
+*   **Technical**: Deep integration with Gemini Vision/Speech to structure raw input into meaningful data (merchant, amount, category) in under 5 seconds.
+*   **Status**: ![Smart Entry](./images/gif/smartentery-ezgif.com-speed.gif)
+
+### 📊 Live Insight (Natural Language Charts)
+Visualize your data by simply asking for it.
+*   **How to use**: Type a query like *"Show me my coffee spending vs rent for the last 6 months"* or *"Compare my income to expenses this year"*.
+*   **Technical**: Converts natural language into complex database queries and dynamically generates optimized chart configurations (Pie, Bar, Line).
+*   **Status**: ![Live Insight](./images/gif/insight-ezgif.com-video-to-gif-converter.gif)
+
+### 📑 AI Report (Automated Intelligence)
+Get a "CFO-level" summary of your household's health every week.
+*   **How to use**: Reports are automatically generated and available in your Dashboard.
+*   **Technical**: Analyzes trends, identifies "hidden leakages," and summarizes your biggest spenders vs your goals.
+*   **Preview**: ![AI Report Preview](./images/report_land.png)
+
+### 💬 AI Advisor (Personalized Financial Chat)
+A RAG-based advisor that knows your history and helps you plan the future.
+*   **How to use**: Open the Advisor tab and ask questions like *"Can I afford a new laptop next month?"* or *"How can I save 200 more dollars this month?"*
+*   **Technical**: Uses Retrieval-Augmented Generation (RAG) to ground AI responses in your *actual* transaction history for 100% personalized advice.
+*   **Status**: ![AI Advisor](./images/ai_advisor.png)
+
+---
+
+## 🔭 7. AI Observability with Opik
+
+To ensure 99.9% accuracy and transparency in our AI operations, we use **Opik by Comet** for full LLM observability. We track every "thought" the AI has to prevent hallucinations and optimize performance.
+
+| Feature | Trace Name (Opik) | What We Monitor |
+| :--- | :--- | :--- |
+| **Smart Entry** | `processSmartEntry` / `analyzeImage` | Accuracy of OCR and intent extraction from voice. |
+| **Live Insight** | `queryParserAgent.parseQuery` | Precision in date range extraction and chart selection. |
+| **AI Report** | `reportAgent.generateReport` | Mathematical correctness of insights vs database totals. |
+| **AI Advisor** | `advisorAgent.getFinancialAdvice` | RAG context retrieval quality and grounding status. |
+
+*Developers can view these traces in the [Opik Dashboard](https://www.comet.com/opik/) to see exactly how Gemini processes each request. Each feature is traced using specific wrappers to capture latency, token usage, and accuracy scores.*
+
+---
+
+## 🛠️ Installation & Setup
+
+1.  **Clone the Repo**: `git clone https://github.com/itskhalid2025/HouseHold-Budgeting.git`
+2.  **Environment Variables**: Setup your `.env` with `GEMINI_API_KEY` and `DATABASE_URL`.
+3.  **Run Locally**:
+    *   `cd backend && npm install && npm start`
+    *   `cd frontend && npm install && npm run dev`
+4.  **PWA**: Open the app in your mobile browser and select "Add to Home Screen".
